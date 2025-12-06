@@ -17,6 +17,7 @@ import PricingRequest from './pages/solutions/PricingRequest'
 import ThankYou from './pages/solutions/ThankYou'
 import PupilDistance from './pages/solutions/PupilDistance'
 import DriveToStore from './pages/solutions/DriveToStore'
+import Contact from './pages/Contact'
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
         <Route path="/thank-you" element={<ThankYou />} />
         <Route path="/pupil-distance" element={<PupilDistance />} />
         <Route path="/drive-to-store" element={<DriveToStore />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
     </Router>
   )

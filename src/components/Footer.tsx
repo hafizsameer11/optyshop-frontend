@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Footer: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleContactClick = () => {
+        navigate('/contact')
+    }
+
     return (
         <footer className="bg-[#212B47] text-white relative">
             {/* Top gradient bar */}
@@ -82,7 +89,7 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-3">Follow us</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
-                        <div className="flex gap-3">
+                        <div className="flex gap-3 mb-6">
                             {/* LinkedIn */}
                             <a
                                 href="#"
@@ -122,6 +129,13 @@ const Footer: React.FC = () => {
                                 <span className="text-[#212B47] font-bold text-xs">YT</span>
                             </a>
                         </div>
+                        {/* Contact Us Button */}
+                        <button
+                            onClick={handleContactClick}
+                            className="px-6 py-3 bg-[#212B47] border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 uppercase tracking-wide text-sm"
+                        >
+                            Contact Us
+                        </button>
                     </div>
                 </div>
 
