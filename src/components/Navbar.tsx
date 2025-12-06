@@ -44,14 +44,14 @@ const solutions = [
         description: 'Get accurate results online',
         gradient: 'from-blue-400 to-green-500',
         icon: '👁️',
-        path: '#'
+        path: '/pupil-distance'
     },
     {
         label: 'DRIVE-TO-STORE',
         description: 'driving traffic to my stores',
         gradient: 'from-orange-500 to-yellow-500',
         icon: '📍',
-        path: '#'
+        path: '/drive-to-store'
     },
 ]
 

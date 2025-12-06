@@ -5,6 +5,13 @@ import HeroSection from '../../components/solutions/ecommerce/HeroSection'
 import ConversionRateSection from '../../components/solutions/ecommerce/ConversionRateSection'
 import TestDriveSection from '../../components/solutions/ecommerce/TestDriveSection'
 import VirtualTryOn3DViewerSection from '../../components/solutions/ecommerce/VirtualTryOn3DViewerSection'
+import SizeGuaranteeSection from '../../components/solutions/ecommerce/SizeGuaranteeSection'
+import VideoSection from '../../components/solutions/ecommerce/VideoSection'
+import FAQSection from '../../components/solutions/ecommerce/FAQSection'
+import WebinarSection from '../../components/solutions/ecommerce/WebinarSection'
+import ContactDemoSection from '../../components/solutions/ecommerce/ContactDemoSection'
+import AdvancedVirtualTryOnSection from '../../components/solutions/ecommerce/AdvancedVirtualTryOnSection'
+import PricingPlansSection from '../../components/solutions/ecommerce/PricingPlansSection'
 
 const Ecommerce: React.FC = () => {
     return (
@@ -41,6 +48,31 @@ const Ecommerce: React.FC = () => {
 
             {/* Virtual Try-On and 3D Viewer Section */}
             <VirtualTryOn3DViewerSection />
+
+            {/* Size Guarantee Section */}
+            <SizeGuaranteeSection />
+
+            {/* Video Section */}
+            <VideoSection />
+
+            {/* FAQ Section */}
+            <FAQSection />
+
+            {/* Webinar Section */}
+            <WebinarSection />
+
+
+
+            {/* Contact Demo Section */}
+            <div id="contact-demo-section">
+                <ContactDemoSection />
+            </div>
+
+            {/* Advanced Virtual Try-On Section */}
+            <AdvancedVirtualTryOnSection />
+
+            {/* Pricing Plans Section */}
+            <PricingPlansSection />
 
             <Footer />
         </div>

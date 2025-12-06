@@ -11,7 +11,12 @@ import Online from './pages/solutions/Online'
 import ThreeDResources from './pages/solutions/ThreeDResources'
 import InStore from './pages/solutions/InStore'
 import Ecommerce from './pages/solutions/Ecommerce'
+import Webinar from './pages/solutions/Webinar'
+import WebinarVideo from './pages/solutions/WebinarVideo'
 import PricingRequest from './pages/solutions/PricingRequest'
+import ThankYou from './pages/solutions/ThankYou'
+import PupilDistance from './pages/solutions/PupilDistance'
+import DriveToStore from './pages/solutions/DriveToStore'
 
 function App() {
   return (
@@ -28,7 +33,12 @@ function App() {
         <Route path="/3d-resources" element={<ThreeDResources />} />
         <Route path="/in-store" element={<InStore />} />
         <Route path="/ecommerce" element={<Ecommerce />} />
+        <Route path="/webinar" element={<Webinar />} />
+        <Route path="/webinar-video" element={<WebinarVideo />} />
         <Route path="/pricing-request" element={<PricingRequest />} />
+        <Route path="/thank-you" element={<ThankYou />} />
+        <Route path="/pupil-distance" element={<PupilDistance />} />
+        <Route path="/drive-to-store" element={<DriveToStore />} />
       </Routes>
     </Router>
   )

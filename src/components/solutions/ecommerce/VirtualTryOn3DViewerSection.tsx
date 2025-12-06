@@ -2,21 +2,21 @@ import React from 'react'
 
 const VirtualTryOn3DViewerSection: React.FC = () => {
     return (
-        <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+        <section className="bg-white py-6 md:py-8 px-4 sm:px-6">
             <div className="w-[90%] mx-auto">
-                <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+                <div className="grid lg:grid-cols-2 gap-4 md:gap-6 items-center">
                     {/* Left Side - Text Content */}
-                    <div className="order-2 lg:order-1 space-y-6 md:space-y-8">
+                    <div className="order-2 lg:order-1 space-y-3 md:space-y-4">
                         {/* Main Headline */}
                         <div>
-                            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-blue-950 leading-tight">
+                            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-950 leading-tight">
                                 Virtual Try-On and 3D Viewer: A Great Help in Choosing the Right{' '}
-                                <span className="underline decoration-2 underline-offset-4">Frame</span>
+                                <span className="underline decoration-2 underline-offset-2">Frame</span>
                             </h2>
                         </div>
 
                         {/* Statistics and Benefits */}
-                        <div className="space-y-4 text-base md:text-lg text-gray-700 leading-relaxed">
+                        <div className="space-y-2 text-sm md:text-base text-gray-700 leading-snug">
                             <p>
                                 <strong className="text-blue-950">81%</strong> of online eyeglass users found the virtual try-on combined with the 3D Viewer useful for choosing the right frame.
                             </p>
@@ -29,11 +29,11 @@ const VirtualTryOn3DViewerSection: React.FC = () => {
                         </div>
 
                         {/* Call to Action Buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <button className="px-8 md:px-12 py-3 md:py-4 border border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg bg-white">
+                        <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                            <button className="px-5 md:px-6 py-2 md:py-2.5 border border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-xs md:text-sm bg-white">
                                 Learn more
                             </button>
-                            <button className="px-8 md:px-12 py-3 md:py-4 bg-blue-950 text-white font-semibold rounded-full hover:bg-blue-900 transition-colors duration-300 text-base md:text-lg">
+                            <button className="px-5 md:px-6 py-2 md:py-2.5 bg-blue-950 text-white font-semibold rounded-full hover:bg-blue-900 transition-colors duration-300 text-xs md:text-sm">
                                 Discover the 3D Viewer
                             </button>
                         </div>
@@ -41,11 +41,11 @@ const VirtualTryOn3DViewerSection: React.FC = () => {
 
                     {/* Right Side - Smartphone Image */}
                     <div className="flex justify-center lg:justify-end order-1 lg:order-2">
-                        <div className="relative w-[280px] sm:w-[320px] md:w-[360px]">
+                        <div className="relative w-[240px] sm:w-[280px] md:w-[300px]">
                             <img
                                 src="/assets/images/mobile1.png"
                                 alt="Virtual Try-On and 3D Viewer on smartphone"
-                                className="w-full h-auto object-contain rounded-2xl shadow-2xl"
+                                className="w-full h-auto object-contain rounded-2xl "
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement
                                     target.src = '/assets/images/image3.png'
