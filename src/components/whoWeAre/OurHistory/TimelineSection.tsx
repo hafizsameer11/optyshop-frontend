@@ -53,7 +53,7 @@ const timelineEvents: TimelineEvent[] = [
 
 const TimelineSection: React.FC = () => {
     return (
-        <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+        <section id="timeline-section" className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
                 <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-start">
                     {/* Left - Image */}

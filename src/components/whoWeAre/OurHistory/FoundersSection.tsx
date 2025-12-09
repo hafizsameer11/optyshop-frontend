@@ -1,6 +1,27 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const FoundersSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleFindOutMore = () => {
+        // Scroll to timeline section if on the same page, otherwise navigate
+        if (location.pathname === '/our-history') {
+            const timelineSection = document.getElementById('timeline-section')
+            if (timelineSection) {
+                const offset = 100
+                const elementPosition = timelineSection.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - offset
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                })
+            }
+        } else {
+            navigate('/our-history#timeline-section')
+        }
+    }
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -35,7 +56,10 @@ const FoundersSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-sm md:text-base">
+                            <button 
+                                onClick={handleFindOutMore}
+                                className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-sm md:text-base cursor-pointer"
+                            >
                                 Find out where it all began
                             </button>
                         </div>

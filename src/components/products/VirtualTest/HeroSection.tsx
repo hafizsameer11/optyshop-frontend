@@ -1,6 +1,35 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const HeroSection = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const handleRequestPrices = () => {
+        navigate('/pricing-request');
+    };
+
+    const handleRequestDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo');
+                if (element) {
+                    const offset = 100; // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - offset;
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            }, 50);
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo');
+        }
+    };
+
     return (
         <section className="relative text-white overflow-hidden bg-cover bg-center" style={{ backgroundImage: 'url(/assets/images/slider-banner-lens-simulator.webp)' }}>
             {/* No overlay - background image is clear */}
@@ -27,10 +56,16 @@ const HeroSection = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-start pt-4">
-                        <button className="px-8 py-3 rounded-full border-2 border-white text-white font-semibold hover:bg-white/10 transition-colors duration-300">
+                        <button
+                            onClick={handleRequestPrices}
+                            className="px-8 py-3 rounded-full border-2 border-white text-white font-semibold hover:bg-white/10 transition-colors duration-300 cursor-pointer"
+                        >
                             Request prices
                         </button>
-                        <button className="px-8 py-3 rounded-full bg-white text-[#1e3a8a] font-semibold hover:bg-gray-100 transition-colors duration-300">
+                        <button
+                            onClick={handleRequestDemo}
+                            className="px-8 py-3 rounded-full bg-white text-[#1e3a8a] font-semibold hover:bg-gray-100 transition-colors duration-300 cursor-pointer"
+                        >
                             Request a demo
                         </button>
                     </div>

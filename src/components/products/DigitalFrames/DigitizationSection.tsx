@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const DigitizationSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/3d-viewer')
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -39,7 +46,10 @@ const DigitizationSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-sm md:text-base">
+                            <button
+                                onClick={handleLearnMore}
+                                className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-sm md:text-base cursor-pointer"
+                            >
                                 Learn more about our digitalization process
                             </button>
                         </div>

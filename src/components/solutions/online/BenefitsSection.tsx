@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const BenefitsSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleDiscoverVirtualTrial = () => {
+        navigate('/virtual-test')
+    }
+
     const stats = [
         {
             icon: '🖱️',
@@ -65,7 +72,10 @@ const BenefitsSection: React.FC = () => {
 
                 {/* Call to Action Button */}
                 <div className="text-center">
-                    <button className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-md">
+                    <button 
+                        onClick={handleDiscoverVirtualTrial}
+                        className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-md cursor-pointer"
+                    >
                         Discover the Advanced Virtual Trial for your website
                     </button>
                 </div>

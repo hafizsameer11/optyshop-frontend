@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const HeroSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleGetPrices = () => {
+        navigate('/pricing-request')
+    }
+
     return (
         <section
             className="relative min-h-[450px] md:min-h-[500px] overflow-hidden bg-cover bg-center bg-no-repeat pt-20 md:pt-0"
@@ -36,7 +43,10 @@ const HeroSection: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-3 md:pt-4">
-                            <button className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-[#0f172a] font-semibold hover:bg-gray-100 transition-colors duration-300 text-sm sm:text-base">
+                            <button
+                                onClick={handleGetPrices}
+                                className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-full bg-white text-[#0f172a] font-semibold hover:bg-gray-100 transition-colors duration-300 text-sm sm:text-base cursor-pointer"
+                            >
                                 Get prices
                             </button>
                         </div>

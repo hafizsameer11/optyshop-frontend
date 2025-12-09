@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Viewer3DSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleDiscoverViewer = () => {
+        navigate('/3d-viewer')
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto">
@@ -40,7 +47,10 @@ const Viewer3DSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-8 py-3 border-2 border-amber-700 rounded-full text-amber-700 bg-white font-semibold hover:bg-amber-50 transition-colors duration-300">
+                            <button
+                                onClick={handleDiscoverViewer}
+                                className="px-8 py-3 border-2 border-amber-700 rounded-full text-amber-700 bg-white font-semibold hover:bg-amber-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Discover the 3D Viewer
                             </button>
                         </div>

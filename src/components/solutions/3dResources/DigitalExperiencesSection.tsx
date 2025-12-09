@@ -1,6 +1,39 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const DigitalExperiencesSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleLearnMore = () => {
+        navigate('/virtual-test')
+    }
+
+    const handleDiscoverViewer = () => {
+        navigate('/3d-viewer')
+    }
+
+    const handleDiscoverStudio = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     const solutions = [
         {
             icon: '👓',
@@ -57,9 +90,12 @@ const DigitalExperiencesSection: React.FC = () => {
 
                             {/* Link */}
                             {solution.link && (
-                                <a href="#" className="text-teal-600 hover:text-teal-700 font-semibold text-sm md:text-base transition-colors underline">
+                                <button 
+                                    onClick={solution.link === 'Learn more' ? handleLearnMore : handleDiscoverViewer}
+                                    className="text-teal-600 hover:text-teal-700 font-semibold text-sm md:text-base transition-colors underline cursor-pointer"
+                                >
                                     {solution.link}
-                                </a>
+                                </button>
                             )}
                         </div>
                     ))}
@@ -67,7 +103,10 @@ const DigitalExperiencesSection: React.FC = () => {
 
                 {/* Call to Action Button */}
                 <div className="text-center">
-                    <button className="px-8 md:px-12 py-3 md:py-4 bg-transparent border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 text-base md:text-lg">
+                    <button 
+                        onClick={handleDiscoverStudio}
+                        className="px-8 md:px-12 py-3 md:py-4 bg-transparent border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 text-base md:text-lg cursor-pointer"
+                    >
                         Discover Fittingbox 3D Studio
                     </button>
                 </div>

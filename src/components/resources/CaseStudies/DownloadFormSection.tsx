@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { CaseStudy } from '../../../data/caseStudiesData'
 
 interface DownloadFormSectionProps {
@@ -6,6 +7,7 @@ interface DownloadFormSectionProps {
 }
 
 const DownloadFormSection: React.FC<DownloadFormSectionProps> = ({ study }) => {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         email: '',
         name: '',
@@ -24,8 +26,8 @@ const DownloadFormSection: React.FC<DownloadFormSectionProps> = ({ study }) => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         console.log('Form submitted:', formData)
-        // Here you would typically send the data to a server or trigger a download
-        alert('Thank you! Your case study download will begin shortly.')
+        // Navigate to thank you page after form submission
+        navigate('/thank-you')
     }
 
     return (
@@ -195,7 +197,7 @@ const DownloadFormSection: React.FC<DownloadFormSectionProps> = ({ study }) => {
                             {/* Download Button */}
                             <button
                                 type="submit"
-                                className="w-full bg-blue-900 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-800 transition-colors duration-300 text-base md:text-lg"
+                                className="w-full bg-blue-900 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-800 transition-colors duration-300 text-base md:text-lg cursor-pointer"
                             >
                                 Download
                             </button>

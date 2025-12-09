@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const AvantPremieresSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleContactUs = () => {
+        navigate('/contact')
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto">
@@ -43,7 +50,10 @@ const AvantPremieresSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-8 py-3 border-2 border-purple-900 bg-white text-purple-900 font-semibold rounded-full hover:bg-purple-50 transition-colors duration-300">
+                            <button
+                                onClick={handleContactUs}
+                                className="px-8 py-3 border-2 border-purple-900 bg-white text-purple-900 font-semibold rounded-full hover:bg-purple-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Contact us
                             </button>
                         </div>

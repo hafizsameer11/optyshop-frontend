@@ -1,6 +1,21 @@
 import React from 'react'
 
 const Viewer3DSection: React.FC = () => {
+    const handleScrollToLiveDemo = () => {
+        setTimeout(() => {
+            const element = document.getElementById('live-demo')
+            if (element) {
+                const offset = 100 // Account for fixed navbar
+                const elementPosition = element.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - offset
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                })
+            }
+        }, 50)
+    }
+
     return (
         <section className="bg-white py-16 px-4">
             <div className="w-[90%] max-w-6xl mx-auto">
@@ -42,7 +57,10 @@ const Viewer3DSection: React.FC = () => {
 
                 {/* Bottom CTA Button */}
                 <div className="mt-12 flex justify-center">
-                    <button className="rounded-full bg-blue-900 text-white px-10 py-4 text-base sm:text-lg font-semibold shadow-lg hover:bg-blue-800 transition-colors">
+                    <button
+                        onClick={handleScrollToLiveDemo}
+                        className="rounded-full bg-blue-900 text-white px-10 py-4 text-base sm:text-lg font-semibold shadow-lg hover:bg-blue-800 transition-colors cursor-pointer"
+                    >
                         Get a demo
                     </button>
                 </div>

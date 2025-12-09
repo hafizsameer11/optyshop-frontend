@@ -1,7 +1,31 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const HeroSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleGetDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <section className="relative h-screen flex flex-col pt-20 md:pt-0">
             <div
@@ -32,7 +56,10 @@ const HeroSection: React.FC = () => {
                                 Get more in-store traffic with a realistic <strong className="text-white font-bold">virtual try-on experience</strong> that drives users to the closest store to try the glasses they have selected online.
                             </p>
 
-                            <button className="bg-white border-2 border-gray-300 text-blue-950 px-5 md:px-6 py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base hover:bg-gray-50 hover:border-gray-400 transition-colors duration-300 w-full sm:w-auto">
+                            <button 
+                                onClick={handleGetDemo}
+                                className="bg-white border-2 border-gray-300 text-blue-950 px-5 md:px-6 py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base hover:bg-gray-50 hover:border-gray-400 transition-colors duration-300 w-full sm:w-auto cursor-pointer"
+                            >
                                 Get a Demo
                             </button>
                         </div>

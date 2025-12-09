@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const ReliableToolSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/pd-measurement')
+    }
+
     return (
         <section className="bg-blue-950 py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -36,7 +43,10 @@ const ReliableToolSection: React.FC = () => {
 
                 {/* Learn More Button */}
                 <div className="text-center">
-                    <button className="bg-white border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white hover:border-white transition-colors duration-300">
+                    <button 
+                        onClick={handleLearnMore}
+                        className="bg-white border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white hover:border-white transition-colors duration-300 cursor-pointer"
+                    >
                         Learn more about Fittingbox PD Measurement
                     </button>
                 </div>

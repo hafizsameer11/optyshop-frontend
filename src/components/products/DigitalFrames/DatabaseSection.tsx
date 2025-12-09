@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const DatabaseSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleConsultDatabase = () => {
+        navigate('/3d-viewer')
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto">
@@ -24,7 +31,10 @@ const DatabaseSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-8 py-3 rounded-full border-2 border-amber-700 text-amber-700 bg-white font-semibold hover:bg-amber-50 transition-colors duration-300">
+                            <button
+                                onClick={handleConsultDatabase}
+                                className="px-8 py-3 rounded-full border-2 border-amber-700 text-amber-700 bg-white font-semibold hover:bg-amber-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Consult the Fittingbox database
                             </button>
                         </div>

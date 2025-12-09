@@ -1,6 +1,12 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const OpenInnovationSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleCoCreate = () => {
+        navigate('/open-innovation')
+    }
     return (
         <section className="py-12 md:py-16 lg:py-20 px-4 sm:px-6" style={{ backgroundColor: '#253C69' }}>
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -73,7 +79,10 @@ const OpenInnovationSection: React.FC = () => {
 
                     {/* Call to Action Button */}
                     <div className="text-center pt-4">
-                        <button className="px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-white text-white font-semibold hover:bg-white hover:text-[#253C69] transition-colors duration-300 text-sm md:text-base">
+                        <button 
+                            onClick={handleCoCreate}
+                            className="px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-white text-white font-semibold hover:bg-white hover:text-[#253C69] transition-colors duration-300 text-sm md:text-base cursor-pointer"
+                        >
                             Let's co-create together!
                         </button>
                     </div>

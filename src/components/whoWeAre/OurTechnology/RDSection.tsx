@@ -70,7 +70,7 @@ const RDSection: React.FC = () => {
                     <div className="text-center pt-4">
                         <Link
                             to="/our-history"
-                            className="inline-block px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-gray-800 text-gray-900 font-semibold hover:bg-gray-50 transition-colors duration-300 text-sm md:text-base"
+                            className="inline-block px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-gray-800 text-gray-900 font-semibold hover:bg-gray-50 transition-colors duration-300 text-sm md:text-base cursor-pointer"
                         >
                             Discover our story
                         </Link>

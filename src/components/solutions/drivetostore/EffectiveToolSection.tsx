@@ -1,6 +1,33 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const EffectiveToolSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleForAdvertising = () => {
+        if (location.pathname === '/') {
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            navigate('/#live-demo')
+        }
+    }
+
+    const handleForWebsite = () => {
+        navigate('/virtual-test')
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -41,10 +68,16 @@ const EffectiveToolSection: React.FC = () => {
 
                         {/* Two CTA Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <button className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 flex-1">
+                            <button 
+                                onClick={handleForAdvertising}
+                                className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 flex-1 cursor-pointer"
+                            >
                                 For Advertising
                             </button>
-                            <button className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 flex-1">
+                            <button 
+                                onClick={handleForWebsite}
+                                className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 flex-1 cursor-pointer"
+                            >
                                 For website
                             </button>
                         </div>

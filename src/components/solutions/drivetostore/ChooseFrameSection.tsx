@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const ChooseFrameSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/virtual-test')
+    }
+
     return (
         <section className="bg-white pt-0 pb-12 md:pb-16 lg:pb-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -23,7 +30,10 @@ const ChooseFrameSection: React.FC = () => {
                             The flexibility of shopping on a variety of electronic devices - phone, tablet, laptop- allows consumers to browse eyewear catalogs from the comfort of their home, to eventually <strong className="text-blue-950 font-bold">travel to a store to make their final purchase</strong>.
                         </p>
 
-                        <button className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300">
+                        <button 
+                            onClick={handleLearnMore}
+                            className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 cursor-pointer"
+                        >
                             Learn more
                         </button>
                     </div>

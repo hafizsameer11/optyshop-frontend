@@ -86,7 +86,7 @@ const TeamSection: React.FC = () => {
                         {/* Navigation Arrows */}
                         <button
                             onClick={prevSlide}
-                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-950 text-white hover:bg-blue-900 transition-colors flex items-center justify-center shadow-lg"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-8 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-950 text-white hover:bg-blue-900 transition-colors flex items-center justify-center shadow-lg cursor-pointer"
                             aria-label="Previous team members"
                         >
                             <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -96,7 +96,7 @@ const TeamSection: React.FC = () => {
 
                         <button
                             onClick={nextSlide}
-                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-950 text-white hover:bg-blue-900 transition-colors flex items-center justify-center shadow-lg"
+                            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-8 z-10 w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-950 text-white hover:bg-blue-900 transition-colors flex items-center justify-center shadow-lg cursor-pointer"
                             aria-label="Next team members"
                         >
                             <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -135,7 +135,7 @@ const TeamSection: React.FC = () => {
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index * itemsToShow)}
-                                className={`h-2 rounded-full transition-all ${Math.floor(currentIndex / itemsToShow) === index
+                                className={`h-2 rounded-full transition-all cursor-pointer ${Math.floor(currentIndex / itemsToShow) === index
                                     ? 'bg-blue-950 w-8'
                                     : 'bg-gray-300 w-2'
                                     }`}

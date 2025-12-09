@@ -1,7 +1,27 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 const JoinUsSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleFindOutMore = () => {
+        if (location.pathname === '/') {
+            const element = document.getElementById('live-demo')
+            if (element) {
+                const offset = 100
+                const elementPosition = element.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - offset
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                })
+            }
+        } else {
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <>
             <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
@@ -29,15 +49,15 @@ const JoinUsSection: React.FC = () => {
 
                             {/* Buttons */}
                             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                                <Link
-                                    to="/"
-                                    className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-center text-sm md:text-base"
+                                <button
+                                    onClick={handleFindOutMore}
+                                    className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 text-center text-sm md:text-base cursor-pointer"
                                 >
                                     Find out more about Fittingbox
-                                </Link>
+                                </button>
                                 <Link
                                     to="/join-us"
-                                    className="px-6 md:px-8 py-3 md:py-4 rounded-lg border-2 border-blue-950 text-blue-950 font-semibold hover:bg-blue-50 transition-colors duration-300 text-center text-sm md:text-base"
+                                    className="px-6 md:px-8 py-3 md:py-4 rounded-lg border-2 border-blue-950 text-blue-950 font-semibold hover:bg-blue-50 transition-colors duration-300 text-center text-sm md:text-base cursor-pointer"
                                 >
                                     See job offers
                                 </Link>

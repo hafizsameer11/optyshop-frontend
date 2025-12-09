@@ -1,6 +1,35 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const WebsiteSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleAdvancedVirtualTrial = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
+    const handleStandardVirtualTest = () => {
+        navigate('/shop')
+    }
+
     return (
         <section className="bg-white text-[#0f172a] py-16 md:py-24">
             <div className="w-[90%] max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-8">
@@ -20,10 +49,16 @@ const WebsiteSection: React.FC = () => {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4">
-                        <button className="px-6 py-3 bg-orange-500 text-white rounded-full shadow-md hover:bg-orange-600 transition">
+                        <button
+                            onClick={handleAdvancedVirtualTrial}
+                            className="px-6 py-3 bg-orange-500 text-white rounded-full shadow-md hover:bg-orange-600 transition cursor-pointer"
+                        >
                             Advanced Virtual Trial
                         </button>
-                        <button className="px-6 py-3 border-2 border-orange-300 text-orange-600 rounded-full hover:bg-orange-50 transition">
+                        <button
+                            onClick={handleStandardVirtualTest}
+                            className="px-6 py-3 border-2 border-orange-300 text-orange-600 rounded-full hover:bg-orange-50 transition cursor-pointer"
+                        >
                             Standard Virtual Test
                         </button>
                     </div>

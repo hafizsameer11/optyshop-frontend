@@ -1,7 +1,27 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const StatsBannerSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleTryTechnology = () => {
+        if (location.pathname === '/') {
+            const element = document.getElementById('live-demo')
+            if (element) {
+                const offset = 100
+                const elementPosition = element.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - offset
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                })
+            }
+        } else {
+            navigate('/#live-demo')
+        }
+    }
+
     const stats = [
         {
             title: 'Over 215M virtual',
@@ -64,12 +84,12 @@ const StatsBannerSection: React.FC = () => {
 
                     {/* Button */}
                     <div className="text-center pt-4">
-                        <Link
-                            to="/"
-                            className="inline-block px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-white text-white font-semibold hover:bg-white hover:text-blue-950 transition-colors duration-300 text-sm md:text-base"
+                        <button
+                            onClick={handleTryTechnology}
+                            className="inline-block px-8 md:px-10 py-3 md:py-4 rounded-lg border-2 border-white text-white font-semibold hover:bg-white hover:text-blue-950 transition-colors duration-300 text-sm md:text-base cursor-pointer"
                         >
                             Try our technology
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

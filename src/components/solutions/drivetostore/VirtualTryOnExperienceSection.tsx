@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const VirtualTryOnExperienceSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/virtual-test')
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -48,7 +55,10 @@ const VirtualTryOnExperienceSection: React.FC = () => {
                             </p>
                         </div>
 
-                        <button className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300">
+                        <button 
+                            onClick={handleLearnMore}
+                            className="bg-transparent border-2 border-blue-950 text-blue-950 px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 cursor-pointer"
+                        >
                             Learn more
                         </button>
                     </div>

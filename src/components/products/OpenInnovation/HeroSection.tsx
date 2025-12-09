@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const HeroSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleDiscoverTechnology = () => {
+        navigate('/our-technology')
+    }
+
     return (
         <section
             className="relative  min-h-[400px] sm:min-h-[450px] md:min-h-[500px] flex items-center pt-20 md:pt-0 bg-cover bg-center bg-no-repeat"
@@ -30,11 +37,11 @@ const HeroSection: React.FC = () => {
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
-                                <button className="px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-white text-slate-800 font-semibold rounded-full hover:bg-gray-100 transition-colors duration-300">
-                                    Get involved
-                                </button>
-                                <button className="px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-slate-800 border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300">
-                                    Learn more
+                                <button
+                                    onClick={handleDiscoverTechnology}
+                                    className="px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base bg-white text-slate-800 font-semibold rounded-full hover:bg-gray-100 transition-colors duration-300 cursor-pointer"
+                                >
+                                    Discover our technology
                                 </button>
                             </div>
                         </div>

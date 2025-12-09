@@ -2,6 +2,21 @@ import React from 'react'
 import Navbar from '../Navbar'
 
 const Hero: React.FC = () => {
+    const handleScrollToLiveDemo = () => {
+        setTimeout(() => {
+            const element = document.getElementById('live-demo')
+            if (element) {
+                const offset = 100 // Account for fixed navbar
+                const elementPosition = element.getBoundingClientRect().top
+                const offsetPosition = elementPosition + window.pageYOffset - offset
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                })
+            }
+        }, 50)
+    }
+
     return (
         <div className="relative min-h-screen text-white">
             {/* Background image / video placeholder */}
@@ -34,10 +49,16 @@ const Hero: React.FC = () => {
                         </p>
 
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-                            <button className="inline-flex justify-center rounded-full bg-white text-slate-900 px-8 py-3 text-sm sm:text-base font-semibold shadow-lg hover:bg-slate-100 transition-colors">
+                            <button
+                                onClick={handleScrollToLiveDemo}
+                                className="inline-flex justify-center rounded-full bg-white text-slate-900 px-8 py-3 text-sm sm:text-base font-semibold shadow-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                            >
                                 Try on the glasses
                             </button>
-                            <button className="inline-flex justify-center rounded-full border border-white/60 px-8 py-3 text-sm sm:text-base font-semibold hover:bg-white/10 transition-colors">
+                            <button
+                                onClick={handleScrollToLiveDemo}
+                                className="inline-flex justify-center rounded-full border border-white/60 px-8 py-3 text-sm sm:text-base font-semibold hover:bg-white/10 transition-colors cursor-pointer"
+                            >
                                 Request a demo
                             </button>
                         </div>

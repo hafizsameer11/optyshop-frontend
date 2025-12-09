@@ -133,8 +133,8 @@ const InterviewsSection: React.FC = () => {
                                     {/* Learn More Link */}
                                     <div className="pt-2">
                                         <Link
-                                            to="/"
-                                            className="text-blue-600 hover:text-blue-800 underline font-medium text-sm md:text-base"
+                                            to="/blog"
+                                            className="text-blue-600 hover:text-blue-800 underline font-medium text-sm md:text-base cursor-pointer"
                                         >
                                             Learn more
                                         </Link>

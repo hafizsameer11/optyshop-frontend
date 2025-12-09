@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import CartIcon from './CartIcon'
 
 const products = [
@@ -116,6 +116,8 @@ const whoWeAre = [
 ]
 
 const Navbar: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isProductsOpen, setIsProductsOpen] = useState(false)
     const [isSolutionsOpen, setIsSolutionsOpen] = useState(false)
@@ -126,6 +128,27 @@ const Navbar: React.FC = () => {
     const [isMobileResourcesOpen, setIsMobileResourcesOpen] = useState(false)
     const [isMobileWhoWeAreOpen, setIsMobileWhoWeAreOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
+
+    const handleScrollToLiveDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash
+            navigate('/#live-demo')
+        }
+    }
 
     useEffect(() => {
         const handleScroll = () => {
@@ -347,10 +370,16 @@ const Navbar: React.FC = () => {
                     </button>
 
                     {/* Desktop CTAs */}
-                    <button className="hidden sm:inline-flex rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer">
+                    <button
+                        onClick={handleScrollToLiveDemo}
+                        className="hidden sm:inline-flex rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                    >
                         Try on glasses
                     </button>
-                    <button className="hidden md:inline-flex rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer">
+                    <button
+                        onClick={handleScrollToLiveDemo}
+                        className="hidden md:inline-flex rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer"
+                    >
                         Get a demo
                     </button>
 
@@ -520,10 +549,22 @@ const Navbar: React.FC = () => {
                     </div>
 
                     <div className="pt-2 space-y-3">
-                        <button className="w-full rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer">
+                        <button
+                            onClick={() => {
+                                setIsMobileOpen(false)
+                                handleScrollToLiveDemo()
+                            }}
+                            className="w-full rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                        >
                             Try on glasses
                         </button>
-                        <button className="w-full rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer">
+                        <button
+                            onClick={() => {
+                                setIsMobileOpen(false)
+                                handleScrollToLiveDemo()
+                            }}
+                            className="w-full rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer"
+                        >
                             Get a demo
                         </button>
                         <div className="flex justify-center pt-2">

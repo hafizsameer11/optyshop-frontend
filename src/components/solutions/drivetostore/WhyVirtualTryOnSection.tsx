@@ -1,6 +1,17 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const WhyVirtualTryOnSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleSeeCaseStudy = () => {
+        navigate('/case-studies')
+    }
+
+    const handleDiscoverAdvanced = () => {
+        navigate('/virtual-test')
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -23,7 +34,10 @@ const WhyVirtualTryOnSection: React.FC = () => {
                             <p className="text-sm md:text-base text-white/90 mb-4 md:mb-5 leading-relaxed">
                                 Visitors who tried on frames with the virtual try-on feature are 2.5 times more likely to book an appointment to go to a store. Observed on 5M page views.
                             </p>
-                            <button className="bg-transparent border-2 border-white text-white px-5 md:px-6 py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base hover:bg-white hover:text-blue-950 transition-colors duration-300">
+                            <button 
+                                onClick={handleSeeCaseStudy}
+                                className="bg-transparent border-2 border-white text-white px-5 md:px-6 py-2.5 md:py-3 rounded-lg font-semibold text-sm md:text-base hover:bg-white hover:text-blue-950 transition-colors duration-300 cursor-pointer"
+                            >
                                 See the case study
                             </button>
                         </div>
@@ -46,7 +60,10 @@ const WhyVirtualTryOnSection: React.FC = () => {
 
                 {/* Bottom CTA Button */}
                 <div className="text-center">
-                    <button className="bg-transparent border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-lg font-semibold lg:rounded-full sm:rounded-full text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300">
+                    <button 
+                        onClick={handleDiscoverAdvanced}
+                        className="bg-transparent border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-lg font-semibold lg:rounded-full sm:rounded-full text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 cursor-pointer"
+                    >
                         Discover Virtual Try-On Advanced for website
                     </button>
                 </div>

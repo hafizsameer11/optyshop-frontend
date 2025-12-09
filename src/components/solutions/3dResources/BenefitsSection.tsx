@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const BenefitsSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/digital-frames')
+    }
+
     const benefits = [
         {
             icon: '😎',
@@ -53,9 +60,12 @@ const BenefitsSection: React.FC = () => {
                             </p>
 
                             {/* Learn More Link */}
-                            <a href="#" className="text-teal-600 hover:text-teal-700 font-semibold text-sm md:text-base transition-colors">
+                            <button 
+                                onClick={handleLearnMore}
+                                className="text-teal-600 hover:text-teal-700 font-semibold text-sm md:text-base transition-colors cursor-pointer"
+                            >
                                 Learn more
-                            </a>
+                            </button>
                         </div>
                     ))}
                 </div>

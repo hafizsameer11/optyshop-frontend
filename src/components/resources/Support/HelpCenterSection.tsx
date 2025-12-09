@@ -1,46 +1,57 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const helpCenterCards = [
     {
         id: 1,
         title: 'Virtual Try-On Advanced',
         icon: '👓',
-        gradient: 'from-orange-500 to-red-500'
+        gradient: 'from-orange-500 to-red-500',
+        path: '/virtual-test'
     },
     {
         id: 2,
         title: 'Eyewear Digitization',
         subtitle: '3D Digitization of Frames',
         icon: '📐',
-        gradient: 'from-green-500 to-blue-500'
+        gradient: 'from-green-500 to-blue-500',
+        path: '/digital-frames'
     },
     {
         id: 3,
         title: 'PD Measurement',
         icon: '📏',
-        gradient: 'from-green-500 to-purple-500'
+        gradient: 'from-green-500 to-purple-500',
+        path: '/pd-measurement'
     },
     {
         id: 4,
         title: '3D Viewer',
         icon: '🎯',
-        gradient: 'from-orange-500 to-yellow-500'
+        gradient: 'from-orange-500 to-yellow-500',
+        path: '/3d-viewer'
     },
     {
         id: 5,
         title: 'Virtual Try-On Standard',
         icon: '👓',
-        gradient: 'from-orange-500 to-red-500'
+        gradient: 'from-orange-500 to-red-500',
+        path: '/in-store'
     }
 ]
 
 const HelpCenterSection: React.FC = () => {
+    const navigate = useNavigate()
     const [searchQuery, setSearchQuery] = useState('')
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
         console.log('Searching for:', searchQuery)
         // Implement search functionality here
+    }
+
+    const handleCardClick = (path: string) => {
+        navigate(path)
     }
 
     return (
@@ -61,7 +72,7 @@ const HelpCenterSection: React.FC = () => {
                         />
                         <button
                             type="submit"
-                            className="bg-blue-900 text-white p-4 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center"
+                            className="bg-blue-900 text-white p-4 rounded-lg hover:bg-blue-800 transition-colors flex items-center justify-center cursor-pointer"
                             aria-label="Search"
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -79,7 +90,8 @@ const HelpCenterSection: React.FC = () => {
                         {helpCenterCards.map((card) => (
                             <div
                                 key={card.id}
-                                className="bg-white rounded-lg p-6 md:p-8 shadow-md hover:shadow-xl transition-shadow duration-300"
+                                onClick={() => handleCardClick(card.path)}
+                                className="bg-white rounded-lg p-6 md:p-8 shadow-md hover:shadow-xl transition-shadow duration-300 cursor-pointer"
                             >
                                 {/* Icon */}
                                 <div className={`w-16 h-16 md:w-20 md:h-20 rounded-lg bg-gradient-to-br ${card.gradient} flex items-center justify-center text-3xl md:text-4xl mb-4 md:mb-6`}>

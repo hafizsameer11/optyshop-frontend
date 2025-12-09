@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface Packshot {
     id: number
@@ -61,11 +62,17 @@ const packshots: Packshot[] = [
 ]
 
 const PackshotsGrid: React.FC = () => {
+    const navigate = useNavigate()
     const [activeTab, setActiveTab] = useState<'all' | 'eyeglass' | 'sunglass'>('all')
 
     const filteredPackshots = activeTab === 'all'
         ? packshots
         : packshots.filter(p => p.category === activeTab)
+
+    const handleDownload = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault()
+        navigate('/pricing-request')
+    }
 
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
@@ -74,7 +81,7 @@ const PackshotsGrid: React.FC = () => {
                 <div className="flex flex-wrap items-center gap-4 md:gap-6 mb-8 md:mb-12 border-b border-gray-200 pb-4">
                     <button
                         onClick={() => setActiveTab('all')}
-                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors ${activeTab === 'all'
+                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors cursor-pointer ${activeTab === 'all'
                             ? 'text-blue-900 border-b-2 border-blue-900'
                             : 'text-gray-600 hover:text-blue-700'
                             }`}
@@ -83,7 +90,7 @@ const PackshotsGrid: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('eyeglass')}
-                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors ${activeTab === 'eyeglass'
+                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors cursor-pointer ${activeTab === 'eyeglass'
                             ? 'text-blue-900 border-b-2 border-blue-900'
                             : 'text-gray-600 hover:text-blue-700'
                             }`}
@@ -92,7 +99,7 @@ const PackshotsGrid: React.FC = () => {
                     </button>
                     <button
                         onClick={() => setActiveTab('sunglass')}
-                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors ${activeTab === 'sunglass'
+                        className={`px-4 py-2 text-sm md:text-base font-semibold transition-colors cursor-pointer ${activeTab === 'sunglass'
                             ? 'text-blue-900 border-b-2 border-blue-900'
                             : 'text-gray-600 hover:text-blue-700'
                             }`}
@@ -141,7 +148,8 @@ const PackshotsGrid: React.FC = () => {
                                 {/* Download Link */}
                                 <a
                                     href="#"
-                                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm md:text-base transition-colors inline-flex items-center gap-2 group"
+                                    onClick={handleDownload}
+                                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm md:text-base transition-colors inline-flex items-center gap-2 group cursor-pointer"
                                 >
                                     Download now
                                     <svg

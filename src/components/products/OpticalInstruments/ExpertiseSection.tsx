@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface ExpertiseItem {
     id: number
@@ -9,6 +10,7 @@ interface ExpertiseItem {
 }
 
 const ExpertiseSection: React.FC = () => {
+    const navigate = useNavigate()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isMobile, setIsMobile] = useState(false)
 
@@ -97,7 +99,10 @@ const ExpertiseSection: React.FC = () => {
                                             <p className="text-xs md:text-sm max-w-xs">
                                                 {item.description}
                                             </p>
-                                            <button className="px-6 py-2 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-colors text-sm">
+                                            <button
+                                                onClick={() => navigate('/digital-frames')}
+                                                className="px-6 py-2 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-colors text-sm cursor-pointer"
+                                            >
                                                 You discover
                                             </button>
                                         </div>

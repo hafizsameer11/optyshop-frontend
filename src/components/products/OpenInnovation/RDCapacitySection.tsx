@@ -1,6 +1,17 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const RDCapacitySection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleContactUs = () => {
+        navigate('/contact')
+    }
+
+    const handleLearnMore = () => {
+        navigate('/our-technology')
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto">
@@ -24,10 +35,16 @@ const RDCapacitySection: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <button className="px-8 py-3 border-2 border-purple-900 bg-white text-purple-900 font-semibold rounded-full hover:bg-purple-50 transition-colors duration-300">
+                            <button
+                                onClick={handleContactUs}
+                                className="px-8 py-3 border-2 border-purple-900 bg-white text-purple-900 font-semibold rounded-full hover:bg-purple-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Contact us
                             </button>
-                            <button className="px-8 py-3 bg-purple-900 text-white font-semibold rounded-full hover:bg-purple-800 transition-colors duration-300">
+                            <button
+                                onClick={handleLearnMore}
+                                className="px-8 py-3 bg-purple-900 text-white font-semibold rounded-full hover:bg-purple-800 transition-colors duration-300 cursor-pointer"
+                            >
                                 Learn more
                             </button>
                         </div>

@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const InstoreSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleNavigateToInStore = () => {
+        navigate('/in-store')
+    }
+
     return (
         <section className="bg-white text-[#0f172a] py-16 md:py-24">
             <div className="w-[90%] max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
@@ -22,7 +29,10 @@ const InstoreSection: React.FC = () => {
                         {' '}is ideal for <span className="font-semibold text-[#0f172a]">optical professionals,</span> such as <span className="font-semibold text-[#0f172a]">opticians and optometrists,</span> who want to <span className="font-semibold text-[#0f172a]">engage their customers</span> as they visit the store.
                     </p>
 
-                    <button className="px-8 py-3 border-2 border-orange-500 text-orange-500 rounded-full font-semibold hover:bg-orange-50 transition-colors">
+                    <button
+                        onClick={handleNavigateToInStore}
+                        className="px-8 py-3 border-2 border-orange-500 text-orange-500 rounded-full font-semibold hover:bg-orange-50 transition-colors cursor-pointer"
+                    >
                         Virtual Try-On for Instore
                     </button>
                 </div>

@@ -1,6 +1,31 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const HeroSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleRequestDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <section
             className="relative min-h-[400px] sm:min-h-[450px] md:min-h-[500px] flex items-center pt-20 md:pt-0 bg-cover bg-center bg-no-repeat"
@@ -34,7 +59,10 @@ const HeroSection: React.FC = () => {
                             </div>
 
                             <div className="pt-4 sm:pt-6">
-                                <button className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg bg-white text-slate-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300 shadow-lg">
+                                <button 
+                                    onClick={handleRequestDemo}
+                                    className="px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg bg-white text-slate-900 font-semibold rounded-lg hover:bg-gray-100 transition-colors duration-300 shadow-lg cursor-pointer"
+                                >
                                     Request a demo
                                 </button>
                             </div>

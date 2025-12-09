@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const categories = [
     'See all',
@@ -12,7 +13,45 @@ const categories = [
 ]
 
 const FilterSection: React.FC = () => {
+    const navigate = useNavigate()
     const [activeCategory, setActiveCategory] = useState('See all')
+
+    const handleCategoryClick = (category: string) => {
+        setActiveCategory(category)
+        
+        // Navigate based on category
+        switch (category) {
+            case 'See all':
+                // Stay on blog page, just scroll to top
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                break
+            case 'User experience':
+                navigate('/online')
+                break
+            case 'E-commerce':
+                navigate('/ecommerce')
+                break
+            case 'Technological expertise':
+                navigate('/our-technology')
+                break
+            case 'Press releases':
+                // Stay on blog page
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                break
+            case 'In store':
+                navigate('/in-store')
+                break
+            case 'Eyewear catalog':
+                navigate('/digital-frames')
+                break
+            case 'Company news':
+                // Stay on blog page
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+                break
+            default:
+                break
+        }
+    }
 
     return (
         <section className="bg-gray-50 border-t border-gray-200">
@@ -24,8 +63,8 @@ const FilterSection: React.FC = () => {
                     {categories.map((category) => (
                         <button
                             key={category}
-                            onClick={() => setActiveCategory(category)}
-                            className={`text-sm md:text-base font-medium transition-colors ${activeCategory === category
+                            onClick={() => handleCategoryClick(category)}
+                            className={`text-sm md:text-base font-medium transition-colors cursor-pointer ${activeCategory === category
                                     ? 'text-blue-900 border-b-2 border-blue-900'
                                     : 'text-gray-700 hover:text-blue-900'
                                 }`}

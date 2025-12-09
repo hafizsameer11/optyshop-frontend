@@ -1,6 +1,31 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const EasyToUseSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleRequestDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <section className="bg-white pt-0 pb-16 md:pb-24">
             <div className="w-[90%] mx-auto">
@@ -50,7 +75,10 @@ const EasyToUseSection: React.FC = () => {
                         </div>
 
                         <div className="pt-4">
-                            <button className="px-8 py-3 border-2 border-teal-600 text-teal-600 font-semibold rounded-full hover:bg-teal-600 hover:text-white transition-colors duration-300">
+                            <button
+                                onClick={handleRequestDemo}
+                                className="px-8 py-3 border-2 border-teal-600 text-teal-600 font-semibold rounded-full hover:bg-teal-600 hover:text-white transition-colors duration-300 cursor-pointer"
+                            >
                                 Request a demo
                             </button>
                         </div>

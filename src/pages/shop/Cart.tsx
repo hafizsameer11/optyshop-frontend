@@ -2,6 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import CartHeroSection from '../../components/shop/CartHeroSection'
 import { useCart } from '../../context/CartContext'
 
 const Cart: React.FC = () => {
@@ -11,6 +12,9 @@ const Cart: React.FC = () => {
         return (
             <div className="bg-white min-h-screen">
                 <Navbar />
+
+                {/* Hero Section */}
+                <CartHeroSection />
 
                 {/* Empty Cart */}
                 <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
@@ -45,6 +49,9 @@ const Cart: React.FC = () => {
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
+
+            {/* Hero Section */}
+            <CartHeroSection />
 
             {/* Breadcrumbs */}
             <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">

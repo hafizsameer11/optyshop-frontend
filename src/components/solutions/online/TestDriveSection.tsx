@@ -1,6 +1,35 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const TestDriveSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleLearnMore = () => {
+        navigate('/virtual-test')
+    }
+
+    const handleRequestDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -47,10 +76,16 @@ const TestDriveSection: React.FC = () => {
 
                         {/* Call to Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <button className="px-8 py-3 bg-blue-950 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors duration-300 shadow-md">
+                            <button 
+                                onClick={handleLearnMore}
+                                className="px-8 py-3 bg-blue-950 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors duration-300 shadow-md cursor-pointer"
+                            >
                                 Learn more
                             </button>
-                            <button className="px-8 py-3 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300">
+                            <button 
+                                onClick={handleRequestDemo}
+                                className="px-8 py-3 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Request a demo
                             </button>
                         </div>

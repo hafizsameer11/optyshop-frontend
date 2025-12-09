@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface GuideItem {
     title: string
@@ -123,6 +124,38 @@ const guidesData: GuideItem[] = [
 ]
 
 const GuidesGridSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleWatchClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.preventDefault()
+        navigate('/webinar')
+    }
+
+    const handleViewClick = (e: React.MouseEvent<HTMLAnchorElement>, category: string) => {
+        e.preventDefault()
+        if (category === 'From guide to shop') {
+            navigate('/drive-to-store')
+        } else if (category === 'Eyewear catalog') {
+            navigate('/digital-frames')
+        } else {
+            // For social media, could navigate to a relevant page or stay on current page
+            navigate('/guides-and-webinars')
+        }
+    }
+
+    const handleExploreAll = (e: React.MouseEvent<HTMLAnchorElement>, category: string) => {
+        e.preventDefault()
+        if (category === 'E-commerce') {
+            navigate('/ecommerce')
+        } else if (category === 'From guide to shop') {
+            navigate('/drive-to-store')
+        } else if (category === 'Eyewear catalog') {
+            navigate('/digital-frames')
+        } else {
+            navigate('/guides-and-webinars')
+        }
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -152,7 +185,8 @@ const GuidesGridSection: React.FC = () => {
                                         </span>
                                         <a
                                             href={item.path}
-                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap"
+                                            onClick={(e) => item.linkText === 'Watch' ? handleWatchClick(e) : handleViewClick(e, guidesData[0].title)}
+                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap cursor-pointer"
                                         >
                                             {item.linkText}
                                         </a>
@@ -161,7 +195,8 @@ const GuidesGridSection: React.FC = () => {
                             </ul>
                             <a
                                 href={guidesData[0].exploreAllPath}
-                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base"
+                                onClick={(e) => handleExploreAll(e, guidesData[0].title)}
+                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base cursor-pointer"
                             >
                                 Explore all
                             </a>
@@ -193,7 +228,8 @@ const GuidesGridSection: React.FC = () => {
                                         </span>
                                         <a
                                             href={item.path}
-                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap"
+                                            onClick={(e) => item.linkText === 'Watch' ? handleWatchClick(e) : handleViewClick(e, guidesData[1].title)}
+                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap cursor-pointer"
                                         >
                                             {item.linkText}
                                         </a>
@@ -202,7 +238,8 @@ const GuidesGridSection: React.FC = () => {
                             </ul>
                             <a
                                 href={guidesData[1].exploreAllPath}
-                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base"
+                                onClick={(e) => handleExploreAll(e, guidesData[1].title)}
+                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base cursor-pointer"
                             >
                                 Explore all
                             </a>
@@ -234,7 +271,8 @@ const GuidesGridSection: React.FC = () => {
                                         </span>
                                         <a
                                             href={item.path}
-                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap"
+                                            onClick={(e) => item.linkText === 'Watch' ? handleWatchClick(e) : handleViewClick(e, guidesData[2].title)}
+                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap cursor-pointer"
                                         >
                                             {item.linkText}
                                         </a>
@@ -243,7 +281,8 @@ const GuidesGridSection: React.FC = () => {
                             </ul>
                             <a
                                 href={guidesData[2].exploreAllPath}
-                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base"
+                                onClick={(e) => handleExploreAll(e, guidesData[2].title)}
+                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base cursor-pointer"
                             >
                                 Explore all
                             </a>
@@ -275,7 +314,8 @@ const GuidesGridSection: React.FC = () => {
                                         </span>
                                         <a
                                             href={item.path}
-                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap"
+                                            onClick={(e) => item.linkText === 'Watch' ? handleWatchClick(e) : handleViewClick(e, guidesData[3].title)}
+                                            className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base whitespace-nowrap cursor-pointer"
                                         >
                                             {item.linkText}
                                         </a>
@@ -284,7 +324,8 @@ const GuidesGridSection: React.FC = () => {
                             </ul>
                             <a
                                 href={guidesData[3].exploreAllPath}
-                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base"
+                                onClick={(e) => handleExploreAll(e, guidesData[3].title)}
+                                className="text-gray-900 hover:text-gray-700 font-semibold text-sm md:text-base cursor-pointer"
                             >
                                 Explore all
                             </a>

@@ -77,7 +77,7 @@ const ExpertiseAreasSection: React.FC = () => {
                                 {/* Discover Button */}
                                 <Link
                                     to={area.path}
-                                    className="text-blue-950 font-semibold hover:text-blue-700 transition-colors underline self-start"
+                                    className="text-blue-950 font-semibold hover:text-blue-700 transition-colors underline self-start cursor-pointer"
                                 >
                                     Discover
                                 </Link>

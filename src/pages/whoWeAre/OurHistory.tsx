@@ -1,5 +1,5 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/whoWeAre/OurHistory/HeroSection'
@@ -16,6 +16,24 @@ import ExpertiseAreasSection from '../../components/whoWeAre/OurHistory/Expertis
 import WorldwideLocationsSection from '../../components/whoWeAre/OurHistory/WorldwideLocationsSection'
 
 const OurHistory: React.FC = () => {
+    const location = useLocation()
+
+    useEffect(() => {
+        if (location.hash === '#timeline-section') {
+            setTimeout(() => {
+                const element = document.getElementById('timeline-section')
+                if (element) {
+                    const offset = 100
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 100)
+        }
+    }, [location.hash])
     return (
         <div className="bg-white min-h-screen">
             <Navbar />

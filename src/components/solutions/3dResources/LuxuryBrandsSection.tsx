@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const LuxuryBrandsSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/digital-frames')
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -43,7 +50,10 @@ const LuxuryBrandsSection: React.FC = () => {
 
                 {/* Call to Action Button */}
                 <div className="text-center mt-12 md:mt-16">
-                    <button className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300 shadow-md text-base md:text-lg">
+                    <button 
+                        onClick={handleLearnMore}
+                        className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300 shadow-md text-base md:text-lg cursor-pointer"
+                    >
                         Learn more about digitizing frames
                     </button>
                 </div>

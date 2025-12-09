@@ -1,6 +1,9 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const AdvancedVirtualTryOnSection: React.FC = () => {
+    const navigate = useNavigate()
+
     const modules = [
         {
             icon: (
@@ -86,7 +89,10 @@ const AdvancedVirtualTryOnSection: React.FC = () => {
                             </p>
 
                             {/* Discover Link */}
-                            <button className="text-gray-900 font-semibold hover:text-blue-950 transition-colors">
+                            <button 
+                                onClick={() => navigate('/virtual-test')}
+                                className="text-gray-900 font-semibold hover:text-blue-950 transition-colors cursor-pointer"
+                            >
                                 Discover →
                             </button>
                         </div>
@@ -97,7 +103,7 @@ const AdvancedVirtualTryOnSection: React.FC = () => {
                 <div className="text-center mb-8">
                     <button
                         onClick={handleDemoClick}
-                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-gray-900 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-300 text-base md:text-lg shadow-lg"
+                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-gray-900 text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-colors duration-300 text-base md:text-lg shadow-lg cursor-pointer"
                     >
                         Get a demo to see all available configurations
                     </button>

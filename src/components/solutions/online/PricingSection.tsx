@@ -1,6 +1,31 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const PricingSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleDiscoverFeatures = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     const plans = [
         {
             name: 'Start-up',
@@ -69,7 +94,10 @@ const PricingSection: React.FC = () => {
 
                 {/* Discover Button */}
                 <div className="text-center">
-                    <button className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300 shadow-md text-base md:text-lg">
+                    <button 
+                        onClick={handleDiscoverFeatures}
+                        className="px-8 md:px-12 py-3 md:py-4 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-lg hover:bg-blue-50 transition-colors duration-300 shadow-md text-base md:text-lg cursor-pointer"
+                    >
                         Discover all the main features and additional modules
                     </button>
                 </div>

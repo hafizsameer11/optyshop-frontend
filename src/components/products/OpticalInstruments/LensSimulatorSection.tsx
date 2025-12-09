@@ -1,6 +1,31 @@
 import React from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 
 const LensSimulatorSection: React.FC = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+
+    const handleNavigateToDemo = () => {
+        if (location.pathname === '/') {
+            // Already on home page, just scroll
+            setTimeout(() => {
+                const element = document.getElementById('live-demo')
+                if (element) {
+                    const offset = 100 // Account for fixed navbar
+                    const elementPosition = element.getBoundingClientRect().top
+                    const offsetPosition = elementPosition + window.pageYOffset - offset
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    })
+                }
+            }, 50)
+        } else {
+            // Navigate to home page with hash - Home component's useEffect will handle scrolling
+            navigate('/#live-demo')
+        }
+    }
+
     return (
         <section className="bg-white py-16 md:py-24">
             <div className="w-[90%] mx-auto">
@@ -43,10 +68,16 @@ const LensSimulatorSection: React.FC = () => {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <button className="px-8 py-3 border-2 border-teal-500 rounded-full text-teal-500 bg-white font-semibold hover:bg-teal-50 transition-colors duration-300">
+                            <button
+                                onClick={handleNavigateToDemo}
+                                className="px-8 py-3 border-2 border-teal-500 rounded-full text-teal-500 bg-white font-semibold hover:bg-teal-50 transition-colors duration-300 cursor-pointer"
+                            >
                                 Discover the lens simulator
                             </button>
-                            <button className="px-8 py-3 rounded-full bg-teal-500 text-white font-semibold hover:bg-teal-600 transition-colors duration-300">
+                            <button
+                                onClick={handleNavigateToDemo}
+                                className="px-8 py-3 rounded-full bg-teal-500 text-white font-semibold hover:bg-teal-600 transition-colors duration-300 cursor-pointer"
+                            >
                                 Try it now
                             </button>
                         </div>

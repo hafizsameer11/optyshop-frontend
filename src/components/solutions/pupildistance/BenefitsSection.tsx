@@ -1,6 +1,13 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const BenefitsSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleDiscoverPD = () => {
+        navigate('/pd-measurement')
+    }
+
     return (
         <section className="bg-stone-50 py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -78,7 +85,10 @@ const BenefitsSection: React.FC = () => {
 
                 {/* Call-to-Action Button */}
                 <div className="text-center">
-                    <button className="bg-white border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300">
+                    <button 
+                        onClick={handleDiscoverPD}
+                        className="bg-white border-2 border-blue-950 text-blue-950 px-8 md:px-12 py-3 md:py-4 rounded-full font-semibold text-base md:text-lg hover:bg-blue-950 hover:text-white transition-colors duration-300 cursor-pointer"
+                    >
                         Discover our PD measurement tool
                     </button>
                 </div>

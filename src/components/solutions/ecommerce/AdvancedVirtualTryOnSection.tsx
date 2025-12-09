@@ -83,7 +83,10 @@ const AdvancedVirtualTryOnSection: React.FC = () => {
                             </p>
 
                             {/* Discover Link */}
-                            <button className="text-gray-900 font-semibold hover:text-blue-950 transition-colors">
+                            <button 
+                                onClick={() => navigate('/virtual-test')}
+                                className="text-gray-900 font-semibold hover:text-blue-950 transition-colors cursor-pointer"
+                            >
                                 Scopri →
                             </button>
                         </div>
@@ -94,7 +97,7 @@ const AdvancedVirtualTryOnSection: React.FC = () => {
                 <div className="text-center mb-8">
                     <button
                         onClick={handleDemoClick}
-                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-xl hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-lg"
+                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-xl hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-lg cursor-pointer"
                     >
                         Richiedete una demo per vedere tutte le configurazioni disponibili
                     </button>

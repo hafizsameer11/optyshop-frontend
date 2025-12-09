@@ -83,7 +83,7 @@ const PricingPlansSection: React.FC = () => {
                 <div className="text-center">
                     <button
                         onClick={handleDiscoverClick}
-                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-lg"
+                        className="px-8 md:px-12 py-4 md:py-5 bg-white border-2 border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-base md:text-lg shadow-lg cursor-pointer"
                     >
                         Scoprite tutte le caratteristiche principali e i moduli aggiuntivi
                     </button>

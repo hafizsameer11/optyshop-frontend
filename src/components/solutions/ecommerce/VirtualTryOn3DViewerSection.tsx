@@ -1,6 +1,17 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const VirtualTryOn3DViewerSection: React.FC = () => {
+    const navigate = useNavigate()
+
+    const handleLearnMore = () => {
+        navigate('/virtual-test')
+    }
+
+    const handleDiscoverViewer = () => {
+        navigate('/3d-viewer')
+    }
+
     return (
         <section className="bg-white py-6 md:py-8 px-4 sm:px-6">
             <div className="w-[90%] mx-auto">
@@ -30,10 +41,16 @@ const VirtualTryOn3DViewerSection: React.FC = () => {
 
                         {/* Call to Action Buttons */}
                         <div className="flex flex-col sm:flex-row gap-2 pt-1">
-                            <button className="px-5 md:px-6 py-2 md:py-2.5 border border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-xs md:text-sm bg-white">
+                            <button 
+                                onClick={handleLearnMore}
+                                className="px-5 md:px-6 py-2 md:py-2.5 border border-blue-950 text-blue-950 font-semibold rounded-full hover:bg-blue-50 transition-colors duration-300 text-xs md:text-sm bg-white cursor-pointer"
+                            >
                                 Learn more
                             </button>
-                            <button className="px-5 md:px-6 py-2 md:py-2.5 bg-blue-950 text-white font-semibold rounded-full hover:bg-blue-900 transition-colors duration-300 text-xs md:text-sm">
+                            <button 
+                                onClick={handleDiscoverViewer}
+                                className="px-5 md:px-6 py-2 md:py-2.5 bg-blue-950 text-white font-semibold rounded-full hover:bg-blue-900 transition-colors duration-300 text-xs md:text-sm cursor-pointer"
+                            >
                                 Discover the 3D Viewer
                             </button>
                         </div>

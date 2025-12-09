@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 interface ExpertiseCard {
     id: number
@@ -11,6 +11,7 @@ interface ExpertiseCard {
 }
 
 const ExpertiseSection: React.FC = () => {
+    const navigate = useNavigate()
     const [currentIndex, setCurrentIndex] = useState(0)
     const [isMobile, setIsMobile] = useState(false)
 
@@ -115,7 +116,14 @@ const ExpertiseSection: React.FC = () => {
                                                     </div>
 
                                                     <div className="pt-4">
-                                                        <button className="px-6 md:px-8 py-2.5 md:py-3 bg-white text-slate-800 border-2 border-slate-800 font-semibold rounded-full hover:bg-slate-100 transition-colors duration-300">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                navigate('/digital-frames')
+                                                            }}
+                                                            className="px-6 md:px-8 py-2.5 md:py-3 bg-white text-slate-800 border-2 border-slate-800 font-semibold rounded-full hover:bg-slate-100 transition-colors duration-300 cursor-pointer"
+                                                        >
                                                             You discover
                                                         </button>
                                                     </div>

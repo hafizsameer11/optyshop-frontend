@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/products/VirtualTest/HeroSection'
@@ -36,9 +37,9 @@ const VirtualTest: React.FC = () => {
                         <a href="#" className="text-orange-500 hover:text-orange-400 transition-colors font-medium text-sm md:text-base">
                             FOR THE WEBSITE
                         </a>
-                        <a href="#" className="text-orange-500 hover:text-orange-400 transition-colors font-medium text-sm md:text-base">
+                        <Link to="/shop" className="text-orange-500 hover:text-orange-400 transition-colors font-medium text-sm md:text-base">
                             FOR SHOP
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
