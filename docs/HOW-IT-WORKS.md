@@ -51,7 +51,7 @@ The integration follows a layered architecture:
                ▼
 ┌─────────────────────────────────────────┐
 │         Backend API                     │
-│  (https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/...)        │
+│  (https://optyshop-frontend.hmstech.org/api/...)        │
 └─────────────────────────────────────────┘
 ```
 
@@ -171,7 +171,7 @@ export const getLensOptions = async (params?: {
 
 ```typescript
 // Inside apiClient.get():
-// 1. Prepends base URL: "https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api"
+// 1. Prepends base URL: "https://optyshop-frontend.hmstech.org/api"
 // 2. Adds Authorization header if needed (2nd param = true)
 // 3. Makes GET request
 // 4. Parses JSON response

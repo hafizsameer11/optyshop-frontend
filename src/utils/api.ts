@@ -3,7 +3,7 @@
  * Handles all API calls to the backend with authentication
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api';
 
 export interface ApiResponse<T = any> {
   success: boolean;

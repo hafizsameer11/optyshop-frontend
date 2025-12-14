@@ -35,7 +35,7 @@ The frontend API routes are defined in `src/config/apiRoutes.ts`. This file cont
 
 1. **Admin Routes**: The frontend should NEVER call admin routes (`/api/admin/*`). These are only for backend/admin panel use.
 
-2. **Base URL**: Configured via `VITE_API_BASE_URL` environment variable (defaults to `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`)
+2. **Base URL**: Configured via `VITE_API_BASE_URL` environment variable (defaults to `https://optyshop-frontend.hmstech.org/api`)
 
 3. **Token Management**: 
    - Access tokens stored in `localStorage` as `access_token`

@@ -261,10 +261,10 @@ export const getPrescriptionLensVariantsByType = async (
 
     const baseUrl = API_ROUTES.LENS.PRESCRIPTION_LENS_TYPES.VARIANTS(typeId);
     const url = buildQueryString(baseUrl, queryParams);
-    const fullUrl = `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api${url}`;
+    const fullUrl = `https://optyshop-frontend.hmstech.org/api${url}`;
     console.log('🔗 Fetching variants from URL:', url);
     console.log('🔗 Full API endpoint:', fullUrl);
-    console.log('🔗 Expected endpoint: https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/lens/prescription-lens-types/' + typeId + '/variants');
+    console.log('🔗 Expected endpoint: https://optyshop-frontend.hmstech.org/api/lens/prescription-lens-types/' + typeId + '/variants');
     const response = await apiClient.get<PrescriptionLensVariantsResponse>(url, false);
     console.log('📥 Raw API Response:', JSON.stringify(response, null, 2));
 

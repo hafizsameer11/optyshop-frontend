@@ -11,7 +11,7 @@ You're seeing a "Failed to fetch" error when trying to:
 ### Common Causes
 
 1. **Backend Server Not Running**
-   - The frontend is trying to connect to `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`
+   - The frontend is trying to connect to `https://optyshop-frontend.hmstech.org/api`
    - The backend server is not running or not accessible
 
 2. **Wrong API URL**
@@ -44,14 +44,14 @@ python app.py
 node server.js
 ```
 
-Verify the server is running by visiting: `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/health` (or your health check endpoint)
+Verify the server is running by visiting: `https://optyshop-frontend.hmstech.org/api/health` (or your health check endpoint)
 
 #### Solution 2: Configure API URL
 
 Create a `.env` file in the root of your project:
 
 ```env
-VITE_API_BASE_URL=https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api
+VITE_API_BASE_URL=https://optyshop-frontend.hmstech.org/api
 ```
 
 Or if your backend is on a different port/host:
@@ -87,7 +87,7 @@ If you don't have a backend yet, you can modify the code to use mock data tempor
 You can test if the backend is accessible by opening your browser's developer console and running:
 
 ```javascript
-fetch('https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/health')
+fetch('https://optyshop-frontend.hmstech.org/api/health')
   .then(res => res.json())
   .then(data => console.log('Backend is running:', data))
   .catch(err => console.error('Backend is not accessible:', err));
@@ -96,8 +96,8 @@ fetch('https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/he
 ### Current API Configuration
 
 The API base URL is configured in:
-- `src/config/apiRoutes.ts` - Hardcoded to `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`
-- `src/utils/api.ts` - Uses `VITE_API_BASE_URL` environment variable or defaults to `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`
+- `src/config/apiRoutes.ts` - Hardcoded to `https://optyshop-frontend.hmstech.org/api`
+- `src/utils/api.ts` - Uses `VITE_API_BASE_URL` environment variable or defaults to `https://optyshop-frontend.hmstech.org/api`
 
 ### Error Messages
 

@@ -12,12 +12,12 @@ import { API_ROUTES } from '../config/apiRoutes';
  */
 export const testBackendConnection = async () => {
   console.log('🔍 Testing backend connection...');
-  console.log('📍 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api');
+  console.log('📍 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api');
   
   // Test 1: Direct fetch to backend root
   console.log('\n1️⃣ Testing direct fetch to backend...');
   try {
-    const response = await fetch('https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api');
+    const response = await fetch('https://optyshop-frontend.hmstech.org/api');
     const data = await response.text();
     console.log('✅ Direct fetch successful:', response.status, data.substring(0, 100));
   } catch (error: any) {
@@ -57,7 +57,7 @@ export const testBackendConnection = async () => {
 
   console.log('\n📋 Summary:');
   console.log('- Frontend origin:', window.location.origin);
-  console.log('- Backend URL:', import.meta.env.VITE_API_BASE_URL || 'https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api');
+  console.log('- Backend URL:', import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api');
   console.log('- Check Network tab in DevTools for detailed request/response');
 };
 

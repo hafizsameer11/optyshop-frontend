@@ -70,7 +70,7 @@ All endpoints from the Postman collection are now defined in the API routes conf
 **File:** `src/utils/api.ts`
 
 The API client handles:
-- ✅ Base URL configuration (`VITE_API_BASE_URL` or default `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`)
+- ✅ Base URL configuration (`VITE_API_BASE_URL` or default `https://optyshop-frontend.hmstech.org/api`)
 - ✅ Authentication token management (access_token, refresh_token)
 - ✅ Automatic token refresh
 - ✅ Error handling
@@ -156,7 +156,7 @@ const result = await apiClient.post(
 
 ## 📝 Notes
 
-1. **Base URL**: Configured via `VITE_API_BASE_URL` environment variable (defaults to `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api`)
+1. **Base URL**: Configured via `VITE_API_BASE_URL` environment variable (defaults to `https://optyshop-frontend.hmstech.org/api`)
 
 2. **Token Management**: 
    - Access tokens stored in `localStorage` as `access_token`

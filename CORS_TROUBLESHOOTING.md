@@ -2,7 +2,7 @@
 
 ## Your Backend is Running ✅
 
-Your backend server is running on `https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api` as shown in the logs.
+Your backend server is running on `https://optyshop-frontend.hmstech.org/api` as shown in the logs.
 
 ## The Issue: CORS (Cross-Origin Resource Sharing)
 
@@ -17,7 +17,7 @@ The "Failed to fetch" error is most likely a **CORS issue**. This happens when:
 2. Go to the **Console** tab
 3. Look for errors like:
    ```
-   Access to fetch at 'https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/auth/me' from origin 'http://localhost:5173' 
+   Access to fetch at 'https://optyshop-frontend.hmstech.org/api/auth/me' from origin 'http://localhost:5173' 
    has been blocked by CORS policy
    ```
 4. Go to the **Network** tab
@@ -63,7 +63,7 @@ Make sure it includes:
 Open your browser console and run:
 
 ```javascript
-fetch('https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/auth/me', {
+fetch('https://optyshop-frontend.hmstech.org/api/auth/me', {
   method: 'GET',
   headers: {
     'Content-Type': 'application/json'
@@ -96,7 +96,7 @@ export default defineConfig({
 
 Then update `API_BASE_URL` to use relative paths:
 ```typescript
-const API_BASE_URL = '/api';  // Instead of 'https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api'
+const API_BASE_URL = '/api';  // Instead of 'https://optyshop-frontend.hmstech.org/api'
 ```
 
 ## Check Your Backend Logs
