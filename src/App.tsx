@@ -32,15 +32,28 @@ import JoinUs from './pages/whoWeAre/JoinUs'
 import JobOpportunities from './pages/whoWeAre/JobOpportunities'
 import JobApplication from './pages/whoWeAre/JobApplication'
 import Products from './pages/shop/Products'
+import ProductDetail from './pages/shop/ProductDetail'
 import Cart from './pages/shop/Cart'
 import Checkout from './pages/shop/Checkout'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ProtectedRoute from './components/customer/ProtectedRoute'
+import ErrorBoundary from './components/ErrorBoundary'
+import CustomerDashboard from './pages/customer/Dashboard'
+import CustomerCart from './pages/customer/Cart'
+import CustomerOrders from './pages/customer/Orders'
+import OrderDetail from './pages/customer/OrderDetail'
+import CustomerPrescriptions from './pages/customer/Prescriptions'
+import CustomerProfile from './pages/customer/Profile'
+import CustomerTransactions from './pages/customer/Transactions'
+import TransactionDetail from './pages/customer/TransactionDetail'
+import PageDetail from './pages/cms/PageDetail'
 
 function App() {
   return (
-    <Router>
-      <Routes>
+    <ErrorBoundary>
+      <Router>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/virtual-test" element={<VirtualTest />} />
         <Route path="/digital-frames" element={<DigitalFrames />} />
@@ -67,18 +80,31 @@ function App() {
         <Route path="/guides-and-webinars" element={<GuidesAndWebinars />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogDetail />} />
+        <Route path="/pages/:slug" element={<PageDetail />} />
         <Route path="/our-history" element={<OurHistory />} />
         <Route path="/our-technology" element={<OurTechnology />} />
         <Route path="/join-us" element={<JoinUs />} />
         <Route path="/job-opportunities" element={<JobOpportunities />} />
         <Route path="/job-application/:jobId" element={<JobApplication />} />
         <Route path="/shop" element={<Products />} />
+        <Route path="/shop/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        {/* Customer Dashboard Routes */}
+        <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+        <Route path="/customer/cart" element={<ProtectedRoute><CustomerCart /></ProtectedRoute>} />
+        <Route path="/customer/orders" element={<ProtectedRoute><CustomerOrders /></ProtectedRoute>} />
+        <Route path="/customer/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
+        <Route path="/customer/prescriptions" element={<ProtectedRoute><CustomerPrescriptions /></ProtectedRoute>} />
+        <Route path="/customer/transactions" element={<ProtectedRoute><CustomerTransactions /></ProtectedRoute>} />
+        <Route path="/customer/transactions/:id" element={<ProtectedRoute><TransactionDetail /></ProtectedRoute>} />
+        <Route path="/customer/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
       </Routes>
     </Router>
+    </ErrorBoundary>
   )
 }
 

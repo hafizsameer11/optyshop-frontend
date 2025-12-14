@@ -1,0 +1,334 @@
+/**
+ * Orders Service
+ * Handles order creation and management
+ */
+
+import { apiClient } from '../utils/api';
+import { API_ROUTES } from '../config/apiRoutes';
+
+// ============================================
+// Type Definitions
+// ============================================
+
+export interface Address {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  zip_code: string;
+  country: string;
+}
+
+export interface OrderCartItem {
+  product_id: number;
+  quantity: number;
+  lens_index?: number | string;
+  lens_coating?: string;
+  lens_coatings?: string[];
+  prescription_id?: number | null;
+  frame_size_id?: number | null;
+  customization?: any;
+}
+
+export interface PaymentInfo {
+  card_number?: string;
+  cardholder_name?: string;
+  expiry_date?: string;
+  cvv?: string;
+  payment_method: string;
+}
+
+export interface CreateOrderRequest {
+  // For authenticated users - include cart items explicitly
+  shipping_address?: Address;
+  billing_address?: Address;
+  payment_method?: string;
+  coupon_code?: string;
+  cart_items?: OrderCartItem[]; // Required for both authenticated and guest users
+  
+  // For guest checkout - include cart items and full details
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  zip_code?: string;
+  country?: string;
+  payment_info?: PaymentInfo;
+}
+
+export interface Order {
+  id: number;
+  order_number: string;
+  user_id: number;
+  status: string;
+  total: number;
+  subtotal: number;
+  discount_amount?: number;
+  shipping_cost: number;
+  shipping_address: Address;
+  billing_address: Address;
+  payment_method: string;
+  coupon_code?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateOrderResponse {
+  success: boolean;
+  message: string;
+  data?: Order;
+  error?: string;
+}
+
+/**
+ * Create a new order from the current cart (authenticated users)
+ * @param orderData - Order data including shipping/billing addresses, payment method, cart items, and optional coupon code
+ */
+export const createOrder = async (
+  orderData: CreateOrderRequest
+): Promise<Order | null> => {
+  try {
+    // Ensure cart_items are included - backend requires this
+    // If cart_items not provided, try to use items from the request
+    // Normalize payment_method to uppercase (backend expects PaymentMethod enum)
+    const normalizedPaymentMethod = orderData.payment_method 
+      ? orderData.payment_method.toUpperCase() 
+      : 'CARD';
+
+    // Backend expects shipping_address and billing_address as JSON strings, not objects
+    const orderPayload: any = {
+      ...orderData,
+      // Backend might expect 'items' or 'cart_items' - include both for compatibility
+      items: orderData.cart_items || [],
+      cart_items: orderData.cart_items || [],
+      // Ensure payment_method is uppercase enum value
+      payment_method: normalizedPaymentMethod,
+      // Convert address objects to JSON strings if they exist
+      shipping_address: orderData.shipping_address 
+        ? JSON.stringify(orderData.shipping_address)
+        : undefined,
+      billing_address: orderData.billing_address
+        ? JSON.stringify(orderData.billing_address)
+        : undefined,
+    };
+
+    // Validate that we have items
+    if (!orderPayload.cart_items || orderPayload.cart_items.length === 0) {
+      console.error('Cannot create order: cart_items are required');
+      return null;
+    }
+
+    const response = await apiClient.post<Order>(
+      API_ROUTES.ORDERS.CREATE,
+      orderPayload,
+      true // Requires authentication (USER endpoint)
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    // Log error for debugging
+    if (import.meta.env.DEV) {
+      console.error('Failed to create order:', response.message || response.error);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error creating order:', error);
+    return null;
+  }
+};
+
+/**
+ * Create a guest order with cart items and customer details
+ * This endpoint handles guest checkout and sends email notifications
+ * @param orderData - Order data including cart items, customer info, payment details, and coupon code
+ */
+export const createGuestOrder = async (
+  orderData: CreateOrderRequest
+): Promise<Order | null> => {
+  try {
+    // For guest checkout, we send all data including cart items
+    // The backend will create the order and send email notification
+    // Validate that we have cart items
+    if (!orderData.cart_items || orderData.cart_items.length === 0) {
+      console.error('Cannot create guest order: cart_items are required');
+      return null;
+    }
+
+    const guestOrderData = {
+      cart_items: orderData.cart_items,
+      // Backend might expect 'items' as well - include both for compatibility
+      items: orderData.cart_items,
+      first_name: orderData.first_name,
+      last_name: orderData.last_name,
+      email: orderData.email,
+      phone: orderData.phone,
+      address: orderData.address,
+      city: orderData.city,
+      zip_code: orderData.zip_code,
+      country: orderData.country,
+      coupon_code: orderData.coupon_code,
+      payment_info: orderData.payment_info || {
+        payment_method: orderData.payment_method || 'CARD', // Backend expects PaymentMethod enum (uppercase)
+        card_number: orderData.payment_info?.card_number,
+        cardholder_name: orderData.payment_info?.cardholder_name,
+        expiry_date: orderData.payment_info?.expiry_date,
+        cvv: orderData.payment_info?.cvv,
+      },
+      // Also include payment_method at top level for backend compatibility
+      payment_method: orderData.payment_info?.payment_method || orderData.payment_method || 'CARD',
+    };
+
+    // For guest checkout, try without authentication first
+    // If that fails with authorization error, the backend might require a different approach
+    let response = await apiClient.post<Order>(
+      API_ROUTES.ORDERS.CREATE,
+      guestOrderData,
+      false // Guest checkout - try PUBLIC endpoint first (no auth required)
+    );
+
+    // Check if the error is authorization-related
+    const isAuthError = !response.success && (
+      response.error?.toLowerCase().includes('401') ||
+      response.error?.toLowerCase().includes('unauthorized') ||
+      response.error?.toLowerCase().includes('not authorized') ||
+      response.message?.toLowerCase().includes('unauthorized') ||
+      response.message?.toLowerCase().includes('not authorized')
+    );
+
+    // If we got an authorization error, the backend might not support guest orders on this endpoint
+    // Log this for debugging - the backend may need to be updated to support guest checkout
+    if (isAuthError) {
+      if (import.meta.env.DEV) {
+        console.warn('Guest order creation requires authentication. Backend may need to support guest checkout on /orders endpoint.');
+      }
+    }
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    // Log error for debugging
+    if (import.meta.env.DEV) {
+      console.error('Failed to create guest order:', response.message || response.error);
+    }
+    return null;
+  } catch (error) {
+    console.error('Error creating guest order:', error);
+    return null;
+  }
+};
+
+/**
+ * Get all orders for the current user
+ */
+export const getOrders = async (): Promise<Order[]> => {
+  try {
+    const response = await apiClient.get<Order[]>(
+      API_ROUTES.ORDERS.LIST,
+      true // Requires authentication (USER endpoint)
+    );
+
+    if (response.success && response.data) {
+      // Handle both array response and wrapped response
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      // If backend returns { orders: [...] }, extract it
+      if (response.data && typeof response.data === 'object' && 'orders' in response.data) {
+        return (response.data as any).orders || [];
+      }
+      return [];
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    return [];
+  }
+};
+
+/**
+ * Get a specific order by ID
+ * @param orderId - Order ID
+ */
+export const getOrderById = async (orderId: number | string): Promise<any | null> => {
+  try {
+    const response = await apiClient.get<any>(
+      API_ROUTES.ORDERS.BY_ID(orderId),
+      true // Requires authentication (USER endpoint)
+    );
+
+    if (response.success && response.data) {
+      // API returns { data: { order: {...} } }
+      const orderData = response.data.order || response.data;
+      
+      // Parse JSON string addresses if they exist
+      if (typeof orderData.shipping_address === 'string') {
+        try {
+          orderData.shipping_address = JSON.parse(orderData.shipping_address);
+        } catch (e) {
+          console.error('Error parsing shipping_address:', e);
+        }
+      }
+      if (typeof orderData.billing_address === 'string') {
+        try {
+          orderData.billing_address = JSON.parse(orderData.billing_address);
+        } catch (e) {
+          console.error('Error parsing billing_address:', e);
+        }
+      }
+      
+      return orderData;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    return null;
+  }
+};
+
+/**
+ * Cancel an order
+ * @param orderId - Order ID
+ */
+export const cancelOrder = async (orderId: number | string): Promise<{ success: boolean; message?: string; data?: any }> => {
+  try {
+    const response = await apiClient.post<{ 
+      success: boolean; 
+      message: string; 
+      data: { order: any } 
+    }>(
+      API_ROUTES.ORDERS.CANCEL(orderId),
+      {},
+      true // Requires authentication (USER endpoint)
+    );
+
+    if (response.success && response.data) {
+      return { 
+        success: true, 
+        message: response.data.message || 'Order cancelled successfully',
+        data: response.data.data 
+      };
+    }
+
+    return { 
+      success: false, 
+      message: response.message || 'Failed to cancel order' 
+    };
+  } catch (error: any) {
+    console.error('Error canceling order:', error);
+    return { 
+      success: false, 
+      message: error.message || 'An error occurred while canceling the order' 
+    };
+  }
+};
+
+

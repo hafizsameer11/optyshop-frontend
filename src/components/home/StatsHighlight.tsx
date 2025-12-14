@@ -1,33 +1,35 @@
 import React from 'react'
-
-const stats = [
-    {
-        value: '4x',
-        title: 'Visits to product pages',
-        caption: "*based on an A/B test on Fielmann's e-commerce site, based on 5 million page views.",
-        icon: '👉',
-    },
-    {
-        value: '3x',
-        title: 'Increase conversion rate',
-        caption: "*based on an A/B test on Fielmann's e-commerce site, based on 5 million page views.",
-        icon: '🛒',
-    },
-    {
-        value: '2.5x',
-        title: 'More visitors in the store',
-        caption: "*based on an A/B test on Fielmann's e-commerce site, based on 5 million page views.",
-        icon: '🏬',
-    },
-]
+import { useTranslation } from 'react-i18next'
 
 const StatsHighlight: React.FC = () => {
+    const { t } = useTranslation()
+    
+    const stats = [
+        {
+            value: '4x',
+            title: t('home.stats.visitsTitle'),
+            caption: t('home.stats.caption'),
+            icon: '👉',
+        },
+        {
+            value: '3x',
+            title: t('home.stats.conversionTitle'),
+            caption: t('home.stats.caption'),
+            icon: '🛒',
+        },
+        {
+            value: '2.5x',
+            title: t('home.stats.visitorsTitle'),
+            caption: t('home.stats.caption'),
+            icon: '🏬',
+        },
+    ]
     return (
         <section className="bg-[#f8f3ed] py-16 px-4">
             <div className="w-[90%] mx-auto text-center space-y-4">
-                <p className="text-sm uppercase tracking-[0.4em] text-slate-500">Impact</p>
+                <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t('home.stats.impact')}</p>
                 <h2 className="text-2xl md:text-3xl font-semibold text-slate-800 pb-12">
-                    Generate engagement and <span className="text-blue-700">increase eyewear sales</span>
+                    {t('home.stats.title')} <span className="text-blue-700">{t('home.stats.titleHighlight')}</span>
                 </h2>
             </div>
 

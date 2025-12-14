@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { CaseStudy } from '../../../data/caseStudiesData'
+import type { CaseStudy } from '../../../services/caseStudiesService'
 
 interface DownloadFormSectionProps {
     study: CaseStudy

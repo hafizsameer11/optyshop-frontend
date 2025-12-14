@@ -1,8 +1,47 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { caseStudies, type CaseStudy } from '../../../data/caseStudiesData'
+import { useCaseStudies } from '../../../hooks/useCaseStudies'
+import type { CaseStudy } from '../../../services/caseStudiesService'
 
 const CaseStudiesGrid: React.FC = () => {
+    const { caseStudies, loading, error } = useCaseStudies()
+
+    if (loading) {
+        return (
+            <section className="bg-white py-12 md:py-16 lg:py-20">
+                <div className="w-[90%] mx-auto max-w-7xl">
+                    <div className="text-center py-12">
+                        <p className="text-gray-600">Loading case studies...</p>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+
+    if (error) {
+        return (
+            <section className="bg-white py-12 md:py-16 lg:py-20">
+                <div className="w-[90%] mx-auto max-w-7xl">
+                    <div className="text-center py-12">
+                        <p className="text-red-600">Error loading case studies: {error}</p>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+
+    if (caseStudies.length === 0) {
+        return (
+            <section className="bg-white py-12 md:py-16 lg:py-20">
+                <div className="w-[90%] mx-auto max-w-7xl">
+                    <div className="text-center py-12">
+                        <p className="text-gray-600">No case studies available at the moment.</p>
+                    </div>
+                </div>
+            </section>
+        )
+    }
+
     return (
         <section className="bg-white py-12 md:py-16 lg:py-20">
             <div className="w-[90%] mx-auto max-w-7xl">
@@ -37,9 +76,9 @@ const CaseStudiesGrid: React.FC = () => {
                                     {study.title}
                                 </h3>
 
-                                {/* Description */}
+                                {/* Description/Content */}
                                 <p className="text-sm md:text-base text-gray-600 mb-4 flex-grow leading-relaxed">
-                                    {study.description}
+                                    {study.content || ''}
                                 </p>
 
                                 {/* Continue Reading Link */}

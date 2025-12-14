@@ -1,0 +1,183 @@
+{
+	"info": {
+	  "_postman_id": "optyshop-api-collection",
+	  "name": "OptyShop API",
+	  "description": "Complete API collection for OptyShop - Smart Optical E-Commerce & Simulation System\n\n## Authentication Strategy\n\n### Website (Public) - No Auth Required\n- **Auth**: Register (customer/admin with ALLOW_ADMIN_REGISTRATION), Login (customer/admin), Refresh Token\n- **Products & Categories**: All GET endpoints\n- **Simulations**: All calculation endpoints (PD, lens thickness, recommendations, etc.)\n- **Marketing Content**: Case studies, blog, jobs (GET only)\n- **Forms**: Configs and submissions (GET configs, POST submissions)\n- **CMS**: Banners (/api/banners), Campaigns (/api/campaigns), FAQs (/api/faqs), Pages (/api/pages/:slug), Testimonials (/api/cms/testimonials)\n- **Coupons**: Apply coupon (/api/coupons/apply)\n- **Health**: /health, /api\n\n### Customer (Authenticated) - `Authorization: Bearer {{access_token}}`\n- **Auth**: Get Current User, Update Profile, Change Password, Logout\n- **Cart**: All endpoints\n- **Orders**: Create, List, Get by ID, Cancel (customer actions)\n- **Prescriptions**: All CRUD operations (customer's own prescriptions)\n\n### Admin (Authenticated) - `Authorization: Bearer {{admin_token}}`\n- **Auth**: Get Current User, Update Profile, Change Password, Logout (same endpoints as customer, uses admin_token)\n- **User Management**: Create User (customer/admin), Get All Users, Update User\n- **Admin Dashboard**: All /api/admin/* endpoints (dashboard, products, categories, frame-sizes, lens-types, lens-coatings, orders, coupons, campaigns, banners, blog-posts, faqs, pages)\n- **Orders**: Update status, refund, assign technician\n- **Prescriptions**: Validate, verify\n- **Simulations**: Config, VTO assets, VTO configs\n- **CMS**: Testimonials CRUD (/api/cms/testimonials)\n- **Analytics**: All /api/analytics/* endpoints\n- **Overview**: /api/overview\n\n## User Registration\n- **Customer Registration**: POST /api/auth/register with role=\"customer\" (default)\n- **Admin Registration (Testing)**: POST /api/auth/register with role=\"admin\" - Only works if ALLOW_ADMIN_REGISTRATION=true in .env\n- **Admin User Creation (Production)**: POST /api/admin/users - Recommended way to create admin users",
+	  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+	  "_exporter_id": "optyshop"
+	},
+	"item": [
+	  {
+		"name": "Website (Public)",
+		"item": [
+		  {
+			"name": "Auth (Public)",
+			"item": [
+			  {
+				"name": "Register (Customer)",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"phone\": \"+1234567890\",\n  \"role\": \"customer\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/auth/register",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "auth",
+					  "register"
+					]
+				  },
+				  "description": "Register a new customer account. Role defaults to 'customer' if not provided. Admin role registration requires ALLOW_ADMIN_REGISTRATION=true in environment."
+				}
+			  },
+			  {
+				"name": "Register (Admin - Testing Only)",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"Password123\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"User\",\n  \"phone\": \"+1234567890\",\n  \"role\": \"admin\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/auth/register",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "auth",
+					  "register"
+					]
+				  },
+				  "description": "⚠️ WARNING: Admin registration only works if ALLOW_ADMIN_REGISTRATION=true in .env file. For production, use POST /api/admin/users instead. This endpoint will return 403 error if admin registration is disabled."
+				}
+			  },
+			  {
+				"name": "Login (Customer)",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"customer@test.com\",\n  \"password\": \"customer123\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/auth/login",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "auth",
+					  "login"
+					]
+				  },
+				  "description": "Login for any user (customer or admin). Returns access_token and refreshToken."
+				}
+			  },
+			  {
+				"name": "Login (Admin)",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/auth/login",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "auth",
+					  "login"
+					]
+				  },
+				  "description": "Login for admin users. Use the returned token as {{admin_token}} for admin endpoints."
+				}
+			  },
+			  {
+				"name": "Refresh Token",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"refreshToken\": \"{{refresh_token}}\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/auth/refresh",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "auth",
+					  "refresh"
+					]
+				  }
+				}
+			  }
+			]
+		  }
+		]
+	  }
+	],
+	"variable": [
+	  {
+		"key": "base_url",
+		"value": "http://localhost:5000",
+		"type": "string"
+	  },
+	  {
+		"key": "access_token",
+		"value": "",
+		"type": "string"
+	  },
+	  {
+		"key": "refresh_token",
+		"value": "",
+		"type": "string"
+	  },
+	  {
+		"key": "admin_token",
+		"value": "",
+		"type": "string"
+	  }
+	]
+}
+

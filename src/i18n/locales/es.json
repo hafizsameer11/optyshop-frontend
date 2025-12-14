@@ -1,0 +1,74 @@
+{
+  "common": {
+    "dashboard": "Panel de control",
+    "cart": "Carrito",
+    "orders": "Pedidos",
+    "prescriptions": "Recetas",
+    "profile": "Perfil",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "shop": "Tienda",
+    "products": "Productos",
+    "solutions": "Soluciones",
+    "resources": "Recursos",
+    "whoWeAre": "Quiénes somos",
+    "getDemo": "Obtener demostración",
+    "welcome": "Bienvenido",
+    "language": "Idioma"
+  },
+  "dashboard": {
+    "title": "Panel de control",
+    "welcomeMessage": "Bienvenido a tu Panel de Control",
+    "description": "Gestiona tus pedidos, recetas y carrito de compras desde aquí. Usa el menú de navegación para acceder a diferentes secciones.",
+    "totalOrders": "Pedidos Totales",
+    "pendingOrders": "Pedidos Pendientes",
+    "completedOrders": "Pedidos Completados",
+    "totalPrescriptions": "Recetas Totales",
+    "cartItems": "Artículos en el Carrito"
+  },
+  "navbar": {
+    "products": "Productos",
+    "solutions": "Soluciones",
+    "resources": "Recursos",
+    "whoWeAre": "Quiénes somos",
+    "shop": "Tienda",
+    "login": "Iniciar sesión",
+    "getDemo": "Obtener demostración"
+  },
+  "products": {
+    "virtualTest": "Prueba virtual",
+    "digitalizedFrames": "Marcos digitalizados",
+    "opticiansInstruments": "Instrumentos de ópticos",
+    "3dViewer": "Visor 3D",
+    "measurementOfDP": "Medición de DP",
+    "openInnovation": "Innovación abierta"
+  },
+  "solutions": {
+    "online": "EN LÍNEA",
+    "onlineDesc": "enriquecer mi experiencia de usuario",
+    "3dResources": "RECURSOS 3D",
+    "3dResourcesDesc": "Digitalizar mis productos",
+    "inStore": "EN TIENDA",
+    "inStoreDesc": "enriquecer la experiencia de mi consumidor",
+    "ecommerce": "COMERCIO ELECTRÓNICO",
+    "ecommerceDesc": "Aumentar mi tasa de conversión",
+    "pupilDistance": "DISTANCIA PUPILAR",
+    "pupilDistanceDesc": "Obtener resultados precisos en línea",
+    "driveToStore": "CONDUCIR A LA TIENDA",
+    "driveToStoreDesc": "dirigiendo tráfico a mis tiendas"
+  },
+  "resources": {
+    "caseStudies": "ESTUDIOS DE CASO",
+    "hqPackshots": "PACKSHOTS HQ",
+    "support": "SOPORTE",
+    "guidesAndWebinars": "GUÍAS Y WEBINARIOS",
+    "blog": "BLOG"
+  },
+  "whoWeAre": {
+    "ourHistory": "NUESTRA HISTORIA",
+    "ourTechnology": "NUESTRA TECNOLOGÍA",
+    "joinUs": "ÚNETE A NOSOTROS"
+  }
+}
+

@@ -73,18 +73,26 @@ const DemoSection: React.FC = () => {
 
         setIsSubmitting(true)
         try {
+            // Prepare payload - backend expects 'name' and 'surname'
+            const payload: Record<string, any> = {
+                email: formData.email,
+                name: formData.name,
+                surname: formData.surname,
+                village: formData.village,
+                company_name: formData.companyName,
+            }
+
+            if (formData.websiteUrl) payload.website_url = formData.websiteUrl
+            if (formData.numberOfFrames) payload.number_of_frames = formData.numberOfFrames
+            if (formData.message) payload.message = formData.message
+
+            if (import.meta.env.DEV) {
+                console.log('[Demo Form] Submitting payload:', payload)
+            }
+
             const response = await apiClient.post(
                 API_ROUTES.FORMS.DEMO.SUBMIT,
-                {
-                    email: formData.email,
-                    name: formData.name,
-                    surname: formData.surname,
-                    village: formData.village,
-                    companyName: formData.companyName,
-                    websiteUrl: formData.websiteUrl || undefined,
-                    numberOfFrames: formData.numberOfFrames || undefined,
-                    message: formData.message || undefined,
-                },
+                payload,
                 false
             )
 
@@ -92,10 +100,18 @@ const DemoSection: React.FC = () => {
                 // Navigate to thank you page on success
                 navigate('/thank-you')
             } else {
-                setSubmitError(response.message || 'Failed to submit demo request. Please try again.')
+                // Show detailed error message from backend
+                const errorMsg = response.error || response.message || 'Failed to submit demo request. Please try again.'
+                setSubmitError(errorMsg)
+                if (import.meta.env.DEV) {
+                    console.error('Demo submission error:', response)
+                }
             }
         } catch (error: any) {
             setSubmitError(error.message || 'An error occurred. Please try again.')
+            if (import.meta.env.DEV) {
+                console.error('Demo submission exception:', error)
+            }
         } finally {
             setIsSubmitting(false)
         }

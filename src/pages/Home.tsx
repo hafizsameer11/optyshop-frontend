@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
-import Hero from '../components/home/Hero'
+import Banner from '../components/home/Banner'
+import Campaigns from '../components/home/Campaigns'
 import TrustedBrands from '../components/home/TrustedBrands'
 import StatsHighlight from '../components/home/StatsHighlight'
 import LiveDemoSection from '../components/home/LiveDemoSection'
@@ -10,6 +11,7 @@ import UltraRealisticSection from '../components/home/UltraRealisticSection'
 import Viewer3DSection from '../components/home/Viewer3DSection'
 import CompatibilitySection from '../components/home/CompatibilitySection'
 import Footer from '../components/Footer'
+import ErrorBoundary from '../components/ErrorBoundary'
 
 const Home: React.FC = () => {
     const location = useLocation()
@@ -35,11 +37,14 @@ const Home: React.FC = () => {
 
     return (
         <div className="bg-slate-950 text-white">
-            <Hero />
+            <Banner />
+            <Campaigns />
             <TrustedBrands />
             <StatsHighlight />
             <LiveDemoSection />
-            <Testimonials />
+            <ErrorBoundary>
+                <Testimonials />
+            </ErrorBoundary>
             <PurchasingJourneySection />
             <UltraRealisticSection />
             <Viewer3DSection />

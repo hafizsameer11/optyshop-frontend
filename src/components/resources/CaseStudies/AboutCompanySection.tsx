@@ -1,5 +1,5 @@
 import React from 'react'
-import type { CaseStudy } from '../../../data/caseStudiesData'
+import type { CaseStudy } from '../../../services/caseStudiesService'
 
 interface AboutCompanySectionProps {
     study: CaseStudy

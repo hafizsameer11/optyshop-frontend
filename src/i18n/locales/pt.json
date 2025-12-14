@@ -1,0 +1,74 @@
+{
+  "common": {
+    "dashboard": "Painel",
+    "cart": "Carrinho",
+    "orders": "Pedidos",
+    "prescriptions": "Receitas",
+    "profile": "Perfil",
+    "logout": "Sair",
+    "login": "Entrar",
+    "register": "Registrar",
+    "shop": "Loja",
+    "products": "Produtos",
+    "solutions": "Soluções",
+    "resources": "Recursos",
+    "whoWeAre": "Quem somos",
+    "getDemo": "Obter demonstração",
+    "welcome": "Bem-vindo",
+    "language": "Idioma"
+  },
+  "dashboard": {
+    "title": "Painel",
+    "welcomeMessage": "Bem-vindo ao seu Painel",
+    "description": "Gerencie seus pedidos, receitas e carrinho de compras daqui. Use o menu de navegação para acessar diferentes seções.",
+    "totalOrders": "Pedidos Totais",
+    "pendingOrders": "Pedidos Pendentes",
+    "completedOrders": "Pedidos Concluídos",
+    "totalPrescriptions": "Receitas Totais",
+    "cartItems": "Itens no Carrinho"
+  },
+  "navbar": {
+    "products": "Produtos",
+    "solutions": "Soluções",
+    "resources": "Recursos",
+    "whoWeAre": "Quem somos",
+    "shop": "Loja",
+    "login": "Entrar",
+    "getDemo": "Obter demonstração"
+  },
+  "products": {
+    "virtualTest": "Teste virtual",
+    "digitalizedFrames": "Armações digitalizadas",
+    "opticiansInstruments": "Instrumentos de ópticos",
+    "3dViewer": "Visualizador 3D",
+    "measurementOfDP": "Medição de DP",
+    "openInnovation": "Inovação aberta"
+  },
+  "solutions": {
+    "online": "ONLINE",
+    "onlineDesc": "enriquecer minha experiência do usuário",
+    "3dResources": "RECURSOS 3D",
+    "3dResourcesDesc": "Digitalizar meus produtos",
+    "inStore": "NA LOJA",
+    "inStoreDesc": "enriquecer a experiência do meu consumidor",
+    "ecommerce": "E-COMMERCE",
+    "ecommerceDesc": "Aumentar minha taxa de conversão",
+    "pupilDistance": "DISTÂNCIA PUPILAR",
+    "pupilDistanceDesc": "Obter resultados precisos online",
+    "driveToStore": "DIRIGIR À LOJA",
+    "driveToStoreDesc": "direcionando tráfego para minhas lojas"
+  },
+  "resources": {
+    "caseStudies": "ESTUDOS DE CASO",
+    "hqPackshots": "PACKSHOTS HQ",
+    "support": "SUPORTE",
+    "guidesAndWebinars": "GUIAS E WEBINÁRIOS",
+    "blog": "BLOG"
+  },
+  "whoWeAre": {
+    "ourHistory": "NOSSA HISTÓRIA",
+    "ourTechnology": "NOSSA TECNOLOGIA",
+    "joinUs": "JUNTE-SE A NÓS"
+  }
+}
+

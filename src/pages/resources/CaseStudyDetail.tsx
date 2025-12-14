@@ -2,22 +2,39 @@ import React from 'react'
 import { useParams, Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { getCaseStudyBySlug } from '../../data/caseStudiesData'
+import { useCaseStudy } from '../../hooks/useCaseStudy'
 import DownloadFormSection from '../../components/resources/CaseStudies/DownloadFormSection'
 import BenefitsSection from '../../components/resources/CaseStudies/BenefitsSection'
 import AboutCompanySection from '../../components/resources/CaseStudies/AboutCompanySection'
 
 const CaseStudyDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>()
-    const study = slug ? getCaseStudyBySlug(slug) : null
+    const { caseStudy: study, loading, error } = useCaseStudy(slug || '')
 
-    if (!study) {
+    if (loading) {
         return (
             <div className="bg-white min-h-screen">
                 <Navbar />
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Case Study Not Found</h1>
+                        <p className="text-gray-600">Loading case study...</p>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        )
+    }
+
+    if (error || !study) {
+        return (
+            <div className="bg-white min-h-screen">
+                <Navbar />
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                            {error ? 'Error loading case study' : 'Case Study Not Found'}
+                        </h1>
+                        {error && <p className="text-red-600 mb-4">{error}</p>}
                         <Link to="/case-studies" className="text-blue-600 hover:text-blue-700">
                             Return to Case Studies
                         </Link>
@@ -57,35 +74,8 @@ const CaseStudyDetail: React.FC = () => {
                             </div>
 
                             <div className="space-y-3 sm:space-y-4 text-sm sm:text-base md:text-lg text-white/90 leading-relaxed">
-                                {study.content?.paragraph1 && (
-                                    <p>
-                                        {study.content.paragraph1.split(study.content.boldPhrases?.[0] || '').map((part, idx, arr) => {
-                                            if (idx === arr.length - 1) return part
-                                            return (
-                                                <React.Fragment key={idx}>
-                                                    {part}
-                                                    <strong className="text-white font-bold">
-                                                        {study.content?.boldPhrases?.[0]}
-                                                    </strong>
-                                                </React.Fragment>
-                                            )
-                                        })}
-                                    </p>
-                                )}
-                                {study.content?.paragraph2 && (
-                                    <p>
-                                        {study.content.paragraph2.split(study.content.boldPhrases?.[1] || '').map((part, idx, arr) => {
-                                            if (idx === arr.length - 1) return part
-                                            return (
-                                                <React.Fragment key={idx}>
-                                                    {part}
-                                                    <strong className="text-white font-bold">
-                                                        {study.content?.boldPhrases?.[1]}
-                                                    </strong>
-                                                </React.Fragment>
-                                            )
-                                        })}
-                                    </p>
+                                {study.content && (
+                                    <p>{study.content}</p>
                                 )}
                             </div>
                         </div>

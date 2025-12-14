@@ -1,0 +1,74 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "cart": "Warenkorb",
+    "orders": "Bestellungen",
+    "prescriptions": "Rezepte",
+    "profile": "Profil",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "shop": "Shop",
+    "products": "Produkte",
+    "solutions": "Lösungen",
+    "resources": "Ressourcen",
+    "whoWeAre": "Wer wir sind",
+    "getDemo": "Demo erhalten",
+    "welcome": "Willkommen",
+    "language": "Sprache"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcomeMessage": "Willkommen auf Ihrem Dashboard",
+    "description": "Verwalten Sie hier Ihre Bestellungen, Rezepte und Warenkorb. Verwenden Sie das Navigationsmenü, um auf verschiedene Bereiche zuzugreifen.",
+    "totalOrders": "Gesamtbestellungen",
+    "pendingOrders": "Ausstehende Bestellungen",
+    "completedOrders": "Abgeschlossene Bestellungen",
+    "totalPrescriptions": "Gesamtrezepte",
+    "cartItems": "Warenkorbartikel"
+  },
+  "navbar": {
+    "products": "Produkte",
+    "solutions": "Lösungen",
+    "resources": "Ressourcen",
+    "whoWeAre": "Wer wir sind",
+    "shop": "Shop",
+    "login": "Anmelden",
+    "getDemo": "Demo erhalten"
+  },
+  "products": {
+    "virtualTest": "Virtueller Test",
+    "digitalizedFrames": "Digitalisierte Rahmen",
+    "opticiansInstruments": "Optikerinstrumente",
+    "3dViewer": "3D-Viewer",
+    "measurementOfDP": "DP-Messung",
+    "openInnovation": "Offene Innovation"
+  },
+  "solutions": {
+    "online": "ONLINE",
+    "onlineDesc": "meine Benutzererfahrung bereichern",
+    "3dResources": "3D-RESSOURCEN",
+    "3dResourcesDesc": "meine Produkte digitalisieren",
+    "inStore": "IM LADEN",
+    "inStoreDesc": "meine Verbrauchererfahrung bereichern",
+    "ecommerce": "E-COMMERCE",
+    "ecommerceDesc": "meine Conversion-Rate erhöhen",
+    "pupilDistance": "PUPILLENABSTAND",
+    "pupilDistanceDesc": "genaue Ergebnisse online erhalten",
+    "driveToStore": "ZUM LADEN FAHREN",
+    "driveToStoreDesc": "Verkehr zu meinen Geschäften lenken"
+  },
+  "resources": {
+    "caseStudies": "FALLSTUDIEN",
+    "hqPackshots": "HQ-PACKSHOTS",
+    "support": "SUPPORT",
+    "guidesAndWebinars": "ANLEITUNGEN UND WEBINARE",
+    "blog": "BLOG"
+  },
+  "whoWeAre": {
+    "ourHistory": "UNSERE GESCHICHTE",
+    "ourTechnology": "UNSERE TECHNOLOGIE",
+    "joinUs": "TRETEN SIE UNS BEI"
+  }
+}
+

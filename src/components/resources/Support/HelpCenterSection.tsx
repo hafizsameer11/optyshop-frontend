@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import FAQSection from './FAQSection'
 
 const helpCenterCards = [
     {
@@ -114,6 +115,9 @@ const HelpCenterSection: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* FAQ Section */}
+            <FAQSection />
         </section>
     )
 }

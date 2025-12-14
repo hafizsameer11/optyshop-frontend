@@ -1,0 +1,74 @@
+{
+  "common": {
+    "dashboard": "Tableau de bord",
+    "cart": "Panier",
+    "orders": "Commandes",
+    "prescriptions": "Ordonnances",
+    "profile": "Profil",
+    "logout": "Déconnexion",
+    "login": "Connexion",
+    "register": "S'inscrire",
+    "shop": "Boutique",
+    "products": "Produits",
+    "solutions": "Solutions",
+    "resources": "Ressources",
+    "whoWeAre": "Qui nous sommes",
+    "getDemo": "Obtenir une démo",
+    "welcome": "Bienvenue",
+    "language": "Langue"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcomeMessage": "Bienvenue sur votre Tableau de bord",
+    "description": "Gérez vos commandes, ordonnances et panier depuis ici. Utilisez le menu de navigation pour accéder aux différentes sections.",
+    "totalOrders": "Commandes Totales",
+    "pendingOrders": "Commandes en Attente",
+    "completedOrders": "Commandes Terminées",
+    "totalPrescriptions": "Ordonnances Totales",
+    "cartItems": "Articles dans le Panier"
+  },
+  "navbar": {
+    "products": "Produits",
+    "solutions": "Solutions",
+    "resources": "Ressources",
+    "whoWeAre": "Qui nous sommes",
+    "shop": "Boutique",
+    "login": "Connexion",
+    "getDemo": "Obtenir une démo"
+  },
+  "products": {
+    "virtualTest": "Test virtuel",
+    "digitalizedFrames": "Montures numérisées",
+    "opticiansInstruments": "Instruments d'opticiens",
+    "3dViewer": "Visualiseur 3D",
+    "measurementOfDP": "Mesure de DP",
+    "openInnovation": "Innovation ouverte"
+  },
+  "solutions": {
+    "online": "EN LIGNE",
+    "onlineDesc": "enrichir mon expérience utilisateur",
+    "3dResources": "RESSOURCES 3D",
+    "3dResourcesDesc": "Numériser mes produits",
+    "inStore": "EN MAGASIN",
+    "inStoreDesc": "enrichir l'expérience de mon consommateur",
+    "pupilDistance": "DISTANCE PUPILLAIRE",
+    "pupilDistanceDesc": "Obtenir des résultats précis en ligne",
+    "ecommerce": "E-COMMERCE",
+    "ecommerceDesc": "Augmenter mon taux de conversion",
+    "driveToStore": "CONDUIRE AU MAGASIN",
+    "driveToStoreDesc": "diriger le trafic vers mes magasins"
+  },
+  "resources": {
+    "caseStudies": "ÉTUDES DE CAS",
+    "hqPackshots": "PACKSHOTS HQ",
+    "support": "SUPPORT",
+    "guidesAndWebinars": "GUIDES ET WEBINAIRES",
+    "blog": "BLOG"
+  },
+  "whoWeAre": {
+    "ourHistory": "NOTRE HISTOIRE",
+    "ourTechnology": "NOTRE TECHNOLOGIE",
+    "joinUs": "REJOIGNEZ-NOUS"
+  }
+}
+

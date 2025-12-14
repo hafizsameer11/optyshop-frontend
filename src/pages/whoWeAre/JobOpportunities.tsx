@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import { apiClient } from '../../utils/api'
+import { API_ROUTES } from '../../config/apiRoutes'
 
 interface Job {
     id: number
@@ -10,11 +12,64 @@ interface Job {
     location: string
     type: string
     description: string
-    requirements: string[]
+    requirements: string[] | string // Can be array or string (from API)
 }
 
 const JobOpportunities: React.FC = () => {
-    const jobs: Job[] = [
+    const [jobs, setJobs] = useState<Job[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string>('')
+
+    // Helper function to normalize requirements to always be an array
+    const normalizeRequirements = (requirements: string[] | string | null | undefined): string[] => {
+        if (!requirements) return []
+        if (Array.isArray(requirements)) return requirements
+        if (typeof requirements === 'string') {
+            // Try to parse as JSON first (in case it's a JSON string)
+            try {
+                const parsed = JSON.parse(requirements)
+                if (Array.isArray(parsed)) return parsed
+            } catch {
+                // Not JSON, continue with string parsing
+            }
+            // Split by newlines or commas
+            return requirements
+                .split(/\n|,/)
+                .map(req => req.trim())
+                .filter(req => req.length > 0)
+        }
+        return []
+    }
+
+    useEffect(() => {
+        const fetchJobs = async () => {
+            setIsLoading(true)
+            setError('')
+            try {
+                const response = await apiClient.get<Job[]>(API_ROUTES.JOBS.LIST, false)
+                if (response.success && response.data) {
+                    const jobsData = Array.isArray(response.data) ? response.data : []
+                    // Normalize requirements field - ensure it's always an array
+                    const normalizedJobs = jobsData.map((job: any) => ({
+                        ...job,
+                        requirements: normalizeRequirements(job.requirements),
+                    }))
+                    setJobs(normalizedJobs)
+                } else {
+                    setError(response.message || 'Failed to load jobs')
+                }
+            } catch (err: any) {
+                setError(err.message || 'Failed to load jobs')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchJobs()
+    }, [])
+
+    // Fallback static jobs if API fails (for development)
+    const staticJobs: Job[] = [
         {
             id: 1,
             title: 'Senior Frontend Developer',
@@ -101,6 +156,13 @@ const JobOpportunities: React.FC = () => {
         }
     ]
 
+    // Use jobs from API, or fallback to static jobs if API fails
+    // Ensure all jobs have normalized requirements
+    const displayJobs = (jobs.length > 0 ? jobs : staticJobs).map(job => ({
+        ...job,
+        requirements: normalizeRequirements(job.requirements),
+    }))
+
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
@@ -170,9 +232,26 @@ const JobOpportunities: React.FC = () => {
                             </p>
                         </div>
 
+                        {/* Loading State */}
+                        {isLoading && (
+                            <div className="text-center py-12">
+                                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#253C69]"></div>
+                                <p className="mt-4 text-gray-600">Loading job opportunities...</p>
+                            </div>
+                        )}
+
+                        {/* Error Message */}
+                        {!isLoading && error && (
+                            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-6">
+                                <p className="font-semibold">Note: {error}</p>
+                                <p className="text-sm mt-1">Showing static job listings. Please check your backend connection.</p>
+                            </div>
+                        )}
+
                         {/* Jobs Grid */}
+                        {!isLoading && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                            {jobs.map((job) => (
+                            {displayJobs.map((job) => (
                                 <div
                                     key={job.id}
                                     className="bg-white border border-gray-200 rounded-xl p-6 md:p-8 shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
@@ -208,15 +287,23 @@ const JobOpportunities: React.FC = () => {
                                     <div className="mb-4">
                                         <p className="text-xs md:text-sm font-semibold text-gray-900 mb-2">Key Requirements:</p>
                                         <ul className="space-y-1">
-                                            {job.requirements.slice(0, 2).map((req, index) => (
-                                                <li key={index} className="text-xs md:text-sm text-gray-600 flex items-start">
-                                                    <span className="text-blue-950 mr-2 mt-1">•</span>
-                                                    <span>{req}</span>
-                                                </li>
-                                            ))}
-                                            {job.requirements.length > 2 && (
+                                            {Array.isArray(job.requirements) && job.requirements.length > 0 ? (
+                                                <>
+                                                    {job.requirements.slice(0, 2).map((req, index) => (
+                                                        <li key={index} className="text-xs md:text-sm text-gray-600 flex items-start">
+                                                            <span className="text-blue-950 mr-2 mt-1">•</span>
+                                                            <span>{req}</span>
+                                                        </li>
+                                                    ))}
+                                                    {job.requirements.length > 2 && (
+                                                        <li className="text-xs md:text-sm text-gray-500 italic">
+                                                            + {job.requirements.length - 2} more requirements
+                                                        </li>
+                                                    )}
+                                                </>
+                                            ) : (
                                                 <li className="text-xs md:text-sm text-gray-500 italic">
-                                                    + {job.requirements.length - 2} more requirements
+                                                    Requirements not specified
                                                 </li>
                                             )}
                                         </ul>
@@ -234,9 +321,10 @@ const JobOpportunities: React.FC = () => {
                                 </div>
                             ))}
                         </div>
+                        )}
 
                         {/* No Jobs Message (if needed) */}
-                        {jobs.length === 0 && (
+                        {!isLoading && displayJobs.length === 0 && (
                             <div className="text-center py-12">
                                 <p className="text-lg md:text-xl text-gray-600">
                                     No open positions at the moment. Check back soon!

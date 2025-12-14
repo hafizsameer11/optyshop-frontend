@@ -1,7 +1,9 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const Footer: React.FC = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
 
     const handleContactClick = () => {
@@ -26,68 +28,68 @@ const Footer: React.FC = () => {
                                 OptiShop
                             </span>
                         </div>
-                        <p className="text-sm text-slate-400 mt-2">The Digital Eyewear Company®</p>
+                        <p className="text-sm text-slate-400 mt-2">{t('footer.tagline')}</p>
                     </div>
 
                     {/* Middle-left: Useful links */}
                     <div>
-                        <h3 className="text-white font-semibold mb-3">Useful links</h3>
+                        <h3 className="text-white font-semibold mb-3">{t('footer.usefulLinks')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
                         <ul className="space-y-2 text-sm text-slate-400">
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    Customer Service
-                                </a>
+                                <Link to="/support" className="hover:text-white transition-colors">
+                                    {t('footer.customerService')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    Help Center (English)
-                                </a>
+                                <Link to="/help-center" className="hover:text-white transition-colors">
+                                    {t('footer.helpCenter')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    FAQ
-                                </a>
+                                <Link to="/help-center" className="hover:text-white transition-colors">
+                                    {t('footer.faq')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    Site map
-                                </a>
+                                <Link to="/" className="hover:text-white transition-colors">
+                                    {t('footer.siteMap')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    General terms
-                                </a>
+                                <Link to="/contact" className="hover:text-white transition-colors">
+                                    {t('footer.generalTerms')}
+                                </Link>
                             </li>
                         </ul>
                     </div>
 
                     {/* Middle-right: Corporate */}
                     <div>
-                        <h3 className="text-white font-semibold mb-3">Corporate</h3>
+                        <h3 className="text-white font-semibold mb-3">{t('footer.corporate')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
                         <ul className="space-y-2 text-sm text-slate-400">
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    Who we are
-                                </a>
+                                <Link to="/our-history" className="hover:text-white transition-colors">
+                                    {t('footer.whoWeAre')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    Our technology
-                                </a>
+                                <Link to="/our-technology" className="hover:text-white transition-colors">
+                                    {t('footer.ourTechnology')}
+                                </Link>
                             </li>
                             <li>
-                                <a href="#" className="hover:text-white transition-colors">
-                                    join us
-                                </a>
+                                <Link to="/join-us" className="hover:text-white transition-colors">
+                                    {t('footer.joinUs')}
+                                </Link>
                             </li>
                         </ul>
                     </div>
 
                     {/* Right: Follow us */}
                     <div>
-                        <h3 className="text-white font-semibold mb-3">Follow us</h3>
+                        <h3 className="text-white font-semibold mb-3">{t('footer.followUs')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
                         <div className="flex gap-3 mb-6">
                             {/* LinkedIn */}
@@ -134,7 +136,7 @@ const Footer: React.FC = () => {
                             onClick={handleContactClick}
                             className="px-6 py-3 bg-[#212B47] border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 uppercase tracking-wide text-sm"
                         >
-                            Contact Us
+                            {t('footer.contactUs')}
                         </button>
                     </div>
                 </div>
@@ -142,14 +144,14 @@ const Footer: React.FC = () => {
                 {/* Bottom copyright */}
                 <div className="border-t border-white/20 pt-6 pb-4">
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-sm text-slate-400">
-                        <span>© OptiShop 2025</span>
+                        <span>{t('footer.copyright')}</span>
                         <span className="hidden sm:inline">•</span>
                         <a href="#" className="underline hover:text-white transition-colors">
-                            Terms of use
+                            {t('footer.termsOfUse')}
                         </a>
                         <span className="hidden sm:inline">•</span>
                         <a href="#" className="underline hover:text-white transition-colors">
-                            Privacy & Legal
+                            {t('footer.privacyLegal')}
                         </a>
                     </div>
                 </div>

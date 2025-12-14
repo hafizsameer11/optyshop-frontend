@@ -1,12 +1,67 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import CartHeroSection from '../../components/shop/CartHeroSection'
 import { useCart } from '../../context/CartContext'
+import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 
 const Cart: React.FC = () => {
     const { cartItems, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCart()
+    const [couponCode, setCouponCode] = useState('')
+    const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+    const [couponError, setCouponError] = useState('')
+
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) {
+            setCouponError('Please enter a coupon code')
+            return
+        }
+
+        setIsApplyingCoupon(true)
+        setCouponError('')
+
+        // Convert cart items to API format
+        const cartItemsForCoupon: CartItemForCoupon[] = cartItems.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            unit_price: Number(item.price || 0)
+        }))
+
+        const subtotal = getTotalPrice()
+        const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
+
+        if (result) {
+            setAppliedCoupon(result)
+            setCouponError('')
+        } else {
+            setAppliedCoupon(null)
+            setCouponError('Invalid or expired coupon code')
+        }
+
+        setIsApplyingCoupon(false)
+    }
+
+    const handleRemoveCoupon = () => {
+        setCouponCode('')
+        setAppliedCoupon(null)
+        setCouponError('')
+    }
+
+    const getFinalTotal = () => {
+        if (appliedCoupon) {
+            return Number(appliedCoupon.final_total || 0)
+        }
+        return getTotalPrice()
+    }
+
+    const getDiscountAmount = () => {
+        if (appliedCoupon) {
+            return Number(appliedCoupon.discount_amount || 0)
+        }
+        return 0
+    }
 
     if (cartItems.length === 0) {
         return (
@@ -119,7 +174,7 @@ const Cart: React.FC = () => {
                                                 {item.brand} - {item.category}
                                             </p>
                                             <p className="text-lg font-semibold text-blue-950 mt-2">
-                                                ${item.price.toFixed(2)}
+                                                ${Number(item.price || 0).toFixed(2)}
                                             </p>
                                         </div>
 
@@ -164,11 +219,70 @@ const Cart: React.FC = () => {
                                     Order Summary
                                 </h2>
 
+                                {/* Coupon Code Section */}
+                                <div className="mb-6 pb-6 border-b border-gray-200">
+                                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Have a coupon code?</h3>
+                                    {!appliedCoupon ? (
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Enter coupon code"
+                                                value={couponCode}
+                                                onChange={(e) => {
+                                                    setCouponCode(e.target.value.toUpperCase())
+                                                    setCouponError('')
+                                                }}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        handleApplyCoupon()
+                                                    }
+                                                }}
+                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyCoupon}
+                                                disabled={isApplyingCoupon || !couponCode.trim()}
+                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+                                            >
+                                                {isApplyingCoupon ? '...' : 'Apply'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                                            <div className="flex items-center gap-2">
+                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <span className="text-sm font-semibold text-green-800">
+                                                    {couponCode} Applied
+                                                </span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveCoupon}
+                                                className="text-sm text-red-600 hover:text-red-700 font-medium"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    )}
+                                    {couponError && (
+                                        <p className="mt-2 text-sm text-red-600">{couponError}</p>
+                                    )}
+                                </div>
+
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-gray-700">
                                         <span>Subtotal ({getTotalItems()} items)</span>
                                         <span>${getTotalPrice().toFixed(2)}</span>
                                     </div>
+                                    {appliedCoupon && getDiscountAmount() > 0 && (
+                                        <div className="flex justify-between text-green-600">
+                                            <span>Discount</span>
+                                            <span>-${getDiscountAmount().toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-gray-700">
                                         <span>Shipping</span>
                                         <span className="text-green-600">Free</span>
@@ -176,7 +290,7 @@ const Cart: React.FC = () => {
                                     <div className="border-t border-gray-200 pt-4">
                                         <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900">
                                             <span>Total</span>
-                                            <span>${getTotalPrice().toFixed(2)}</span>
+                                            <span>${getFinalTotal().toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>

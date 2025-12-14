@@ -1,14 +1,26 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { Product } from '../data/productsData'
 
-export interface CartItem extends Product {
+// Cart-compatible product interface (works with both old and new product formats)
+export interface CartProduct {
+    id: number
+    name: string
+    brand: string
+    category: string
+    price: number
+    image: string
+    description: string
+    inStock: boolean
+    rating?: number
+}
+
+export interface CartItem extends CartProduct {
     quantity: number
 }
 
 interface CartContextType {
     cartItems: CartItem[]
-    addToCart: (product: Product) => void
+    addToCart: (product: CartProduct) => void
     removeFromCart: (productId: number) => void
     updateQuantity: (productId: number, quantity: number) => void
     clearCart: () => void
@@ -50,7 +62,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         localStorage.setItem('cart', JSON.stringify(cartItems))
     }, [cartItems])
 
-    const addToCart = (product: Product) => {
+    const addToCart = (product: CartProduct) => {
         setCartItems(prevItems => {
             const existingItem = prevItems.find(item => item.id === product.id)
             if (existingItem) {
@@ -85,7 +97,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
 
     const getTotalPrice = () => {
-        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+        return cartItems.reduce((total, item) => total + (Number(item.price || 0) * item.quantity), 0)
     }
 
     const getTotalItems = () => {

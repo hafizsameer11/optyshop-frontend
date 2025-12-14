@@ -1,0 +1,74 @@
+{
+  "common": {
+    "dashboard": "Cruscotto",
+    "cart": "Carrello",
+    "orders": "Ordini",
+    "prescriptions": "Ricette",
+    "profile": "Profilo",
+    "logout": "Esci",
+    "login": "Accedi",
+    "register": "Registrati",
+    "shop": "Negozio",
+    "products": "Prodotti",
+    "solutions": "Soluzioni",
+    "resources": "Risorse",
+    "whoWeAre": "Chi siamo",
+    "getDemo": "Ottieni demo",
+    "welcome": "Benvenuto",
+    "language": "Lingua"
+  },
+  "dashboard": {
+    "title": "Cruscotto",
+    "welcomeMessage": "Benvenuto nel tuo Cruscotto",
+    "description": "Gestisci i tuoi ordini, ricette e carrello da qui. Usa il menu di navigazione per accedere alle diverse sezioni.",
+    "totalOrders": "Ordini Totali",
+    "pendingOrders": "Ordini in Attesa",
+    "completedOrders": "Ordini Completati",
+    "totalPrescriptions": "Ricette Totali",
+    "cartItems": "Articoli nel Carrello"
+  },
+  "navbar": {
+    "products": "Prodotti",
+    "solutions": "Soluzioni",
+    "resources": "Risorse",
+    "whoWeAre": "Chi siamo",
+    "shop": "Negozio",
+    "login": "Accedi",
+    "getDemo": "Ottieni demo"
+  },
+  "products": {
+    "virtualTest": "Test virtuale",
+    "digitalizedFrames": "Montature digitalizzate",
+    "opticiansInstruments": "Strumenti ottici",
+    "3dViewer": "Visualizzatore 3D",
+    "measurementOfDP": "Misurazione DP",
+    "openInnovation": "Innovazione aperta"
+  },
+  "solutions": {
+    "online": "ONLINE",
+    "onlineDesc": "arricchire la mia esperienza utente",
+    "3dResources": "RISORSE 3D",
+    "3dResourcesDesc": "Digitalizzare i miei prodotti",
+    "inStore": "IN NEGOZIO",
+    "inStoreDesc": "arricchire l'esperienza del mio consumatore",
+    "ecommerce": "E-COMMERCE",
+    "ecommerceDesc": "Aumentare il mio tasso di conversione",
+    "pupilDistance": "DISTANZA PUPILLARE",
+    "pupilDistanceDesc": "Ottenere risultati accurati online",
+    "driveToStore": "GUIDA AL NEGOZIO",
+    "driveToStoreDesc": "dirigere il traffico ai miei negozi"
+  },
+  "resources": {
+    "caseStudies": "STUDI DI CASO",
+    "hqPackshots": "PACKSHOTS HQ",
+    "support": "SUPPORTO",
+    "guidesAndWebinars": "GUIDE E WEBINAR",
+    "blog": "BLOG"
+  },
+  "whoWeAre": {
+    "ourHistory": "LA NOSTRA STORIA",
+    "ourTechnology": "LA NOSTRA TECNOLOGIA",
+    "joinUs": "UNISCITI A NOI"
+  }
+}
+

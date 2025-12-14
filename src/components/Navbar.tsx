@@ -1,121 +1,125 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
-
-const products = [
-    { label: 'Virtual test', icon: '👓', path: '/virtual-test' },
-    { label: 'Digitalized frames', icon: '🖼️', path: '/digital-frames' },
-    { label: "Opticians' instruments", icon: '🔧', path: '/optical-instruments' },
-    { label: '3D viewer', icon: '🌀', path: '/3d-viewer' },
-    { label: 'Measurement of DP', icon: '📏', path: '/pd-measurement' },
-    { label: 'Open innovation', icon: '💡', path: '/open-innovation' },
-]
-
-const solutions = [
-    {
-        label: 'ONLINE',
-        description: 'enrich my user experience',
-        gradient: 'from-orange-500 to-red-500',
-        icon: '🖱️',
-        path: '/online'
-    },
-    {
-        label: '3D RESOURCES',
-        description: 'Digitize my products',
-        gradient: 'from-green-500 to-blue-500',
-        icon: '💾',
-        path: '/3d-resources'
-    },
-    {
-        label: 'IN STORE',
-        description: 'enrich my consumer experience',
-        gradient: 'from-orange-500 to-yellow-500',
-        icon: '🏪',
-        path: '/in-store'
-    },
-    {
-        label: 'E-COMMERCE',
-        description: 'Increase my conversion rate',
-        gradient: 'from-orange-500 to-yellow-500',
-        icon: '🛒',
-        path: '/ecommerce'
-    },
-    {
-        label: 'PUPIL DISTANCE',
-        description: 'Get accurate results online',
-        gradient: 'from-blue-400 to-green-500',
-        icon: '👁️',
-        path: '/pupil-distance'
-    },
-    {
-        label: 'DRIVE-TO-STORE',
-        description: 'driving traffic to my stores',
-        gradient: 'from-orange-500 to-yellow-500',
-        icon: '📍',
-        path: '/drive-to-store'
-    },
-]
-
-const resources = [
-    {
-        label: 'CASE STUDIES',
-        gradient: 'from-orange-500 to-orange-600',
-        icon: '📣',
-        path: '/case-studies',
-        column: 'left'
-    },
-    {
-        label: 'HQ PACKSHOTS',
-        gradient: 'from-cyan-400 to-teal-500',
-        icon: '📸',
-        path: '/hq-packshots',
-        column: 'left'
-    },
-    {
-        label: 'SUPPORT',
-        gradient: 'from-purple-500 via-pink-500 to-purple-600',
-        icon: '❓',
-        path: '/support',
-        column: 'left'
-    },
-    {
-        label: 'GUIDES AND WEBINARS',
-        gradient: 'from-purple-600 to-purple-700',
-        icon: '✅',
-        path: '/guides-and-webinars',
-        column: 'right'
-    },
-    {
-        label: 'BLOG',
-        gradient: 'from-orange-400 to-orange-500',
-        icon: '📝',
-        path: '/blog',
-        column: 'right'
-    },
-]
-
-const whoWeAre = [
-    {
-        label: 'OUR HISTORY',
-        gradient: 'from-orange-500 to-red-500',
-        icon: '✍️',
-        path: '/our-history'
-    },
-    {
-        label: 'OUR TECHNOLOGY',
-        gradient: 'from-blue-500 to-green-500',
-        icon: '💡',
-        path: '/our-technology'
-    },
-    {
-        label: 'JOIN US',
-        gradient: 'from-purple-500 to-pink-500',
-        icon: '👥',
-        path: '/join-us'
-    },
-]
+import LanguageSwitcher from './LanguageSwitcher'
 
 const Navbar: React.FC = () => {
+    const { t } = useTranslation()
+    
+    const products = [
+        { label: t('products.virtualTest'), icon: '👓', path: '/virtual-test' },
+        { label: t('products.digitalizedFrames'), icon: '🖼️', path: '/digital-frames' },
+        { label: t('products.opticiansInstruments'), icon: '🔧', path: '/optical-instruments' },
+        { label: t('products.3dViewer'), icon: '🌀', path: '/3d-viewer' },
+        { label: t('products.measurementOfDP'), icon: '📏', path: '/pd-measurement' },
+        { label: t('products.openInnovation'), icon: '💡', path: '/open-innovation' },
+    ]
+
+    const solutions = [
+        {
+            label: t('solutions.online'),
+            description: t('solutions.onlineDesc'),
+            gradient: 'from-orange-500 to-red-500',
+            icon: '🖱️',
+            path: '/online'
+        },
+        {
+            label: t('solutions.3dResources'),
+            description: t('solutions.3dResourcesDesc'),
+            gradient: 'from-green-500 to-blue-500',
+            icon: '💾',
+            path: '/3d-resources'
+        },
+        {
+            label: t('solutions.inStore'),
+            description: t('solutions.inStoreDesc'),
+            gradient: 'from-orange-500 to-yellow-500',
+            icon: '🏪',
+            path: '/in-store'
+        },
+        {
+            label: t('solutions.ecommerce'),
+            description: t('solutions.ecommerceDesc'),
+            gradient: 'from-orange-500 to-yellow-500',
+            icon: '🛒',
+            path: '/ecommerce'
+        },
+        {
+            label: t('solutions.pupilDistance'),
+            description: t('solutions.pupilDistanceDesc'),
+            gradient: 'from-blue-400 to-green-500',
+            icon: '👁️',
+            path: '/pupil-distance'
+        },
+        {
+            label: t('solutions.driveToStore'),
+            description: t('solutions.driveToStoreDesc'),
+            gradient: 'from-orange-500 to-yellow-500',
+            icon: '📍',
+            path: '/drive-to-store'
+        },
+    ]
+
+    const resources = [
+        {
+            label: t('resources.caseStudies'),
+            gradient: 'from-orange-500 to-orange-600',
+            icon: '📣',
+            path: '/case-studies',
+            column: 'left'
+        },
+        {
+            label: t('resources.hqPackshots'),
+            gradient: 'from-cyan-400 to-teal-500',
+            icon: '📸',
+            path: '/hq-packshots',
+            column: 'left'
+        },
+        {
+            label: t('resources.support'),
+            gradient: 'from-purple-500 via-pink-500 to-purple-600',
+            icon: '❓',
+            path: '/support',
+            column: 'left'
+        },
+        {
+            label: t('resources.guidesAndWebinars'),
+            gradient: 'from-purple-600 to-purple-700',
+            icon: '✅',
+            path: '/guides-and-webinars',
+            column: 'right'
+        },
+        {
+            label: t('resources.blog'),
+            gradient: 'from-orange-400 to-orange-500',
+            icon: '📝',
+            path: '/blog',
+            column: 'right'
+        },
+    ]
+
+    const whoWeAre = [
+        {
+            label: t('whoWeAre.ourHistory'),
+            gradient: 'from-orange-500 to-red-500',
+            icon: '✍️',
+            path: '/our-history'
+        },
+        {
+            label: t('whoWeAre.ourTechnology'),
+            gradient: 'from-blue-500 to-green-500',
+            icon: '💡',
+            path: '/our-technology'
+        },
+        {
+            label: t('whoWeAre.joinUs'),
+            gradient: 'from-purple-500 to-pink-500',
+            icon: '👥',
+            path: '/join-us'
+        },
+    ]
+
     const navigate = useNavigate()
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -164,9 +168,9 @@ const Navbar: React.FC = () => {
             className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${isScrolled ? 'bg-blue-950/95 backdrop-blur-xl shadow-lg border-b border-white/5' : 'bg-transparent'
                 }`}
         >
-            <div className="flex items-center justify-between w-[90%] mx-auto py-4 md:py-5">
+            <div className="flex items-center justify-between w-[90%] max-w-7xl mx-auto py-4 md:py-5">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-2">
+                <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
                     <div className="h-9 text-white w-9 border-2 border-blue-400 rounded-md flex items-center justify-center text-xs tracking-widest bg-white/5">
                         OS
                     </div>
@@ -176,7 +180,7 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation */}
-                <nav className="hidden md:flex items-center space-x-10 text-sm md:text-base font-semibold text-white">
+                <nav className="hidden md:flex items-center space-x-8 lg:space-x-10 text-sm md:text-base font-semibold text-white flex-1 justify-center">
                     {/* Products with dropdown */}
                     <div
                         className="relative"
@@ -184,7 +188,7 @@ const Navbar: React.FC = () => {
                         onMouseLeave={() => setIsProductsOpen(false)}
                     >
                         <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            Products
+                            {t('navbar.products')}
                             <span className="text-xs">▾</span>
                         </button>
 
@@ -218,7 +222,7 @@ const Navbar: React.FC = () => {
                         onMouseLeave={() => setIsSolutionsOpen(false)}
                     >
                         <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            Solutions
+                            {t('navbar.solutions')}
                             <span className="text-xs">▾</span>
                         </button>
 
@@ -256,7 +260,7 @@ const Navbar: React.FC = () => {
                         onMouseLeave={() => setIsResourcesOpen(false)}
                     >
                         <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            Resources
+                            {t('navbar.resources')}
                             <span className="text-xs">▾</span>
                         </button>
 
@@ -310,7 +314,7 @@ const Navbar: React.FC = () => {
                         onMouseLeave={() => setIsWhoWeAreOpen(false)}
                     >
                         <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            Who we are
+                            {t('navbar.whoWeAre')}
                             <span className="text-xs">▾</span>
                         </button>
 
@@ -342,15 +346,17 @@ const Navbar: React.FC = () => {
                         to="/shop"
                         className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
                     >
-                        Shop
+                        {t('navbar.shop')}
                     </Link>
                 </nav>
 
                 {/* Right side actions */}
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
+                    {/* Language Switcher */}
+                    <LanguageSwitcher variant="navbar" />
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center  justify-center md:hidden h-9 w-9 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-9 w-9 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-colors cursor-pointer"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -372,15 +378,16 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer"
+                        className="hidden md:inline-flex items-center rounded-full border border-blue-400 px-4 lg:px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer whitespace-nowrap"
                     >
-                        Login
+                        {t('navbar.login')}
                     </Link>
                     <button
+                        type="button"
                         onClick={handleScrollToLiveDemo}
-                        className="hidden md:inline-flex rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer"
+                        className="hidden md:inline-flex items-center rounded-full bg-blue-500 text-white px-4 lg:px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap"
                     >
-                        Get a demo
+                        {t('navbar.getDemo')}
                     </button>
 
                     {/* Cart Icon */}
@@ -399,7 +406,7 @@ const Navbar: React.FC = () => {
                             className="flex w-full items-center justify-between font-semibold cursor-pointer"
                             onClick={() => setIsMobileProductsOpen((prev) => !prev)}
                         >
-                            <span>Products</span>
+                            <span>{t('navbar.products')}</span>
                             <span
                                 className={`text-xs transition-transform ${isMobileProductsOpen ? 'rotate-180' : ''
                                     }`}
@@ -434,7 +441,7 @@ const Navbar: React.FC = () => {
                             className="flex w-full items-center justify-between font-semibold cursor-pointer"
                             onClick={() => setIsMobileSolutionsOpen((prev) => !prev)}
                         >
-                            <span>Solutions</span>
+                            <span>{t('navbar.solutions')}</span>
                             <span
                                 className={`text-xs transition-transform ${isMobileSolutionsOpen ? 'rotate-180' : ''
                                     }`}
@@ -476,7 +483,7 @@ const Navbar: React.FC = () => {
                         <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-sm text-white">
                             <span>🛍️</span>
                         </div>
-                        <span>Shop</span>
+                        <span>{t('navbar.shop')}</span>
                     </Link>
 
                     {/* Resources section with items */}
@@ -485,7 +492,7 @@ const Navbar: React.FC = () => {
                             className="flex w-full items-center justify-between font-semibold cursor-pointer"
                             onClick={() => setIsMobileResourcesOpen((prev) => !prev)}
                         >
-                            <span>Resources</span>
+                            <span>{t('navbar.resources')}</span>
                             <span
                                 className={`text-xs transition-transform ${isMobileResourcesOpen ? 'rotate-180' : ''
                                     }`}
@@ -519,7 +526,7 @@ const Navbar: React.FC = () => {
                             className="flex w-full items-center justify-between font-semibold cursor-pointer"
                             onClick={() => setIsMobileWhoWeAreOpen((prev) => !prev)}
                         >
-                            <span>Who we are</span>
+                            <span>{t('navbar.whoWeAre')}</span>
                             <span
                                 className={`text-xs transition-transform ${isMobileWhoWeAreOpen ? 'rotate-180' : ''
                                     }`}
@@ -549,12 +556,17 @@ const Navbar: React.FC = () => {
                     </div>
 
                     <div className="pt-2 space-y-3">
+                        <div className="flex justify-center pb-2">
+                            <LanguageSwitcher variant="navbar" />
+                        </div>
                         <Link
                             to="/login"
-                            onClick={() => setIsMobileOpen(false)}
+                            onClick={() => {
+                                setIsMobileOpen(false)
+                            }}
                             className="w-full rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer text-center block"
                         >
-                            Login
+                            {t('navbar.login')}
                         </Link>
                         <button
                             onClick={() => {
@@ -563,7 +575,7 @@ const Navbar: React.FC = () => {
                             }}
                             className="w-full rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer"
                         >
-                            Get a demo
+                            {t('navbar.getDemo')}
                         </button>
                         <div className="flex justify-center pt-2">
                             <CartIcon />

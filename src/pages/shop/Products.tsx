@@ -1,25 +1,203 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
-import { products, categories } from '../../data/productsData'
-import type { Product } from '../../data/productsData'
+import { 
+    getProducts, 
+    getProductOptions,
+    type Product,
+    type ProductFilters,
+    type ProductOptions
+} from '../../services/productsService'
+import { getProductImageUrl } from '../../utils/productImage'
 
 const Products: React.FC = () => {
     const { addToCart } = useCart()
-    const [selectedCategory, setSelectedCategory] = useState<string>('all')
-    const [searchTerm, setSearchTerm] = useState('')
-
-    const filteredProducts = products.filter(product => {
-        const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
-        const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            product.brand.toLowerCase().includes(searchTerm.toLowerCase())
-        return matchesCategory && matchesSearch
+    const [products, setProducts] = useState<Product[]>([])
+    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 12,
+        pages: 0
     })
+    
+    // Filters
+    const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
+    const [searchTerm, setSearchTerm] = useState('')
+    const [frameShape, setFrameShape] = useState<string>('')
+    const [frameMaterial, setFrameMaterial] = useState<string>('')
+    const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
+    const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
+    const [gender, setGender] = useState<string>('')
+    const [currentPage, setCurrentPage] = useState(1)
+    const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
+    const [showNewArrivals, setShowNewArrivals] = useState(false)
+
+    // Fetch product options on mount
+    useEffect(() => {
+        const fetchOptions = async () => {
+            try {
+                const options = await getProductOptions()
+                setProductOptions(options)
+            } catch (error) {
+                console.error('Error fetching product options:', error)
+                setProductOptions(null)
+            }
+        }
+        fetchOptions()
+    }, [])
+
+    // Fetch products when filters change
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                setLoading(true)
+                const filters: ProductFilters = {
+                    page: currentPage,
+                    limit: 12,
+                }
+
+                if (selectedCategory !== 'all') {
+                    filters.category = selectedCategory
+                }
+
+                if (searchTerm) {
+                    filters.search = searchTerm
+                }
+
+                if (frameShape) {
+                    filters.frameShape = frameShape
+                }
+
+                if (frameMaterial) {
+                    filters.frameMaterial = frameMaterial
+                }
+
+                if (minPrice !== undefined) {
+                    filters.minPrice = minPrice
+                }
+
+                if (maxPrice !== undefined) {
+                    filters.maxPrice = maxPrice
+                }
+
+                if (gender) {
+                    filters.gender = gender
+                }
+
+                // Add sorting
+                if (sortBy === 'newest') {
+                    filters.sortBy = 'created_at'
+                    filters.sortOrder = 'desc'
+                } else if (sortBy === 'oldest') {
+                    filters.sortBy = 'created_at'
+                    filters.sortOrder = 'asc'
+                } else if (sortBy === 'price_low') {
+                    filters.sortBy = 'price'
+                    filters.sortOrder = 'asc'
+                } else if (sortBy === 'price_high') {
+                    filters.sortBy = 'price'
+                    filters.sortOrder = 'desc'
+                } else if (sortBy === 'name') {
+                    filters.sortBy = 'name'
+                    filters.sortOrder = 'asc'
+                }
+
+            const result = await getProducts(filters)
+            if (result) {
+                // Log first product to debug image and stock data - show ALL image-related fields
+                if (result.products && result.products.length > 0 && import.meta.env.DEV) {
+                    const sampleProduct = result.products[0]
+                    const selectedImageUrl = getProductImageUrl(sampleProduct)
+                    console.log('🔍 API Product List - Sample Product Data:', {
+                        id: sampleProduct.id,
+                        name: sampleProduct.name,
+                        'All Image Fields': {
+                            images: sampleProduct.images,
+                            image: sampleProduct.image,
+                            image_url: sampleProduct.image_url,
+                            thumbnail: sampleProduct.thumbnail,
+                            primary_image: (sampleProduct as any).primary_image,
+                            main_image: (sampleProduct as any).main_image,
+                            product_image: (sampleProduct as any).product_image,
+                            photo: (sampleProduct as any).photo,
+                            photo_url: (sampleProduct as any).photo_url,
+                        },
+                        'Selected Image URL': selectedImageUrl,
+                        'Stock Fields': {
+                            in_stock: sampleProduct.in_stock,
+                            stock_quantity: sampleProduct.stock_quantity,
+                            stock_status: (sampleProduct as any).stock_status,
+                        },
+                        'Price Fields': {
+                            price: sampleProduct.price,
+                            sale_price: sampleProduct.sale_price,
+                        },
+                    })
+                }
+                setProducts(result.products || [])
+                setPagination(result.pagination || {
+                    total: 0,
+                    page: 1,
+                    limit: 12,
+                    pages: 0
+                })
+            } else {
+                setProducts([])
+                setPagination({
+                    total: 0,
+                    page: 1,
+                    limit: 12,
+                    pages: 0
+                })
+            }
+            } catch (error) {
+                console.error('Error fetching products:', error)
+                setProducts([])
+                setPagination({
+                    total: 0,
+                    page: 1,
+                    limit: 12,
+                    pages: 0
+                })
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchProducts()
+    }, [selectedCategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
 
     const handleAddToCart = (product: Product) => {
-        addToCart(product)
+        try {
+            // Convert API product to cart-compatible format
+            const salePrice = product?.sale_price ? Number(product.sale_price) : null
+            const regularPrice = product?.price ? Number(product.price) : 0
+            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
+            
+            const cartProduct = {
+                id: product?.id || 0,
+                name: product?.name || '',
+                brand: product?.brand || '',
+                category: product?.category?.slug || 'eyeglasses',
+                price: finalPrice,
+                image: getProductImageUrl(product), // Use the same image extraction logic as product card
+                description: product?.description || '',
+                inStock: product?.in_stock || false,
+                rating: product?.rating ? Number(product.rating) : undefined
+            }
+            addToCart(cartProduct)
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+        }
+    }
+
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     return (
@@ -59,67 +237,316 @@ const Products: React.FC = () => {
             {/* Filters and Search */}
             <section className="bg-white py-8 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="flex flex-col md:flex-row gap-4 md:gap-6 mb-8">
+                    <div className="flex flex-col gap-6 mb-8">
+                        {/* New Arrivals Toggle and Sort */}
+                        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={() => {
+                                        setShowNewArrivals(!showNewArrivals)
+                                        if (!showNewArrivals) {
+                                            setSortBy('newest')
+                                        }
+                                        setCurrentPage(1)
+                                    }}
+                                    className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                                        showNewArrivals
+                                            ? 'bg-blue-950 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                >
+                                    {showNewArrivals ? '✓ New Arrivals' : 'New Arrivals'}
+                                </button>
+                                
+                                {/* Quick Gender Filters */}
+                                {productOptions?.genders && productOptions.genders.length > 0 && (
+                                    <div className="flex gap-2 flex-wrap">
+                                        {productOptions.genders.map((g) => (
+                                            <button
+                                                key={g}
+                                                onClick={() => {
+                                                    setGender(gender === g ? '' : g)
+                                                    setCurrentPage(1)
+                                                }}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                    gender === g
+                                                        ? 'bg-blue-950 text-white'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                {g.charAt(0).toUpperCase() + g.slice(1)}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            {/* Sort Dropdown */}
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => {
+                                        setSortBy(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="price_low">Price: Low to High</option>
+                                    <option value="price_high">Price: High to Low</option>
+                                    <option value="name">Name: A to Z</option>
+                                </select>
+                            </div>
+                        </div>
+
                         {/* Search */}
                         <div className="flex-1">
                             <input
                                 type="text"
                                 placeholder="Search products..."
                                 value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value)
+                                    setCurrentPage(1)
+                                }}
                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                             />
                         </div>
 
-                        {/* Category Filter */}
-                        <div className="flex flex-wrap gap-2 md:gap-3">
-                            {categories.map((category) => (
+                        {/* Quick Category Filters */}
+                        {productOptions?.categories && productOptions.categories.length > 0 && (
+                            <div className="flex flex-wrap gap-2 items-center">
+                                <span className="text-sm font-medium text-gray-700 mr-2">Categories:</span>
                                 <button
-                                    key={category.id}
-                                    onClick={() => setSelectedCategory(category.id)}
-                                    className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-colors ${selectedCategory === category.id
-                                        ? 'bg-blue-950 text-white'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
+                                    onClick={() => {
+                                        setSelectedCategory('all')
+                                        setCurrentPage(1)
+                                    }}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                        selectedCategory === 'all'
+                                            ? 'bg-blue-950 text-white'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
                                 >
-                                    {category.label} ({category.count})
+                                    All
                                 </button>
-                            ))}
+                                {productOptions.categories.slice(0, 6).map((category) => (
+                                    <button
+                                        key={category.id}
+                                        onClick={() => {
+                                            setSelectedCategory(category.id)
+                                            setCurrentPage(1)
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            selectedCategory === category.id
+                                                ? 'bg-blue-950 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {category.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Filters Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Category Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => {
+                                        setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="all">All Categories</option>
+                                    {productOptions?.categories?.map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Frame Shape Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Frame Shape</label>
+                                <select
+                                    value={frameShape}
+                                    onChange={(e) => {
+                                        setFrameShape(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All Shapes</option>
+                                    {productOptions?.frameShapes?.map((shape) => (
+                                        <option key={shape} value={shape}>
+                                            {shape.charAt(0).toUpperCase() + shape.slice(1).replace('_', ' ')}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Frame Material Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Frame Material</label>
+                                <select
+                                    value={frameMaterial}
+                                    onChange={(e) => {
+                                        setFrameMaterial(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All Materials</option>
+                                    {productOptions?.frameMaterials?.map((material) => (
+                                        <option key={material} value={material}>
+                                            {material.charAt(0).toUpperCase() + material.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Gender Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                                <select
+                                    value={gender}
+                                    onChange={(e) => {
+                                        setGender(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All</option>
+                                    {productOptions?.genders?.map((g) => (
+                                        <option key={g} value={g}>
+                                            {g.charAt(0).toUpperCase() + g.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Price Range */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
+                                <input
+                                    type="number"
+                                    placeholder="Min price"
+                                    value={minPrice || ''}
+                                    onChange={(e) => {
+                                        setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
+                                <input
+                                    type="number"
+                                    placeholder="Max price"
+                                    value={maxPrice || ''}
+                                    onChange={(e) => {
+                                        setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
+            {/* New Arrivals Section */}
+            {showNewArrivals && (
+                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                                New Arrivals
+                            </h2>
+                            <button
+                                onClick={() => setShowNewArrivals(false)}
+                                className="text-sm text-gray-600 hover:text-gray-900"
+                            >
+                                Hide
+                            </button>
+                        </div>
+                        <p className="text-gray-600 mb-4">
+                            Discover our latest collection of eyewear
+                        </p>
+                    </div>
+                </section>
+            )}
+
             {/* Products Grid */}
             <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    {filteredProducts.length === 0 ? (
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
+                            <p className="mt-4 text-lg text-gray-600">Loading products...</p>
+                        </div>
+                    ) : !products || products.length === 0 ? (
                         <div className="text-center py-12">
                             <p className="text-lg md:text-xl text-gray-600">
                                 No products found. Try adjusting your filters.
                             </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-                            {filteredProducts.map((product) => (
-                                <div
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8 mb-8">
+                                {products && products.length > 0 && products.map((product) => (
+                                    <Link
                                     key={product.id}
+                                        to={`/shop/product/${product.slug || product.id}`}
                                     className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
                                 >
                                     {/* Product Image */}
                                     <div className="relative h-64 md:h-72 bg-gray-100 overflow-hidden">
                                         <img
-                                            src={product.image}
+                                            src={getProductImageUrl(product)}
                                             alt={product.name}
-                                            className="w-full h-full object-contain p-4"
+                                            className="w-full h-full object-cover"
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement
+                                                // Log which image failed to load
+                                                if (import.meta.env.DEV) {
+                                                    console.warn('Image failed to load for product:', product.id, product.name, 'Tried URL:', target.src)
+                                                }
                                                 target.src = '/assets/images/frame1.png'
                                             }}
                                         />
-                                        {!product.inStock && (
+                                            {(() => {
+                                                const p = product as any
+                                                const stockStatus = p.stock_status || product.in_stock
+                                                const stockQty = product.stock_quantity
+                                                
+                                                // Check if out of stock
+                                                const isOutOfStock = 
+                                                    stockStatus === 'out_of_stock' ||
+                                                    stockStatus === false ||
+                                                    (stockQty !== undefined && stockQty <= 0)
+                                                
+                                                return isOutOfStock ? (
                                             <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
                                                 Out of Stock
+                                                    </div>
+                                                ) : null
+                                            })()}
+                                            {product.sale_price && product.price && product.sale_price < product.price && (
+                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                                    Sale
                                             </div>
                                         )}
                                     </div>
@@ -128,59 +555,147 @@ const Products: React.FC = () => {
                                     <div className="p-4 md:p-6 flex-grow flex flex-col">
                                         <div className="mb-2">
                                             <p className="text-sm text-gray-500 uppercase tracking-wide">
-                                                {product.brand}
+                                                    {product.brand || product.category?.name || 'Brand'}
                                             </p>
                                             <h3 className="text-lg md:text-xl font-bold text-gray-900 mt-1">
                                                 {product.name}
                                             </h3>
                                         </div>
 
-                                        <p className="text-sm text-gray-600 mb-4 flex-grow">
+                                            {product.description && (
+                                                <p className="text-sm text-gray-600 mb-4 flex-grow line-clamp-2">
                                             {product.description}
                                         </p>
-
-                                        {/* Rating */}
-                                        {product.rating && (
-                                            <div className="flex items-center gap-1 mb-4">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <svg
-                                                        key={i}
-                                                        className={`w-4 h-4 ${i < Math.floor(product.rating!)
-                                                            ? 'text-yellow-400'
-                                                            : 'text-gray-300'
-                                                            }`}
-                                                        fill="currentColor"
-                                                        viewBox="0 0 20 20"
-                                                    >
-                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                    </svg>
-                                                ))}
-                                                <span className="text-sm text-gray-500 ml-1">
-                                                    ({product.rating})
-                                                </span>
-                                            </div>
                                         )}
 
                                         {/* Price and Add to Cart */}
                                         <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-200">
+                                                <div className="flex flex-col">
+                                                    {product.sale_price && product.price && Number(product.sale_price) < Number(product.price) ? (
+                                                        <>
+                                                            <span className="text-2xl font-bold text-blue-950">
+                                                                ${Number(product.sale_price || 0).toFixed(2)}
+                                                            </span>
+                                                            <span className="text-sm text-gray-500 line-through">
+                                                                ${Number(product.price || 0).toFixed(2)}
+                                                            </span>
+                                                        </>
+                                                    ) : (
                                             <span className="text-2xl font-bold text-blue-950">
-                                                ${product.price.toFixed(2)}
+                                                            ${Number(product.price || 0).toFixed(2)}
                                             </span>
+                                                    )}
+                                                </div>
                                             <button
-                                                onClick={() => handleAddToCart(product)}
-                                                disabled={!product.inStock}
-                                                className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-colors ${product.inStock
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        handleAddToCart(product)
+                                                    }}
+                                                    disabled={(() => {
+                                                        const p = product as any
+                                                        const stockStatus = p.stock_status || product.in_stock
+                                                        const stockQty = product.stock_quantity
+                                                        
+                                                        return stockStatus === 'out_of_stock' ||
+                                                               stockStatus === false ||
+                                                               (stockQty !== undefined && stockQty <= 0)
+                                                    })()}
+                                                    className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-colors ${
+                                                        (() => {
+                                                            const p = product as any
+                                                            const stockStatus = p.stock_status || product.in_stock
+                                                            const stockQty = product.stock_quantity
+                                                            
+                                                            const isInStock = stockStatus === 'in_stock' ||
+                                                                              stockStatus === true ||
+                                                                              (stockQty !== undefined && stockQty > 0)
+                                                            
+                                                            return isInStock
                                                     ? 'bg-blue-950 text-white hover:bg-blue-900'
                                                     : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        })()
                                                     }`}
-                                            >
-                                                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                                                >
+                                                    {(() => {
+                                                        const p = product as any
+                                                        const stockStatus = p.stock_status || product.in_stock
+                                                        const stockQty = product.stock_quantity
+                                                        
+                                                        const isInStock = stockStatus === 'in_stock' ||
+                                                                          stockStatus === true ||
+                                                                          (stockQty !== undefined && stockQty > 0)
+                                                        
+                                                        return isInStock ? 'Add to Cart' : 'Out of Stock'
+                                                    })()}
                                             </button>
+                                            </div>
                                         </div>
+                                    </Link>
+                                ))}
                                     </div>
+
+                            {/* Pagination */}
+                            {pagination && pagination.pages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-8">
+                                    <button
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                            currentPage === 1
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                        }`}
+                                    >
+                                        Previous
+                                    </button>
+                                    
+                                    {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
+                                        const page = i + 1
+                                        if (
+                                            page === 1 ||
+                                            page === pagination.pages ||
+                                            (page >= currentPage - 1 && page <= currentPage + 1)
+                                        ) {
+                                            return (
+                                                <button
+                                                    key={page}
+                                                    onClick={() => handlePageChange(page)}
+                                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                                        currentPage === page
+                                                            ? 'bg-blue-950 text-white'
+                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                    }`}
+                                                >
+                                                    {page}
+                                                </button>
+                                            )
+                                        } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                            return <span key={page} className="px-2">...</span>
+                                        }
+                                        return null
+                                    })}
+                                    
+                                    <button
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === pagination.pages}
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                                            currentPage === pagination.pages
+                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                        }`}
+                                    >
+                                        Next
+                                    </button>
                                 </div>
-                            ))}
+                            )}
+
+                            {/* Results count */}
+                            {pagination && (
+                                <div className="text-center mt-4 text-gray-600">
+                                    Showing {products.length} of {pagination.total || 0} products
                         </div>
+                            )}
+                        </>
                     )}
                 </div>
             </section>

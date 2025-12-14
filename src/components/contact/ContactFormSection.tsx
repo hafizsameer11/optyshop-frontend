@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiClient } from '../../utils/api'
+import { API_ROUTES } from '../../config/apiRoutes'
 
 const ContactFormSection: React.FC = () => {
     const navigate = useNavigate()
@@ -11,19 +13,71 @@ const ContactFormSection: React.FC = () => {
         companyName: '',
         message: ''
     })
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState<string>('')
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         })
+        // Clear error when user starts typing
+        if (submitError) {
+            setSubmitError('')
+        }
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        console.log('Form submitted:', formData)
-        // Navigate to thank you page after form submission
-        navigate('/thank-you')
+        setSubmitError('')
+
+        // Basic validation
+        if (!formData.email || !formData.firstName || !formData.lastName || !formData.country || !formData.companyName || !formData.message) {
+            setSubmitError('Please fill in all required fields')
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            // Prepare payload - backend expects 'company' not 'companyName'
+            const payload = {
+                email: formData.email,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                country: formData.country,
+                company: formData.companyName,
+                message: formData.message
+            }
+
+            if (import.meta.env.DEV) {
+                console.log('[Contact Form] Submitting payload:', payload)
+            }
+
+            const response = await apiClient.post(
+                API_ROUTES.FORMS.CONTACT.SUBMIT,
+                payload,
+                false
+            )
+
+            if (response.success) {
+                // Navigate to thank you page after successful submission
+                navigate('/thank-you')
+            } else {
+                // Show detailed error message from backend
+                const errorMsg = response.error || response.message || 'Failed to submit contact form. Please try again.'
+                setSubmitError(errorMsg)
+                if (import.meta.env.DEV) {
+                    console.error('Contact form submission error:', response)
+                }
+            }
+        } catch (error: any) {
+            setSubmitError(error.message || 'An error occurred. Please try again.')
+            if (import.meta.env.DEV) {
+                console.error('Contact form submission exception:', error)
+            }
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -152,12 +206,30 @@ const ContactFormSection: React.FC = () => {
                                 .
                             </p>
 
+                            {/* Error Message */}
+                            {submitError && (
+                                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                                    {submitError}
+                                </div>
+                            )}
+
                             {/* Submit Button */}
                             <button
                                 type="submit"
-                                className="w-full bg-blue-950 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-900 transition-colors duration-300"
+                                disabled={isSubmitting}
+                                className="w-full bg-blue-950 text-white px-6 md:px-8 py-3 md:py-4 rounded-lg font-semibold text-base md:text-lg hover:bg-blue-900 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
-                                Contact us
+                                {isSubmitting ? (
+                                    <>
+                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span>Submitting...</span>
+                                    </>
+                                ) : (
+                                    'Contact us'
+                                )}
                             </button>
                         </form>
                     </div>
