@@ -17,7 +17,7 @@ Hook initializes and calls: getLensTreatments({ isActive: true })
     ↓
 Service builds URL: "/lens/treatments?isActive=true"
     ↓
-API Client makes GET request to: http://localhost:5000/api/lens/treatments?isActive=true
+API Client makes GET request to: https://piro-optyshopbackend-muhs96-c5eb95-72-61-22-134.traefik.me/api/lens/treatments?isActive=true
     ↓
 Backend returns: { success: true, data: [LensTreatment[], ...] }
     ↓
