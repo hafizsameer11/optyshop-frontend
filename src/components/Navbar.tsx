@@ -179,174 +179,49 @@ const Navbar: React.FC = () => {
                     </span>
                 </Link>
 
-                {/* Desktop navigation */}
-                <nav className="hidden md:flex items-center space-x-8 lg:space-x-10 text-sm md:text-base font-semibold text-white flex-1 justify-center">
-                    {/* Products with dropdown */}
-                    <div
-                        className="relative"
-                        onMouseEnter={() => setIsProductsOpen(true)}
-                        onMouseLeave={() => setIsProductsOpen(false)}
+                {/* Desktop navigation - simplified shop categories */}
+                <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-sm md:text-base font-semibold text-white flex-1 justify-center">
+                    <Link
+                        to="/"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
                     >
-                        <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            {t('navbar.products')}
-                            <span className="text-xs">▾</span>
-                        </button>
-
-                        {isProductsOpen && (
-                            <div className="absolute left-0 top-full pt-2 w-[520px] rounded-3xl bg-white/95 shadow-2xl px-8 py-6 text-slate-900 backdrop-blur-sm">
-                                <div className="grid grid-cols-2 gap-x-10 gap-y-5">
-                                    {products.map((item) => (
-                                        <Link
-                                            key={item.label}
-                                            to={item.path}
-                                            onClick={() => setIsProductsOpen(false)}
-                                            className="flex items-center gap-3 text-left hover:translate-y-0.5 hover:scale-[1.01] transition-transform cursor-pointer"
-                                        >
-                                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 flex items-center justify-center text-xl text-white shadow-md">
-                                                <span>{item.icon}</span>
-                                            </div>
-                                            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                                                {item.label}
-                                            </span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Solutions with dropdown */}
-                    <div
-                        className="relative"
-                        onMouseEnter={() => setIsSolutionsOpen(true)}
-                        onMouseLeave={() => setIsSolutionsOpen(false)}
-                    >
-                        <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            {t('navbar.solutions')}
-                            <span className="text-xs">▾</span>
-                        </button>
-
-                        {isSolutionsOpen && (
-                            <div className="absolute left-0 top-full pt-2 w-[520px] rounded-3xl bg-white/95 shadow-2xl px-8 py-6 text-slate-900 backdrop-blur-sm">
-                                <div className="grid grid-cols-2 gap-x-10 gap-y-5">
-                                    {solutions.map((item) => (
-                                        <Link
-                                            key={item.label}
-                                            to={item.path}
-                                            onClick={() => setIsSolutionsOpen(false)}
-                                            className="flex items-start gap-3 text-left hover:translate-y-0.5 hover:scale-[1.01] transition-transform cursor-pointer"
-                                        >
-                                            <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-xl text-white shadow-md flex-shrink-0`}>
-                                                <span>{item.icon}</span>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                                                    {item.label}
-                                                </span>
-                                                <span className="text-xs text-slate-600 mt-0.5">
-                                                    {item.description}
-                                                </span>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    {/* Resources with dropdown */}
-                    <div
-                        className="relative"
-                        onMouseEnter={() => setIsResourcesOpen(true)}
-                        onMouseLeave={() => setIsResourcesOpen(false)}
-                    >
-                        <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            {t('navbar.resources')}
-                            <span className="text-xs">▾</span>
-                        </button>
-
-                        {isResourcesOpen && (
-                            <div className="absolute left-0 top-full pt-2 w-[520px] rounded-3xl bg-white/95 shadow-2xl px-8 py-6 text-slate-900 backdrop-blur-sm">
-                                <div className="grid grid-cols-2 gap-x-10 gap-y-5">
-                                    {/* Left column */}
-                                    <div className="flex flex-col gap-5">
-                                        {resources.filter(item => item.column === 'left').map((item) => (
-                                            <Link
-                                                key={item.label}
-                                                to={item.path}
-                                                onClick={() => setIsResourcesOpen(false)}
-                                                className="flex items-center gap-3 text-left hover:translate-y-0.5 hover:scale-[1.01] transition-transform cursor-pointer"
-                                            >
-                                                <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-xl text-white shadow-md`}>
-                                                    <span>{item.icon}</span>
-                                                </div>
-                                                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                                                    {item.label}
-                                                </span>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                    {/* Right column */}
-                                    <div className="flex flex-col gap-5">
-                                        {resources.filter(item => item.column === 'right').map((item) => (
-                                            <Link
-                                                key={item.label}
-                                                to={item.path}
-                                                onClick={() => setIsResourcesOpen(false)}
-                                                className="flex items-center gap-3 text-left hover:translate-y-0.5 hover:scale-[1.01] transition-transform cursor-pointer"
-                                            >
-                                                <div className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-xl text-white shadow-md`}>
-                                                    <span>{item.icon}</span>
-                                                </div>
-                                                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                                                    {item.label}
-                                                </span>
-                                            </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                    {/* Who We Are with dropdown */}
-                    <div
-                        className="relative"
-                        onMouseEnter={() => setIsWhoWeAreOpen(true)}
-                        onMouseLeave={() => setIsWhoWeAreOpen(false)}
-                    >
-                        <button className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer">
-                            {t('navbar.whoWeAre')}
-                            <span className="text-xs">▾</span>
-                        </button>
-
-                        {isWhoWeAreOpen && (
-                            <div className="absolute left-0 top-full pt-2 w-[380px] rounded-2xl bg-white shadow-2xl px-6 py-6 text-slate-900 backdrop-blur-sm">
-                                <div className="grid grid-cols-2 gap-5">
-                                    {whoWeAre.map((item) => (
-                                        <Link
-                                            key={item.label}
-                                            to={item.path}
-                                            onClick={() => setIsWhoWeAreOpen(false)}
-                                            className="flex items-center gap-3 text-left hover:translate-y-0.5 hover:scale-[1.01] transition-transform cursor-pointer"
-                                        >
-                                            <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-xl text-white shadow-md flex-shrink-0`}>
-                                                <span>{item.icon}</span>
-                                            </div>
-                                            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide">
-                                                {item.label}
-                                            </span>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Shop Link */}
+                        Home
+                    </Link>
                     <Link
                         to="/shop"
-                        className="inline-flex items-center gap-1 pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
                     >
-                        {t('navbar.shop')}
+                        Eyeglasses
+                    </Link>
+                    <Link
+                        to="/shop"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                    >
+                        Sunglasses
+                    </Link>
+                    <Link
+                        to="/shop"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                    >
+                        Opty Kids
+                    </Link>
+                    <Link
+                        to="/shop"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                    >
+                        Contact Lenses
+                    </Link>
+                    <Link
+                        to="/shop"
+                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                    >
+                        Eye Hygiene
+                    </Link>
+                    <Link
+                        to="/virtual-test"
+                        className="ml-2 inline-flex items-center rounded-full bg-blue-500 text-white px-4 lg:px-5 py-1.5 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap"
+                    >
+                        Virtual Try On
                     </Link>
                 </nav>
 
