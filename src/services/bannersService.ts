@@ -6,22 +6,30 @@
 import { apiClient } from '../utils/api';
 import { API_ROUTES } from '../config/apiRoutes';
 
+// Raw meta coming from API can be:
+// - JSON string
+// - plain text string
+// - already-parsed object
+// - null
+export type BannerMetaRaw = string | Record<string, any> | null;
+
 // Type definitions for banner data
 export interface Banner {
   id: number;
   title: string;
-  image_url: string;
+  image_url: string | null;
   link_url: string | null;
   position: string | null;
   sort_order: number;
   is_active: boolean;
-  meta: string;
+  meta: BannerMetaRaw;
   created_at: string;
   updated_at: string;
 }
 
 export interface BannersResponse {
-  banners: Banner[];
+  // Backend may return either `banners` array or a plain array
+  banners?: Banner[];
 }
 
 /**
@@ -45,8 +53,8 @@ export const getBanners = async (position?: string | null): Promise<Banner[]> =>
         banners = response.data;
       } 
       // Check if response.data has a banners property
-      else if ('banners' in response.data && Array.isArray(response.data.banners)) {
-        banners = response.data.banners;
+      else if ('banners' in response.data && Array.isArray((response.data as BannersResponse).banners)) {
+        banners = (response.data as BannersResponse).banners as Banner[];
       }
       // Check if response.data is a single banner object
       else if ('id' in response.data && 'image_url' in response.data) {

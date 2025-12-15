@@ -78,30 +78,59 @@ const BannerComponent: React.FC = () => {
     }
 
     // Helper function to handle image URLs (convert full URLs to relative paths for proxy)
-    const getImageUrl = (imageUrl: string | undefined): string => {
-        if (!imageUrl) return ''
-        // If it's a full URL with localhost:5000, convert to relative path
+    const getImageUrl = (imageUrl: string | null | undefined): string => {
+        // Fallback to a default hero image if none is provided by admin
+        const fallback = '/assets/images/banner CES-Frame Removal-desktop.webp'
+
+        if (!imageUrl) return fallback
+
+        // If it's a full URL with localhost:5000, convert to relative path (dev environment)
         if (imageUrl.includes('http://localhost:5000') || imageUrl.includes('http://127.0.0.1:5000')) {
             const url = new URL(imageUrl)
-            return url.pathname
+            return url.pathname || fallback
         }
+
+        // If backend returned an insecure http URL on a https site, upgrade to https
+        if (imageUrl.startsWith('http://')) {
+            try {
+                const url = new URL(imageUrl)
+                url.protocol = 'https:'
+                return url.toString()
+            } catch {
+                // If parsing fails, fall back to default
+                return fallback
+            }
+        }
+
         // If it's already a relative path, return as is
         if (imageUrl.startsWith('/')) {
             return imageUrl
         }
+
         // Otherwise return the full URL
         return imageUrl
     }
 
     // Parse meta field for banner metadata (description, buttons, etc.)
-    const parseMeta = (meta: string | null | undefined): BannerMeta | null => {
+    const parseMeta = (meta: unknown): BannerMeta | null => {
         if (!meta) return null
-        try {
-            return JSON.parse(meta) as BannerMeta
-        } catch {
-            // If meta is not JSON, treat it as description
-            return { description: meta }
+
+        // If meta is already an object, assume it matches BannerMeta shape
+        if (typeof meta === 'object') {
+            return meta as BannerMeta
         }
+
+        if (typeof meta === 'string') {
+            try {
+                // Try to parse JSON string
+                return JSON.parse(meta) as BannerMeta
+            } catch {
+                // If meta is not JSON, treat it as description text
+                return { description: meta }
+            }
+        }
+
+        return null
     }
 
     // Handle button click
