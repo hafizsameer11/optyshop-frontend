@@ -166,18 +166,6 @@ const BannerComponent: React.FC = () => {
         }
     }
 
-    const handleBannerClick = (banner: Banner) => {
-        // Only handle banner click if there's a link_url and no buttons
-        const meta = parseMeta(banner.meta)
-        if (banner.link_url && !meta?.button1 && !meta?.button2) {
-            if (banner.link_url.startsWith('http')) {
-            window.open(banner.link_url, '_blank', 'noopener,noreferrer')
-            } else {
-                navigate(banner.link_url)
-            }
-        }
-    }
-
     const goToSlide = (index: number) => {
         setCurrentIndex(index)
         setIsAutoPlaying(false) // Pause auto-play when user manually navigates
@@ -217,7 +205,18 @@ const BannerComponent: React.FC = () => {
                             return (
                         <div
                             key={banner.id || index}
-                                    className="min-w-full h-full relative"
+                            className="min-w-full h-full relative cursor-pointer"
+                            onClick={() => {
+                                // Only handle banner click if there's a link_url and no buttons
+                                const meta = parseMeta(banner.meta)
+                                if (banner.link_url && !meta?.button1 && !meta?.button2) {
+                                    if (banner.link_url.startsWith('http')) {
+                                        window.open(banner.link_url, '_blank', 'noopener,noreferrer')
+                                    } else {
+                                        navigate(banner.link_url)
+                                    }
+                                }
+                            }}
                             style={{
                                 backgroundImage: `url(${getImageUrl(banner.image_url)})`,
                                         backgroundSize: 'cover',

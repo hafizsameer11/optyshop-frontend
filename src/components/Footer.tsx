@@ -31,7 +31,7 @@ const Footer: React.FC = () => {
                         <p className="text-sm text-slate-400 mt-2">{t('footer.tagline')}</p>
                     </div>
 
-                    {/* Middle-left: Useful links */}
+                    {/* Middle-left: Shop & help links */}
                     <div>
                         <h3 className="text-white font-semibold mb-3">{t('footer.usefulLinks')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
@@ -52,13 +52,18 @@ const Footer: React.FC = () => {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/" className="hover:text-white transition-colors">
-                                    {t('footer.siteMap')}
+                                <Link to="/shop" className="hover:text-white transition-colors">
+                                    Shop glasses
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/virtual-test" className="hover:text-white transition-colors">
+                                    Virtual try on
                                 </Link>
                             </li>
                             <li>
                                 <Link to="/contact" className="hover:text-white transition-colors">
-                                    {t('footer.generalTerms')}
+                                    Contact
                                 </Link>
                             </li>
                         </ul>
@@ -82,6 +87,16 @@ const Footer: React.FC = () => {
                             <li>
                                 <Link to="/join-us" className="hover:text-white transition-colors">
                                     {t('footer.joinUs')}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/online" className="hover:text-white transition-colors">
+                                    Solutions
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/case-studies" className="hover:text-white transition-colors">
+                                    Resources
                                 </Link>
                             </li>
                         </ul>

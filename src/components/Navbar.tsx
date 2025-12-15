@@ -133,27 +133,6 @@ const Navbar: React.FC = () => {
     const [isMobileWhoWeAreOpen, setIsMobileWhoWeAreOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
-    const handleScrollToLiveDemo = () => {
-        if (location.pathname === '/') {
-            // Already on home page, just scroll
-            setTimeout(() => {
-                const element = document.getElementById('live-demo')
-                if (element) {
-                    const offset = 100 // Account for fixed navbar
-                    const elementPosition = element.getBoundingClientRect().top
-                    const offsetPosition = elementPosition + window.pageYOffset - offset
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    })
-                }
-            }, 50)
-        } else {
-            // Navigate to home page with hash
-            navigate('/#live-demo')
-        }
-    }
-
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
@@ -180,7 +159,7 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation - simplified shop categories */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-8 text-sm md:text-base font-semibold text-white">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-6 lg:space-x-8 text-xs md:text-sm font-semibold text-white">
                     <Link
                         to="/"
                         className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
@@ -253,17 +232,10 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center rounded-full border border-blue-400 px-4 lg:px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer whitespace-nowrap"
+                        className="hidden md:inline-flex items-center rounded-full border border-blue-400 px-4 lg:px-5 py-2 text-xs md:text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.login')}
                     </Link>
-                    <button
-                        type="button"
-                        onClick={handleScrollToLiveDemo}
-                        className="hidden md:inline-flex items-center rounded-full bg-blue-500 text-white px-4 lg:px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap"
-                    >
-                        {t('navbar.getDemo')}
-                    </button>
 
                     {/* Cart Icon */}
                     <div className="hidden md:block">
@@ -443,15 +415,6 @@ const Navbar: React.FC = () => {
                         >
                             {t('navbar.login')}
                         </Link>
-                        <button
-                            onClick={() => {
-                                setIsMobileOpen(false)
-                                handleScrollToLiveDemo()
-                            }}
-                            className="w-full rounded-full bg-blue-500 text-white px-5 py-2 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer"
-                        >
-                            {t('navbar.getDemo')}
-                        </button>
                         <div className="flex justify-center pt-2">
                             <CartIcon />
                         </div>
