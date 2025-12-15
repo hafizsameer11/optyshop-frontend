@@ -168,7 +168,7 @@ const Navbar: React.FC = () => {
             className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${isScrolled ? 'bg-blue-950/95 backdrop-blur-xl shadow-lg border-b border-white/5' : 'bg-transparent'
                 }`}
         >
-            <div className="flex items-center justify-between w-[90%] max-w-7xl mx-auto py-4 md:py-5">
+            <div className="flex items-center w-[90%] max-w-7xl mx-auto py-4 md:py-5">
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
                     <div className="h-9 text-white w-9 border-2 border-blue-400 rounded-md flex items-center justify-center text-xs tracking-widest bg-white/5">
@@ -180,7 +180,7 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation - simplified shop categories */}
-                <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-sm md:text-base font-semibold text-white flex-1 justify-center">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-8 text-sm md:text-base font-semibold text-white">
                     <Link
                         to="/"
                         className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
