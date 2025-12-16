@@ -34,7 +34,6 @@ const TrustedBrands: React.FC = () => {
                             src={brand.src}
                             alt={brand.name}
                             className="h-8 sm:h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
-                            loading="lazy"
                         />
                     ))}
                 </div>

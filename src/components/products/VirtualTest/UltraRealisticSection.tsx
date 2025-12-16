@@ -13,7 +13,6 @@ const UltraRealisticSection: React.FC = () => {
                         src="/assets/images/virtual-try.jpg"
                         alt="Ultra-realistic virtual try-on"
                         className="h-full w-full object-cover"
-                        loading="lazy"
                     />
 
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />

@@ -42,7 +42,6 @@ const CustomerShowcaseSection: React.FC = () => {
                                     src={customer.src}
                                     alt={customer.name}
                                     className="h-8 sm:h-10 md:h-12 lg:h-14 object-contain opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
-                                    loading="lazy"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement
                                         target.style.display = 'none'
