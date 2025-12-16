@@ -163,9 +163,9 @@ const Navbar: React.FC = () => {
                                     if (subcategories.length > 0 || isLoading) {
                                         return (
                                             <div 
-                                                className="absolute left-0 top-full mt-2 min-w-[220px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
+                                                className="absolute left-0 top-full mt-1.5 min-w-[240px] rounded-xl bg-white shadow-2xl border border-gray-200 py-2 z-[9999] opacity-100 transform transition-all duration-200 ease-out"
                                                 style={{ 
-                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+                                                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
                                                 }}
                                                 onMouseEnter={() => {
                                                     if (dropdownTimeoutRef.current) {
@@ -180,15 +180,14 @@ const Navbar: React.FC = () => {
                                                     }, 150)
                                                 }}
                                             >
-                                                <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
-                                                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                                        {category.name} - Subcategories
-                                                    </span>
-                                                </div>
                                                 <div className="py-1">
                                                     {isLoading ? (
-                                                        <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
-                                                            Loading...
+                                                        <div className="px-4 py-3 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
+                                                            <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                            </svg>
+                                                            <span>Loading...</span>
                                                         </div>
                                                     ) : subcategories.length > 0 ? (
                                                         subcategories.map((subcategory) => (
@@ -196,14 +195,14 @@ const Navbar: React.FC = () => {
                                                                 key={subcategory.id}
                                                                 to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
                                                                 onClick={() => setHoveredCategory(null)}
-                                                                className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
+                                                                className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
                                                             >
                                                                 {subcategory.name}
                                                             </Link>
                                                         ))
                                                     ) : (
-                                                        <div className="px-4 py-2.5 text-sm text-gray-400 text-center">
-                                                            No subcategories
+                                                        <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                                                            No subcategories available
                                                         </div>
                                                     )}
                                                 </div>
@@ -341,15 +340,14 @@ const Navbar: React.FC = () => {
                                                     </svg>
                                                 </button>
                                                 {hoveredCategory === category.id && (
-                                                    <div className="ml-4 mt-1 space-y-1 bg-blue-900/30 rounded-lg p-2">
-                                                        <div className="px-2 py-1 border-b border-blue-700/50 mb-1">
-                                                            <span className="text-xs font-semibold text-cyan-200 uppercase tracking-wide">
-                                                                {category.name}
-                                                            </span>
-                                                        </div>
+                                                    <div className="ml-4 mt-1 space-y-1 bg-blue-900/40 rounded-lg p-2 border border-blue-700/30">
                                                         {isLoading ? (
-                                                            <div className="px-4 py-2 text-sm text-cyan-200/70 text-center">
-                                                                Loading...
+                                                            <div className="px-4 py-3 text-sm text-cyan-200/70 text-center flex items-center justify-center gap-2">
+                                                                <svg className="animate-spin h-4 w-4 text-cyan-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                </svg>
+                                                                <span>Loading...</span>
                                                             </div>
                                                         ) : subcategories.length > 0 ? (
                                                             subcategories.map((subcategory) => (
@@ -360,14 +358,14 @@ const Navbar: React.FC = () => {
                                                                         setIsMobileOpen(false)
                                                                         setHoveredCategory(null)
                                                                     }}
-                                                                    className="block px-4 py-2 rounded-lg text-sm bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150"
+                                                                    className="block px-4 py-2.5 rounded-md text-sm font-medium bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150"
                                                                 >
                                                                     {subcategory.name}
                                                                 </Link>
                                                             ))
                                                         ) : (
-                                                            <div className="px-4 py-2 text-sm text-cyan-200/50 text-center">
-                                                                No subcategories
+                                                            <div className="px-4 py-3 text-sm text-cyan-200/50 text-center">
+                                                                No subcategories available
                                                             </div>
                                                         )}
                                                     </div>
