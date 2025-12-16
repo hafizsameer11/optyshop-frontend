@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
@@ -9,6 +9,7 @@ const Navbar: React.FC = () => {
     const { t } = useTranslation()
     const [categories, setCategories] = useState<Category[]>([])
     const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
+    const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -40,7 +41,12 @@ const Navbar: React.FC = () => {
         }
 
         window.addEventListener('scroll', handleScroll)
-        return () => window.removeEventListener('scroll', handleScroll)
+        return () => {
+            window.removeEventListener('scroll', handleScroll)
+            if (dropdownTimeoutRef.current) {
+                clearTimeout(dropdownTimeoutRef.current)
+            }
+        }
     }, [])
 
     return (
@@ -84,8 +90,18 @@ const Navbar: React.FC = () => {
                             <div
                                 key={category.id}
                                 className="relative group"
-                                onMouseEnter={() => setHoveredCategory(category.id)}
-                                onMouseLeave={() => setHoveredCategory(null)}
+                                onMouseEnter={() => {
+                                    if (dropdownTimeoutRef.current) {
+                                        clearTimeout(dropdownTimeoutRef.current)
+                                        dropdownTimeoutRef.current = null
+                                    }
+                                    setHoveredCategory(category.id)
+                                }}
+                                onMouseLeave={() => {
+                                    dropdownTimeoutRef.current = setTimeout(() => {
+                                        setHoveredCategory(null)
+                                    }, 150)
+                                }}
                             >
                                 <Link
                                     to={`/shop?category=${category.slug}`}
@@ -111,28 +127,40 @@ const Navbar: React.FC = () => {
                                 {/* Subcategories Dropdown */}
                                 {category.subcategories && category.subcategories.length > 0 && hoveredCategory === category.id && (
                                     <div 
-                                        className="absolute left-0 top-full mt-2 min-w-[200px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
+                                        className="absolute left-0 top-full mt-2 min-w-[220px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
                                         style={{ 
                                             boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
                                         }}
+                                        onMouseEnter={() => {
+                                            if (dropdownTimeoutRef.current) {
+                                                clearTimeout(dropdownTimeoutRef.current)
+                                                dropdownTimeoutRef.current = null
+                                            }
+                                            setHoveredCategory(category.id)
+                                        }}
+                                        onMouseLeave={() => {
+                                            dropdownTimeoutRef.current = setTimeout(() => {
+                                                setHoveredCategory(null)
+                                            }, 150)
+                                        }}
                                     >
-                                        <div className="px-2 py-1 border-b border-gray-100">
-                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                                                {category.name}
+                                        <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
+                                            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                                {category.name} - Subcategories
                                             </span>
                                         </div>
-                                        {category.subcategories.map((subcategory) => (
-                                            <Link
-                                                key={subcategory.id}
-                                                to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
-                                                onClick={() => setHoveredCategory(null)}
-                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                                className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
-                                            >
-                                                {subcategory.name}
-                                            </Link>
-                                        ))}
+                                        <div className="py-1">
+                                            {category.subcategories.map((subcategory) => (
+                                                <Link
+                                                    key={subcategory.id}
+                                                    to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                    onClick={() => setHoveredCategory(null)}
+                                                    className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
+                                                >
+                                                    {subcategory.name}
+                                                </Link>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
