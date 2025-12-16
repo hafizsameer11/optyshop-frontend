@@ -155,7 +155,7 @@ const Navbar: React.FC = () => {
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' : 'bg-transparent'
                 }`}
         >
-            <div className="flex items-center w-[90%] max-w-7xl mx-auto py-3 md:py-4">
+            <div className="flex items-center w-[90%] max-w-7xl mx-auto py-3 md:py-4 pl-4 md:pl-6">
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0 group">
                     <div className="h-10 w-10 border-2 border-blue-400 rounded-lg flex items-center justify-center text-xs tracking-widest bg-white/5 group-hover:bg-blue-500/20 group-hover:border-blue-300 transition-all duration-300">
@@ -167,7 +167,7 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation - simplified shop categories */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1.5 mx-6 lg:mx-10">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1.5 mx-4 lg:mx-6">
                     <Link
                         to="/"
                         className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
@@ -230,17 +230,17 @@ const Navbar: React.FC = () => {
                     </Link>
                     <Link
                         to="/virtual-test"
-                        className="ml-3 w-[130px] h-10 inline-flex items-center justify-center rounded-full bg-blue-500 text-white px-3 py-2 text-xs font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="ml-2 w-[125px] h-10 inline-flex items-center justify-center rounded-full bg-blue-500 text-white px-3 py-2 text-xs font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.virtualTryOn')}
                     </Link>
                 </nav>
 
                 {/* Right side actions */}
-                <div className="flex items-center space-x-2 md:space-x-2.5 flex-shrink-0 ml-auto">
+                <div className="flex items-center space-x-2 md:space-x-2 flex-shrink-0 ml-auto pr-2 md:pr-4">
                     {/* Language Switcher */}
                     <div className="hidden md:block">
-                    <LanguageSwitcher variant="navbar" />
+                        <LanguageSwitcher variant="navbar" />
                     </div>
                     
                     {/* Mobile menu toggle */}
@@ -267,7 +267,7 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[75px] rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.login')}
                     </Link>
