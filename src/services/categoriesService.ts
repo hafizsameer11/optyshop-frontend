@@ -23,9 +23,11 @@ export interface Category {
   image: string | null;
   is_active: boolean;
   sort_order: number;
+  parent_id?: number | null;
   created_at: string;
   updated_at: string;
   products?: CategoryProduct[];
+  subcategories?: Category[]; // Subcategories (children)
 }
 
 export interface CategoriesResponse {
@@ -74,9 +76,12 @@ export const getCategories = async (includeProducts: boolean = false): Promise<C
       }
 
       // Filter active categories and sort by sort_order
-      return categories
+      const activeCategories = categories
         .filter((category) => category.is_active)
         .sort((a, b) => a.sort_order - b.sort_order);
+
+      // Organize categories with subcategories
+      return organizeCategoriesWithSubcategories(activeCategories);
     }
 
     console.error('Failed to fetch categories:', response.message);
@@ -85,6 +90,45 @@ export const getCategories = async (includeProducts: boolean = false): Promise<C
     console.error('Error fetching categories:', error);
     return [];
   }
+};
+
+/**
+ * Organize categories into parent categories with their subcategories
+ */
+const organizeCategoriesWithSubcategories = (categories: Category[]): Category[] => {
+  // Separate parent categories (no parent_id or parent_id is null) and subcategories
+  const parentCategories: Category[] = [];
+  const subcategoriesMap: Map<number, Category[]> = new Map();
+
+  categories.forEach((category) => {
+    if (!category.parent_id || category.parent_id === null) {
+      // This is a parent category
+      parentCategories.push({ ...category, subcategories: [] });
+    } else {
+      // This is a subcategory
+      const parentId = category.parent_id;
+      if (!subcategoriesMap.has(parentId)) {
+        subcategoriesMap.set(parentId, []);
+      }
+      subcategoriesMap.get(parentId)!.push(category);
+    }
+  });
+
+  // Attach subcategories to their parent categories
+  parentCategories.forEach((parent) => {
+    const subcategories = subcategoriesMap.get(parent.id) || [];
+    parent.subcategories = subcategories.sort((a, b) => a.sort_order - b.sort_order);
+  });
+
+  return parentCategories;
+};
+
+/**
+ * Get categories organized with subcategories
+ * Returns only parent categories with their subcategories nested
+ */
+export const getCategoriesWithSubcategories = async (): Promise<Category[]> => {
+  return getCategories(false);
 };
 
 /**

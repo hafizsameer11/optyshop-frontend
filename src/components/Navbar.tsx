@@ -3,9 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
 import LanguageSwitcher from './LanguageSwitcher'
+import { getCategoriesWithSubcategories, type Category } from '../services/categoriesService'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
+    const [categories, setCategories] = useState<Category[]>([])
+    const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
     
     const products = [
         { label: t('products.virtualTest'), icon: '👓', path: '/virtual-test' },
@@ -133,6 +136,19 @@ const Navbar: React.FC = () => {
     const [isMobileWhoWeAreOpen, setIsMobileWhoWeAreOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
+    // Fetch categories on mount
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const fetchedCategories = await getCategoriesWithSubcategories()
+                setCategories(fetchedCategories)
+            } catch (error) {
+                console.error('Error fetching categories:', error)
+            }
+        }
+        fetchCategories()
+    }, [])
+
     // Check if current path matches link
     const isActive = (path: string) => {
         if (path === '/') {
@@ -166,7 +182,7 @@ const Navbar: React.FC = () => {
                     </span>
                 </Link>
 
-                {/* Desktop navigation - simplified shop categories */}
+                {/* Desktop navigation - dynamic categories from API */}
                 <nav className="hidden md:flex items-center justify-center flex-1 space-x-1.5 mx-4 lg:mx-6">
                     <Link
                         to="/"
@@ -178,56 +194,70 @@ const Navbar: React.FC = () => {
                     >
                         {t('navbar.home')}
                     </Link>
-                    <Link
-                        to="/shop"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                            isActive('/shop') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
-                        }`}
-                    >
-                        {t('navbar.eyeglasses')}
-                    </Link>
-                    <Link
-                        to="/shop"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                            isActive('/shop') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
-                        }`}
-                    >
-                        {t('navbar.sunglasses')}
-                    </Link>
-                    <Link
-                        to="/shop"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                            isActive('/shop') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
-                        }`}
-                    >
-                        {t('navbar.optyKids')}
-                    </Link>
-                    <Link
-                        to="/shop"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                            isActive('/shop') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
-                        }`}
-                    >
-                        {t('navbar.contactLenses')}
-                    </Link>
-                    <Link
-                        to="/shop"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                            isActive('/shop') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
-                        }`}
-                    >
-                        {t('navbar.eyeHygiene')}
-                    </Link>
+                    
+                    {/* Dynamic Categories from API */}
+                    {categories.length > 0 ? (
+                        categories.slice(0, 6).map((category) => (
+                            <div
+                                key={category.id}
+                                className="relative"
+                                onMouseEnter={() => setHoveredCategory(category.id)}
+                                onMouseLeave={() => setHoveredCategory(null)}
+                            >
+                                <Link
+                                    to={`/shop?category=${category.slug}`}
+                                    className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                        isActive('/shop') 
+                                            ? 'bg-blue-500/30 text-blue-200' 
+                                            : 'hover:bg-white/10 hover:text-blue-300'
+                                    }`}
+                                >
+                                    {category.name}
+                                </Link>
+                                
+                                {/* Subcategories Dropdown */}
+                                {category.subcategories && category.subcategories.length > 0 && hoveredCategory === category.id && (
+                                    <div className="absolute left-0 top-full mt-2 w-48 rounded-lg bg-white/95 backdrop-blur-sm shadow-xl border border-blue-500/20 py-2 z-50">
+                                        {category.subcategories.map((subcategory) => (
+                                            <Link
+                                                key={subcategory.id}
+                                                to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                onClick={() => setHoveredCategory(null)}
+                                                className="block px-4 py-2 text-xs text-slate-900 hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
+                                            >
+                                                {subcategory.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    ) : (
+                        // Fallback to default categories while loading
+                        <>
+                            <Link
+                                to="/shop"
+                                className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                    isActive('/shop') 
+                                        ? 'bg-blue-500/30 text-blue-200' 
+                                        : 'hover:bg-white/10 hover:text-blue-300'
+                                }`}
+                            >
+                                {t('navbar.eyeglasses')}
+                            </Link>
+                            <Link
+                                to="/shop"
+                                className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                    isActive('/shop') 
+                                        ? 'bg-blue-500/30 text-blue-200' 
+                                        : 'hover:bg-white/10 hover:text-blue-300'
+                                }`}
+                            >
+                                {t('navbar.sunglasses')}
+                            </Link>
+                        </>
+                    )}
+                    
                     <Link
                         to="/virtual-test"
                         className="ml-2 w-[125px] h-10 inline-flex items-center justify-center rounded-full bg-blue-500 text-white px-3 py-2 text-xs font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
@@ -293,58 +323,89 @@ const Navbar: React.FC = () => {
                         >
                             {t('navbar.home')}
                         </Link>
+                        
+                        {/* Dynamic Categories from API */}
+                        {categories.length > 0 ? (
+                            categories.map((category) => (
+                                <div key={category.id}>
+                                    {category.subcategories && category.subcategories.length > 0 ? (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    const isOpen = hoveredCategory === category.id
+                                                    setHoveredCategory(isOpen ? null : category.id)
+                                                }}
+                                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                                    isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                                }`}
+                                            >
+                                                <span>{category.name}</span>
+                                                <span className={`text-xs transition-transform ${hoveredCategory === category.id ? 'rotate-180' : ''}`}>
+                                                    ▾
+                                                </span>
+                                            </button>
+                                            {hoveredCategory === category.id && (
+                                                <div className="ml-4 mt-1 space-y-1">
+                                                    {category.subcategories.map((subcategory) => (
+                                                        <Link
+                                                            key={subcategory.id}
+                                                            to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                            onClick={() => {
+                                                                setIsMobileOpen(false)
+                                                                setHoveredCategory(null)
+                                                            }}
+                                                            className="block px-4 py-2 rounded-lg text-sm bg-white/5 hover:bg-white/10 transition-colors"
+                                                        >
+                                                            {subcategory.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Link
+                                            to={`/shop?category=${category.slug}`}
+                                            onClick={() => setIsMobileOpen(false)}
+                                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                            }`}
+                                        >
+                                            {category.name}
+                                        </Link>
+                                    )}
+                                </div>
+                            ))
+                        ) : (
+                            // Fallback while loading
+                            <>
+                                <Link
+                                    to="/shop"
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                        isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                    }`}
+                                >
+                                    {t('navbar.eyeglasses')}
+                                </Link>
+                                <Link
+                                    to="/shop"
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                        isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                    }`}
+                                >
+                                    {t('navbar.sunglasses')}
+                                </Link>
+                            </>
+                        )}
+                        
                         <Link
-                            to="/shop"
-                            onClick={() => setIsMobileOpen(false)}
-                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
-                            }`}
-                        >
-                            {t('navbar.eyeglasses')}
-                        </Link>
-                                    <Link
-                            to="/shop"
-                                        onClick={() => setIsMobileOpen(false)}
-                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
-                            }`}
-                        >
-                            {t('navbar.sunglasses')}
-                        </Link>
-                        <Link
-                            to="/shop"
-                            onClick={() => setIsMobileOpen(false)}
-                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
-                            }`}
-                        >
-                            {t('navbar.optyKids')}
-                                    </Link>
-                    <Link
-                        to="/shop"
-                        onClick={() => setIsMobileOpen(false)}
-                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
-                            }`}
-                        >
-                            {t('navbar.contactLenses')}
-                        </Link>
-                        <Link
-                            to="/shop"
-                            onClick={() => setIsMobileOpen(false)}
-                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
-                            }`}
-                        >
-                            {t('navbar.eyeHygiene')}
-                        </Link>
-                                    <Link
                             to="/virtual-test"
-                                        onClick={() => setIsMobileOpen(false)}
+                            onClick={() => setIsMobileOpen(false)}
                             className="block px-4 py-2.5 rounded-lg font-semibold bg-blue-500 hover:bg-blue-600 transition-colors text-center"
                         >
                             {t('navbar.virtualTryOn')}
-                                    </Link>
+                        </Link>
                     </div>
 
                     <div className="pt-4 border-t border-blue-500/30 space-y-3">
