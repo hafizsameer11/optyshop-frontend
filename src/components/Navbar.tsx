@@ -9,131 +9,8 @@ const Navbar: React.FC = () => {
     const { t } = useTranslation()
     const [categories, setCategories] = useState<Category[]>([])
     const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
-    
-    const products = [
-        { label: t('products.virtualTest'), icon: '👓', path: '/virtual-test' },
-        { label: t('products.digitalizedFrames'), icon: '🖼️', path: '/digital-frames' },
-        { label: t('products.opticiansInstruments'), icon: '🔧', path: '/optical-instruments' },
-        { label: t('products.3dViewer'), icon: '🌀', path: '/3d-viewer' },
-        { label: t('products.measurementOfDP'), icon: '📏', path: '/pd-measurement' },
-        { label: t('products.openInnovation'), icon: '💡', path: '/open-innovation' },
-    ]
-
-    const solutions = [
-        {
-            label: t('solutions.online'),
-            description: t('solutions.onlineDesc'),
-            gradient: 'from-orange-500 to-red-500',
-            icon: '🖱️',
-            path: '/online'
-        },
-        {
-            label: t('solutions.3dResources'),
-            description: t('solutions.3dResourcesDesc'),
-            gradient: 'from-green-500 to-blue-500',
-            icon: '💾',
-            path: '/3d-resources'
-        },
-        {
-            label: t('solutions.inStore'),
-            description: t('solutions.inStoreDesc'),
-            gradient: 'from-orange-500 to-yellow-500',
-            icon: '🏪',
-            path: '/in-store'
-        },
-        {
-            label: t('solutions.ecommerce'),
-            description: t('solutions.ecommerceDesc'),
-            gradient: 'from-orange-500 to-yellow-500',
-            icon: '🛒',
-            path: '/ecommerce'
-        },
-        {
-            label: t('solutions.pupilDistance'),
-            description: t('solutions.pupilDistanceDesc'),
-            gradient: 'from-blue-400 to-green-500',
-            icon: '👁️',
-            path: '/pupil-distance'
-        },
-        {
-            label: t('solutions.driveToStore'),
-            description: t('solutions.driveToStoreDesc'),
-            gradient: 'from-orange-500 to-yellow-500',
-            icon: '📍',
-            path: '/drive-to-store'
-        },
-    ]
-
-    const resources = [
-        {
-            label: t('resources.caseStudies'),
-            gradient: 'from-orange-500 to-orange-600',
-            icon: '📣',
-            path: '/case-studies',
-            column: 'left'
-        },
-        {
-            label: t('resources.hqPackshots'),
-            gradient: 'from-cyan-400 to-teal-500',
-            icon: '📸',
-            path: '/hq-packshots',
-            column: 'left'
-        },
-        {
-            label: t('resources.support'),
-            gradient: 'from-purple-500 via-pink-500 to-purple-600',
-            icon: '❓',
-            path: '/support',
-            column: 'left'
-        },
-        {
-            label: t('resources.guidesAndWebinars'),
-            gradient: 'from-purple-600 to-purple-700',
-            icon: '✅',
-            path: '/guides-and-webinars',
-            column: 'right'
-        },
-        {
-            label: t('resources.blog'),
-            gradient: 'from-orange-400 to-orange-500',
-            icon: '📝',
-            path: '/blog',
-            column: 'right'
-        },
-    ]
-
-    const whoWeAre = [
-        {
-            label: t('whoWeAre.ourHistory'),
-            gradient: 'from-orange-500 to-red-500',
-            icon: '✍️',
-            path: '/our-history'
-        },
-        {
-            label: t('whoWeAre.ourTechnology'),
-            gradient: 'from-blue-500 to-green-500',
-            icon: '💡',
-            path: '/our-technology'
-        },
-        {
-            label: t('whoWeAre.joinUs'),
-            gradient: 'from-purple-500 to-pink-500',
-            icon: '👥',
-            path: '/join-us'
-        },
-    ]
-
-    const navigate = useNavigate()
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
-    const [isProductsOpen, setIsProductsOpen] = useState(false)
-    const [isSolutionsOpen, setIsSolutionsOpen] = useState(false)
-    const [isResourcesOpen, setIsResourcesOpen] = useState(false)
-    const [isWhoWeAreOpen, setIsWhoWeAreOpen] = useState(false)
-    const [isMobileProductsOpen, setIsMobileProductsOpen] = useState(true)
-    const [isMobileSolutionsOpen, setIsMobileSolutionsOpen] = useState(false)
-    const [isMobileResourcesOpen, setIsMobileResourcesOpen] = useState(false)
-    const [isMobileWhoWeAreOpen, setIsMobileWhoWeAreOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
     // Fetch categories on mount
@@ -168,28 +45,34 @@ const Navbar: React.FC = () => {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' : 'bg-transparent'
-                }`}
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+                isScrolled 
+                    ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' 
+                    : 'bg-blue-950/95 backdrop-blur-md'
+            }`}
+            style={{ 
+                backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)'
+            }}
         >
             <div className="flex items-center w-[90%] max-w-7xl mx-auto py-3 md:py-4 pl-4 md:pl-6">
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0 group">
-                    <div className="h-10 w-10 border-2 border-blue-400 rounded-lg flex items-center justify-center text-xs tracking-widest bg-white/5 group-hover:bg-blue-500/20 group-hover:border-blue-300 transition-all duration-300">
-                        <span className="text-white font-bold">OS</span>
+                    <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
+                        <span className="text-white font-bold text-sm">OS</span>
                     </div>
-                    <span className="text-lg md:text-xl font-bold tracking-[0.35em] uppercase text-white group-hover:text-blue-300 transition-colors">
+                    <span className="text-lg md:text-xl font-bold tracking-[0.35em] uppercase text-white group-hover:text-cyan-200 transition-colors">
                         OPTISHOP
                     </span>
                 </Link>
 
                 {/* Desktop navigation - dynamic categories from API */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1.5 mx-4 lg:mx-6">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-2 mx-4 lg:mx-6">
                     <Link
                         to="/"
-                        className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                        className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                             isActive('/') 
-                                ? 'bg-blue-500/30 text-blue-200' 
-                                : 'hover:bg-white/10 hover:text-blue-300'
+                                ? 'bg-blue-800/50 text-blue-100' 
+                                : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                         }`}
                     >
                         {t('navbar.home')}
@@ -200,30 +83,52 @@ const Navbar: React.FC = () => {
                         categories.slice(0, 6).map((category) => (
                             <div
                                 key={category.id}
-                                className="relative"
+                                className="relative group"
                                 onMouseEnter={() => setHoveredCategory(category.id)}
                                 onMouseLeave={() => setHoveredCategory(null)}
                             >
                                 <Link
                                     to={`/shop?category=${category.slug}`}
-                                    className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                    className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                         isActive('/shop') 
-                                            ? 'bg-blue-500/30 text-blue-200' 
-                                            : 'hover:bg-white/10 hover:text-blue-300'
+                                            ? 'bg-blue-800/50 text-blue-100' 
+                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                     }`}
                                 >
                                     {category.name}
+                                    {category.subcategories && category.subcategories.length > 0 && (
+                                        <svg 
+                                            className="ml-1 w-3 h-3 transition-transform" 
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    )}
                                 </Link>
                                 
                                 {/* Subcategories Dropdown */}
                                 {category.subcategories && category.subcategories.length > 0 && hoveredCategory === category.id && (
-                                    <div className="absolute left-0 top-full mt-2 w-48 rounded-lg bg-white/95 backdrop-blur-sm shadow-xl border border-blue-500/20 py-2 z-50">
+                                    <div 
+                                        className="absolute left-0 top-full mt-2 min-w-[200px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
+                                        style={{ 
+                                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+                                        }}
+                                    >
+                                        <div className="px-2 py-1 border-b border-gray-100">
+                                            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                                                {category.name}
+                                            </span>
+                                        </div>
                                         {category.subcategories.map((subcategory) => (
                                             <Link
                                                 key={subcategory.id}
                                                 to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
                                                 onClick={() => setHoveredCategory(null)}
-                                                className="block px-4 py-2 text-xs text-slate-900 hover:bg-blue-500/10 hover:text-blue-600 transition-colors"
+                                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.1)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
                                             >
                                                 {subcategory.name}
                                             </Link>
@@ -237,20 +142,20 @@ const Navbar: React.FC = () => {
                         <>
                             <Link
                                 to="/shop"
-                                className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                     isActive('/shop') 
-                                        ? 'bg-blue-500/30 text-blue-200' 
-                                        : 'hover:bg-white/10 hover:text-blue-300'
+                                        ? 'bg-blue-800/50 text-blue-100' 
+                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                 }`}
                             >
                                 {t('navbar.eyeglasses')}
                             </Link>
                             <Link
                                 to="/shop"
-                                className={`w-[85px] h-10 px-2 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                     isActive('/shop') 
-                                        ? 'bg-blue-500/30 text-blue-200' 
-                                        : 'hover:bg-white/10 hover:text-blue-300'
+                                        ? 'bg-blue-800/50 text-blue-100' 
+                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                 }`}
                             >
                                 {t('navbar.sunglasses')}
@@ -260,7 +165,7 @@ const Navbar: React.FC = () => {
                     
                     <Link
                         to="/virtual-test"
-                        className="ml-2 w-[125px] h-10 inline-flex items-center justify-center rounded-full bg-blue-500 text-white px-3 py-2 text-xs font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="ml-2 min-w-[125px] h-10 inline-flex items-center justify-center rounded-full bg-cyan-500 text-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-cyan-400 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.virtualTryOn')}
                     </Link>
@@ -275,7 +180,7 @@ const Navbar: React.FC = () => {
                     
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-10 w-10 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-all duration-200 cursor-pointer"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-10 w-10 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -297,7 +202,7 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.login')}
                     </Link>
@@ -311,14 +216,14 @@ const Navbar: React.FC = () => {
 
             {/* Mobile menu */}
             {isMobileOpen && (
-                <div className="mt-2 md:hidden rounded-2xl bg-blue-950/98 backdrop-blur-xl border border-blue-500/30 shadow-2xl mx-4 mb-4 px-5 py-6 space-y-3 text-sm text-white">
+                <div className="mt-2 md:hidden rounded-2xl bg-blue-950/98 backdrop-blur-xl border border-cyan-400/30 shadow-2xl mx-4 mb-4 px-5 py-6 space-y-3 text-sm text-white">
                     {/* Shop Categories */}
                     <div className="space-y-2">
                         <Link
                             to="/"
                             onClick={() => setIsMobileOpen(false)}
                             className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                isActive('/') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                isActive('/') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                             }`}
                         >
                             {t('navbar.home')}
@@ -336,16 +241,26 @@ const Navbar: React.FC = () => {
                                                     setHoveredCategory(isOpen ? null : category.id)
                                                 }}
                                                 className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                                    isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                                    isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                                 }`}
                                             >
                                                 <span>{category.name}</span>
-                                                <span className={`text-xs transition-transform ${hoveredCategory === category.id ? 'rotate-180' : ''}`}>
-                                                    ▾
-                                                </span>
+                                                <svg 
+                                                    className={`w-4 h-4 transition-transform duration-200 ${hoveredCategory === category.id ? 'rotate-180' : ''}`}
+                                                    fill="none" 
+                                                    stroke="currentColor" 
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
                                             </button>
                                             {hoveredCategory === category.id && (
-                                                <div className="ml-4 mt-1 space-y-1">
+                                                <div className="ml-4 mt-1 space-y-1 bg-blue-900/30 rounded-lg p-2">
+                                                    <div className="px-2 py-1 border-b border-blue-700/50 mb-1">
+                                                        <span className="text-xs font-semibold text-cyan-200 uppercase tracking-wide">
+                                                            {category.name}
+                                                        </span>
+                                                    </div>
                                                     {category.subcategories.map((subcategory) => (
                                                         <Link
                                                             key={subcategory.id}
@@ -354,7 +269,7 @@ const Navbar: React.FC = () => {
                                                                 setIsMobileOpen(false)
                                                                 setHoveredCategory(null)
                                                             }}
-                                                            className="block px-4 py-2 rounded-lg text-sm bg-white/5 hover:bg-white/10 transition-colors"
+                                                            className="block px-4 py-2 rounded-lg text-sm bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150"
                                                         >
                                                             {subcategory.name}
                                                         </Link>
@@ -367,7 +282,7 @@ const Navbar: React.FC = () => {
                                             to={`/shop?category=${category.slug}`}
                                             onClick={() => setIsMobileOpen(false)}
                                             className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                                isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                             }`}
                                         >
                                             {category.name}
@@ -382,7 +297,7 @@ const Navbar: React.FC = () => {
                                     to="/shop"
                                     onClick={() => setIsMobileOpen(false)}
                                     className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                        isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                        isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                     }`}
                                 >
                                     {t('navbar.eyeglasses')}
@@ -391,7 +306,7 @@ const Navbar: React.FC = () => {
                                     to="/shop"
                                     onClick={() => setIsMobileOpen(false)}
                                     className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                        isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                                        isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                     }`}
                                 >
                                     {t('navbar.sunglasses')}
@@ -402,13 +317,13 @@ const Navbar: React.FC = () => {
                         <Link
                             to="/virtual-test"
                             onClick={() => setIsMobileOpen(false)}
-                            className="block px-4 py-2.5 rounded-lg font-semibold bg-blue-500 hover:bg-blue-600 transition-colors text-center"
+                            className="block px-4 py-2.5 rounded-lg font-semibold bg-cyan-500 hover:bg-cyan-400 transition-colors text-center shadow-lg"
                         >
                             {t('navbar.virtualTryOn')}
                         </Link>
                     </div>
 
-                    <div className="pt-4 border-t border-blue-500/30 space-y-3">
+                    <div className="pt-4 border-t border-cyan-400/30 space-y-3">
                         <div className="flex justify-center">
                             <LanguageSwitcher variant="navbar" />
                         </div>
@@ -417,7 +332,7 @@ const Navbar: React.FC = () => {
                             onClick={() => {
                                 setIsMobileOpen(false)
                             }}
-                            className="w-full rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
+                            className="w-full rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
                         >
                             {t('navbar.login')}
                         </Link>

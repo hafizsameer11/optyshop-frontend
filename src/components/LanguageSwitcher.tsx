@@ -91,7 +91,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center gap-1.5 h-10 min-w-[80px] px-3 py-2 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-colors text-white whitespace-nowrap"
+        className="flex items-center justify-center gap-1.5 h-10 min-w-[80px] px-3 py-2 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-colors text-white whitespace-nowrap"
         aria-label="Change language"
       >
         <span className="text-base leading-none">{currentLanguage.flag}</span>
@@ -112,13 +112,18 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-blue-500/20 z-50 py-2">
+          <div 
+            className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-2xl border border-blue-200/50 z-50 py-2"
+            style={{ 
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+            }}
+          >
             {languages.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => changeLanguage(lang.code)}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-blue-500/10 transition-colors rounded-lg mx-1 ${
-                  i18n.language === lang.code ? 'bg-blue-500/20 text-blue-600' : 'text-slate-900'
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-blue-50 transition-colors rounded-lg mx-1 ${
+                  i18n.language === lang.code ? 'bg-blue-100 text-blue-600' : 'text-slate-700'
                 }`}
               >
                 <span className="text-xl">{lang.flag}</span>
