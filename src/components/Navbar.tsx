@@ -133,6 +133,14 @@ const Navbar: React.FC = () => {
     const [isMobileWhoWeAreOpen, setIsMobileWhoWeAreOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
 
+    // Check if current path matches link
+    const isActive = (path: string) => {
+        if (path === '/') {
+            return location.pathname === '/'
+        }
+        return location.pathname.startsWith(path)
+    }
+
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20)
@@ -144,87 +152,123 @@ const Navbar: React.FC = () => {
 
     return (
         <header
-            className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${isScrolled ? 'bg-blue-950/95 backdrop-blur-xl shadow-lg border-b border-white/5' : 'bg-transparent'
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' : 'bg-transparent'
                 }`}
         >
-            <div className="flex items-center w-[90%] max-w-7xl mx-auto py-4 md:py-5">
+            <div className="flex items-center justify-between w-[90%] max-w-7xl mx-auto py-3 md:py-4">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-2 flex-shrink-0">
-                    <div className="h-9 text-white w-9 border-2 border-blue-400 rounded-md flex items-center justify-center text-xs tracking-widest bg-white/5">
-                        OS
+                <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0 group">
+                    <div className="h-10 w-10 border-2 border-blue-400 rounded-lg flex items-center justify-center text-xs tracking-widest bg-white/5 group-hover:bg-blue-500/20 group-hover:border-blue-300 transition-all duration-300">
+                        <span className="text-white font-bold">OS</span>
                     </div>
-                    <span className="text-base md:text-lg font-bold tracking-[0.35em] uppercase text-white">
-                        OptiShop
+                    <span className="text-lg md:text-xl font-bold tracking-[0.35em] uppercase text-white group-hover:text-blue-300 transition-colors">
+                        OPTISHOP
                     </span>
                 </Link>
 
                 {/* Desktop navigation - simplified shop categories */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-6 lg:space-x-8 text-xs md:text-sm font-semibold text-white">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1 mx-4 lg:mx-8">
                     <Link
                         to="/"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Home
+                        {t('navbar.home')}
                     </Link>
                     <Link
                         to="/shop"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/shop') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Eyeglasses
+                        {t('navbar.eyeglasses')}
                     </Link>
                     <Link
                         to="/shop"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/shop') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Sunglasses
+                        {t('navbar.sunglasses')}
                     </Link>
                     <Link
                         to="/shop"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/shop') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Opty Kids
+                        <span className="block leading-tight">
+                            <span>{t('navbar.optyKidsLine1')}</span>
+                            <span className="block text-xs">{t('navbar.optyKidsLine2')}</span>
+                        </span>
                     </Link>
                     <Link
                         to="/shop"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/shop') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Contact Lenses
+                        <span className="block leading-tight">
+                            <span>{t('navbar.contactLensesLine1')}</span>
+                            <span className="block text-xs">{t('navbar.contactLensesLine2')}</span>
+                        </span>
                     </Link>
                     <Link
                         to="/shop"
-                        className="pb-1 border-b-2 border-transparent hover:border-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium text-white transition-all duration-200 ${
+                            isActive('/shop') 
+                                ? 'bg-blue-500/30 text-blue-200' 
+                                : 'hover:bg-white/10 hover:text-blue-300'
+                        }`}
                     >
-                        Eye Hygiene
+                        <span className="block leading-tight">
+                            <span>{t('navbar.eyeHygieneLine1')}</span>
+                            <span className="block text-xs">{t('navbar.eyeHygieneLine2')}</span>
+                        </span>
                     </Link>
                     <Link
                         to="/virtual-test"
-                        className="ml-2 inline-flex items-center rounded-full bg-blue-500 text-white px-4 lg:px-5 py-1.5 text-sm font-semibold shadow-lg hover:bg-blue-600 transition-colors cursor-pointer whitespace-nowrap"
+                        className="ml-3 inline-flex items-center rounded-full bg-blue-500 text-white px-5 py-2.5 text-sm font-semibold shadow-lg hover:bg-blue-600 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
-                        Virtual Try On
+                        {t('navbar.virtualTryOn')}
                     </Link>
                 </nav>
 
                 {/* Right side actions */}
                 <div className="flex items-center space-x-2 md:space-x-3 flex-shrink-0">
                     {/* Language Switcher */}
-                    <LanguageSwitcher variant="navbar" />
+                    <div className="hidden md:block">
+                        <LanguageSwitcher variant="navbar" />
+                    </div>
+                    
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-9 w-9 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-colors cursor-pointer"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-10 w-10 rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 transition-all duration-200 cursor-pointer"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
                         {/* Hamburger / close icon */}
                         <span
-                            className={`block w-4 h-[1.5px] bg-white rounded-sm transition-transform duration-200 ${isMobileOpen ? 'rotate-45 translate-y-[3px]' : ''
+                            className={`block w-4 h-[1.5px] bg-white rounded-sm transition-all duration-300 ${isMobileOpen ? 'rotate-45 translate-y-[3px]' : ''
                                 }`}
                         />
                         <span
-                            className={`block w-4 h-[1.5px] bg-white rounded-sm my-[3px] transition-opacity duration-200 ${isMobileOpen ? 'opacity-0' : 'opacity-100'
+                            className={`block w-4 h-[1.5px] bg-white rounded-sm my-[3px] transition-opacity duration-300 ${isMobileOpen ? 'opacity-0' : 'opacity-100'
                                 }`}
                         />
                         <span
-                            className={`block w-4 h-[1.5px] bg-white rounded-sm transition-transform duration-200 ${isMobileOpen ? '-rotate-45 -translate-y-[3px]' : ''
+                            className={`block w-4 h-[1.5px] bg-white rounded-sm transition-all duration-300 ${isMobileOpen ? '-rotate-45 -translate-y-[3px]' : ''
                                 }`}
                         />
                     </button>
@@ -232,7 +276,7 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center rounded-full border border-blue-400 px-4 lg:px-5 py-2 text-xs md:text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer whitespace-nowrap"
+                        className="hidden md:inline-flex items-center rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-4 lg:px-5 py-2 text-xs md:text-sm font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
                     >
                         {t('navbar.login')}
                     </Link>
@@ -246,164 +290,74 @@ const Navbar: React.FC = () => {
 
             {/* Mobile menu */}
             {isMobileOpen && (
-                <div className="mt-4 md:hidden rounded-3xl bg-slate-950/90 border border-blue-500/40 px-5 py-4 space-y-4 text-sm text-white">
-                    {/* Products section with items */}
-                    <div>
-                        <button
-                            className="flex w-full items-center justify-between font-semibold cursor-pointer"
-                            onClick={() => setIsMobileProductsOpen((prev) => !prev)}
+                <div className="mt-2 md:hidden rounded-2xl bg-blue-950/98 backdrop-blur-xl border border-blue-500/30 shadow-2xl mx-4 mb-4 px-5 py-6 space-y-3 text-sm text-white">
+                    {/* Shop Categories */}
+                    <div className="space-y-2">
+                        <Link
+                            to="/"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
                         >
-                            <span>{t('navbar.products')}</span>
-                            <span
-                                className={`text-xs transition-transform ${isMobileProductsOpen ? 'rotate-180' : ''
-                                    }`}
-                            >
-                                ▾
-                            </span>
-                        </button>
-                        {isMobileProductsOpen && (
-                            <div className="mt-3 grid grid-cols-1 gap-3">
-                                {products.map((item) => (
-                                    <Link
-                                        key={item.label}
-                                        to={item.path}
-                                        onClick={() => setIsMobileOpen(false)}
-                                        className="flex items-center gap-3 text-left rounded-2xl bg-white/5 px-3 py-2 hover:bg-white/10 transition-colors"
-                                    >
-                                        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 flex items-center justify-center text-sm text-white">
-                                            <span>{item.icon}</span>
-                                        </div>
-                                        <span className="text-xs font-semibold uppercase tracking-wide">
-                                            {item.label}
-                                        </span>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
+                            {t('navbar.home')}
+                        </Link>
+                        <Link
+                            to="/shop"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
+                        >
+                            {t('navbar.eyeglasses')}
+                        </Link>
+                        <Link
+                            to="/shop"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
+                        >
+                            {t('navbar.sunglasses')}
+                        </Link>
+                        <Link
+                            to="/shop"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
+                        >
+                            {t('navbar.optyKids')}
+                        </Link>
+                        <Link
+                            to="/shop"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
+                        >
+                            {t('navbar.contactLenses')}
+                        </Link>
+                        <Link
+                            to="/shop"
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isActive('/shop') ? 'bg-blue-500/30 text-blue-200' : 'hover:bg-white/10'
+                            }`}
+                        >
+                            {t('navbar.eyeHygiene')}
+                        </Link>
+                        <Link
+                            to="/virtual-test"
+                            onClick={() => setIsMobileOpen(false)}
+                            className="block px-4 py-2.5 rounded-lg font-semibold bg-blue-500 hover:bg-blue-600 transition-colors text-center"
+                        >
+                            {t('navbar.virtualTryOn')}
+                        </Link>
                     </div>
 
-                    {/* Solutions section with items */}
-                    <div>
-                        <button
-                            className="flex w-full items-center justify-between font-semibold cursor-pointer"
-                            onClick={() => setIsMobileSolutionsOpen((prev) => !prev)}
-                        >
-                            <span>{t('navbar.solutions')}</span>
-                            <span
-                                className={`text-xs transition-transform ${isMobileSolutionsOpen ? 'rotate-180' : ''
-                                    }`}
-                            >
-                                ▾
-                            </span>
-                        </button>
-                        {isMobileSolutionsOpen && (
-                            <div className="mt-3 grid grid-cols-1 gap-3">
-                                {solutions.map((item) => (
-                                    <Link
-                                        key={item.label}
-                                        to={item.path}
-                                        onClick={() => setIsMobileOpen(false)}
-                                        className="flex items-start gap-3 text-left rounded-2xl bg-white/5 px-3 py-2 hover:bg-white/10 transition-colors"
-                                    >
-                                        <div className={`h-9 w-9 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-sm text-white flex-shrink-0`}>
-                                            <span>{item.icon}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xs font-semibold uppercase tracking-wide">
-                                                {item.label}
-                                            </span>
-                                            <span className="text-xs text-slate-400 mt-0.5">
-                                                {item.description}
-                                            </span>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    {/* Shop Link */}
-                    <Link
-                        to="/shop"
-                        onClick={() => setIsMobileOpen(false)}
-                        className="flex items-center gap-3 rounded-2xl bg-white/5 px-3 py-2 hover:bg-white/10 transition-colors font-semibold cursor-pointer"
-                    >
-                        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-sm text-white">
-                            <span>🛍️</span>
-                        </div>
-                        <span>{t('navbar.shop')}</span>
-                    </Link>
-
-                    {/* Resources section with items */}
-                    <div>
-                        <button
-                            className="flex w-full items-center justify-between font-semibold cursor-pointer"
-                            onClick={() => setIsMobileResourcesOpen((prev) => !prev)}
-                        >
-                            <span>{t('navbar.resources')}</span>
-                            <span
-                                className={`text-xs transition-transform ${isMobileResourcesOpen ? 'rotate-180' : ''
-                                    }`}
-                            >
-                                ▾
-                            </span>
-                        </button>
-                        {isMobileResourcesOpen && (
-                            <div className="mt-3 grid grid-cols-1 gap-3">
-                                {resources.map((item) => (
-                                    <Link
-                                        key={item.label}
-                                        to={item.path}
-                                        onClick={() => setIsMobileOpen(false)}
-                                        className="flex items-center gap-3 text-left rounded-2xl bg-white/5 px-3 py-2 hover:bg-white/10 transition-colors"
-                                    >
-                                        <div className={`h-9 w-9 rounded-2xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-sm text-white flex-shrink-0`}>
-                                            <span>{item.icon}</span>
-                                        </div>
-                                        <span className="text-xs font-semibold uppercase tracking-wide">
-                                            {item.label}
-                                        </span>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    {/* Who We Are section with items */}
-                    <div>
-                        <button
-                            className="flex w-full items-center justify-between font-semibold cursor-pointer"
-                            onClick={() => setIsMobileWhoWeAreOpen((prev) => !prev)}
-                        >
-                            <span>{t('navbar.whoWeAre')}</span>
-                            <span
-                                className={`text-xs transition-transform ${isMobileWhoWeAreOpen ? 'rotate-180' : ''
-                                    }`}
-                            >
-                                ▾
-                            </span>
-                        </button>
-                        {isMobileWhoWeAreOpen && (
-                            <div className="mt-3 grid grid-cols-1 gap-3">
-                                {whoWeAre.map((item) => (
-                                    <Link
-                                        key={item.label}
-                                        to={item.path}
-                                        onClick={() => setIsMobileOpen(false)}
-                                        className="flex items-center gap-3 text-left rounded-2xl bg-white/5 px-3 py-2 hover:bg-white/10 transition-colors"
-                                    >
-                                        <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-sm text-white flex-shrink-0`}>
-                                            <span>{item.icon}</span>
-                                        </div>
-                                        <span className="text-xs font-semibold uppercase tracking-wide">
-                                            {item.label}
-                                        </span>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="pt-2 space-y-3">
-                        <div className="flex justify-center pb-2">
+                    <div className="pt-4 border-t border-blue-500/30 space-y-3">
+                        <div className="flex justify-center">
                             <LanguageSwitcher variant="navbar" />
                         </div>
                         <Link
@@ -411,11 +365,11 @@ const Navbar: React.FC = () => {
                             onClick={() => {
                                 setIsMobileOpen(false)
                             }}
-                            className="w-full rounded-full border border-blue-400 px-5 py-2 text-sm font-semibold text-blue-100 hover:bg-blue-500/10 transition-colors cursor-pointer text-center block"
+                            className="w-full rounded-full border border-blue-400 bg-white/5 hover:bg-blue-500/20 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
                         >
                             {t('navbar.login')}
                         </Link>
-                        <div className="flex justify-center pt-2">
+                        <div className="flex justify-center">
                             <CartIcon />
                         </div>
                     </div>

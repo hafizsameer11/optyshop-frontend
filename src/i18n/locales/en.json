@@ -267,6 +267,19 @@
     "cartItems": "Cart Items"
   },
   "navbar": {
+    "home": "Home",
+    "eyeglasses": "Eyeglasses",
+    "sunglasses": "Sunglasses",
+    "optyKids": "Opty Kids",
+    "optyKidsLine1": "Opty",
+    "optyKidsLine2": "Kids",
+    "contactLenses": "Contact Lenses",
+    "contactLensesLine1": "Contact",
+    "contactLensesLine2": "Lenses",
+    "eyeHygiene": "Eye Hygiene",
+    "eyeHygieneLine1": "Eye",
+    "eyeHygieneLine2": "Hygiene",
+    "virtualTryOn": "Virtual Try On",
     "products": "Products",
     "solutions": "Solutions",
     "resources": "Resources",
@@ -276,37 +289,67 @@
     "getDemo": "Get a demo"
   },
   "products": {
-    "virtualTest": "Virtual test",
-    "digitalizedFrames": "Digitalized frames",
-    "opticiansInstruments": "Opticians' instruments",
-    "3dViewer": "3D viewer",
-    "measurementOfDP": "Measurement of DP",
-    "openInnovation": "Open innovation"
+    "virtualTest": "Virtual Test",
+    "digitalizedFrames": "Digital Frames",
+    "opticiansInstruments": "Optical Instruments",
+    "3dViewer": "3D Viewer",
+    "measurementOfDP": "PD Measurement",
+    "openInnovation": "Open Innovation"
   },
   "solutions": {
-    "online": "ONLINE",
+    "online": "Online",
     "onlineDesc": "enrich my user experience",
-    "3dResources": "3D RESOURCES",
+    "3dResources": "3D Resources",
     "3dResourcesDesc": "Digitize my products",
-    "inStore": "IN STORE",
+    "inStore": "In Store",
     "inStoreDesc": "enrich my consumer experience",
-    "ecommerce": "E-COMMERCE",
+    "ecommerce": "Ecommerce",
     "ecommerceDesc": "Increase my conversion rate",
-    "pupilDistance": "PUPIL DISTANCE",
+    "pupilDistance": "Pupil Distance",
     "pupilDistanceDesc": "Get accurate results online",
-    "driveToStore": "DRIVE-TO-STORE",
-    "driveToStoreDesc": "driving traffic to my stores"
+    "driveToStore": "Drive to Store",
+    "driveToStoreDesc": "driving traffic to my stores",
+    "webinar": "Webinar"
   },
   "resources": {
-    "caseStudies": "CASE STUDIES",
-    "hqPackshots": "HQ PACKSHOTS",
-    "support": "SUPPORT",
-    "guidesAndWebinars": "GUIDES AND WEBINARS",
-    "blog": "BLOG"
+    "caseStudies": "Case Studies",
+    "hqPackshots": "HQ Packshots",
+    "support": "Support",
+    "guidesAndWebinars": "Guides & Webinars",
+    "blog": "Blog",
+    "helpCenter": "Help Center"
   },
   "whoWeAre": {
-    "ourHistory": "OUR HISTORY",
-    "ourTechnology": "OUR TECHNOLOGY",
-    "joinUs": "JOIN US"
+    "ourHistory": "Our History",
+    "ourTechnology": "Our Technology",
+    "joinUs": "Join Us",
+    "jobOpportunities": "Job Opportunities"
+  },
+  "footer": {
+    "tagline": "The Digital Eyewear Company®",
+    "usefulLinks": "Useful links",
+    "customerService": "Customer Service",
+    "helpCenter": "Help Center (English)",
+    "faq": "FAQ",
+    "siteMap": "Site map",
+    "generalTerms": "General terms",
+    "corporate": "Corporate",
+    "whoWeAre": "Who we are",
+    "ourTechnology": "Our technology",
+    "joinUs": "join us",
+    "followUs": "Follow us",
+    "contactUs": "Contact Us",
+    "copyright": "© OptiShop 2025",
+    "termsOfUse": "Terms of use",
+    "privacyLegal": "Privacy & Legal",
+    "products": "Products",
+    "solutions": "Solutions",
+    "resources": "Resources",
+    "companyAndShop": "Company & Shop",
+    "shop": "Shop",
+    "cart": "Cart",
+    "contact": "Contact",
+    "login": "Login",
+    "register": "Register"
   }
 }

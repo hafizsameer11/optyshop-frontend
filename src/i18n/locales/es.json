@@ -28,6 +28,19 @@
     "cartItems": "Artículos en el Carrito"
   },
   "navbar": {
+    "home": "Inicio",
+    "eyeglasses": "Gafas",
+    "sunglasses": "Gafas de sol",
+    "optyKids": "Opty Kids",
+    "optyKidsLine1": "Opty",
+    "optyKidsLine2": "Kids",
+    "contactLenses": "Lentes de contacto",
+    "contactLensesLine1": "Lentes de",
+    "contactLensesLine2": "contacto",
+    "eyeHygiene": "Higiene ocular",
+    "eyeHygieneLine1": "Higiene",
+    "eyeHygieneLine2": "ocular",
+    "virtualTryOn": "Probar virtualmente",
     "products": "Productos",
     "solutions": "Soluciones",
     "resources": "Recursos",
@@ -37,38 +50,67 @@
     "getDemo": "Obtener demostración"
   },
   "products": {
-    "virtualTest": "Prueba virtual",
-    "digitalizedFrames": "Marcos digitalizados",
-    "opticiansInstruments": "Instrumentos de ópticos",
+    "virtualTest": "Prueba Virtual",
+    "digitalizedFrames": "Marcos Digitales",
+    "opticiansInstruments": "Instrumentos Ópticos",
     "3dViewer": "Visor 3D",
     "measurementOfDP": "Medición de DP",
-    "openInnovation": "Innovación abierta"
+    "openInnovation": "Innovación Abierta"
   },
   "solutions": {
-    "online": "EN LÍNEA",
+    "online": "En Línea",
     "onlineDesc": "enriquecer mi experiencia de usuario",
-    "3dResources": "RECURSOS 3D",
+    "3dResources": "Recursos 3D",
     "3dResourcesDesc": "Digitalizar mis productos",
-    "inStore": "EN TIENDA",
+    "inStore": "En Tienda",
     "inStoreDesc": "enriquecer la experiencia de mi consumidor",
-    "ecommerce": "COMERCIO ELECTRÓNICO",
+    "ecommerce": "Comercio Electrónico",
     "ecommerceDesc": "Aumentar mi tasa de conversión",
-    "pupilDistance": "DISTANCIA PUPILAR",
+    "pupilDistance": "Distancia Pupilar",
     "pupilDistanceDesc": "Obtener resultados precisos en línea",
-    "driveToStore": "CONDUCIR A LA TIENDA",
-    "driveToStoreDesc": "dirigiendo tráfico a mis tiendas"
+    "driveToStore": "Conducir a la Tienda",
+    "driveToStoreDesc": "dirigiendo tráfico a mis tiendas",
+    "webinar": "Webinar"
   },
   "resources": {
-    "caseStudies": "ESTUDIOS DE CASO",
-    "hqPackshots": "PACKSHOTS HQ",
-    "support": "SOPORTE",
-    "guidesAndWebinars": "GUÍAS Y WEBINARIOS",
-    "blog": "BLOG"
+    "caseStudies": "Estudios de Caso",
+    "hqPackshots": "Packshots HQ",
+    "support": "Soporte",
+    "guidesAndWebinars": "Guías y Webinarios",
+    "blog": "Blog",
+    "helpCenter": "Centro de Ayuda"
   },
   "whoWeAre": {
-    "ourHistory": "NUESTRA HISTORIA",
-    "ourTechnology": "NUESTRA TECNOLOGÍA",
-    "joinUs": "ÚNETE A NOSOTROS"
+    "ourHistory": "Nuestra Historia",
+    "ourTechnology": "Nuestra Tecnología",
+    "joinUs": "Únete a Nosotros",
+    "jobOpportunities": "Oportunidades de Trabajo"
+  },
+  "footer": {
+    "tagline": "La Compañía de Gafas Digitales®",
+    "usefulLinks": "Enlaces útiles",
+    "customerService": "Servicio al Cliente",
+    "helpCenter": "Centro de Ayuda (Español)",
+    "faq": "Preguntas Frecuentes",
+    "siteMap": "Mapa del sitio",
+    "generalTerms": "Términos generales",
+    "corporate": "Corporativo",
+    "whoWeAre": "Quiénes somos",
+    "ourTechnology": "Nuestra tecnología",
+    "joinUs": "Únete a nosotros",
+    "followUs": "Síguenos",
+    "contactUs": "Contáctanos",
+    "copyright": "© OptiShop 2025",
+    "termsOfUse": "Términos de uso",
+    "privacyLegal": "Privacidad y Legal",
+    "products": "Productos",
+    "solutions": "Soluciones",
+    "resources": "Recursos",
+    "companyAndShop": "Empresa y Tienda",
+    "shop": "Tienda",
+    "cart": "Carrito",
+    "contact": "Contacto",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
   }
 }
-
