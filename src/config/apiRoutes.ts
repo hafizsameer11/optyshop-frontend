@@ -60,6 +60,8 @@ export const API_ROUTES = {
       params.append('limit', String(limit));
       return `/subcategories?${params.toString()}`;
     },
+    BY_CATEGORY: (categoryId: number | string) => `/subcategories/by-category/${categoryId}`, // PUBLIC
+    BY_ID: (id: number | string) => `/subcategories/${id}`, // PUBLIC
   },
 
   // ============================================

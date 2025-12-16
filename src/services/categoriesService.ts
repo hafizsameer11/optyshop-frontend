@@ -53,6 +53,16 @@ export interface SubcategoriesResponse {
   };
 }
 
+export interface SubcategoryResponse {
+  success: boolean;
+  message: string;
+  data: {
+    subcategory: Category & {
+      category?: Category;
+    };
+  };
+}
+
 /**
  * Get all categories
  * @param includeProducts - If true, include products in each category
@@ -206,17 +216,14 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
 
 /**
  * Get subcategories by category ID
+ * Uses the new /api/subcategories/by-category/{categoryId} endpoint
  * @param categoryId - The ID of the parent category
- * @param page - Page number (default: 1)
- * @param limit - Items per page (default: 50)
  */
 export const getSubcategoriesByCategoryId = async (
-  categoryId: number | string,
-  page: number = 1,
-  limit: number = 50
+  categoryId: number | string
 ): Promise<Category[]> => {
   try {
-    const endpoint = API_ROUTES.SUBCATEGORIES.LIST(categoryId, page, limit);
+    const endpoint = API_ROUTES.SUBCATEGORIES.BY_CATEGORY(categoryId);
     const response = await apiClient.get<SubcategoriesResponse>(
       endpoint,
       false // PUBLIC endpoint
@@ -248,6 +255,37 @@ export const getSubcategoriesByCategoryId = async (
   } catch (error) {
     console.error('Error fetching subcategories:', error);
     return [];
+  }
+};
+
+/**
+ * Get subcategory by ID
+ * @param id - The ID of the subcategory
+ */
+export const getSubcategoryById = async (id: number | string): Promise<Category | null> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.BY_ID(id);
+    const response = await apiClient.get<SubcategoryResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      if ('subcategory' in response.data) {
+        return response.data.subcategory;
+      } else if ('data' in response.data && 'subcategory' in (response.data as any).data) {
+        return (response.data as any).data.subcategory;
+      } else if ('id' in response.data) {
+        return response.data as Category;
+      }
+    }
+
+    console.error('Failed to fetch subcategory:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching subcategory:', error);
+    return null;
   }
 };
 
