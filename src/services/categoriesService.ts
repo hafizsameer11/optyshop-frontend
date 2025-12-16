@@ -38,6 +38,21 @@ export interface CategoryResponse {
   category: Category;
 }
 
+export interface SubcategoriesResponse {
+  success: boolean;
+  message: string;
+  data: {
+    subcategories: Category[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+    category?: Category;
+  };
+}
+
 /**
  * Get all categories
  * @param includeProducts - If true, include products in each category
@@ -186,6 +201,53 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
   } catch (error) {
     console.error('Error fetching category:', error);
     return null;
+  }
+};
+
+/**
+ * Get subcategories by category ID
+ * @param categoryId - The ID of the parent category
+ * @param page - Page number (default: 1)
+ * @param limit - Items per page (default: 50)
+ */
+export const getSubcategoriesByCategoryId = async (
+  categoryId: number | string,
+  page: number = 1,
+  limit: number = 50
+): Promise<Category[]> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.LIST(categoryId, page, limit);
+    const response = await apiClient.get<SubcategoriesResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let subcategories: Category[] = [];
+      
+      if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
+        subcategories = response.data.subcategories;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (innerData && 'subcategories' in innerData && Array.isArray(innerData.subcategories)) {
+          subcategories = innerData.subcategories;
+        } else if (Array.isArray(innerData)) {
+          subcategories = innerData;
+        }
+      }
+
+      // Filter active subcategories and sort by sort_order
+      return subcategories
+        .filter((subcategory) => subcategory.is_active)
+        .sort((a, b) => a.sort_order - b.sort_order);
+    }
+
+    console.error('Failed to fetch subcategories:', response.message);
+    return [];
+  } catch (error) {
+    console.error('Error fetching subcategories:', error);
+    return [];
   }
 };
 

@@ -3,12 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
 import LanguageSwitcher from './LanguageSwitcher'
-import { getCategoriesWithSubcategories, type Category } from '../services/categoriesService'
+import { getCategoriesWithSubcategories, getSubcategoriesByCategoryId, type Category } from '../services/categoriesService'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
     const [categories, setCategories] = useState<Category[]>([])
     const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
+    const [categorySubcategories, setCategorySubcategories] = useState<Map<number, Category[]>>(new Map())
+    const [loadingSubcategories, setLoadingSubcategories] = useState<Set<number>>(new Set())
     const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -26,6 +28,33 @@ const Navbar: React.FC = () => {
         }
         fetchCategories()
     }, [])
+
+    // Fetch subcategories when hovering over a category
+    const fetchSubcategories = async (categoryId: number) => {
+        // If already loaded, don't fetch again
+        if (categorySubcategories.has(categoryId) || loadingSubcategories.has(categoryId)) {
+            return
+        }
+
+        setLoadingSubcategories(prev => new Set(prev).add(categoryId))
+        
+        try {
+            const subcategories = await getSubcategoriesByCategoryId(categoryId)
+            setCategorySubcategories(prev => {
+                const newMap = new Map(prev)
+                newMap.set(categoryId, subcategories)
+                return newMap
+            })
+        } catch (error) {
+            console.error(`Error fetching subcategories for category ${categoryId}:`, error)
+        } finally {
+            setLoadingSubcategories(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(categoryId)
+                return newSet
+            })
+        }
+    }
 
     // Check if current path matches link
     const isActive = (path: string) => {
@@ -55,7 +84,7 @@ const Navbar: React.FC = () => {
                 isScrolled 
                     ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' 
                     : 'bg-blue-950/95 backdrop-blur-md'
-            }`}
+                }`}
             style={{ 
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)'
             }}
@@ -96,6 +125,8 @@ const Navbar: React.FC = () => {
                                         dropdownTimeoutRef.current = null
                                     }
                                     setHoveredCategory(category.id)
+                                    // Fetch subcategories when hovering
+                                    fetchSubcategories(category.id)
                                 }}
                                 onMouseLeave={() => {
                                     dropdownTimeoutRef.current = setTimeout(() => {
@@ -112,57 +143,75 @@ const Navbar: React.FC = () => {
                                     }`}
                                 >
                                     {category.name}
-                                    {category.subcategories && category.subcategories.length > 0 && (
-                                        <svg 
-                                            className="ml-1 w-3 h-3 transition-transform" 
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    )}
+                                    <svg 
+                                        className="ml-1 w-3 h-3 transition-transform" 
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
                                 </Link>
                                 
                                 {/* Subcategories Dropdown */}
-                                {category.subcategories && category.subcategories.length > 0 && hoveredCategory === category.id && (
-                                    <div 
-                                        className="absolute left-0 top-full mt-2 min-w-[220px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
-                                        style={{ 
-                                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
-                                        }}
-                                        onMouseEnter={() => {
-                                            if (dropdownTimeoutRef.current) {
-                                                clearTimeout(dropdownTimeoutRef.current)
-                                                dropdownTimeoutRef.current = null
-                                            }
-                                            setHoveredCategory(category.id)
-                                        }}
-                                        onMouseLeave={() => {
-                                            dropdownTimeoutRef.current = setTimeout(() => {
-                                                setHoveredCategory(null)
-                                            }, 150)
-                                        }}
-                                    >
-                                        <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
-                                            <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                                {category.name} - Subcategories
-                                            </span>
-                                        </div>
-                                        <div className="py-1">
-                                            {category.subcategories.map((subcategory) => (
-                                                <Link
-                                                    key={subcategory.id}
-                                                    to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
-                                                    onClick={() => setHoveredCategory(null)}
-                                                    className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
-                                                >
-                                                    {subcategory.name}
-                                                </Link>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                {hoveredCategory === category.id && (() => {
+                                    // Get subcategories from API or from category data
+                                    const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
+                                    const isLoading = loadingSubcategories.has(category.id)
+                                    
+                                    // Show dropdown if there are subcategories or if still loading
+                                    if (subcategories.length > 0 || isLoading) {
+                                        return (
+                                            <div 
+                                                className="absolute left-0 top-full mt-2 min-w-[220px] rounded-lg bg-white shadow-2xl border border-blue-200/50 py-2 z-[100] transform transition-all duration-200 ease-out"
+                                                style={{ 
+                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2)'
+                                                }}
+                                                onMouseEnter={() => {
+                                                    if (dropdownTimeoutRef.current) {
+                                                        clearTimeout(dropdownTimeoutRef.current)
+                                                        dropdownTimeoutRef.current = null
+                                                    }
+                                                    setHoveredCategory(category.id)
+                                                }}
+                                                onMouseLeave={() => {
+                                                    dropdownTimeoutRef.current = setTimeout(() => {
+                                                        setHoveredCategory(null)
+                                                    }, 150)
+                                                }}
+                                            >
+                                                <div className="px-3 py-2 border-b border-gray-100 bg-gray-50">
+                                                    <span className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                                        {category.name} - Subcategories
+                                                    </span>
+                                                </div>
+                                                <div className="py-1">
+                                                    {isLoading ? (
+                                                        <div className="px-4 py-2.5 text-sm text-gray-500 text-center">
+                                                            Loading...
+                                                        </div>
+                                                    ) : subcategories.length > 0 ? (
+                                                        subcategories.map((subcategory) => (
+                                                            <Link
+                                                                key={subcategory.id}
+                                                                to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                                onClick={() => setHoveredCategory(null)}
+                                                                className="block px-4 py-2.5 text-sm text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 rounded mx-1"
+                                                            >
+                                                                {subcategory.name}
+                                                            </Link>
+                                                        ))
+                                                    ) : (
+                                                        <div className="px-4 py-2.5 text-sm text-gray-400 text-center">
+                                                            No subcategories
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    }
+                                    return null
+                                })()}
                             </div>
                         ))
                     ) : (
@@ -259,65 +308,85 @@ const Navbar: React.FC = () => {
                         
                         {/* Dynamic Categories from API */}
                         {categories.length > 0 ? (
-                            categories.map((category) => (
-                                <div key={category.id}>
-                                    {category.subcategories && category.subcategories.length > 0 ? (
-                                        <>
-                                            <button
-                                                onClick={() => {
-                                                    const isOpen = hoveredCategory === category.id
-                                                    setHoveredCategory(isOpen ? null : category.id)
-                                                }}
-                                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
+                            categories.map((category) => {
+                                const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
+                                const hasSubcategories = subcategories.length > 0
+                                const isLoading = loadingSubcategories.has(category.id)
+                                
+                                return (
+                                    <div key={category.id}>
+                                        {hasSubcategories || isLoading ? (
+                                            <>
+                                                <button
+                                                    onClick={() => {
+                                                        const isOpen = hoveredCategory === category.id
+                                                        setHoveredCategory(isOpen ? null : category.id)
+                                                        // Fetch subcategories when opening
+                                                        if (!isOpen) {
+                                                            fetchSubcategories(category.id)
+                                                        }
+                                                    }}
+                                                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                                        isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
+                                                    }`}
+                                                >
+                                                    <span>{category.name}</span>
+                                                    <svg 
+                                                        className={`w-4 h-4 transition-transform duration-200 ${hoveredCategory === category.id ? 'rotate-180' : ''}`}
+                                                        fill="none" 
+                                                        stroke="currentColor" 
+                                                        viewBox="0 0 24 24"
+                                                    >
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </button>
+                                                {hoveredCategory === category.id && (
+                                                    <div className="ml-4 mt-1 space-y-1 bg-blue-900/30 rounded-lg p-2">
+                                                        <div className="px-2 py-1 border-b border-blue-700/50 mb-1">
+                                                            <span className="text-xs font-semibold text-cyan-200 uppercase tracking-wide">
+                                                                {category.name}
+                                                            </span>
+                                                        </div>
+                                                        {isLoading ? (
+                                                            <div className="px-4 py-2 text-sm text-cyan-200/70 text-center">
+                                                                Loading...
+                                                            </div>
+                                                        ) : subcategories.length > 0 ? (
+                                                            subcategories.map((subcategory) => (
+                                                                <Link
+                                                                    key={subcategory.id}
+                                                                    to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                                    onClick={() => {
+                                                                        setIsMobileOpen(false)
+                                                                        setHoveredCategory(null)
+                                                                    }}
+                                                                    className="block px-4 py-2 rounded-lg text-sm bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150"
+                                                                >
+                                                                    {subcategory.name}
+                                                                </Link>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-4 py-2 text-sm text-cyan-200/50 text-center">
+                                                                No subcategories
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <Link
+                                                to={`/shop?category=${category.slug}`}
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
                                                     isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                                 }`}
                                             >
-                                                <span>{category.name}</span>
-                                                <svg 
-                                                    className={`w-4 h-4 transition-transform duration-200 ${hoveredCategory === category.id ? 'rotate-180' : ''}`}
-                                                    fill="none" 
-                                                    stroke="currentColor" 
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                </svg>
-                                            </button>
-                                            {hoveredCategory === category.id && (
-                                                <div className="ml-4 mt-1 space-y-1 bg-blue-900/30 rounded-lg p-2">
-                                                    <div className="px-2 py-1 border-b border-blue-700/50 mb-1">
-                                                        <span className="text-xs font-semibold text-cyan-200 uppercase tracking-wide">
-                                                            {category.name}
-                                                        </span>
-                                                    </div>
-                                                    {category.subcategories.map((subcategory) => (
-                                                        <Link
-                                                            key={subcategory.id}
-                                                            to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
-                                                            onClick={() => {
-                                                                setIsMobileOpen(false)
-                                                                setHoveredCategory(null)
-                                                            }}
-                                                            className="block px-4 py-2 rounded-lg text-sm bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150"
-                                                        >
-                                                            {subcategory.name}
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </>
-                                    ) : (
-                                        <Link
-                                            to={`/shop?category=${category.slug}`}
-                                            onClick={() => setIsMobileOpen(false)}
-                                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                                isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
-                                            }`}
-                                        >
-                                            {category.name}
-                                        </Link>
-                                    )}
-                                </div>
-                            ))
+                                                {category.name}
+                                            </Link>
+                                        )}
+                                    </div>
+                                )
+                            })
                         ) : (
                             // Fallback while loading
                             <>

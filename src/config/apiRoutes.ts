@@ -50,6 +50,19 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // SUBCATEGORIES (PUBLIC)
+  // ============================================
+  SUBCATEGORIES: {
+    LIST: (categoryId?: number | string, page: number = 1, limit: number = 50) => {
+      const params = new URLSearchParams();
+      if (categoryId) params.append('category_id', String(categoryId));
+      params.append('page', String(page));
+      params.append('limit', String(limit));
+      return `/subcategories?${params.toString()}`;
+    },
+  },
+
+  // ============================================
   // CART (USER - requires access_token)
   // ============================================
   CART: {
