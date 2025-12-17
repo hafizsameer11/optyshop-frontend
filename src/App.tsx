@@ -33,6 +33,7 @@ import JobOpportunities from './pages/whoWeAre/JobOpportunities'
 import JobApplication from './pages/whoWeAre/JobApplication'
 import Products from './pages/shop/Products'
 import ProductDetail from './pages/shop/ProductDetail'
+import CategoryPage from './pages/shop/CategoryPage'
 import Cart from './pages/shop/Cart'
 import Checkout from './pages/shop/Checkout'
 import Login from './pages/auth/Login'
@@ -87,6 +88,8 @@ function App() {
         <Route path="/job-opportunities" element={<JobOpportunities />} />
         <Route path="/job-application/:jobId" element={<JobApplication />} />
         <Route path="/shop" element={<Products />} />
+        <Route path="/category/:categorySlug" element={<CategoryPage />} />
+        <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
         <Route path="/shop/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
