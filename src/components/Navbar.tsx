@@ -9,9 +9,11 @@ const Navbar: React.FC = () => {
     const { t } = useTranslation()
     const [categories, setCategories] = useState<Category[]>([])
     const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
+    const [clickedCategory, setClickedCategory] = useState<number | null>(null)
     const [categorySubcategories, setCategorySubcategories] = useState<Map<number, Category[]>>(new Map())
     const [loadingSubcategories, setLoadingSubcategories] = useState<Set<number>>(new Set())
     const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const dropdownRef = useRef<HTMLDivElement>(null)
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -78,6 +80,23 @@ const Navbar: React.FC = () => {
         }
     }, [])
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setClickedCategory(null)
+            }
+        }
+
+        if (clickedCategory !== null) {
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [clickedCategory])
+
     return (
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -115,104 +134,105 @@ const Navbar: React.FC = () => {
                     
                     {/* Dynamic Categories from API */}
                     {categories.length > 0 ? (
-                        categories.slice(0, 6).map((category) => (
+                        categories.slice(0, 6).map((category) => {
+                            const isDropdownOpen = clickedCategory === category.id
+                            const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
+                            const isLoading = loadingSubcategories.has(category.id)
+                            
+                            return (
                             <div
                                 key={category.id}
                                 className="relative group"
+                                ref={isDropdownOpen ? dropdownRef : null}
                                 onMouseEnter={() => {
                                     if (dropdownTimeoutRef.current) {
                                         clearTimeout(dropdownTimeoutRef.current)
                                         dropdownTimeoutRef.current = null
                                     }
                                     setHoveredCategory(category.id)
-                                    // Fetch subcategories when hovering
-                                    fetchSubcategories(category.id)
                                 }}
                                 onMouseLeave={() => {
-                                    dropdownTimeoutRef.current = setTimeout(() => {
-                                        setHoveredCategory(null)
-                                    }, 150)
+                                    // Only close on hover leave if not clicked open
+                                    if (clickedCategory !== category.id) {
+                                        dropdownTimeoutRef.current = setTimeout(() => {
+                                            setHoveredCategory(null)
+                                        }, 150)
+                                    }
                                 }}
                             >
-                                <Link
-                                    to={`/shop?category=${category.slug}`}
-                                    className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                                        isActive('/shop') 
-                                            ? 'bg-blue-800/50 text-blue-100' 
-                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
-                                    }`}
-                                >
-                                    {category.name}
-                                    <svg 
-                                        className="ml-1 w-3 h-3 transition-transform" 
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        viewBox="0 0 24 24"
+                                <div className="flex items-center relative">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            const newState = isDropdownOpen ? null : category.id
+                                            setClickedCategory(newState)
+                                            if (newState !== null) {
+                                                fetchSubcategories(category.id)
+                                            }
+                                        }}
+                                        className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                            isActive('/shop') 
+                                                ? 'bg-blue-800/50 text-blue-100' 
+                                                : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
+                                        }`}
+                                        aria-label={`Toggle ${category.name} subcategories`}
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </Link>
+                                        {category.name}
+                                        <svg 
+                                            className={`ml-1 w-3 h-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                                            fill="none" 
+                                            stroke="currentColor" 
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                </div>
                                 
                                 {/* Subcategories Dropdown */}
-                                {hoveredCategory === category.id && (() => {
-                                    // Get subcategories from API or from category data
-                                    const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
-                                    const isLoading = loadingSubcategories.has(category.id)
-                                    
+                                {isDropdownOpen && (() => {
                                     // Show dropdown if there are subcategories or if still loading
-                                    if (subcategories.length > 0 || isLoading) {
-                                        return (
-                                            <div 
-                                                className="absolute left-0 top-full mt-1.5 min-w-[240px] rounded-xl bg-white shadow-2xl border border-gray-200 py-2 z-[9999] opacity-100 transform transition-all duration-200 ease-out"
-                                                style={{ 
-                                                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
-                                                }}
-                                                onMouseEnter={() => {
-                                                    if (dropdownTimeoutRef.current) {
-                                                        clearTimeout(dropdownTimeoutRef.current)
-                                                        dropdownTimeoutRef.current = null
-                                                    }
-                                                    setHoveredCategory(category.id)
-                                                }}
-                                                onMouseLeave={() => {
-                                                    dropdownTimeoutRef.current = setTimeout(() => {
-                                                        setHoveredCategory(null)
-                                                    }, 150)
-                                                }}
-                                            >
-                                                <div className="py-1">
-                                                    {isLoading ? (
-                                                        <div className="px-4 py-3 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
-                                                            <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                            </svg>
-                                                            <span>Loading...</span>
-                                                        </div>
-                                                    ) : subcategories.length > 0 ? (
-                                                        subcategories.map((subcategory) => (
-                                                            <Link
-                                                                key={subcategory.id}
-                                                                to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
-                                                                onClick={() => setHoveredCategory(null)}
-                                                                className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
-                                                            >
-                                                                {subcategory.name}
-                                                            </Link>
-                                                        ))
-                                                    ) : (
-                                                        <div className="px-4 py-3 text-sm text-gray-400 text-center">
-                                                            No subcategories available
-                                                        </div>
-                                                    )}
-                                                </div>
+                                    return (
+                                        <div 
+                                            className="absolute left-0 top-full mt-1.5 min-w-[240px] rounded-xl bg-white shadow-2xl border border-gray-200 py-2 z-[9999] opacity-100 transform transition-all duration-200 ease-out"
+                                            style={{ 
+                                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
+                                            }}
+                                        >
+                                            <div className="py-1">
+                                                {isLoading ? (
+                                                    <div className="px-4 py-3 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
+                                                        <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        <span>Loading...</span>
+                                                    </div>
+                                                ) : subcategories.length > 0 ? (
+                                                    subcategories.map((subcategory) => (
+                                                        <Link
+                                                            key={subcategory.id}
+                                                            to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                            onClick={() => setClickedCategory(null)}
+                                                            className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
+                                                        >
+                                                            {subcategory.name}
+                                                        </Link>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-3 text-sm text-gray-400 text-center">
+                                                        No subcategories available
+                                                    </div>
+                                                )}
                                             </div>
-                                        )
-                                    }
-                                    return null
+                                        </div>
+                                    )
                                 })()}
                             </div>
-                        ))
+                            )
+                        })
                     ) : (
                         // Fallback to default categories while loading
                         <>
