@@ -224,32 +224,37 @@ const ProductDetail: React.FC = () => {
     const originalPrice = hasValidSale ? regularPriceNum : null
     
     // Check if product is a contact lens (memoized to prevent infinite loops)
+    // Use product.id as the only dependency to prevent infinite loops
     const isContactLens = useMemo(() => {
         if (!product) return false
         const p = product as any
-        return product.category?.slug === 'contact-lenses' || 
+        const categorySlug = product.category?.slug
+        return categorySlug === 'contact-lenses' || 
                p.product_type === 'contact_lens' ||
-               p.base_curve_options !== undefined
-    }, [product?.id, product?.category?.slug])
+               Array.isArray(p.base_curve_options)
+    }, [product?.id])
     
     // Get contact lens options from product (memoized)
+    // Only depend on product.id to prevent infinite loops
     const baseCurveOptions = useMemo(() => {
-        if (!isContactLens || !product) return []
+        if (!product) return []
         const p = product as any
+        if (!Array.isArray(p.base_curve_options)) return []
         return p.base_curve_options || [8.70, 8.80, 8.90]
-    }, [isContactLens, product?.id])
+    }, [product?.id])
     
     const diameterOptions = useMemo(() => {
-        if (!isContactLens || !product) return []
+        if (!product) return []
         const p = product as any
+        if (!Array.isArray(p.diameter_options)) return []
         return p.diameter_options || [14.00, 14.20]
-    }, [isContactLens, product?.id])
+    }, [product?.id])
     
     const powersRange = useMemo(() => {
-        if (!isContactLens || !product) return ''
+        if (!product) return ''
         const p = product as any
         return p.powers_range || '-0.50 to -6.00 in 0.25 steps'
-    }, [isContactLens, product?.id])
+    }, [product?.id])
     
     // Parse power range to generate options
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
@@ -323,17 +328,29 @@ const ProductDetail: React.FC = () => {
         return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
     }
     
-    const powerOptions = isContactLens ? generatePowerOptions(powersRange) : []
+    // Memoize power options to prevent recalculation on every render
+    const powerOptions = useMemo(() => {
+        if (!powersRange) return []
+        return generatePowerOptions(powersRange)
+    }, [powersRange])
     
     // Initialize contact lens form when product loads
     useEffect(() => {
-        if (isContactLens && product) {
-            // Only reset form if product ID changed
-            if (lastProductIdRef.current !== product.id) {
-                lastProductIdRef.current = product.id
-                const p = product as any
-                const baseCurves = p.base_curve_options || [8.70, 8.80, 8.90]
-                const diameters = p.diameter_options || [14.00, 14.20]
+        if (!product?.id) return
+        
+        // Only reset form if product ID changed
+        if (lastProductIdRef.current !== product.id) {
+            lastProductIdRef.current = product.id
+            
+            // Check if it's a contact lens
+            const p = product as any
+            const isContactLensProduct = product.category?.slug === 'contact-lenses' || 
+                                        p.product_type === 'contact_lens' ||
+                                        Array.isArray(p.base_curve_options)
+            
+            if (isContactLensProduct) {
+                const baseCurves = Array.isArray(p.base_curve_options) ? p.base_curve_options : [8.70, 8.80, 8.90]
+                const diameters = Array.isArray(p.diameter_options) ? p.diameter_options : [14.00, 14.20]
                 
                 if (baseCurves.length > 0 && diameters.length > 0) {
                     setContactLensFormData({
@@ -349,7 +366,7 @@ const ProductDetail: React.FC = () => {
                 }
             }
         }
-    }, [product?.id, isContactLens])
+    }, [product?.id])
     
     const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
         setContactLensFormData(prev => ({ ...prev, [field]: value }))
