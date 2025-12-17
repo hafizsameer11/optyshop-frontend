@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { useCart } from '../../context/CartContext'
 import { 
     getProducts, 
     type Product,
@@ -14,7 +13,6 @@ import { getCategoryBySlug, getSubcategoryBySlug, getSubcategoriesByCategoryId, 
 const CategoryPage: React.FC = () => {
     const { categorySlug, subcategorySlug } = useParams<{ categorySlug: string; subcategorySlug?: string }>()
     const navigate = useNavigate()
-    const { addToCart } = useCart()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
@@ -447,8 +445,8 @@ const CategoryPage: React.FC = () => {
                                                 </p>
                                             )}
 
-                                            {/* Price and Add to Cart */}
-                                            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-200">
+                                            {/* Price */}
+                                            <div className="mt-auto pt-4 border-t border-gray-200">
                                                 <div className="flex flex-col">
                                                     {product.sale_price && product.price && Number(product.sale_price) < Number(product.price) ? (
                                                         <>
@@ -465,48 +463,6 @@ const CategoryPage: React.FC = () => {
                                                         </span>
                                                     )}
                                                 </div>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        handleAddToCart(product)
-                                                    }}
-                                                    disabled={(() => {
-                                                        const p = product as any
-                                                        const stockStatus = p.stock_status || product.in_stock
-                                                        const stockQty = product.stock_quantity
-                                                        
-                                                        return stockStatus === 'out_of_stock' ||
-                                                               stockStatus === false ||
-                                                               (stockQty !== undefined && stockQty <= 0)
-                                                    })()}
-                                                    className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-colors ${
-                                                        (() => {
-                                                            const p = product as any
-                                                            const stockStatus = p.stock_status || product.in_stock
-                                                            const stockQty = product.stock_quantity
-                                                            
-                                                            const isInStock = stockStatus === 'in_stock' ||
-                                                                              stockStatus === true ||
-                                                                              (stockQty !== undefined && stockQty > 0)
-                                                            
-                                                            return isInStock
-                                                                ? 'bg-blue-950 text-white hover:bg-blue-900'
-                                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        })()
-                                                    }`}
-                                                >
-                                                    {(() => {
-                                                        const p = product as any
-                                                        const stockStatus = p.stock_status || product.in_stock
-                                                        const stockQty = product.stock_quantity
-                                                        
-                                                        const isInStock = stockStatus === 'in_stock' ||
-                                                                          stockStatus === true ||
-                                                                          (stockQty !== undefined && stockQty > 0)
-                                                        
-                                                        return isInStock ? 'Add to Cart' : 'Out of Stock'
-                                                    })()}
-                                                </button>
                                             </div>
                                         </div>
                                     </Link>
