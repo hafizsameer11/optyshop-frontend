@@ -1456,11 +1456,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         }
       })
 
-      // Add lens thickness price
-      if (lensSelection.lensThickness === 'plastic') {
-        finalPrice += 30.00
-      } else if (lensSelection.lensThickness === 'glass') {
-        finalPrice += 60.00
+      // Add lens thickness price from API
+      if (lensSelection.lensThicknessMaterialId) {
+        const selectedMaterial = lensThicknessMaterials.find(m => m.id === lensSelection.lensThicknessMaterialId)
+        if (selectedMaterial) {
+          finalPrice += selectedMaterial.price || 0
+        }
+      } else if (lensSelection.lensThickness) {
+        // Fallback to slug-based lookup if material ID not available
+        const materialSlug = lensSelection.lensThickness === 'plastic' ? 'plastic' : 'glass'
+        const selectedMaterial = lensThicknessMaterials.find(m => m.slug === materialSlug)
+        if (selectedMaterial) {
+          finalPrice += selectedMaterial.price || 0
+        }
       }
 
       // Add treatment price adjustments from API
@@ -1842,6 +1850,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 lensOptions={lensOptions}
                 coatingOptions={coatingOptions}
                 treatments={apiTreatments}
+                progressiveOptions={progressiveOptions}
+                lensThicknessMaterials={lensThicknessMaterials}
                 onBack={handleBack}
                 onAddToCart={handleAddToCart}
                 loading={loading}
@@ -2113,7 +2123,7 @@ interface LensThicknessStepProps {
   lensThicknessMaterials?: LensThicknessMaterial[]
   lensThicknessOptions?: LensThicknessOption[]
   lensIndexOptions?: number[]
-  onLensThicknessChange: (thickness: 'plastic' | 'glass') => void
+  onLensThicknessChange: (thickness: 'plastic' | 'glass', materialId?: number) => void
   onLensThicknessOptionChange: (option: string) => void
   onNext: () => void
   onBack: () => void
@@ -2173,7 +2183,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
                     className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="flex-1 text-sm font-medium text-gray-900">{material.name}</span>
-                  <span className="text-sm font-semibold text-gray-700">{material.price.toFixed(2)}€</span>
+                  <span className="text-sm font-semibold text-gray-700">${material.price.toFixed(2)}</span>
                 </label>
               )
             })
@@ -2189,7 +2199,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
               className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
             />
             <span className="flex-1 text-sm font-medium text-gray-900">Unbreakable (Plastic)</span>
-            <span className="text-sm font-semibold text-gray-700">30.00€</span>
+            <span className="text-sm font-semibold text-gray-700">$30.00</span>
           </label>
 
           <label className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -2201,7 +2211,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
               className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
             />
             <span className="flex-1 text-sm font-medium text-gray-900">Minerals (Glass)</span>
-            <span className="text-sm font-semibold text-gray-700">60.00€</span>
+            <span className="text-sm font-semibold text-gray-700">$60.00</span>
           </label>
             </>
           )}
@@ -2550,7 +2560,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{treatment.name}</div>
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">{treatment.price.toFixed(2)}€</span>
+                  <span className="text-sm font-semibold text-gray-700">${treatment.price.toFixed(2)}</span>
                 </label>
               )
             })}
@@ -3427,6 +3437,8 @@ interface SummaryStepProps {
   lensOptions: LensType[]
   coatingOptions: LensCoating[]
   treatments: Array<{ id: string; name: string; price: number }>
+  progressiveOptions: Array<{ id: string; name: string; price: number; description: string; recommended?: boolean; variantId?: number }>
+  lensThicknessMaterials: Array<{ id: number; name: string; slug: string; price: number }>
   onBack: () => void
   onAddToCart: () => void
   loading: boolean
@@ -3439,6 +3451,8 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   lensOptions,
   coatingOptions,
   treatments,
+  progressiveOptions,
+  lensThicknessMaterials,
   onBack,
   onAddToCart,
   loading
@@ -3449,15 +3463,12 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
 
   let total: number = basePrice
 
-  // For progressive lenses, use the progressive option price
+  // For progressive lenses, use the progressive option price from API
   if (lensSelection.progressiveOption) {
-    const progressivePrices: Record<string, number> = {
-      premium: 52.95,
-      standard: 37.95,
-      'mid-range': 37.95,
-      'near-range': 37.95
+    const progressiveOption = progressiveOptions.find(opt => opt.id === lensSelection.progressiveOption)
+    if (progressiveOption) {
+      total += progressiveOption.price || 0
     }
-    total += progressivePrices[lensSelection.progressiveOption] || 0
   } else if (lensSelection.lensIndex) {
     const selectedLensType = lensOptions.find(lt => lt.index === lensSelection.lensIndex)
     if (selectedLensType) {
@@ -3465,11 +3476,19 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
     }
   }
 
-  // Add lens thickness price
-  if (lensSelection.lensThickness === 'plastic') {
-    total += 30.00
-  } else if (lensSelection.lensThickness === 'glass') {
-    total += 60.00
+  // Add lens thickness price from API
+  if (lensSelection.lensThicknessMaterialId) {
+    const selectedMaterial = lensThicknessMaterials.find(m => m.id === lensSelection.lensThicknessMaterialId)
+    if (selectedMaterial) {
+      total += selectedMaterial.price || 0
+    }
+  } else if (lensSelection.lensThickness) {
+    // Fallback to slug-based lookup if material ID not available
+    const materialSlug = lensSelection.lensThickness === 'plastic' ? 'plastic' : 'glass'
+    const selectedMaterial = lensThicknessMaterials.find(m => m.slug === materialSlug)
+    if (selectedMaterial) {
+      total += selectedMaterial.price || 0
+    }
   }
 
   lensSelection.coatings.forEach(coatingSlug => {
