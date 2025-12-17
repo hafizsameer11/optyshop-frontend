@@ -1683,12 +1683,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 <div className="text-sm text-gray-500 mb-1">Estimate Total</div>
                 <div className="text-2xl font-bold text-gray-900">
                   ${(() => {
-                    if (priceCalculation) {
-                      return priceCalculation.total.toFixed(2)
-                    }
-                    // Calculate total from order summary
+                    // Always calculate total from order summary (source of truth)
                     const total = orderSummary.reduce((sum, item) => {
-                      return sum + (item.price || 0)
+                      return sum + (Number(item.price) || 0)
                     }, 0)
                     return total.toFixed(2)
                   })()}
