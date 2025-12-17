@@ -46,8 +46,6 @@ const Home: React.FC = () => {
             <StatsHighlight />
             <ShopCategories />
             <LatestArrivals />
-            <FeaturedArrivals categorySlug="contact-lenses" categoryName="Contact Lenses" />
-            <FeaturedArrivals categorySlug="sunglasses" categoryName="Sunglasses and eyeglasses" />
             <LiveDemoSection />
             <ErrorBoundary>
                 <Testimonials />

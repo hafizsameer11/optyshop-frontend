@@ -10,6 +10,7 @@ import {
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
+import ContactLensConfiguration from '../../components/shop/ContactLensConfiguration'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 
 const ProductDetail: React.FC = () => {
@@ -22,6 +23,7 @@ const ProductDetail: React.FC = () => {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [quantity, setQuantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
+    const [showContactLensConfig, setShowContactLensConfig] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
 
     useEffect(() => {
@@ -194,6 +196,11 @@ const ProductDetail: React.FC = () => {
     const hasValidSale = salePriceNum != null && regularPriceNum > 0 && salePriceNum < regularPriceNum
     const displayPrice = hasValidSale ? salePriceNum : regularPriceNum
     const originalPrice = hasValidSale ? regularPriceNum : null
+    
+    // Check if product is a contact lens
+    const isContactLens = product.category?.slug === 'contact-lenses' || 
+                          (product as any).product_type === 'contact_lens' ||
+                          (product as any).base_curve_options !== undefined
 
     return (
         <div className="bg-white min-h-screen">
@@ -417,39 +424,75 @@ const ProductDetail: React.FC = () => {
                                     </div>
                                     
                                     <div className="space-y-3">
-                                        <button
-                                            onClick={() => setShowCheckout(true)}
-                                            disabled={(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-                                                
-                                                // Check if out of stock
-                                                return stockStatus === 'out_of_stock' ||
-                                                       (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                       (stockStatus === undefined && product.in_stock === false) ||
-                                                       (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                            })()}
-                                            className={`w-full px-6 py-4 rounded-lg font-semibold text-lg transition-colors ${
-                                                (() => {
+                                        {isContactLens ? (
+                                            <button
+                                                onClick={() => setShowContactLensConfig(true)}
+                                                disabled={(() => {
                                                     const p = product as any
                                                     const stockStatus = p.stock_status
                                                     const stockQty = product.stock_quantity
                                                     
-                                                    // Check if in stock - stock_status === 'in_stock' means it's in stock
-                                                    const isInStock = stockStatus === 'in_stock' ||
-                                                                      (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
-                                                                      (stockStatus === undefined && product.in_stock === true) ||
-                                                                      (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
+                                                    // Check if out of stock
+                                                    return stockStatus === 'out_of_stock' ||
+                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                           (stockStatus === undefined && product.in_stock === false) ||
+                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                })()}
+                                                className={`w-full px-6 py-4 rounded-lg font-semibold text-lg transition-colors ${
+                                                    (() => {
+                                                        const p = product as any
+                                                        const stockStatus = p.stock_status
+                                                        const stockQty = product.stock_quantity
+                                                        
+                                                        // Check if in stock - stock_status === 'in_stock' means it's in stock
+                                                        const isInStock = stockStatus === 'in_stock' ||
+                                                                          (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
+                                                                          (stockStatus === undefined && product.in_stock === true) ||
+                                                                          (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
+                                                        
+                                                        return isInStock
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                    })()
+                                                }`}
+                                            >
+                                                Select Parameters
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={() => setShowCheckout(true)}
+                                                disabled={(() => {
+                                                    const p = product as any
+                                                    const stockStatus = p.stock_status
+                                                    const stockQty = product.stock_quantity
                                                     
-                                                    return isInStock
-                                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                })()
-                                            }`}
-                                        >
-                                            Select Lenses
-                                        </button>
+                                                    // Check if out of stock
+                                                    return stockStatus === 'out_of_stock' ||
+                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                           (stockStatus === undefined && product.in_stock === false) ||
+                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                })()}
+                                                className={`w-full px-6 py-4 rounded-lg font-semibold text-lg transition-colors ${
+                                                    (() => {
+                                                        const p = product as any
+                                                        const stockStatus = p.stock_status
+                                                        const stockQty = product.stock_quantity
+                                                        
+                                                        // Check if in stock - stock_status === 'in_stock' means it's in stock
+                                                        const isInStock = stockStatus === 'in_stock' ||
+                                                                          (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
+                                                                          (stockStatus === undefined && product.in_stock === true) ||
+                                                                          (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
+                                                        
+                                                        return isInStock
+                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                    })()
+                                                }`}
+                                            >
+                                                Select Lenses
+                                            </button>
+                                        )}
                                         
                                         <div className="flex gap-3">
                                             <button
@@ -532,10 +575,18 @@ const ProductDetail: React.FC = () => {
             <Footer />
 
             {/* Checkout Modal */}
-            {showCheckout && product && (
+            {showCheckout && product && !isContactLens && (
                 <ProductCheckout
                     product={product}
                     onClose={() => setShowCheckout(false)}
+                />
+            )}
+
+            {/* Contact Lens Configuration Modal */}
+            {showContactLensConfig && product && isContactLens && (
+                <ContactLensConfiguration
+                    product={product}
+                    onClose={() => setShowContactLensConfig(false)}
                 />
             )}
 

@@ -32,13 +32,8 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                 }
 
                 if (categorySlug) {
-                    // Find category by slug to get ID
-                    const categories = await getCategoriesWithSubcategories()
-                    if (isCancelled) return
-                    const category = categories.find(cat => cat.slug === categorySlug)
-                    if (category) {
-                        filters.category = category.id
-                    }
+                    // Use category slug directly (API expects slug, not ID)
+                    filters.category = categorySlug
                 }
 
                 const result = await getProducts(filters)

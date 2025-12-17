@@ -66,6 +66,15 @@ export interface AddToCartRequest {
   treatment_ids?: number[];
   photochromic_color_id?: number | null;
   prescription_sun_color_id?: number | null;
+  // Contact Lens Fields
+  contact_lens_right_qty?: number;
+  contact_lens_right_base_curve?: number;
+  contact_lens_right_diameter?: number;
+  contact_lens_right_power?: number;
+  contact_lens_left_qty?: number;
+  contact_lens_left_base_curve?: number;
+  contact_lens_left_diameter?: number;
+  contact_lens_left_power?: number;
   // Legacy fields for backward compatibility
   lens_index?: number | string;
   lens_coating?: string;
