@@ -135,7 +135,7 @@ const Navbar: React.FC = () => {
                     {/* Dynamic Categories from API */}
                     {categories.length > 0 ? (
                         categories.slice(0, 6).map((category) => {
-                            const isDropdownOpen = clickedCategory === category.id
+                            const isDropdownOpen = clickedCategory === category.id || hoveredCategory === category.id
                             const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
                             const isLoading = loadingSubcategories.has(category.id)
                             
@@ -150,6 +150,8 @@ const Navbar: React.FC = () => {
                                         dropdownTimeoutRef.current = null
                                     }
                                     setHoveredCategory(category.id)
+                                    // Fetch subcategories on hover
+                                    fetchSubcategories(category.id)
                                 }}
                                 onMouseLeave={() => {
                                     // Only close on hover leave if not clicked open
@@ -166,7 +168,7 @@ const Navbar: React.FC = () => {
                                         onClick={(e) => {
                                             e.preventDefault()
                                             e.stopPropagation()
-                                            const newState = isDropdownOpen ? null : category.id
+                                            const newState = clickedCategory === category.id ? null : category.id
                                             setClickedCategory(newState)
                                             if (newState !== null) {
                                                 fetchSubcategories(category.id)
@@ -200,6 +202,20 @@ const Navbar: React.FC = () => {
                                             style={{ 
                                                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
                                             }}
+                                            onMouseEnter={() => {
+                                                if (dropdownTimeoutRef.current) {
+                                                    clearTimeout(dropdownTimeoutRef.current)
+                                                    dropdownTimeoutRef.current = null
+                                                }
+                                                setHoveredCategory(category.id)
+                                            }}
+                                            onMouseLeave={() => {
+                                                if (clickedCategory !== category.id) {
+                                                    dropdownTimeoutRef.current = setTimeout(() => {
+                                                        setHoveredCategory(null)
+                                                    }, 150)
+                                                }
+                                            }}
                                         >
                                             <div className="py-1">
                                                 {isLoading ? (
@@ -215,7 +231,10 @@ const Navbar: React.FC = () => {
                                                         <Link
                                                             key={subcategory.id}
                                                             to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
-                                                            onClick={() => setClickedCategory(null)}
+                                                            onClick={() => {
+                                                                setClickedCategory(null)
+                                                                setHoveredCategory(null)
+                                                            }}
                                                             className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
                                                         >
                                                             {subcategory.name}
