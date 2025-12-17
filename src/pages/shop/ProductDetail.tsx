@@ -10,21 +10,47 @@ import {
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
-import ContactLensConfiguration from '../../components/shop/ContactLensConfiguration'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
+import { useAuth } from '../../context/AuthContext'
+import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
+
+interface ContactLensFormData {
+    right_qty: number
+    right_base_curve: string
+    right_diameter: string
+    right_power: string
+    left_qty: number
+    left_base_curve: string
+    left_diameter: string
+    left_power: string
+}
 
 const ProductDetail: React.FC = () => {
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
     const { addToCart } = useCart()
+    const { isAuthenticated } = useAuth()
     const [product, setProduct] = useState<Product | null>(null)
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [quantity, setQuantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
-    const [showContactLensConfig, setShowContactLensConfig] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
+    
+    // Contact lens form state
+    const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
+        right_qty: 1,
+        right_base_curve: '8.70',
+        right_diameter: '14.00',
+        right_power: '',
+        left_qty: 1,
+        left_base_curve: '8.70',
+        left_diameter: '14.00',
+        left_power: ''
+    })
+    const [contactLensErrors, setContactLensErrors] = useState<Record<string, string>>({})
+    const [contactLensLoading, setContactLensLoading] = useState(false)
 
     useEffect(() => {
         let isCancelled = false
@@ -201,6 +227,227 @@ const ProductDetail: React.FC = () => {
     const isContactLens = product.category?.slug === 'contact-lenses' || 
                           (product as any).product_type === 'contact_lens' ||
                           (product as any).base_curve_options !== undefined
+    
+    // Get contact lens options from product
+    const baseCurveOptions = isContactLens ? (p.base_curve_options || [8.70, 8.80, 8.90]) : []
+    const diameterOptions = isContactLens ? (p.diameter_options || [14.00, 14.20]) : []
+    const powersRange = isContactLens ? (p.powers_range || '-0.50 to -6.00 in 0.25 steps') : ''
+    
+    // Parse power range to generate options
+    // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
+    const generatePowerOptions = (range: string): string[] => {
+        try {
+            const options: string[] = []
+            
+            // Match all ranges in the string (handles multiple ranges)
+            const rangePattern = /(-?\d+\.?\d*)\s+(?:to|a)\s+(-?\d+\.?\d*)\s+(?:in|in\s+variazioni\s+di)\s+(\d+\.?\d*)\s+steps?/gi
+            let match
+            
+            while ((match = rangePattern.exec(range)) !== null) {
+                const start = parseFloat(match[1])
+                const end = parseFloat(match[2])
+                const step = parseFloat(match[3])
+                
+                if (start < end) {
+                    // Positive range (e.g., +0.50 to +6.00)
+                    for (let val = start; val <= end; val += step) {
+                        const formatted = val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)
+                        if (!options.includes(formatted)) {
+                            options.push(formatted)
+                        }
+                    }
+                } else {
+                    // Negative range (e.g., -0.50 to -6.00)
+                    for (let val = start; val >= end; val -= step) {
+                        const formatted = val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)
+                        if (!options.includes(formatted)) {
+                            options.push(formatted)
+                        }
+                    }
+                }
+            }
+            
+            // If no ranges found, try single range pattern
+            if (options.length === 0) {
+                const singleMatch = range.match(/(-?\d+\.?\d*)\s+(?:to|a)\s+(-?\d+\.?\d*)\s+(?:in|in\s+variazioni\s+di)\s+(\d+\.?\d*)\s+steps?/i)
+                if (singleMatch) {
+                    const start = parseFloat(singleMatch[1])
+                    const end = parseFloat(singleMatch[2])
+                    const step = parseFloat(singleMatch[3])
+                    
+                    if (start < end) {
+                        for (let val = start; val <= end; val += step) {
+                            const formatted = val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)
+                            options.push(formatted)
+                        }
+                    } else {
+                        for (let val = start; val >= end; val -= step) {
+                            const formatted = val >= 0 ? `+${val.toFixed(2)}` : val.toFixed(2)
+                            options.push(formatted)
+                        }
+                    }
+                }
+            }
+            
+            // Sort options: negative values first (descending), then positive (ascending)
+            if (options.length > 0) {
+                return options.sort((a, b) => {
+                    const numA = parseFloat(a)
+                    const numB = parseFloat(b)
+                    return numA - numB
+                })
+            }
+        } catch (error) {
+            console.error('Error parsing power range:', error)
+        }
+        
+        // Default fallback options
+        return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
+    }
+    
+    const powerOptions = isContactLens ? generatePowerOptions(powersRange) : []
+    
+    // Initialize contact lens form when product loads
+    useEffect(() => {
+        if (isContactLens && baseCurveOptions.length > 0 && diameterOptions.length > 0) {
+            setContactLensFormData({
+                right_qty: 1,
+                right_base_curve: baseCurveOptions[0]?.toString() || '8.70',
+                right_diameter: diameterOptions[0]?.toString() || '14.00',
+                right_power: '',
+                left_qty: 1,
+                left_base_curve: baseCurveOptions[0]?.toString() || '8.70',
+                left_diameter: diameterOptions[0]?.toString() || '14.00',
+                left_power: ''
+            })
+        }
+    }, [isContactLens, baseCurveOptions.length, diameterOptions.length])
+    
+    const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
+        setContactLensFormData(prev => ({ ...prev, [field]: value }))
+        if (contactLensErrors[field]) {
+            setContactLensErrors(prev => {
+                const newErrors = { ...prev }
+                delete newErrors[field]
+                return newErrors
+            })
+        }
+    }
+    
+    const calculateContactLensTotal = (): number => {
+        if (!contactLensFormData.right_power || !contactLensFormData.left_power) {
+            return 0
+        }
+        
+        const basePrice = product.sale_price && product.sale_price < product.price 
+            ? product.sale_price 
+            : product.price
+        
+        const rightTotal = Number(basePrice) * contactLensFormData.right_qty
+        const leftTotal = Number(basePrice) * contactLensFormData.left_qty
+        
+        return rightTotal + leftTotal
+    }
+    
+    const validateContactLensForm = (): boolean => {
+        const newErrors: Record<string, string> = {}
+        
+        if (!contactLensFormData.right_power) {
+            newErrors.right_power = 'Power is required for right eye'
+        }
+        
+        if (!contactLensFormData.left_power) {
+            newErrors.left_power = 'Power is required for left eye'
+        }
+        
+        if (contactLensFormData.right_qty < 1) {
+            newErrors.right_qty = 'Quantity must be at least 1'
+        }
+        
+        if (contactLensFormData.left_qty < 1) {
+            newErrors.left_qty = 'Quantity must be at least 1'
+        }
+        
+        setContactLensErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+    
+    const handleContactLensAddToCart = async () => {
+        if (!validateContactLensForm()) {
+            return
+        }
+        
+        setContactLensLoading(true)
+        try {
+            if (isAuthenticated) {
+                const cartRequest: AddToCartRequest = {
+                    product_id: product.id,
+                    quantity: 1,
+                    contact_lens_right_qty: contactLensFormData.right_qty,
+                    contact_lens_right_base_curve: parseFloat(contactLensFormData.right_base_curve),
+                    contact_lens_right_diameter: parseFloat(contactLensFormData.right_diameter),
+                    contact_lens_right_power: parseFloat(contactLensFormData.right_power),
+                    contact_lens_left_qty: contactLensFormData.left_qty,
+                    contact_lens_left_base_curve: parseFloat(contactLensFormData.left_base_curve),
+                    contact_lens_left_diameter: parseFloat(contactLensFormData.left_diameter),
+                    contact_lens_left_power: parseFloat(contactLensFormData.left_power)
+                }
+                
+                const result = await addItemToCart(cartRequest)
+                
+                if (result.success) {
+                    const cartProduct = {
+                        id: product.id || 0,
+                        name: product.name || '',
+                        brand: product.brand || '',
+                        category: product.category?.slug || 'contact-lenses',
+                        price: calculateContactLensTotal(),
+                        image: getProductImageUrl(product, selectedImageIndex),
+                        description: product.description || '',
+                        inStock: product.in_stock || false
+                    }
+                    addToCart(cartProduct)
+                    navigate('/cart')
+                } else {
+                    alert(result.message || 'Failed to add to cart')
+                }
+            } else {
+                const cartProduct = {
+                    id: product.id || 0,
+                    name: product.name || '',
+                    brand: product.brand || '',
+                    category: product.category?.slug || 'contact-lenses',
+                    price: calculateContactLensTotal(),
+                    image: getProductImageUrl(product, selectedImageIndex),
+                    description: product.description || '',
+                    inStock: product.in_stock || false,
+                    customization: {
+                        contactLens: {
+                            right: {
+                                qty: contactLensFormData.right_qty,
+                                baseCurve: parseFloat(contactLensFormData.right_base_curve),
+                                diameter: parseFloat(contactLensFormData.right_diameter),
+                                power: parseFloat(contactLensFormData.right_power)
+                            },
+                            left: {
+                                qty: contactLensFormData.left_qty,
+                                baseCurve: parseFloat(contactLensFormData.left_base_curve),
+                                diameter: parseFloat(contactLensFormData.left_diameter),
+                                power: parseFloat(contactLensFormData.left_power)
+                            }
+                        }
+                    }
+                }
+                addToCart(cartProduct)
+                navigate('/cart')
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+            alert('Failed to add to cart. Please try again.')
+        } finally {
+            setContactLensLoading(false)
+        }
+    }
 
     return (
         <div className="bg-white min-h-screen">
@@ -390,75 +637,235 @@ const ProductDetail: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Quantity and Add to Cart */}
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <label className="font-semibold text-gray-700">Quantity:</label>
-                                        <div className="flex items-center border border-gray-300 rounded-lg">
-                                            <button
-                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="px-4 py-2 hover:bg-gray-100 transition-colors"
-                                                disabled={quantity <= 1}
-                                            >
-                                                -
+                                {/* Contact Lens Configuration */}
+                                {isContactLens ? (
+                                    <div className="mb-6">
+                                        {/* Unit Selector */}
+                                        <div className="mb-4">
+                                            <button className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg">
+                                                unit
                                             </button>
-                                            <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
-                                            <button
-                                                onClick={() => setQuantity(quantity + 1)}
-                                                className="px-4 py-2 hover:bg-gray-100 transition-colors"
-                                                disabled={(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
+                                        </div>
+                                        
+                                        {/* Price Display */}
+                                        <div className="mb-6">
+                                            <div className="text-3xl font-bold text-gray-900">
+                                                ${calculateContactLensTotal().toFixed(2)}
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Configuration Form */}
+                                        <div className="bg-white border border-gray-300 rounded-lg p-6 mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-6">Select the parameters</h3>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                {/* Right Eye */}
+                                                <div>
+                                                    <h4 className="text-base font-semibold text-gray-900 mb-4">(Right eye)</h4>
                                                     
-                                                    // Check if out of stock
-                                                    return stockStatus === 'out_of_stock' ||
-                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                           (stockStatus === undefined && product.in_stock === false) ||
-                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                })()}
+                                                    <div className="space-y-4">
+                                                        {/* Qty */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={contactLensFormData.right_qty}
+                                                                onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
+                                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                    contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                                }`}
+                                                            />
+                                                            {contactLensErrors.right_qty && (
+                                                                <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_qty}</p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Radius (B.C) */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Radius (B.C)</label>
+                                                            <select
+                                                                value={contactLensFormData.right_base_curve}
+                                                                onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                {baseCurveOptions.map((option) => (
+                                                                    <option key={option} value={option.toString()}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Diameter */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">(Diameter)</label>
+                                                            <select
+                                                                value={contactLensFormData.right_diameter}
+                                                                onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                {diameterOptions.map((option) => (
+                                                                    <option key={option} value={option.toString()}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Power (PWR) */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Power (PWR) <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={contactLensFormData.right_power}
+                                                                onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                    contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                                }`}
+                                                            >
+                                                                <option value="">-</option>
+                                                                {powerOptions.map((power) => (
+                                                                    <option key={power} value={power}>
+                                                                        {power}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            {contactLensErrors.right_power && (
+                                                                <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_power}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Left Eye */}
+                                                <div>
+                                                    <h4 className="text-base font-semibold text-gray-900 mb-4">(Left eye)</h4>
+                                                    
+                                                    <div className="space-y-4">
+                                                        {/* Qty */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Qty</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                value={contactLensFormData.left_qty}
+                                                                onChange={(e) => handleContactLensFieldChange('left_qty', parseInt(e.target.value) || 1)}
+                                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                    contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                                }`}
+                                                            />
+                                                            {contactLensErrors.left_qty && (
+                                                                <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_qty}</p>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Radius (B.C) */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Radius (B.C)</label>
+                                                            <select
+                                                                value={contactLensFormData.left_base_curve}
+                                                                onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                {baseCurveOptions.map((option) => (
+                                                                    <option key={option} value={option.toString()}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Diameter */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">(Diameter)</label>
+                                                            <select
+                                                                value={contactLensFormData.left_diameter}
+                                                                onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
+                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                {diameterOptions.map((option) => (
+                                                                    <option key={option} value={option.toString()}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        {/* Power (PWR) */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Power (PWR) <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={contactLensFormData.left_power}
+                                                                onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                    contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                                }`}
+                                                            >
+                                                                <option value="">-</option>
+                                                                {powerOptions.map((power) => (
+                                                                    <option key={power} value={power}>
+                                                                        {power}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                            {contactLensErrors.left_power && (
+                                                                <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_power}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Add to Cart Button */}
+                                        <div className="flex justify-end mb-6">
+                                            <button
+                                                onClick={handleContactLensAddToCart}
+                                                disabled={contactLensLoading}
+                                                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                +
+                                                {contactLensLoading ? 'Adding to Cart...' : 'Add to Cart'}
                                             </button>
                                         </div>
                                     </div>
-                                    
-                                    <div className="space-y-3">
-                                        {isContactLens ? (
-                                            <button
-                                                onClick={() => setShowContactLensConfig(true)}
-                                                disabled={(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    // Check if out of stock
-                                                    return stockStatus === 'out_of_stock' ||
-                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                           (stockStatus === undefined && product.in_stock === false) ||
-                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                })()}
-                                                className={`w-full px-6 py-4 rounded-lg font-semibold text-lg transition-colors ${
-                                                    (() => {
+                                ) : (
+                                    /* Regular Product Quantity and Add to Cart */
+                                    <div className="mb-6">
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <label className="font-semibold text-gray-700">Quantity:</label>
+                                            <div className="flex items-center border border-gray-300 rounded-lg">
+                                                <button
+                                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                                    className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                                                    disabled={quantity <= 1}
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="px-4 py-2 min-w-[60px] text-center">{quantity}</span>
+                                                <button
+                                                    onClick={() => setQuantity(quantity + 1)}
+                                                    className="px-4 py-2 hover:bg-gray-100 transition-colors"
+                                                    disabled={(() => {
                                                         const p = product as any
                                                         const stockStatus = p.stock_status
                                                         const stockQty = product.stock_quantity
                                                         
-                                                        // Check if in stock - stock_status === 'in_stock' means it's in stock
-                                                        const isInStock = stockStatus === 'in_stock' ||
-                                                                          (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
-                                                                          (stockStatus === undefined && product.in_stock === true) ||
-                                                                          (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
-                                                        
-                                                        return isInStock
-                                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                    })()
-                                                }`}
-                                            >
-                                                Select Parameters
-                                            </button>
-                                        ) : (
+                                                        return stockStatus === 'out_of_stock' ||
+                                                               (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                               (stockStatus === undefined && product.in_stock === false) ||
+                                                               (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                    })()}
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
                                             <button
                                                 onClick={() => setShowCheckout(true)}
                                                 disabled={(() => {
@@ -466,7 +873,6 @@ const ProductDetail: React.FC = () => {
                                                     const stockStatus = p.stock_status
                                                     const stockQty = product.stock_quantity
                                                     
-                                                    // Check if out of stock
                                                     return stockStatus === 'out_of_stock' ||
                                                            (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
                                                            (stockStatus === undefined && product.in_stock === false) ||
@@ -478,7 +884,6 @@ const ProductDetail: React.FC = () => {
                                                         const stockStatus = p.stock_status
                                                         const stockQty = product.stock_quantity
                                                         
-                                                        // Check if in stock - stock_status === 'in_stock' means it's in stock
                                                         const isInStock = stockStatus === 'in_stock' ||
                                                                           (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
                                                                           (stockStatus === undefined && product.in_stock === true) ||
@@ -492,45 +897,123 @@ const ProductDetail: React.FC = () => {
                                             >
                                                 Select Lenses
                                             </button>
-                                        )}
-                                        
-                                        <div className="flex gap-3">
-                                            <button
-                                                onClick={() => setShowTryOn(true)}
-                                                disabled={(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    // Check if out of stock
-                                                    return stockStatus === 'out_of_stock' ||
-                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                           (stockStatus === undefined && product.in_stock === false) ||
-                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                })()}
-                                                className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-                                            >
-                                                Try on
-                                            </button>
                                             
-                                            <a
-                                                href="https://wa.me/1234567890"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
-                                            >
-                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                                                </svg>
-                                            </a>
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => setShowTryOn(true)}
+                                                    disabled={(() => {
+                                                        const p = product as any
+                                                        const stockStatus = p.stock_status
+                                                        const stockQty = product.stock_quantity
+                                                        
+                                                        return stockStatus === 'out_of_stock' ||
+                                                               (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                               (stockStatus === undefined && product.in_stock === false) ||
+                                                               (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                    })()}
+                                                    className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                >
+                                                    Try on
+                                                </button>
+                                                
+                                                <a
+                                                    href="https://wa.me/1234567890"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
+                                                >
+                                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                                    </svg>
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
+
+            {/* Product Specifications for Contact Lenses */}
+            {isContactLens && (
+                <section className="py-12 md:py-16 bg-gray-50 px-4 sm:px-6">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Product Specifications</h2>
+                        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {p.contact_lens_brand && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Producer:</span>
+                                        <span className="text-gray-600">{p.contact_lens_brand}</span>
+                                    </div>
+                                )}
+                                {p.brand && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Brand:</span>
+                                        <span className="text-gray-600">{p.brand}</span>
+                                    </div>
+                                )}
+                                {p.contact_lens_material && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Material:</span>
+                                        <span className="text-gray-600">{p.contact_lens_material}</span>
+                                    </div>
+                                )}
+                                {p.contact_lens_color && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Lens Color:</span>
+                                        <span className="text-gray-600">{p.contact_lens_color}</span>
+                                    </div>
+                                )}
+                                {p.contact_lens_type && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Product Type:</span>
+                                        <span className="text-gray-600">{p.contact_lens_type}</span>
+                                    </div>
+                                )}
+                                {p.replacement_frequency && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Replacement Frequency:</span>
+                                        <span className="text-gray-600">{p.replacement_frequency}</span>
+                                    </div>
+                                )}
+                                {p.water_content !== undefined && p.water_content !== null && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Water Content:</span>
+                                        <span className="text-gray-600">{p.water_content}%</span>
+                                    </div>
+                                )}
+                                {p.powers_range && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Powers:</span>
+                                        <span className="text-gray-600">{typeof p.powers_range === 'string' ? p.powers_range : JSON.stringify(p.powers_range)}</span>
+                                    </div>
+                                )}
+                                {p.can_sleep_with !== undefined && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Sleeping with Lenses:</span>
+                                        <span className="text-gray-600">{p.can_sleep_with ? 'YES' : 'NO'}</span>
+                                    </div>
+                                )}
+                                {p.is_medical_device !== undefined && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">Medical Device:</span>
+                                        <span className="text-gray-600">{p.is_medical_device ? 'YES' : 'NO'}</span>
+                                    </div>
+                                )}
+                                {p.has_uv_filter !== undefined && (
+                                    <div className="flex">
+                                        <span className="font-semibold text-gray-700 w-48">UV Filter:</span>
+                                        <span className="text-gray-600">{p.has_uv_filter ? 'YES' : 'NO'}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Related Products */}
             {relatedProducts.length > 0 && (
@@ -582,13 +1065,6 @@ const ProductDetail: React.FC = () => {
                 />
             )}
 
-            {/* Contact Lens Configuration Modal */}
-            {showContactLensConfig && product && isContactLens && (
-                <ContactLensConfiguration
-                    product={product}
-                    onClose={() => setShowContactLensConfig(false)}
-                />
-            )}
 
             {/* Virtual Try-On Modal */}
             <VirtualTryOnModal
