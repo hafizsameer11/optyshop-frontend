@@ -8,6 +8,8 @@ const LatestArrivals: React.FC = () => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchLatestProducts = async () => {
             try {
                 setLoading(true)
@@ -17,16 +19,26 @@ const LatestArrivals: React.FC = () => {
                     sortBy: 'created_at',
                     sortOrder: 'desc'
                 })
+                if (isCancelled) return
+                
                 if (result) {
                     setProducts(result.products)
                 }
             } catch (error) {
-                console.error('Error fetching latest products:', error)
+                if (!isCancelled) {
+                    console.error('Error fetching latest products:', error)
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
         fetchLatestProducts()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     if (loading) {

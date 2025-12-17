@@ -25,11 +25,15 @@ const ProductDetail: React.FC = () => {
     const [showTryOn, setShowTryOn] = useState(false)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchProduct = async () => {
             if (!slug) return
             
             setLoading(true)
             const productData = await getProductBySlug(slug)
+            
+            if (isCancelled) return
             
             if (productData) {
                 // Reset selected image index when loading a new product
@@ -58,15 +62,25 @@ const ProductDetail: React.FC = () => {
                 setProduct(productData)
                 // Fetch related products
                 const related = await getRelatedProducts(productData.id, 4)
-                setRelatedProducts(related)
+                if (!isCancelled) {
+                    setRelatedProducts(related)
+                }
             } else {
                 // Product not found, redirect to shop
-                navigate('/shop')
+                if (!isCancelled) {
+                    navigate('/shop')
+                }
             }
-            setLoading(false)
+            if (!isCancelled) {
+                setLoading(false)
+            }
         }
 
         fetchProduct()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [slug, navigate])
 
     const handleAddToCart = () => {

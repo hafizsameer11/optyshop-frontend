@@ -47,6 +47,8 @@ const Products: React.FC = () => {
 
     // Read URL parameters and fetch category/subcategory info
     useEffect(() => {
+        let isCancelled = false
+        
         const categorySlug = searchParams.get('category')
         const subcategorySlug = searchParams.get('subcategory')
         
@@ -57,11 +59,14 @@ const Products: React.FC = () => {
             if (categorySlug) {
                 try {
                     category = await getCategoryBySlug(categorySlug)
+                    if (isCancelled) return
                     if (category) {
                         setSelectedCategory(category.id)
                     }
                 } catch (error) {
-                    console.error('Error fetching category:', error)
+                    if (!isCancelled) {
+                        console.error('Error fetching category:', error)
+                    }
                 }
             }
             
@@ -69,44 +74,69 @@ const Products: React.FC = () => {
                 try {
                     // Pass categoryId if available to narrow the search
                     subcategory = await getSubcategoryBySlug(subcategorySlug, category?.id)
+                    if (isCancelled) return
                     if (subcategory) {
                         setSelectedSubcategory(subcategory.id)
                     }
                 } catch (error) {
-                    console.error('Error fetching subcategory:', error)
+                    if (!isCancelled) {
+                        console.error('Error fetching subcategory:', error)
+                    }
                 }
             } else {
                 // Reset subcategory if not in URL
-                setSelectedSubcategory(null)
+                if (!isCancelled) {
+                    setSelectedSubcategory(null)
+                }
             }
             
             // Reset category if not in URL
             if (!categorySlug) {
-                setSelectedCategory('all')
+                if (!isCancelled) {
+                    setSelectedCategory('all')
+                }
             }
             
-            setCategoryInfo({ category, subcategory })
+            if (!isCancelled) {
+                setCategoryInfo({ category, subcategory })
+            }
         }
         
         fetchCategoryInfo()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [searchParams])
     
     // Fetch product options on mount
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchOptions = async () => {
             try {
                 const options = await getProductOptions()
-                setProductOptions(options)
+                if (!isCancelled) {
+                    setProductOptions(options)
+                }
             } catch (error) {
-                console.error('Error fetching product options:', error)
-                setProductOptions(null)
+                if (!isCancelled) {
+                    console.error('Error fetching product options:', error)
+                    setProductOptions(null)
+                }
             }
         }
         fetchOptions()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     // Fetch products when filters change
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchProducts = async () => {
             try {
                 setLoading(true)
@@ -166,6 +196,8 @@ const Products: React.FC = () => {
                 }
 
             const result = await getProducts(filters)
+            if (isCancelled) return
+            
             if (result) {
                 // Log first product to debug image and stock data - show ALL image-related fields
                 if (result.products && result.products.length > 0 && import.meta.env.DEV) {
@@ -197,37 +229,53 @@ const Products: React.FC = () => {
                         },
                     })
                 }
-                setProducts(result.products || [])
-                setPagination(result.pagination || {
-                    total: 0,
-                    page: 1,
-                    limit: 12,
-                    pages: 0
-                })
+                if (!isCancelled) {
+                    setProducts(result.products || [])
+                    setPagination(result.pagination || {
+                        total: 0,
+                        page: 1,
+                        limit: 12,
+                        pages: 0
+                    })
+                }
             } else {
-                setProducts([])
-                setPagination({
-                    total: 0,
-                    page: 1,
-                    limit: 12,
-                    pages: 0
-                })
+                if (!isCancelled) {
+                    setProducts([])
+                    setPagination({
+                        total: 0,
+                        page: 1,
+                        limit: 12,
+                        pages: 0
+                    })
+                }
             }
             } catch (error) {
-                console.error('Error fetching products:', error)
-                setProducts([])
-                setPagination({
-                    total: 0,
-                    page: 1,
-                    limit: 12,
-                    pages: 0
-                })
+                if (!isCancelled) {
+                    console.error('Error fetching products:', error)
+                    setProducts([])
+                    setPagination({
+                        total: 0,
+                        page: 1,
+                        limit: 12,
+                        pages: 0
+                    })
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
 
-        fetchProducts()
+        // Add debounce to prevent rapid successive calls
+        const timeoutId = setTimeout(() => {
+            fetchProducts()
+        }, 150)
+
+        return () => {
+            isCancelled = true
+            clearTimeout(timeoutId)
+        }
     }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
 
     const handleAddToCart = (product: Product) => {

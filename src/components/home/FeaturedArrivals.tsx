@@ -19,6 +19,8 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchFeaturedProducts = async () => {
             try {
                 setLoading(true)
@@ -32,6 +34,7 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                 if (categorySlug) {
                     // Find category by slug to get ID
                     const categories = await getCategoriesWithSubcategories()
+                    if (isCancelled) return
                     const category = categories.find(cat => cat.slug === categorySlug)
                     if (category) {
                         filters.category = category.id
@@ -39,16 +42,26 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                 }
 
                 const result = await getProducts(filters)
+                if (isCancelled) return
+                
                 if (result) {
                     setProducts(result.products)
                 }
             } catch (error) {
-                console.error('Error fetching featured products:', error)
+                if (!isCancelled) {
+                    console.error('Error fetching featured products:', error)
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
         fetchFeaturedProducts()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [categorySlug, limit])
 
     if (loading) {

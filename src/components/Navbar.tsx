@@ -20,15 +20,25 @@ const Navbar: React.FC = () => {
 
     // Fetch categories on mount
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchCategories = async () => {
             try {
                 const fetchedCategories = await getCategoriesWithSubcategories()
-                setCategories(fetchedCategories)
+                if (!isCancelled) {
+                    setCategories(fetchedCategories)
+                }
             } catch (error) {
-                console.error('Error fetching categories:', error)
+                if (!isCancelled) {
+                    console.error('Error fetching categories:', error)
+                }
             }
         }
         fetchCategories()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     // Fetch subcategories when hovering over a category
@@ -42,11 +52,9 @@ const Navbar: React.FC = () => {
         
         try {
             const subcategories = await getSubcategoriesByCategoryId(categoryId)
-            console.log(`Fetched subcategories for category ${categoryId}:`, subcategories)
             setCategorySubcategories(prev => {
                 const newMap = new Map(prev)
                 newMap.set(categoryId, subcategories)
-                console.log(`Updated categorySubcategories map for category ${categoryId}:`, subcategories)
                 return newMap
             })
         } catch (error) {
@@ -142,15 +150,6 @@ const Navbar: React.FC = () => {
                             const subcategories = fetchedSubcategories || category.subcategories || []
                             const isLoading = loadingSubcategories.has(category.id)
                             
-                            if (isDropdownOpen) {
-                                console.log(`Category ${category.id} (${category.name}) dropdown open:`, {
-                                    fetchedSubcategories,
-                                    categorySubcategories: category.subcategories,
-                                    finalSubcategories: subcategories,
-                                    isLoading
-                                })
-                            }
-                            
                             return (
                             <div
                                 key={category.id}
@@ -162,8 +161,11 @@ const Navbar: React.FC = () => {
                                         dropdownTimeoutRef.current = null
                                     }
                                     setHoveredCategory(category.id)
-                                    // Fetch subcategories on hover
-                                    fetchSubcategories(category.id)
+                                    // Debounce subcategory fetching to prevent too many requests
+                                    const timeoutId = setTimeout(() => {
+                                        fetchSubcategories(category.id)
+                                    }, 200)
+                                    dropdownTimeoutRef.current = timeoutId as any
                                 }}
                                 onMouseLeave={() => {
                                     // Only close on hover leave if not clicked open
@@ -242,7 +244,7 @@ const Navbar: React.FC = () => {
                                                     subcategories.map((subcategory) => (
                                                         <Link
                                                             key={subcategory.id}
-                                                            to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                            to={`/category/${category.slug}/${subcategory.slug}`}
                                                             onClick={() => {
                                                                 setClickedCategory(null)
                                                                 setHoveredCategory(null)
@@ -404,7 +406,7 @@ const Navbar: React.FC = () => {
                                                             subcategories.map((subcategory) => (
                                                                 <Link
                                                                     key={subcategory.id}
-                                                                    to={`/shop?category=${category.slug}&subcategory=${subcategory.slug}`}
+                                                                    to={`/category/${category.slug}/${subcategory.slug}`}
                                                                     onClick={() => {
                                                                         setIsMobileOpen(false)
                                                                         setHoveredCategory(null)
@@ -424,7 +426,7 @@ const Navbar: React.FC = () => {
                                             </>
                                         ) : (
                                             <Link
-                                                to={`/shop?category=${category.slug}`}
+                                                to={`/category/${category.slug}`}
                                                 onClick={() => setIsMobileOpen(false)}
                                                 className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
                                                     isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
