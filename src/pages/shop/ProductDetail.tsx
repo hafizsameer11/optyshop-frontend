@@ -338,32 +338,41 @@ const ProductDetail: React.FC = () => {
     useEffect(() => {
         if (!product?.id) return
         
-        // Only reset form if product ID changed
-        if (lastProductIdRef.current !== product.id) {
-            lastProductIdRef.current = product.id
+        const currentProductId = product.id
+        
+        // Only initialize once per product ID
+        if (formInitializedRef.current === currentProductId) return
+        
+        // Check if it's a contact lens
+        const p = product as any
+        const isContactLensProduct = product.category?.slug === 'contact-lenses' || 
+                                    p.product_type === 'contact_lens' ||
+                                    Array.isArray(p.base_curve_options)
+        
+        if (isContactLensProduct) {
+            const baseCurves = Array.isArray(p.base_curve_options) ? p.base_curve_options : [8.70, 8.80, 8.90]
+            const diameters = Array.isArray(p.diameter_options) ? p.diameter_options : [14.00, 14.20]
             
-            // Check if it's a contact lens
-            const p = product as any
-            const isContactLensProduct = product.category?.slug === 'contact-lenses' || 
-                                        p.product_type === 'contact_lens' ||
-                                        Array.isArray(p.base_curve_options)
-            
-            if (isContactLensProduct) {
-                const baseCurves = Array.isArray(p.base_curve_options) ? p.base_curve_options : [8.70, 8.80, 8.90]
-                const diameters = Array.isArray(p.diameter_options) ? p.diameter_options : [14.00, 14.20]
+            if (baseCurves.length > 0 && diameters.length > 0) {
+                formInitializedRef.current = currentProductId
+                lastProductIdRef.current = currentProductId
                 
-                if (baseCurves.length > 0 && diameters.length > 0) {
-                    setContactLensFormData({
-                        right_qty: 1,
-                        right_base_curve: baseCurves[0]?.toString() || '8.70',
-                        right_diameter: diameters[0]?.toString() || '14.00',
-                        right_power: '',
-                        left_qty: 1,
-                        left_base_curve: baseCurves[0]?.toString() || '8.70',
-                        left_diameter: diameters[0]?.toString() || '14.00',
-                        left_power: ''
-                    })
-                }
+                setContactLensFormData({
+                    right_qty: 1,
+                    right_base_curve: baseCurves[0]?.toString() || '8.70',
+                    right_diameter: diameters[0]?.toString() || '14.00',
+                    right_power: '',
+                    left_qty: 1,
+                    left_base_curve: baseCurves[0]?.toString() || '8.70',
+                    left_diameter: diameters[0]?.toString() || '14.00',
+                    left_power: ''
+                })
+            }
+        } else {
+            // Reset refs if not a contact lens
+            if (formInitializedRef.current !== null) {
+                formInitializedRef.current = null
+                lastProductIdRef.current = null
             }
         }
     }, [product?.id])
@@ -379,7 +388,8 @@ const ProductDetail: React.FC = () => {
         }
     }
     
-    const calculateContactLensTotal = (): number => {
+    // Memoize total calculation to prevent recalculation on every render
+    const calculateContactLensTotal = useMemo(() => {
         if (!contactLensFormData.right_power || !contactLensFormData.left_power) {
             return 0
         }
@@ -392,7 +402,7 @@ const ProductDetail: React.FC = () => {
         const leftTotal = Number(basePrice) * contactLensFormData.left_qty
         
         return rightTotal + leftTotal
-    }
+    }, [contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty, product.price, product.sale_price])
     
     const validateContactLensForm = (): boolean => {
         const newErrors: Record<string, string> = {}
@@ -446,7 +456,7 @@ const ProductDetail: React.FC = () => {
                         name: product.name || '',
                         brand: product.brand || '',
                         category: product.category?.slug || 'contact-lenses',
-                        price: calculateContactLensTotal(),
+                        price: calculateContactLensTotal,
                         image: getProductImageUrl(product, selectedImageIndex),
                         description: product.description || '',
                         inStock: product.in_stock || false
@@ -462,7 +472,7 @@ const ProductDetail: React.FC = () => {
                     name: product.name || '',
                     brand: product.brand || '',
                     category: product.category?.slug || 'contact-lenses',
-                    price: calculateContactLensTotal(),
+                    price: calculateContactLensTotal,
                     image: getProductImageUrl(product, selectedImageIndex),
                     description: product.description || '',
                     inStock: product.in_stock || false,
@@ -695,7 +705,7 @@ const ProductDetail: React.FC = () => {
                                         {/* Price Display */}
                                         <div className="mb-6">
                                             <div className="text-3xl font-bold text-gray-900">
-                                                ${calculateContactLensTotal().toFixed(2)}
+                                                ${calculateContactLensTotal.toFixed(2)}
                                             </div>
                                         </div>
                                         
