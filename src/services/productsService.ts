@@ -131,6 +131,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   category?: string | number;
+  subcategory?: string | number;
   gender?: string;
   search?: string;
   sortBy?: string;

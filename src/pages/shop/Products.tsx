@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
@@ -11,9 +11,11 @@ import {
     type ProductOptions
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
+import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../services/categoriesService'
 
 const Products: React.FC = () => {
     const { addToCart } = useCart()
+    const [searchParams, setSearchParams] = useSearchParams()
     const [products, setProducts] = useState<Product[]>([])
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [loading, setLoading] = useState(true)
@@ -24,8 +26,15 @@ const Products: React.FC = () => {
         pages: 0
     })
     
+    // Category and subcategory from URL
+    const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
+        category: null,
+        subcategory: null
+    })
+    
     // Filters
     const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
+    const [selectedSubcategory, setSelectedSubcategory] = useState<string | number | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [frameShape, setFrameShape] = useState<string>('')
     const [frameMaterial, setFrameMaterial] = useState<string>('')
@@ -36,6 +45,52 @@ const Products: React.FC = () => {
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
     const [showNewArrivals, setShowNewArrivals] = useState(false)
 
+    // Read URL parameters and fetch category/subcategory info
+    useEffect(() => {
+        const categorySlug = searchParams.get('category')
+        const subcategorySlug = searchParams.get('subcategory')
+        
+        const fetchCategoryInfo = async () => {
+            let category: Category | null = null
+            let subcategory: Category | null = null
+            
+            if (categorySlug) {
+                try {
+                    category = await getCategoryBySlug(categorySlug)
+                    if (category) {
+                        setSelectedCategory(category.id)
+                    }
+                } catch (error) {
+                    console.error('Error fetching category:', error)
+                }
+            }
+            
+            if (subcategorySlug) {
+                try {
+                    // Pass categoryId if available to narrow the search
+                    subcategory = await getSubcategoryBySlug(subcategorySlug, category?.id)
+                    if (subcategory) {
+                        setSelectedSubcategory(subcategory.id)
+                    }
+                } catch (error) {
+                    console.error('Error fetching subcategory:', error)
+                }
+            } else {
+                // Reset subcategory if not in URL
+                setSelectedSubcategory(null)
+            }
+            
+            // Reset category if not in URL
+            if (!categorySlug) {
+                setSelectedCategory('all')
+            }
+            
+            setCategoryInfo({ category, subcategory })
+        }
+        
+        fetchCategoryInfo()
+    }, [searchParams])
+    
     // Fetch product options on mount
     useEffect(() => {
         const fetchOptions = async () => {
@@ -62,6 +117,10 @@ const Products: React.FC = () => {
 
                 if (selectedCategory !== 'all') {
                     filters.category = selectedCategory
+                }
+
+                if (selectedSubcategory) {
+                    filters.subcategory = selectedSubcategory
                 }
 
                 if (searchTerm) {
@@ -169,7 +228,7 @@ const Products: React.FC = () => {
         }
 
         fetchProducts()
-    }, [selectedCategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
+    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
 
     const handleAddToCart = (product: Product) => {
         try {
@@ -209,10 +268,18 @@ const Products: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="text-center text-white">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                            Shop Glasses
+                            {categoryInfo.subcategory 
+                                ? categoryInfo.subcategory.name 
+                                : categoryInfo.category 
+                                    ? categoryInfo.category.name 
+                                    : 'Shop Glasses'}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            Discover our wide collection of eyeglasses and sunglasses
+                            {categoryInfo.subcategory 
+                                ? `Browse our collection of ${categoryInfo.subcategory.name}`
+                                : categoryInfo.category 
+                                    ? `Discover our wide collection of ${categoryInfo.category.name}`
+                                    : 'Discover our wide collection of eyeglasses and sunglasses'}
                         </p>
                     </div>
                 </div>
@@ -221,7 +288,7 @@ const Products: React.FC = () => {
             {/* Breadcrumbs */}
             <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    <nav className="flex items-center gap-2 text-sm text-gray-900">
+                    <nav className="flex items-center gap-2 text-sm text-gray-900 flex-wrap">
                         <Link to="/" className="flex items-center gap-2 hover:text-gray-700 transition-colors">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -229,7 +296,21 @@ const Products: React.FC = () => {
                             <span>HOME</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">SHOP</span>
+                        <Link to="/shop" className="hover:text-gray-700 transition-colors">
+                            <span>SHOP</span>
+                        </Link>
+                        {categoryInfo.category && (
+                            <>
+                                <span className="text-gray-500">&gt;</span>
+                                <span className="text-gray-900 uppercase">{categoryInfo.category.name}</span>
+                            </>
+                        )}
+                        {categoryInfo.subcategory && (
+                            <>
+                                <span className="text-gray-500">&gt;</span>
+                                <span className="text-gray-900 uppercase">{categoryInfo.subcategory.name}</span>
+                            </>
+                        )}
                     </nav>
                 </div>
             </div>

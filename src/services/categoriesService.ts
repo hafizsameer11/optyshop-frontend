@@ -295,3 +295,35 @@ export const getSubcategoryById = async (id: number | string): Promise<Category 
   }
 };
 
+/**
+ * Get subcategory by slug
+ * Fetches all subcategories and finds the one with matching slug
+ * @param slug - The slug of the subcategory
+ * @param categoryId - Optional category ID to narrow the search
+ */
+export const getSubcategoryBySlug = async (slug: string, categoryId?: number | string): Promise<Category | null> => {
+  try {
+    // If categoryId is provided, fetch subcategories for that category only
+    if (categoryId) {
+      const subcategories = await getSubcategoriesByCategoryId(categoryId);
+      return subcategories.find(sub => sub.slug === slug) || null;
+    }
+    
+    // Otherwise, fetch all categories and find subcategory
+    const categories = await getCategoriesWithSubcategories();
+    for (const category of categories) {
+      if (category.subcategories) {
+        const subcategory = category.subcategories.find(sub => sub.slug === slug);
+        if (subcategory) {
+          return subcategory;
+        }
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching subcategory by slug:', error);
+    return null;
+  }
+};
+
