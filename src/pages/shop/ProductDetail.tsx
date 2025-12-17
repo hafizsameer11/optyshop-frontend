@@ -391,8 +391,9 @@ const ProductDetail: React.FC = () => {
     }
     
     // Memoize total calculation to prevent recalculation on every render
+    // Use product.id instead of product.price/sale_price to prevent recalculation when product object changes
     const calculateContactLensTotal = useMemo(() => {
-        if (!contactLensFormData.right_power || !contactLensFormData.left_power) {
+        if (!product || !contactLensFormData.right_power || !contactLensFormData.left_power) {
             return 0
         }
         
@@ -404,7 +405,7 @@ const ProductDetail: React.FC = () => {
         const leftTotal = Number(basePrice) * contactLensFormData.left_qty
         
         return rightTotal + leftTotal
-    }, [contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty, product.price, product.sale_price])
+    }, [product?.id, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
     
     const validateContactLensForm = (): boolean => {
         const newErrors: Record<string, string> = {}
