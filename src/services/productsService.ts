@@ -201,7 +201,14 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
   };
 } | null> => {
   try {
-    const endpoint = buildQueryString(API_ROUTES.PRODUCTS.LIST, filters);
+    // Map subcategory to subCategory (API expects capital C)
+    const apiFilters: Record<string, any> = { ...filters };
+    if (apiFilters.subcategory !== undefined) {
+      apiFilters.subCategory = apiFilters.subcategory;
+      delete apiFilters.subcategory;
+    }
+    
+    const endpoint = buildQueryString(API_ROUTES.PRODUCTS.LIST, apiFilters);
     
     if (import.meta.env.DEV && filters.subcategory) {
       console.log('🔍 API Request - Filtering by subcategory:', {

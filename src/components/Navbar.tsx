@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -12,7 +12,7 @@ const Navbar: React.FC = () => {
     const [clickedCategory, setClickedCategory] = useState<number | null>(null)
     const [categorySubcategories, setCategorySubcategories] = useState<Map<number, Category[]>>(new Map())
     const [loadingSubcategories, setLoadingSubcategories] = useState<Set<number>>(new Set())
-    const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -72,6 +72,10 @@ const Navbar: React.FC = () => {
     const isActive = (path: string) => {
         if (path === '/') {
             return location.pathname === '/'
+        }
+        // For category paths, check if current path starts with the category path
+        if (path.startsWith('/category/')) {
+            return location.pathname.startsWith(path)
         }
         return location.pathname.startsWith(path)
     }
@@ -165,7 +169,7 @@ const Navbar: React.FC = () => {
                                     const timeoutId = setTimeout(() => {
                                         fetchSubcategories(category.id)
                                     }, 200)
-                                    dropdownTimeoutRef.current = timeoutId as any
+                                    dropdownTimeoutRef.current = timeoutId
                                 }}
                                 onMouseLeave={() => {
                                     // Only close on hover leave if not clicked open
@@ -177,34 +181,38 @@ const Navbar: React.FC = () => {
                                 }}
                             >
                                 <div className="flex items-center relative">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            const newState = clickedCategory === category.id ? null : category.id
-                                            setClickedCategory(newState)
-                                            if (newState !== null) {
-                                                fetchSubcategories(category.id)
-                                            }
-                                        }}
+                                    <Link
+                                        to={`/category/${category.slug}`}
                                         className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                                            isActive('/shop') 
+                                            isActive(`/category/${category.slug}`) 
                                                 ? 'bg-blue-800/50 text-blue-100' 
                                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                         }`}
-                                        aria-label={`Toggle ${category.name} subcategories`}
+                                        onClick={(e) => {
+                                            // If there are subcategories, allow dropdown toggle on click
+                                            const hasSubcategories = (categorySubcategories.get(category.id) || category.subcategories || []).length > 0
+                                            if (hasSubcategories) {
+                                                e.preventDefault()
+                                                const newState = clickedCategory === category.id ? null : category.id
+                                                setClickedCategory(newState)
+                                                if (newState !== null) {
+                                                    fetchSubcategories(category.id)
+                                                }
+                                            }
+                                        }}
                                     >
                                         {category.name}
-                                        <svg 
-                                            className={`ml-1 w-3 h-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
-                                            fill="none" 
-                                            stroke="currentColor" 
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
+                                        {((categorySubcategories.get(category.id) || category.subcategories || []).length > 0 || loadingSubcategories.has(category.id)) && (
+                                            <svg 
+                                                className={`ml-1 w-3 h-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+                                                fill="none" 
+                                                stroke="currentColor" 
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
+                                        )}
+                                    </Link>
                                 </div>
                                 
                                 {/* Subcategories Dropdown */}
@@ -232,6 +240,18 @@ const Navbar: React.FC = () => {
                                             }}
                                         >
                                             <div className="py-1">
+                                                {/* View All Category Link */}
+                                                <Link
+                                                    to={`/category/${category.slug}`}
+                                                    onClick={() => {
+                                                        setClickedCategory(null)
+                                                        setHoveredCategory(null)
+                                                    }}
+                                                    className="block px-4 py-2.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md border-b border-gray-200 mb-1"
+                                                >
+                                                    View All {category.name}
+                                                </Link>
+                                                
                                                 {isLoading ? (
                                                     <div className="px-4 py-3 text-sm text-gray-500 text-center flex items-center justify-center gap-2">
                                                         <svg className="animate-spin h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -369,31 +389,52 @@ const Navbar: React.FC = () => {
                                     <div key={category.id}>
                                         {hasSubcategories || isLoading ? (
                                             <>
-                                                <button
-                                                    onClick={() => {
-                                                        const isOpen = hoveredCategory === category.id
-                                                        setHoveredCategory(isOpen ? null : category.id)
-                                                        // Fetch subcategories when opening
-                                                        if (!isOpen) {
-                                                            fetchSubcategories(category.id)
-                                                        }
-                                                    }}
-                                                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                                        isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
-                                                    }`}
-                                                >
-                                                    <span>{category.name}</span>
-                                                    <svg 
-                                                        className={`w-4 h-4 transition-transform duration-200 ${hoveredCategory === category.id ? 'rotate-180' : ''}`}
-                                                        fill="none" 
-                                                        stroke="currentColor" 
-                                                        viewBox="0 0 24 24"
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        to={`/category/${category.slug}`}
+                                                        onClick={() => setIsMobileOpen(false)}
+                                                        className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                                            isActive(`/category/${category.slug}`) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
+                                                        }`}
                                                     >
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                    </svg>
-                                                </button>
+                                                        {category.name}
+                                                    </Link>
+                                                    <button
+                                                        onClick={() => {
+                                                            const isOpen = hoveredCategory === category.id
+                                                            setHoveredCategory(isOpen ? null : category.id)
+                                                            // Fetch subcategories when opening
+                                                            if (!isOpen) {
+                                                                fetchSubcategories(category.id)
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-2.5 rounded-lg font-medium transition-all ${
+                                                            isActive(`/category/${category.slug}`) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
+                                                        }`}
+                                                        aria-label="Toggle subcategories"
+                                                    >
+                                                        <svg 
+                                                            className={`w-4 h-4 transition-transform duration-200 ${hoveredCategory === category.id ? 'rotate-180' : ''}`}
+                                                            fill="none" 
+                                                            stroke="currentColor" 
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
                                                 {hoveredCategory === category.id && (
                                                     <div className="ml-4 mt-1 space-y-1 bg-blue-900/40 rounded-lg p-2 border border-blue-700/30">
+                                                        <Link
+                                                            to={`/category/${category.slug}`}
+                                                            onClick={() => {
+                                                                setIsMobileOpen(false)
+                                                                setHoveredCategory(null)
+                                                            }}
+                                                            className="block px-4 py-2.5 rounded-md text-sm font-semibold bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150 border-b border-blue-700/30 mb-1"
+                                                        >
+                                                            View All {category.name}
+                                                        </Link>
                                                         {isLoading ? (
                                                             <div className="px-4 py-3 text-sm text-cyan-200/70 text-center flex items-center justify-center gap-2">
                                                                 <svg className="animate-spin h-4 w-4 text-cyan-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -429,7 +470,7 @@ const Navbar: React.FC = () => {
                                                 to={`/category/${category.slug}`}
                                                 onClick={() => setIsMobileOpen(false)}
                                                 className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                                    isActive('/shop') ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
+                                                    isActive(`/category/${category.slug}`) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                                 }`}
                                             >
                                                 {category.name}

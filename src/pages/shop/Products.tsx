@@ -61,7 +61,8 @@ const Products: React.FC = () => {
                     category = await getCategoryBySlug(categorySlug)
                     if (isCancelled) return
                     if (category) {
-                        setSelectedCategory(category.id)
+                        // API expects category slug, not ID
+                        setSelectedCategory(category.slug)
                     }
                 } catch (error) {
                     if (!isCancelled) {
@@ -76,7 +77,8 @@ const Products: React.FC = () => {
                     subcategory = await getSubcategoryBySlug(subcategorySlug, category?.id)
                     if (isCancelled) return
                     if (subcategory) {
-                        setSelectedSubcategory(subcategory.id)
+                        // API expects subcategory slug, not ID
+                        setSelectedSubcategory(subcategory.slug)
                     }
                 } catch (error) {
                     if (!isCancelled) {

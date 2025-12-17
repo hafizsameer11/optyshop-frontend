@@ -104,11 +104,13 @@ const CategoryPage: React.FC = () => {
                 }
 
                 // If subcategory is selected, filter ONLY by subcategory
-                // Otherwise, filter by category
+                // Otherwise, filter by category to show all products in that category
+                // API expects slugs (strings) for category and subCategory parameters
                 if (categoryInfo.subcategory) {
-                    // Filter ONLY by subcategory - this should return only products in this subcategory
-                    filters.subcategory = categoryInfo.subcategory.id
-                    // Don't include category filter when subcategory is selected - let API handle subcategory filtering
+                    // Filter ONLY by subcategory - show only products linked to this subcategory
+                    filters.subcategory = categoryInfo.subcategory.slug
+                    // Explicitly exclude category filter to ensure only subcategory products are shown
+                    delete filters.category
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 Fetching products for subcategory:', {
@@ -119,8 +121,10 @@ const CategoryPage: React.FC = () => {
                         })
                     }
                 } else {
-                    // Filter by category only - show products directly in this category
-                    filters.category = categoryInfo.category!.id
+                    // Filter by category only - show all products linked to this category
+                    filters.category = categoryInfo.category!.slug
+                    // Explicitly exclude subcategory filter to show all category products
+                    delete filters.subcategory
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 Fetching products for category:', {
@@ -353,15 +357,35 @@ const CategoryPage: React.FC = () => {
                         </div>
                     ) : !products || products.length === 0 ? (
                         <div className="text-center py-12">
-                            <p className="text-lg md:text-xl text-gray-600 mb-4">
-                                No products found in this category.
-                            </p>
-                            <Link 
-                                to="/shop" 
-                                className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors"
-                            >
-                                Browse All Products
-                            </Link>
+                            <div className="max-w-md mx-auto">
+                                <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p className="text-lg md:text-xl text-gray-600 mb-2 font-semibold">
+                                    {categoryInfo.subcategory 
+                                        ? `No products found in ${categoryInfo.subcategory.name}`
+                                        : `No products found in ${categoryInfo.category.name}`}
+                                </p>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    {categoryInfo.subcategory 
+                                        ? "This subcategory doesn't have any products yet."
+                                        : "This category doesn't have any products yet."}
+                                </p>
+                                {categoryInfo.subcategory ? (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}`}
+                                        className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
+                                    >
+                                        View {categoryInfo.category.name} Products
+                                    </Link>
+                                ) : null}
+                                <Link 
+                                    to="/shop" 
+                                    className="inline-block px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    Browse All Products
+                                </Link>
+                            </div>
                         </div>
                     ) : (
                         <>
