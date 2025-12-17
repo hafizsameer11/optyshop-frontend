@@ -4,6 +4,9 @@ import Banner from '../components/home/Banner'
 import Campaigns from '../components/home/Campaigns'
 import TrustedBrands from '../components/home/TrustedBrands'
 import StatsHighlight from '../components/home/StatsHighlight'
+import ShopCategories from '../components/home/ShopCategories'
+import LatestArrivals from '../components/home/LatestArrivals'
+import FeaturedArrivals from '../components/home/FeaturedArrivals'
 import LiveDemoSection from '../components/home/LiveDemoSection'
 import Testimonials from '../components/home/Testimonials'
 import PurchasingJourneySection from '../components/home/PurchasingJourneySection'
@@ -41,6 +44,10 @@ const Home: React.FC = () => {
             <Campaigns />
             <TrustedBrands />
             <StatsHighlight />
+            <ShopCategories />
+            <LatestArrivals />
+            <FeaturedArrivals categorySlug="contact-lenses" categoryName="Contact Lenses" />
+            <FeaturedArrivals categorySlug="sunglasses" categoryName="Sunglasses and eyeglasses" />
             <LiveDemoSection />
             <ErrorBoundary>
                 <Testimonials />
