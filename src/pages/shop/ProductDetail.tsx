@@ -252,15 +252,15 @@ const ProductDetail: React.FC = () => {
         return p.diameter_options || [14.00, 14.20]
     }, [product?.id])
     
-    const powersRange = useMemo(() => {
-        if (!product) return ''
-        const p = product as any
-        return p.powers_range || '-0.50 to -6.00 in 0.25 steps'
-    }, [product?.id])
-    
-    // Parse power range to generate options
+    // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
-    const generatePowerOptions = (range: string): string[] => {
+    const powerOptions = useMemo(() => {
+        if (!product) return []
+        const p = product as any
+        const range = p.powers_range || '-0.50 to -6.00 in 0.25 steps'
+        
+        if (!range) return []
+        
         try {
             const options: string[] = []
             
@@ -328,13 +328,7 @@ const ProductDetail: React.FC = () => {
         
         // Default fallback options
         return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
-    }
-    
-    // Memoize power options to prevent recalculation on every render
-    const powerOptions = useMemo(() => {
-        if (!powersRange) return []
-        return generatePowerOptions(powersRange)
-    }, [powersRange])
+    }, [product?.id])
     
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -390,22 +384,25 @@ const ProductDetail: React.FC = () => {
         }
     }
     
+    // Memoize product price to prevent recalculation
+    const productBasePrice = useMemo(() => {
+        if (!product) return 0
+        return product.sale_price && product.sale_price < product.price 
+            ? Number(product.sale_price) 
+            : Number(product.price || 0)
+    }, [product?.id, product?.price, product?.sale_price])
+    
     // Memoize total calculation to prevent recalculation on every render
-    // Use product.id instead of product.price/sale_price to prevent recalculation when product object changes
     const calculateContactLensTotal = useMemo(() => {
-        if (!product || !contactLensFormData.right_power || !contactLensFormData.left_power) {
+        if (!contactLensFormData.right_power || !contactLensFormData.left_power || productBasePrice === 0) {
             return 0
         }
         
-        const basePrice = product.sale_price && product.sale_price < product.price 
-            ? product.sale_price 
-            : product.price
-        
-        const rightTotal = Number(basePrice) * contactLensFormData.right_qty
-        const leftTotal = Number(basePrice) * contactLensFormData.left_qty
+        const rightTotal = productBasePrice * contactLensFormData.right_qty
+        const leftTotal = productBasePrice * contactLensFormData.left_qty
         
         return rightTotal + leftTotal
-    }, [product?.id, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
+    }, [productBasePrice, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
     
     const validateContactLensForm = (): boolean => {
         const newErrors: Record<string, string> = {}
