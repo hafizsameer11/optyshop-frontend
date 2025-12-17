@@ -86,14 +86,46 @@ const CategoryPage: React.FC = () => {
                 const filters: ProductFilters = {
                     page: currentPage,
                     limit: 12,
-                    category: categoryInfo.category!.id
                 }
 
+                // If subcategory is selected, filter ONLY by subcategory
+                // Otherwise, filter by category
                 if (categoryInfo.subcategory) {
+                    // Filter ONLY by subcategory - this should return only products in this subcategory
                     filters.subcategory = categoryInfo.subcategory.id
+                    // Don't include category filter when subcategory is selected - let API handle subcategory filtering
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 Fetching products for subcategory:', {
+                            subcategoryId: categoryInfo.subcategory.id,
+                            subcategoryName: categoryInfo.subcategory.name,
+                            subcategorySlug: categoryInfo.subcategory.slug,
+                            filters
+                        })
+                    }
+                } else {
+                    // Filter by category only - show products directly in this category
+                    filters.category = categoryInfo.category!.id
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 Fetching products for category:', {
+                            categoryId: categoryInfo.category!.id,
+                            categoryName: categoryInfo.category!.name,
+                            categorySlug: categoryInfo.category!.slug,
+                            filters
+                        })
+                    }
                 }
 
                 const result = await getProducts(filters)
+                
+                if (import.meta.env.DEV && result) {
+                    console.log('📦 Products received:', {
+                        count: result.products?.length || 0,
+                        total: result.pagination?.total || 0,
+                        products: result.products?.map(p => ({ id: p.id, name: p.name, category: p.category?.name, subcategory: (p as any).subcategory?.name }))
+                    })
+                }
                 
                 if (isCancelled) return
 

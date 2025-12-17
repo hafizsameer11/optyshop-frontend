@@ -203,6 +203,14 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
   try {
     const endpoint = buildQueryString(API_ROUTES.PRODUCTS.LIST, filters);
     
+    if (import.meta.env.DEV && filters.subcategory) {
+      console.log('🔍 API Request - Filtering by subcategory:', {
+        subcategory: filters.subcategory,
+        category: filters.category,
+        endpoint
+      })
+    }
+    
     const response = await apiClient.get<ProductsListResponse>(
       endpoint,
       false // PUBLIC endpoint
