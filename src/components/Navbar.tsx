@@ -42,9 +42,11 @@ const Navbar: React.FC = () => {
         
         try {
             const subcategories = await getSubcategoriesByCategoryId(categoryId)
+            console.log(`Fetched subcategories for category ${categoryId}:`, subcategories)
             setCategorySubcategories(prev => {
                 const newMap = new Map(prev)
                 newMap.set(categoryId, subcategories)
+                console.log(`Updated categorySubcategories map for category ${categoryId}:`, subcategories)
                 return newMap
             })
         } catch (error) {
@@ -136,8 +138,18 @@ const Navbar: React.FC = () => {
                     {categories.length > 0 ? (
                         categories.slice(0, 6).map((category) => {
                             const isDropdownOpen = clickedCategory === category.id || hoveredCategory === category.id
-                            const subcategories = categorySubcategories.get(category.id) || category.subcategories || []
+                            const fetchedSubcategories = categorySubcategories.get(category.id)
+                            const subcategories = fetchedSubcategories || category.subcategories || []
                             const isLoading = loadingSubcategories.has(category.id)
+                            
+                            if (isDropdownOpen) {
+                                console.log(`Category ${category.id} (${category.name}) dropdown open:`, {
+                                    fetchedSubcategories,
+                                    categorySubcategories: category.subcategories,
+                                    finalSubcategories: subcategories,
+                                    isLoading
+                                })
+                            }
                             
                             return (
                             <div

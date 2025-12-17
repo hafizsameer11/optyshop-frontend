@@ -244,10 +244,16 @@ export const getSubcategoriesByCategoryId = async (
         }
       }
 
-      // Filter active subcategories and sort by sort_order
-      return subcategories
-        .filter((subcategory) => subcategory.is_active)
-        .sort((a, b) => a.sort_order - b.sort_order);
+      console.log('Fetched subcategories:', subcategories);
+
+      // Filter active subcategories (default to true if is_active is not present) and sort by sort_order
+      const filteredSubcategories = subcategories
+        .filter((subcategory) => subcategory.is_active !== false) // Include if is_active is true, undefined, or null
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      
+      console.log('Filtered subcategories:', filteredSubcategories);
+      
+      return filteredSubcategories;
     }
 
     console.error('Failed to fetch subcategories:', response.message);
