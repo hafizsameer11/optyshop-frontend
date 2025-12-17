@@ -36,7 +36,34 @@ export const useTestimonials = (): UseTestimonialsReturn => {
   };
 
   useEffect(() => {
-    fetchTestimonials();
+    let isCancelled = false;
+    
+    const fetch = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getTestimonials();
+        
+        if (!isCancelled) {
+          setTestimonials(data);
+        }
+      } catch (err: any) {
+        if (!isCancelled) {
+          setError(err.message || 'Failed to fetch testimonials');
+          console.error('Error in useTestimonials:', err);
+        }
+      } finally {
+        if (!isCancelled) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetch();
+    
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   return {

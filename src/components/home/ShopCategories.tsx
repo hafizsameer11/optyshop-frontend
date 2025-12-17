@@ -15,84 +15,62 @@ const ShopCategories: React.FC = () => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchCategoriesAndProducts = async () => {
             try {
                 setLoading(true)
-                // Fetch categories (with or without products from API)
+                // Fetch categories with products included from API (includeProducts=true)
                 const fetchedCategories = await getCategories(true)
                 
-                // Always fetch ALL products for each category to ensure we have them
-                const categoriesWithProducts = await Promise.all(
-                    fetchedCategories.map(async (category) => {
-                        // Fetch all products for this category using slug
-                        try {
-                            // First fetch to get total count
-                            const firstPage = await getProducts({
-                                category: category.slug,
-                                page: 1,
-                                limit: 100 // Large limit to get all products
-                            })
-                            
-                            if (!firstPage) {
-                                return {
-                                    ...category,
-                                    fetchedProducts: category.products || [],
-                                    products: category.products || []
-                                } as CategoryWithProducts
-                            }
-                            
-                            let allProducts = firstPage.products || []
-                            const totalPages = firstPage.pagination?.pages || 1
-                            
-                            // Fetch remaining pages if there are more
-                            if (totalPages > 1) {
-                                const remainingPages = await Promise.all(
-                                    Array.from({ length: totalPages - 1 }, (_, i) => 
-                                        getProducts({
-                                            category: category.slug,
-                                            page: i + 2,
-                                            limit: 100
-                                        })
-                                    )
-                                )
-                                
-                                remainingPages.forEach(page => {
-                                    if (page?.products) {
-                                        allProducts = [...allProducts, ...page.products]
-                                    }
-                                })
-                            }
-                            
-                            return {
-                                ...category,
-                                fetchedProducts: allProducts,
-                                products: allProducts.length > 0 ? allProducts : (category.products || [])
-                            } as CategoryWithProducts
-                        } catch (error) {
-                            console.error(`Error fetching products for category ${category.name}:`, error)
-                            // Fallback to products from category if available
-                            return {
-                                ...category,
-                                fetchedProducts: category.products || [],
-                                products: category.products || []
-                            } as CategoryWithProducts
-                        }
-                    })
-                )
+                if (isCancelled) return
                 
-                // Filter to only show categories that have products (either from API or fetched)
+                // Limit to first 6 categories to prevent too many API calls
+                const limitedCategories = fetchedCategories.slice(0, 6)
+                
+                // Use products that come with categories API, only fetch additional if needed
+                const categoriesWithProducts = limitedCategories.map((category) => {
+                    // Use products from category if available, otherwise empty array
+                    const categoryProducts = category.products || []
+                    
+                    // Only fetch additional products if category has less than 4 products
+                    // and we need more for display
+                    if (categoryProducts.length < 4) {
+                        // Don't fetch here - just use what we have
+                        // This prevents excessive API calls
+                    }
+                    
+                    return {
+                        ...category,
+                        fetchedProducts: categoryProducts,
+                        products: categoryProducts
+                    } as CategoryWithProducts
+                })
+                
+                if (isCancelled) return
+                
+                // Filter to only show categories that have products
                 const categoriesWithAnyProducts = categoriesWithProducts.filter(
                     cat => (cat.products && cat.products.length > 0) || (cat.fetchedProducts && cat.fetchedProducts.length > 0)
                 )
                 
                 setCategories(categoriesWithAnyProducts)
             } catch (error) {
-                console.error('Error fetching categories:', error)
+                if (!isCancelled) {
+                    console.error('Error fetching categories:', error)
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
+        
         fetchCategoriesAndProducts()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     // Helper function to parse product images

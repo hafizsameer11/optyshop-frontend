@@ -26,12 +26,17 @@ const BannerComponent: React.FC = () => {
     const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchBanners = async () => {
             try {
                 setLoading(true)
                 // Fetch all active banners from admin panel
                 // Pass undefined to get all active banners regardless of position
                 const data = await getBanners(undefined)
+                
+                if (isCancelled) return
+                
                 setBanners(data)
                 
                 // Log for debugging
@@ -41,14 +46,22 @@ const BannerComponent: React.FC = () => {
                     console.warn('No active banners found in admin panel')
                 }
             } catch (error) {
-                console.error('Error loading banners from admin panel:', error)
-                setBanners([])
+                if (!isCancelled) {
+                    console.error('Error loading banners from admin panel:', error)
+                    setBanners([])
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
 
         fetchBanners()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     // Auto-rotate banners if there are multiple

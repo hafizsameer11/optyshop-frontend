@@ -7,20 +7,33 @@ const CampaignsComponent: React.FC = () => {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
+        let isCancelled = false
+        
         const fetchCampaigns = async () => {
             try {
                 setLoading(true)
                 const data = await getCampaigns(true) // Get only active campaigns
+                
+                if (isCancelled) return
+                
                 setCampaigns(data)
             } catch (error) {
-                console.error('Error loading campaigns:', error)
-                setCampaigns([])
+                if (!isCancelled) {
+                    console.error('Error loading campaigns:', error)
+                    setCampaigns([])
+                }
             } finally {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
 
         fetchCampaigns()
+        
+        return () => {
+            isCancelled = true
+        }
     }, [])
 
     if (loading) {
