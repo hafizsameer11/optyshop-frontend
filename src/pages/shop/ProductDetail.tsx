@@ -226,7 +226,6 @@ const ProductDetail: React.FC = () => {
     const originalPrice = hasValidSale ? regularPriceNum : null
     
     // Check if product is a contact lens (memoized to prevent infinite loops)
-    // Use product.id as the only dependency to prevent infinite loops
     const isContactLens = useMemo(() => {
         if (!product) return false
         const p = product as any
@@ -234,23 +233,22 @@ const ProductDetail: React.FC = () => {
         return categorySlug === 'contact-lenses' || 
                p.product_type === 'contact_lens' ||
                Array.isArray(p.base_curve_options)
-    }, [product?.id])
+    }, [product])
     
     // Get contact lens options from product (memoized)
-    // Only depend on product.id to prevent infinite loops
     const baseCurveOptions = useMemo(() => {
         if (!product) return []
         const p = product as any
         if (!Array.isArray(p.base_curve_options)) return []
         return p.base_curve_options || [8.70, 8.80, 8.90]
-    }, [product?.id])
+    }, [product])
     
     const diameterOptions = useMemo(() => {
         if (!product) return []
         const p = product as any
         if (!Array.isArray(p.diameter_options)) return []
         return p.diameter_options || [14.00, 14.20]
-    }, [product?.id])
+    }, [product])
     
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
@@ -328,7 +326,7 @@ const ProductDetail: React.FC = () => {
         
         // Default fallback options
         return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
-    }, [product?.id])
+    }, [product])
     
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -390,7 +388,7 @@ const ProductDetail: React.FC = () => {
         return product.sale_price && product.sale_price < product.price 
             ? Number(product.sale_price) 
             : Number(product.price || 0)
-    }, [product?.id, product?.price, product?.sale_price])
+    }, [product])
     
     // Memoize total calculation to prevent recalculation on every render
     const calculateContactLensTotal = useMemo(() => {
