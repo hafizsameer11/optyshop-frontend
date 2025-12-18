@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/products/VirtualTest/HeroSection'
@@ -12,6 +13,8 @@ import FAQSection from '../../components/products/VirtualTest/FAQSection'
 import ExpertiseSection from '../../components/products/VirtualTest/ExpertiseSection'
 
 const VirtualTest: React.FC = () => {
+    const { t } = useTranslation()
+    
     return (
         <div className="bg-slate-950 text-white min-h-screen">
             <Navbar />
@@ -28,17 +31,17 @@ const VirtualTest: React.FC = () => {
                             <svg className="w-3 md:w-4 h-3 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home')}</span>
                         </div>
                         <span className="text-orange-500">/</span>
-                        <span className="text-orange-500">VIRTUAL TEST</span>
+                        <span className="text-orange-500">{t('products.virtualTest')}</span>
                     </div>
                     <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-16">
                         <a href="#" className="text-orange-500 hover:text-orange-400 transition-colors font-medium text-sm md:text-base">
-                            FOR THE WEBSITE
+                            {t('pages.virtualTest.forWebsite')}
                         </a>
                         <Link to="/shop" className="text-orange-500 hover:text-orange-400 transition-colors font-medium text-sm md:text-base">
-                            FOR SHOP
+                            {t('pages.virtualTest.forShop')}
                         </Link>
                     </div>
                 </div>

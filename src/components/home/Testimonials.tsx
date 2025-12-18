@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useTestimonials } from '../../hooks/useTestimonials'
 
 // Local type for component display
@@ -10,6 +11,7 @@ type DisplayTestimonial = {
 }
 
 const Testimonials: React.FC = () => {
+    const { t } = useTranslation()
     const { testimonials, loading, error } = useTestimonials()
     const [activeIndex, setActiveIndex] = useState(0)
 
@@ -52,11 +54,11 @@ const Testimonials: React.FC = () => {
             <section className="bg-gradient-to-b from-blue-950 to-blue-950 py-20 px-4">
                 <div className="w-[92%] max-w-7xl mx-auto">
                     <h2 className="text-center text-3xl sm:text-4xl font-semibold mb-16">
-                        <span className="text-slate-200">What do they think of</span>{' '}
-                        <span className="text-blue-300">Virtual Glasses Try‑On?</span>
+                        <span className="text-slate-200">{t('home.testimonials.titlePart1')}</span>{' '}
+                        <span className="text-blue-300">{t('home.testimonials.titlePart2')}</span>
                     </h2>
                     <div className="text-center py-12">
-                        <p className="text-slate-300">Loading testimonials...</p>
+                        <p className="text-slate-300">{t('home.testimonials.loading')}</p>
                     </div>
                 </div>
             </section>
@@ -69,11 +71,11 @@ const Testimonials: React.FC = () => {
             <section className="bg-gradient-to-b from-blue-950 to-blue-950 py-20 px-4">
                 <div className="w-[92%] max-w-7xl mx-auto">
                     <h2 className="text-center text-3xl sm:text-4xl font-semibold mb-16">
-                        <span className="text-slate-200">What do they think of</span>{' '}
-                        <span className="text-blue-300">Virtual Glasses Try‑On?</span>
+                        <span className="text-slate-200">{t('home.testimonials.titlePart1')}</span>{' '}
+                        <span className="text-blue-300">{t('home.testimonials.titlePart2')}</span>
                     </h2>
                     <div className="text-center py-12">
-                        <p className="text-red-300">Error loading testimonials: {error}</p>
+                        <p className="text-red-300">{t('home.testimonials.error')}: {error}</p>
                     </div>
                 </div>
             </section>
@@ -86,11 +88,11 @@ const Testimonials: React.FC = () => {
             <section className="bg-gradient-to-b from-blue-950 to-blue-950 py-20 px-4">
                 <div className="w-[92%] max-w-7xl mx-auto">
                     <h2 className="text-center text-3xl sm:text-4xl font-semibold mb-16">
-                        <span className="text-slate-200">What do they think of</span>{' '}
-                        <span className="text-blue-300">Virtual Glasses Try‑On?</span>
+                        <span className="text-slate-200">{t('home.testimonials.titlePart1')}</span>{' '}
+                        <span className="text-blue-300">{t('home.testimonials.titlePart2')}</span>
                     </h2>
                     <div className="text-center py-12">
-                        <p className="text-slate-300">No testimonials available at the moment.</p>
+                        <p className="text-slate-300">{t('home.testimonials.noTestimonials')}</p>
                     </div>
                 </div>
             </section>
@@ -101,8 +103,8 @@ const Testimonials: React.FC = () => {
         <section className="bg-gradient-to-b from-blue-950 to-blue-950 py-20 px-4">
             <div className="w-[92%] max-w-7xl mx-auto">
                 <h2 className="text-center text-3xl sm:text-4xl font-semibold mb-16">
-                    <span className="text-slate-200">What do they think of</span>{' '}
-                    <span className="text-blue-300">Virtual Glasses Try‑On?</span>
+                    <span className="text-slate-200">{t('home.testimonials.titlePart1')}</span>{' '}
+                    <span className="text-blue-300">{t('home.testimonials.titlePart2')}</span>
                 </h2>
 
                 {/* Desktop / tablet: 4 cards in a row (no slider, matches reference design) */}
@@ -184,7 +186,7 @@ const Testimonials: React.FC = () => {
                                     onClick={() => setActiveIndex(idx)}
                                     className={`h-3 w-3 rounded-full border border-blue-300 transition-colors ${idx === activeIndex ? 'bg-blue-400' : 'bg-transparent'
                                         }`}
-                                    aria-label={`Go to testimonial ${idx + 1}`}
+                                    aria-label={t('home.testimonials.goToTestimonial', { number: idx + 1 })}
                                 />
                             ))}
                         </div>

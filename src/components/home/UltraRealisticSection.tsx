@@ -1,6 +1,9 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const UltraRealisticSection: React.FC = () => {
+    const { t } = useTranslation()
+    
     return (
         <section className="bg-white py-20 px-4">
             <div className="w-[90%] max-w-6xl mx-auto">
@@ -9,18 +12,17 @@ const UltraRealisticSection: React.FC = () => {
                     {/* Left: Text content */}
                     <div className="space-y-6 text-slate-900">
                         <h2 className="text-3xl sm:text-4xl font-semibold text-blue-900">
-                            An ultra-realistic result of the{' '}
-                            <span className="underline">glasses</span>
+                            {t('home.ultraRealistic.titlePart1')}{' '}
+                            <span className="underline">{t('home.ultraRealistic.titlePart2')}</span>
                         </h2>
 
                         <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                            Our <span className="font-bold">real-time solution</span> takes realism to new levels thanks
-                            to accurate face tracking and attention to frame details.
+                            {t('home.ultraRealistic.description1Part1')} <span className="font-bold">{t('home.ultraRealistic.description1Part2')}</span> {t('home.ultraRealistic.description1Part3')}
                         </p>
 
                         <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                            We can handle complex materials and lighting effects, to provide an{' '}
-                            <span className="font-bold">ultra-realistic rendering</span> of frames and lenses.
+                            {t('home.ultraRealistic.description2Part1')}{' '}
+                            <span className="font-bold">{t('home.ultraRealistic.description2Part2')}</span> {t('home.ultraRealistic.description2Part3')}
                         </p>
                     </div>
 

@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
 import LanguageSwitcher from './LanguageSwitcher'
-import { getCategoriesWithSubcategories, getSubcategoriesByCategoryId, type Category } from '../services/categoriesService'
+import { getCategoriesWithSubcategories, getSubcategoriesByCategoryId, getNestedSubcategories, type Category } from '../services/categoriesService'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
@@ -11,9 +11,14 @@ const Navbar: React.FC = () => {
     const [hoveredCategory, setHoveredCategory] = useState<number | null>(null)
     const [clickedCategory, setClickedCategory] = useState<number | null>(null)
     const [categorySubcategories, setCategorySubcategories] = useState<Map<number, Category[]>>(new Map())
+    const [nestedSubcategories, setNestedSubcategories] = useState<Map<number, Category[]>>(new Map())
     const [loadingSubcategories, setLoadingSubcategories] = useState<Set<number>>(new Set())
+    const [loadingNestedSubcategories, setLoadingNestedSubcategories] = useState<Set<number>>(new Set())
+    const [hoveredSubcategory, setHoveredSubcategory] = useState<number | null>(null)
     const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const nestedDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const nestedDropdownRef = useRef<HTMLDivElement>(null)
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -68,6 +73,63 @@ const Navbar: React.FC = () => {
         }
     }
 
+    // Fetch nested subcategories when hovering over a subcategory
+    const fetchNestedSubcategories = async (subcategoryId: number) => {
+        // If already loaded, don't fetch again
+        if (nestedSubcategories.has(subcategoryId) || loadingNestedSubcategories.has(subcategoryId)) {
+            return
+        }
+
+        setLoadingNestedSubcategories(prev => new Set(prev).add(subcategoryId))
+        
+        try {
+            const nested = await getNestedSubcategories(subcategoryId)
+            setNestedSubcategories(prev => {
+                const newMap = new Map(prev)
+                newMap.set(subcategoryId, nested)
+                return newMap
+            })
+        } catch (error) {
+            console.error(`Error fetching nested subcategories for subcategory ${subcategoryId}:`, error)
+        } finally {
+            setLoadingNestedSubcategories(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(subcategoryId)
+                return newSet
+            })
+        }
+    }
+
+    // Format category name for display (correct capitalization and spelling)
+    const formatCategoryName = (name: string): string => {
+        if (!name) return name
+        
+        // Common corrections for category names
+        const corrections: Record<string, string> = {
+            'eye glasses': 'Eyeglasses',
+            'eyeglasses': 'Eyeglasses',
+            'sun glasses': 'Sunglasses',
+            'sunglasses': 'Sunglasses',
+            'opti kids': 'Opty Kids',
+            'opty kids': 'Opty Kids',
+            'eye heigene': 'Eye Hygiene',
+            'eye hygiene': 'Eye Hygiene',
+            'contact-lenses': 'Contact Lenses',
+            'contact lenses': 'Contact Lenses'
+        }
+        
+        const lowerName = name.toLowerCase().trim()
+        if (corrections[lowerName]) {
+            return corrections[lowerName]
+        }
+        
+        // If no correction found, capitalize properly (Title Case)
+        return name
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
+    }
+
     // Check if current path matches link
     const isActive = (path: string) => {
         if (path === '/') {
@@ -119,10 +181,11 @@ const Navbar: React.FC = () => {
                     : 'bg-blue-950/95 backdrop-blur-md'
                 }`}
             style={{ 
-                backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)'
+                backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
+                overflow: 'visible'
             }}
         >
-            <div className="flex items-center w-[90%] max-w-7xl mx-auto py-3 md:py-4 pl-4 md:pl-6">
+            <div className="flex items-center w-full max-w-[1920px] mx-auto py-3 md:py-4 px-2 md:px-4 lg:px-6 gap-2 md:gap-3" style={{ overflow: 'visible' }}>
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0 group">
                     <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
@@ -134,10 +197,10 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation - dynamic categories from API */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-2 mx-4 lg:mx-6">
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1 md:space-x-1.5 lg:space-x-2 mx-1 md:mx-2 lg:mx-4 overflow-visible">
                     <Link
                         to="/"
-                        className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                        className={`h-10 px-2.5 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                             isActive('/') 
                                 ? 'bg-blue-800/50 text-blue-100' 
                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -148,28 +211,41 @@ const Navbar: React.FC = () => {
                     
                     {/* Dynamic Categories from API */}
                     {categories.length > 0 ? (
-                        categories.slice(0, 6).map((category) => {
+                        categories.map((category) => {
                             const isDropdownOpen = clickedCategory === category.id || hoveredCategory === category.id
                             const fetchedSubcategories = categorySubcategories.get(category.id)
                             const subcategories = fetchedSubcategories || category.subcategories || []
                             const isLoading = loadingSubcategories.has(category.id)
+                            const hasSubcategories = subcategories.length > 0 || isLoading
+                            
+                            // Debug: Log dropdown state
+                            if (isDropdownOpen) {
+                                console.log(`[NAVBAR DEBUG] Dropdown open for ${category.name}:`, {
+                                    isDropdownOpen,
+                                    clickedCategory,
+                                    hoveredCategory: hoveredCategory,
+                                    categoryId: category.id,
+                                    subcategoriesCount: subcategories.length,
+                                    isLoading,
+                                    hasSubcategories,
+                                    fetchedSubcategories: fetchedSubcategories?.length || 0
+                                })
+                            }
                             
                             return (
                             <div
                                 key={category.id}
                                 className="relative group"
                                 ref={isDropdownOpen ? dropdownRef : null}
+                                style={{ position: 'relative', zIndex: isDropdownOpen ? 99999 : 'auto' }}
                                 onMouseEnter={() => {
                                     if (dropdownTimeoutRef.current) {
                                         clearTimeout(dropdownTimeoutRef.current)
                                         dropdownTimeoutRef.current = null
                                     }
                                     setHoveredCategory(category.id)
-                                    // Debounce subcategory fetching to prevent too many requests
-                                    const timeoutId = setTimeout(() => {
+                                    // Fetch subcategories immediately on hover
                                         fetchSubcategories(category.id)
-                                    }, 200)
-                                    dropdownTimeoutRef.current = timeoutId
                                 }}
                                 onMouseLeave={() => {
                                     // Only close on hover leave if not clicked open
@@ -183,15 +259,17 @@ const Navbar: React.FC = () => {
                                 <div className="flex items-center relative">
                                     <Link
                                         to={`/category/${category.slug}`}
-                                        className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                        className={`h-10 px-2.5 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                             isActive(`/category/${category.slug}`) 
                                                 ? 'bg-blue-800/50 text-blue-100' 
                                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                         }`}
                                         onClick={(e) => {
-                                            // If there are subcategories, allow dropdown toggle on click
-                                            const hasSubcategories = (categorySubcategories.get(category.id) || category.subcategories || []).length > 0
-                                            if (hasSubcategories) {
+                                            // Always allow dropdown toggle on click if category might have subcategories
+                                            const currentSubs = categorySubcategories.get(category.id) || category.subcategories || []
+                                            const mightHaveSubs = currentSubs.length > 0 || loadingSubcategories.has(category.id)
+                                            
+                                            if (mightHaveSubs || !categorySubcategories.has(category.id)) {
                                                 e.preventDefault()
                                                 const newState = clickedCategory === category.id ? null : category.id
                                                 setClickedCategory(newState)
@@ -201,8 +279,8 @@ const Navbar: React.FC = () => {
                                             }
                                         }}
                                     >
-                                        {category.name}
-                                        {((categorySubcategories.get(category.id) || category.subcategories || []).length > 0 || loadingSubcategories.has(category.id)) && (
+                                        {formatCategoryName(category.name)}
+                                        {hasSubcategories && (
                                             <svg 
                                                 className={`ml-1 w-3 h-3 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
                                                 fill="none" 
@@ -216,13 +294,20 @@ const Navbar: React.FC = () => {
                                 </div>
                                 
                                 {/* Subcategories Dropdown */}
-                                {isDropdownOpen && (() => {
-                                    // Show dropdown if there are subcategories or if still loading
-                                    return (
+                                {isDropdownOpen && (
                                         <div 
-                                            className="absolute left-0 top-full mt-1.5 min-w-[240px] rounded-xl bg-white shadow-2xl border border-gray-200 py-2 z-[9999] opacity-100 transform transition-all duration-200 ease-out"
+                                            className="absolute left-0 top-full mt-1.5 min-w-[240px] max-w-[300px] rounded-xl bg-white shadow-2xl border-2 border-gray-300 py-2"
                                             style={{ 
-                                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
+                                                boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+                                                display: 'block',
+                                                position: 'absolute',
+                                                visibility: 'visible',
+                                                opacity: 1,
+                                                zIndex: 99999,
+                                                top: 'calc(100% + 6px)',
+                                                left: 0,
+                                                backgroundColor: 'white',
+                                                pointerEvents: 'auto'
                                             }}
                                             onMouseEnter={() => {
                                                 if (dropdownTimeoutRef.current) {
@@ -249,7 +334,7 @@ const Navbar: React.FC = () => {
                                                     }}
                                                     className="block px-4 py-2.5 text-sm font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md border-b border-gray-200 mb-1"
                                                 >
-                                                    View All {category.name}
+                                                    {t('navbar.viewAll')} {formatCategoryName(category.name)}
                                                 </Link>
                                                 
                                                 {isLoading ? (
@@ -258,31 +343,134 @@ const Navbar: React.FC = () => {
                                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                         </svg>
-                                                        <span>Loading...</span>
+                                                        <span>{t('navbar.loading')}</span>
                                                     </div>
                                                 ) : subcategories.length > 0 ? (
-                                                    subcategories.map((subcategory) => (
+                                                    subcategories.map((subcategory) => {
+                                                        const nestedSubs = nestedSubcategories.get(subcategory.id) || []
+                                                        const isLoadingNested = loadingNestedSubcategories.has(subcategory.id)
+                                                        const hasNested = nestedSubs.length > 0 || isLoadingNested
+                                                        const isSubcategoryHovered = hoveredSubcategory === subcategory.id
+                                                        
+                                                        return (
+                                                            <div
+                                                                key={subcategory.id}
+                                                                className="relative group/subcategory"
+                                                                onMouseEnter={() => {
+                                                                    if (nestedDropdownTimeoutRef.current) {
+                                                                        clearTimeout(nestedDropdownTimeoutRef.current)
+                                                                        nestedDropdownTimeoutRef.current = null
+                                                                    }
+                                                                    setHoveredSubcategory(subcategory.id)
+                                                                    // Fetch nested subcategories when hovering
+                                                                    const timeoutId = setTimeout(() => {
+                                                                        fetchNestedSubcategories(subcategory.id)
+                                                                    }, 200)
+                                                                    nestedDropdownTimeoutRef.current = timeoutId
+                                                                }}
+                                                                onMouseLeave={() => {
+                                                                    nestedDropdownTimeoutRef.current = setTimeout(() => {
+                                                                        setHoveredSubcategory(null)
+                                                                    }, 150)
+                                                                }}
+                                                            >
+                                                                <Link
+                                                                    to={`/category/${category.slug}/${subcategory.slug}`}
+                                                                    onClick={() => {
+                                                                        setClickedCategory(null)
+                                                                        setHoveredCategory(null)
+                                                                        setHoveredSubcategory(null)
+                                                                    }}
+                                                                    className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md flex items-center justify-between"
+                                                                >
+                                                                    <span>{subcategory.name}</span>
+                                                                    {hasNested && (
+                                                                        <svg 
+                                                                            className={`ml-2 w-3 h-3 transition-transform duration-200 ${isSubcategoryHovered ? 'rotate-90' : ''}`}
+                                                                            fill="none" 
+                                                                            stroke="currentColor" 
+                                                                            viewBox="0 0 24 24"
+                                                                        >
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                        </svg>
+                                                                    )}
+                                                                </Link>
+                                                                
+                                                                {/* Nested Subcategories Dropdown */}
+                                                                {isSubcategoryHovered && hasNested && (
+                                                                    <div 
+                                                                        className="absolute left-full top-0 ml-1 min-w-[220px] rounded-xl bg-white shadow-2xl border border-gray-200 py-2 z-[10000] opacity-100 transform transition-all duration-200 ease-out"
+                                                                        style={{ 
+                                                                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.1)'
+                                                                        }}
+                                                                        onMouseEnter={() => {
+                                                                            if (nestedDropdownTimeoutRef.current) {
+                                                                                clearTimeout(nestedDropdownTimeoutRef.current)
+                                                                                nestedDropdownTimeoutRef.current = null
+                                                                            }
+                                                                            setHoveredSubcategory(subcategory.id)
+                                                                        }}
+                                                                        onMouseLeave={() => {
+                                                                            nestedDropdownTimeoutRef.current = setTimeout(() => {
+                                                                                setHoveredSubcategory(null)
+                                                                            }, 150)
+                                                                        }}
+                                                                    >
+                                                                        <div className="py-1">
                                                         <Link
-                                                            key={subcategory.id}
                                                             to={`/category/${category.slug}/${subcategory.slug}`}
                                                             onClick={() => {
                                                                 setClickedCategory(null)
                                                                 setHoveredCategory(null)
-                                                            }}
-                                                            className="block px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
-                                                        >
-                                                            {subcategory.name}
+                                                                                    setHoveredSubcategory(null)
+                                                                                }}
+                                                                                className="block px-4 py-2.5 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md border-b border-gray-200 mb-1"
+                                                                            >
+                                                                                {t('navbar.viewAll')} {subcategory.name}
+                                                                            </Link>
+                                                                            
+                                                                            {isLoadingNested ? (
+                                                                                <div className="px-4 py-2 text-xs text-gray-500 text-center flex items-center justify-center gap-2">
+                                                                                    <svg className="animate-spin h-3 w-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                                                    </svg>
+                                                                                    <span>{t('navbar.loading')}</span>
+                                                                                </div>
+                                                                            ) : nestedSubs.length > 0 ? (
+                                                                                nestedSubs.map((nestedSub) => (
+                                                                                    <Link
+                                                                                        key={nestedSub.id}
+                                                                                        to={`/category/${category.slug}/${subcategory.slug}/${nestedSub.slug}`}
+                                                                                        onClick={() => {
+                                                                                            setClickedCategory(null)
+                                                                                            setHoveredCategory(null)
+                                                                                            setHoveredSubcategory(null)
+                                                                                        }}
+                                                                                        className="block px-4 py-2 text-xs font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 transition-all duration-150 mx-1 rounded-md"
+                                                                                    >
+                                                                                        {nestedSub.name}
                                                         </Link>
                                                     ))
+                                                                            ) : (
+                                                                                <div className="px-4 py-2 text-xs text-gray-400 text-center">
+                                                                                    {t('navbar.noNestedSubcategories')}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })
                                                 ) : (
                                                     <div className="px-4 py-3 text-sm text-gray-400 text-center">
-                                                        No subcategories available
+                                                        {t('navbar.noSubcategories')}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                    )
-                                })()}
+                                )}
                             </div>
                             )
                         })
@@ -291,7 +479,7 @@ const Navbar: React.FC = () => {
                         <>
                             <Link
                                 to="/shop"
-                                className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                className={`h-10 px-2 md:px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                     isActive('/shop') 
                                         ? 'bg-blue-800/50 text-blue-100' 
                                         : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -301,7 +489,7 @@ const Navbar: React.FC = () => {
                             </Link>
                             <Link
                                 to="/shop"
-                                className={`min-w-[85px] h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                className={`h-10 px-2 md:px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                     isActive('/shop') 
                                         ? 'bg-blue-800/50 text-blue-100' 
                                         : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -314,22 +502,32 @@ const Navbar: React.FC = () => {
                     
                     <Link
                         to="/virtual-test"
-                        className="ml-2 min-w-[125px] h-10 inline-flex items-center justify-center rounded-full bg-cyan-500 text-white px-4 py-2 text-xs font-semibold shadow-lg hover:bg-cyan-400 hover:shadow-xl hover:scale-105 transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="h-9 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-2.5 py-1.5 text-[10px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50"
+                        title={t('navbar.virtualTryOn')}
                     >
-                        {t('navbar.virtualTryOn')}
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span className="hidden lg:inline">{t('navbar.virtualTryOn')}</span>
+                        <span className="lg:hidden">Try On</span>
                     </Link>
                 </nav>
 
                 {/* Right side actions */}
-                <div className="flex items-center space-x-2 md:space-x-2 flex-shrink-0 ml-auto pr-2 md:pr-4">
+                <div className="flex items-center gap-2 md:gap-2 flex-shrink-0 ml-auto pr-2 md:pr-4">
+                    {/* Cart Icon - Right side, first in the group */}
+                    <div className="hidden md:flex items-center justify-center flex-shrink-0">
+                        <CartIcon />
+                    </div>
+                    
                     {/* Language Switcher */}
-                    <div className="hidden md:block">
+                    <div className="hidden md:block flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
                     </div>
                     
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-10 w-10 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-10 w-10 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -351,15 +549,10 @@ const Navbar: React.FC = () => {
                     {/* Desktop CTAs */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap"
+                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                     >
                         {t('navbar.login')}
                     </Link>
-
-                    {/* Cart Icon */}
-                    <div className="hidden md:block">
-                        <CartIcon />
-                    </div>
                 </div>
             </div>
 
@@ -397,7 +590,7 @@ const Navbar: React.FC = () => {
                                                             isActive(`/category/${category.slug}`) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                                         }`}
                                                     >
-                                                        {category.name}
+                                                        {formatCategoryName(category.name)}
                                                     </Link>
                                                     <button
                                                         onClick={() => {
@@ -433,7 +626,7 @@ const Navbar: React.FC = () => {
                                                             }}
                                                             className="block px-4 py-2.5 rounded-md text-sm font-semibold bg-blue-950/60 hover:bg-blue-800/70 hover:text-cyan-200 transition-all duration-150 border-b border-blue-700/30 mb-1"
                                                         >
-                                                            View All {category.name}
+                                                            {t('navbar.viewAll')} {formatCategoryName(category.name)}
                                                         </Link>
                                                         {isLoading ? (
                                                             <div className="px-4 py-3 text-sm text-cyan-200/70 text-center flex items-center justify-center gap-2">
@@ -441,7 +634,7 @@ const Navbar: React.FC = () => {
                                                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                                                 </svg>
-                                                                <span>Loading...</span>
+                                                                <span>{t('navbar.loading')}</span>
                                                             </div>
                                                         ) : subcategories.length > 0 ? (
                                                             subcategories.map((subcategory) => (
@@ -459,7 +652,7 @@ const Navbar: React.FC = () => {
                                                             ))
                                                         ) : (
                                                             <div className="px-4 py-3 text-sm text-cyan-200/50 text-center">
-                                                                No subcategories available
+                                                                {t('navbar.noSubcategories')}
                                                             </div>
                                                         )}
                                                     </div>
@@ -473,7 +666,7 @@ const Navbar: React.FC = () => {
                                                     isActive(`/category/${category.slug}`) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
                                                 }`}
                                             >
-                                                {category.name}
+                                                {formatCategoryName(category.name)}
                                             </Link>
                                         )}
                                     </div>
@@ -506,9 +699,12 @@ const Navbar: React.FC = () => {
                         <Link
                             to="/virtual-test"
                             onClick={() => setIsMobileOpen(false)}
-                            className="block px-4 py-2.5 rounded-lg font-semibold bg-cyan-500 hover:bg-cyan-400 transition-colors text-center shadow-lg"
+                            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-bold bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 transition-all text-center shadow-lg border border-cyan-300/50"
                         >
-                            {t('navbar.virtualTryOn')}
+                            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                            <span>{t('navbar.virtualTryOn')}</span>
                         </Link>
                     </div>
 

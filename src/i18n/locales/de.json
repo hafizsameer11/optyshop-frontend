@@ -4,6 +4,7 @@
     "cart": "Warenkorb",
     "orders": "Bestellungen",
     "prescriptions": "Rezepte",
+    "transactions": "Transaktionen",
     "profile": "Profil",
     "logout": "Abmelden",
     "login": "Anmelden",
@@ -15,7 +16,105 @@
     "whoWeAre": "Wer wir sind",
     "getDemo": "Demo erhalten",
     "welcome": "Willkommen",
-    "language": "Sprache"
+    "language": "Sprache",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "view": "Anzeigen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "submit": "Absenden",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige",
+    "close": "Schließen",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "update": "Aktualisieren",
+    "create": "Erstellen",
+    "loading": "Lädt...",
+    "noData": "Keine Daten gefunden",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "price": "Preis",
+    "quantity": "Menge",
+    "total": "Gesamt",
+    "subtotal": "Zwischensumme",
+    "shipping": "Versand",
+    "tax": "Steuer",
+    "discount": "Rabatt",
+    "home": "Startseite"
+  },
+  "home": {
+    "hero": {
+      "title": "Virtuelle Anprobe",
+      "subtitle": "für Brillen",
+      "description": "Nutzen Sie Augmented Reality, um sich abzuheben und Kundenvertrauen aufzubauen.",
+      "tryOnButton": "Brille anprobieren",
+      "requestDemoButton": "Demo anfordern"
+    },
+    "stats": {
+      "impact": "Auswirkung",
+      "title": "Engagement generieren und",
+      "titleHighlight": "Brillenverkäufe steigern",
+      "visitsTitle": "Besuche auf Produktseiten",
+      "conversionTitle": "Conversion-Rate erhöhen",
+      "visitorsTitle": "Mehr Besucher im Geschäft",
+      "caption": "*basierend auf einem A/B-Test auf der E-Commerce-Website von Fielmann, basierend auf 5 Millionen Seitenaufrufen."
+    },
+    "testimonials": {
+      "titlePart1": "Was denken sie über",
+      "titlePart2": "die virtuelle Brillenanprobe?",
+      "loading": "Testimonials werden geladen...",
+      "error": "Fehler beim Laden der Testimonials",
+      "noTestimonials": "Derzeit sind keine Testimonials verfügbar.",
+      "goToTestimonial": "Zum Testimonial {{number}} gehen"
+    },
+    "banner": {
+      "loading": "Banner werden geladen..."
+    },
+    "campaigns": {
+      "title": "Spezielle Kampagnen"
+    },
+    "latestArrivals": {
+      "title": "Neueste Ankünfte"
+    },
+    "featuredArrivals": {
+      "title": "Ausgewählte Ankünfte"
+    },
+    "trustedBrands": {
+      "titlePart1": "Sie vertrauen uns",
+      "titlePart2": "bereits"
+    },
+    "purchasingJourney": {
+      "titlePart1": "Ein ansprechendes Erlebnis zur",
+      "titlePart2": "Verbesserung des Einkaufswegs",
+      "solutionPart1": "Eine Lösung zur",
+      "solutionPart2": "Stärkung",
+      "solutionPart3": "der Kunden",
+      "statsText": "der Brillenträger finden die virtuelle Anprobe hilfreich bei der Auswahl von Brillen.",
+      "description": "Bieten Sie ihnen die Möglichkeit, Ihren Katalog einfach zu durchsuchen und auszuprobieren, und schaffen Sie so ein immersives Einkaufserlebnis (Wunschliste, Karussell, Farbauswahl usw.)."
+    },
+    "ultraRealistic": {
+      "titlePart1": "Ein ultra-realistisches Ergebnis der",
+      "titlePart2": "Brillen",
+      "description1Part1": "Unsere",
+      "description1Part2": "Echtzeitlösung",
+      "description1Part3": "bringt den Realismus dank präziser Gesichtserkennung und Aufmerksamkeit für Rahmendetails auf ein neues Niveau.",
+      "description2Part1": "Wir können komplexe Materialien und Beleuchtungseffekte handhaben, um ein",
+      "description2Part2": "ultra-realistisches Rendering",
+      "description2Part3": "von Rahmen und Linsen zu liefern."
+    },
+    "viewer3D": {
+      "title": "3D-Viewer für Brillen",
+      "description1": "Ermöglichen Sie Benutzern, nahtlos zwischen 3D-Ansicht und virtuellem Anprobieren zu wechseln, um jeden Winkel Ihrer Rahmen sofort zu erkunden.",
+      "description2": "Diese interaktive Erfahrung hält Kunden engagiert und selbstbewusst bei der Auswahl des perfekten Paares."
+    },
+    "compatibility": {
+      "ecommercePlatforms": "Unterstützt von allen großen E-Commerce-Plattformen",
+      "worksOnAnyDevice": "Funktioniert auf jedem System und Gerät"
+    }
   },
   "dashboard": {
     "title": "Dashboard",
@@ -28,13 +127,100 @@
     "cartItems": "Warenkorbartikel"
   },
   "navbar": {
+    "home": "Startseite",
+    "eyeglasses": "Brillen",
+    "sunglasses": "Sonnenbrillen",
+    "optyKids": "Opty Kids",
+    "optyKidsLine1": "Opty",
+    "optyKidsLine2": "Kids",
+    "contactLenses": "Kontaktlinsen",
+    "contactLensesLine1": "Kontakt",
+    "contactLensesLine2": "linsen",
+    "eyeHygiene": "Augenhygiene",
+    "eyeHygieneLine1": "Augen",
+    "eyeHygieneLine2": "hygiene",
+    "virtualTryOn": "Virtuelle Anprobe",
     "products": "Produkte",
     "solutions": "Lösungen",
     "resources": "Ressourcen",
     "whoWeAre": "Wer wir sind",
     "shop": "Shop",
     "login": "Anmelden",
-    "getDemo": "Demo erhalten"
+    "getDemo": "Demo erhalten",
+    "viewAll": "Alle Anzeigen",
+    "loading": "Lädt...",
+    "noSubcategories": "Keine Unterkategorien verfügbar",
+    "noNestedSubcategories": "Keine verschachtelten Unterkategorien"
+  },
+  "shop": {
+    "title": "Shop",
+    "products": "Produkte",
+    "addToCart": "In den Warenkorb",
+    "addingToCart": "Wird zum Warenkorb hinzugefügt...",
+    "outOfStock": "Nicht Vorrätig",
+    "inStock": "Auf Lager",
+    "selectOptions": "Optionen Auswählen",
+    "viewDetails": "Details Anzeigen",
+    "noProducts": "Keine Produkte gefunden",
+    "filterBy": "Filtern nach",
+    "category": "Kategorie",
+    "allCategories": "Alle Kategorien",
+    "priceRange": "Preisspanne",
+    "frameShape": "Rahmenform",
+    "frameMaterial": "Rahmenmaterial",
+    "gender": "Geschlecht",
+    "all": "Alle",
+    "male": "Männlich",
+    "female": "Weiblich",
+    "unisex": "Unisex",
+    "sortBy": "Sortieren nach",
+    "sortPriceLow": "Preis: Niedrig bis Hoch",
+    "sortPriceHigh": "Preis: Hoch bis Niedrig",
+    "sortNewest": "Neueste",
+    "sortOldest": "Älteste",
+    "sortNameAZ": "Name: A bis Z",
+    "sortNameZA": "Name: Z bis A",
+    "clearFilters": "Filter Zurücksetzen",
+    "results": "Ergebnisse",
+    "showing": "Zeige",
+    "of": "von",
+    "brand": "Marke",
+    "each": "jeweils",
+    "productNotFound": "Produkt Nicht Gefunden",
+    "returnToShop": "Zurück zum Shop",
+    "outOfStockAlert": "Dieses Produkt ist derzeit nicht vorrätig und kann nicht zum Warenkorb hinzugefügt werden.",
+    "outOfStockMessage": "Dieses Produkt ist derzeit nicht vorrätig. Sie können es derzeit nicht zu Ihrem Warenkorb hinzufügen.",
+    "description": "Entdecken Sie unsere große Auswahl an Brillen und Sonnenbrillen"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "startShopping": "Beginnen Sie mit dem Einkaufen, um Artikel zu Ihrem Warenkorb hinzuzufügen",
+    "continueShopping": "Weiter Einkaufen",
+    "item": "Artikel",
+    "items": "Artikel",
+    "removeItem": "Artikel Entfernen",
+    "updateQuantity": "Menge Aktualisieren",
+    "proceedToCheckout": "Zur Kasse Gehen",
+    "estimatedTotal": "Geschätzter Gesamtbetrag"
+  },
+  "checkout": {
+    "title": "Kasse",
+    "shippingAddress": "Lieferadresse",
+    "billingAddress": "Rechnungsadresse",
+    "paymentMethod": "Zahlungsmethode",
+    "orderSummary": "Bestellübersicht",
+    "placeOrder": "Bestellung Aufgeben",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "address": "Adresse",
+    "city": "Stadt",
+    "zipCode": "Postleitzahl",
+    "country": "Land",
+    "sameAsShipping": "Gleich wie Lieferadresse",
+    "emptyCartError": "Ihr Warenkorb ist leer. Bitte fügen Sie Artikel hinzu, bevor Sie zur Kasse gehen."
   },
   "products": {
     "virtualTest": "Virtueller Test",
@@ -69,6 +255,37 @@
     "ourHistory": "UNSERE GESCHICHTE",
     "ourTechnology": "UNSERE TECHNOLOGIE",
     "joinUs": "TRETEN SIE UNS BEI"
+  },
+  "pages": {
+    "virtualTest": {
+      "forWebsite": "Für die Website",
+      "forShop": "Für den Shop"
+    },
+    "digitalFrames": {
+      "3dDigitization": "3D-Digitalisierung",
+      "database": "Datenbank",
+      "3dViewer": "3D-Viewer",
+      "photoPackshots": "Foto-Packshots"
+    },
+    "opticalInstruments": {
+      "pdMeasure": "PD-Messung",
+      "lensSimulator": "Linsensimulator",
+      "lensRecommendations": "Linsenempfehlungen",
+      "kidsLensRecommendation": "Linsenempfehlung für Kinder",
+      "kidsLensDescription": "Erhalten Sie personalisierte Linsenempfehlungen für Kinder basierend auf Alter und Verschreibungsbedarf.",
+      "getKidsRecommendation": "Kinderempfehlung erhalten",
+      "lifestyleRecommendation": "Lifestyle-Empfehlung",
+      "lifestyleDescription": "Finden Sie die perfekten Linsen für Ihren Lebensstil und Ihre täglichen Aktivitäten.",
+      "getLifestyleRecommendation": "Lifestyle-Empfehlung erhalten"
+    },
+    "pdMeasurement": {
+      "onlinePdMeasurementTool": "Online PD-Messwerkzeug"
+    },
+    "openInnovation": {
+      "rdCapabilities": "F&E-Fähigkeiten",
+      "avantPremieres": "Avant-Premières",
+      "whatsNext": "Was kommt als Nächstes?"
+    }
   }
 }
 

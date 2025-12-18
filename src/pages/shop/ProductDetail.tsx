@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
@@ -23,9 +24,11 @@ interface ContactLensFormData {
     left_base_curve: string
     left_diameter: string
     left_power: string
+    unit: string // Unit selection: 'unit', 'box', 'pack'
 }
 
 const ProductDetail: React.FC = () => {
+    const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
     const { addToCart } = useCart()
@@ -47,8 +50,16 @@ const ProductDetail: React.FC = () => {
         left_qty: 1,
         left_base_curve: '8.70',
         left_diameter: '14.00',
-        left_power: ''
+        left_power: '',
+        unit: 'unit' // Default unit
     })
+    
+    // Unit options for contact lenses
+    const unitOptions = [
+        { value: 'unit', label: 'Unit', description: 'Single lens' },
+        { value: 'box', label: 'Box', description: 'Box of lenses (typically 6-30 lenses)' },
+        { value: 'pack', label: 'Pack', description: 'Pack of lenses' }
+    ]
     const [contactLensErrors, setContactLensErrors] = useState<Record<string, string>>({})
     const [contactLensLoading, setContactLensLoading] = useState(false)
     const lastProductIdRef = useRef<number | null>(null)
@@ -72,6 +83,11 @@ const ProductDetail: React.FC = () => {
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
                     const imageUrl = getProductImageUrl(productData, 0)
+                    const p = productData as any
+                    const isContactLensProduct = productData.category?.slug === 'contact-lenses' || 
+                                                p.product_type === 'contact_lens' ||
+                                                Array.isArray(p.base_curve_options)
+                    
                     console.log('🔍 Product Detail Data:', {
                         id: productData.id,
                         name: productData.name,
@@ -83,9 +99,20 @@ const ProductDetail: React.FC = () => {
                         image_url: productData.image_url,
                         thumbnail: productData.thumbnail,
                         selectedImageUrl: imageUrl,
-                        stock_status: (productData as any).stock_status,
+                        stock_status: p.stock_status,
                         stock_quantity: productData.stock_quantity,
                         in_stock: productData.in_stock,
+                        category: productData.category?.slug,
+                        isContactLens: isContactLensProduct,
+                        // Contact Lens specific fields
+                        ...(isContactLensProduct && {
+                            base_curve_options: p.base_curve_options,
+                            diameter_options: p.diameter_options,
+                            powers_range: p.powers_range,
+                            contact_lens_brand: p.contact_lens_brand,
+                            contact_lens_material: p.contact_lens_material,
+                            contact_lens_type: p.contact_lens_type
+                        }),
                         fullProduct: productData
                     })
                 }
@@ -130,16 +157,90 @@ const ProductDetail: React.FC = () => {
     const baseCurveOptions = useMemo(() => {
         if (!product) return []
         const p = product as any
-        if (!Array.isArray(p.base_curve_options)) return []
-        return p.base_curve_options || [8.70, 8.80, 8.90]
-    }, [product])
+        
+        // Debug: Log API data in development
+        if (import.meta.env.DEV && isContactLens) {
+            console.log('🔍 Contact Lens API Data - Base Curve Options:', {
+                base_curve_options: p.base_curve_options,
+                type: typeof p.base_curve_options,
+                isArray: Array.isArray(p.base_curve_options),
+                productId: product.id,
+                productName: product.name
+            })
+        }
+        
+        // Handle different data formats from API
+        let options: (number | string)[] = []
+        
+        if (Array.isArray(p.base_curve_options)) {
+            options = p.base_curve_options
+        } else if (typeof p.base_curve_options === 'string') {
+            // Try to parse JSON string
+            try {
+                const parsed = JSON.parse(p.base_curve_options)
+                if (Array.isArray(parsed)) {
+                    options = parsed
+                }
+            } catch (e) {
+                // If parsing fails, try splitting by comma
+                options = p.base_curve_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
+            }
+        }
+        
+        // Fallback to default options if empty
+        if (options.length === 0) {
+            options = [8.70, 8.80, 8.90]
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No base_curve_options found in API, using defaults:', options)
+            }
+        }
+        
+        return options
+    }, [product, isContactLens])
     
     const diameterOptions = useMemo(() => {
         if (!product) return []
         const p = product as any
-        if (!Array.isArray(p.diameter_options)) return []
-        return p.diameter_options || [14.00, 14.20]
-    }, [product])
+        
+        // Debug: Log API data in development
+        if (import.meta.env.DEV && isContactLens) {
+            console.log('🔍 Contact Lens API Data - Diameter Options:', {
+                diameter_options: p.diameter_options,
+                type: typeof p.diameter_options,
+                isArray: Array.isArray(p.diameter_options),
+                productId: product.id,
+                productName: product.name
+            })
+        }
+        
+        // Handle different data formats from API
+        let options: (number | string)[] = []
+        
+        if (Array.isArray(p.diameter_options)) {
+            options = p.diameter_options
+        } else if (typeof p.diameter_options === 'string') {
+            // Try to parse JSON string
+            try {
+                const parsed = JSON.parse(p.diameter_options)
+                if (Array.isArray(parsed)) {
+                    options = parsed
+                }
+            } catch (e) {
+                // If parsing fails, try splitting by comma
+                options = p.diameter_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
+            }
+        }
+        
+        // Fallback to default options if empty
+        if (options.length === 0) {
+            options = [14.00, 14.20]
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No diameter_options found in API, using defaults:', options)
+            }
+        }
+        
+        return options
+    }, [product, isContactLens])
     
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
@@ -147,6 +248,16 @@ const ProductDetail: React.FC = () => {
         if (!product) return []
         const p = product as any
         const range = p.powers_range || '-0.50 to -6.00 in 0.25 steps'
+        
+        // Debug: Log power range in development
+        if (import.meta.env.DEV && isContactLens) {
+            console.log('🔍 Contact Lens API Data - Power Range:', {
+                powers_range: p.powers_range,
+                type: typeof p.powers_range,
+                productId: product.id,
+                productName: product.name
+            })
+        }
         
         if (!range) return []
         
@@ -235,8 +346,54 @@ const ProductDetail: React.FC = () => {
                                     Array.isArray(p.base_curve_options)
         
         if (isContactLensProduct) {
-            const baseCurves = Array.isArray(p.base_curve_options) ? p.base_curve_options : [8.70, 8.80, 8.90]
-            const diameters = Array.isArray(p.diameter_options) ? p.diameter_options : [14.00, 14.20]
+            // Get base curve options (handle different formats)
+            let baseCurves: (number | string)[] = []
+            if (Array.isArray(p.base_curve_options)) {
+                baseCurves = p.base_curve_options
+            } else if (typeof p.base_curve_options === 'string') {
+                try {
+                    const parsed = JSON.parse(p.base_curve_options)
+                    if (Array.isArray(parsed)) {
+                        baseCurves = parsed
+                    }
+                } catch (e) {
+                    baseCurves = p.base_curve_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
+                }
+            }
+            if (baseCurves.length === 0) {
+                baseCurves = [8.70, 8.80, 8.90]
+            }
+            
+            // Get diameter options (handle different formats)
+            let diameters: (number | string)[] = []
+            if (Array.isArray(p.diameter_options)) {
+                diameters = p.diameter_options
+            } else if (typeof p.diameter_options === 'string') {
+                try {
+                    const parsed = JSON.parse(p.diameter_options)
+                    if (Array.isArray(parsed)) {
+                        diameters = parsed
+                    }
+                } catch (e) {
+                    diameters = p.diameter_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
+                }
+            }
+            if (diameters.length === 0) {
+                diameters = [14.00, 14.20]
+            }
+            
+            // Debug: Log initialization in development
+            if (import.meta.env.DEV) {
+                console.log('🔍 Initializing Contact Lens Form:', {
+                    productId: currentProductId,
+                    productName: product.name,
+                    baseCurves,
+                    diameters,
+                    base_curve_options_raw: p.base_curve_options,
+                    diameter_options_raw: p.diameter_options,
+                    powers_range: p.powers_range
+                })
+            }
             
             if (baseCurves.length > 0 && diameters.length > 0) {
                 formInitializedRef.current = currentProductId
@@ -250,7 +407,8 @@ const ProductDetail: React.FC = () => {
                     left_qty: 1,
                     left_base_curve: baseCurves[0]?.toString() || '8.70',
                     left_diameter: diameters[0]?.toString() || '14.00',
-                    left_power: ''
+                    left_power: '',
+                    unit: 'unit' // Default unit
                 })
             }
         } else {
@@ -260,7 +418,7 @@ const ProductDetail: React.FC = () => {
                 lastProductIdRef.current = null
             }
         }
-    }, [product?.id])
+    }, [product?.id, product?.name])
     
     // Memoize product price to prevent recalculation
     const productBasePrice = useMemo(() => {
@@ -281,6 +439,19 @@ const ProductDetail: React.FC = () => {
         
         return rightTotal + leftTotal
     }, [productBasePrice, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
+
+    // Helper function to check if product is out of stock (MUST be before conditional returns)
+    const isProductOutOfStock = useMemo(() => {
+        if (!product) return false
+        const p = product as any
+        const stockStatus = p.stock_status
+        const stockQty = product.stock_quantity
+        
+        return stockStatus === 'out_of_stock' ||
+               (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+               (stockStatus === undefined && product.in_stock === false) ||
+               (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+    }, [product])
 
     const handleAddToCart = () => {
         if (!product) return
@@ -314,6 +485,16 @@ const ProductDetail: React.FC = () => {
     
     const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
         setContactLensFormData(prev => ({ ...prev, [field]: value }))
+        
+        // Debug: Log unit changes in development
+        if (import.meta.env.DEV && field === 'unit') {
+            console.log('🔍 Unit Selection Changed:', {
+                unit: value,
+                productId: product?.id,
+                productName: product?.name
+            })
+        }
+        
         if (contactLensErrors[field]) {
             setContactLensErrors(prev => {
                 const newErrors = { ...prev }
@@ -345,9 +526,9 @@ const ProductDetail: React.FC = () => {
                 <Navbar />
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 mb-4">{t('shop.productNotFound')}</h1>
                         <Link to="/shop" className="text-blue-600 hover:text-blue-700">
-                            Return to Shop
+                            {t('shop.returnToShop')}
                         </Link>
                     </div>
                 </div>
@@ -407,6 +588,12 @@ const ProductDetail: React.FC = () => {
     const originalPrice = hasValidSale ? regularPriceNum : null
     
     const validateContactLensForm = (): boolean => {
+        // Don't allow adding to cart if out of stock
+        if (isProductOutOfStock) {
+            alert(t('shop.outOfStockAlert'))
+            return false
+        }
+        
         const newErrors: Record<string, string> = {}
         
         if (!contactLensFormData.right_power) {
@@ -458,10 +645,12 @@ const ProductDetail: React.FC = () => {
                         name: product.name || '',
                         brand: product.brand || '',
                         category: product.category?.slug || 'contact-lenses',
-                        price: calculateContactLensTotal,
+                        price: calculateContactLensTotal, // Total price (right + left eye totals)
                         image: getProductImageUrl(product, selectedImageIndex),
                         description: product.description || '',
-                        inStock: product.in_stock || false
+                        inStock: product.in_stock || false,
+                        unit: contactLensFormData.unit, // Include unit selection
+                        isContactLens: true // Flag to identify as contact lens
                     }
                     addToCart(cartProduct)
                     navigate('/cart')
@@ -474,12 +663,15 @@ const ProductDetail: React.FC = () => {
                     name: product.name || '',
                     brand: product.brand || '',
                     category: product.category?.slug || 'contact-lenses',
-                    price: calculateContactLensTotal,
+                    price: calculateContactLensTotal, // Total price (right + left eye totals)
                     image: getProductImageUrl(product, selectedImageIndex),
                     description: product.description || '',
                     inStock: product.in_stock || false,
+                    unit: contactLensFormData.unit, // Include unit selection
+                    isContactLens: true, // Flag to identify as contact lens
                     customization: {
                         contactLens: {
+                            unit: contactLensFormData.unit, // Store unit in customization
                             right: {
                                 qty: contactLensFormData.right_qty,
                                 baseCurve: parseFloat(contactLensFormData.right_base_curve),
@@ -536,87 +728,208 @@ const ProductDetail: React.FC = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                         {/* Product Images */}
                         <div>
-                            <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
-                                <img
-                                    key={`product-${product.id}-img-${selectedImageIndex}`}
-                                    src={getProductImageUrl(product, selectedImageIndex)}
-                                    alt={product.name}
-                                    className="w-full h-full object-cover p-8"
-                                    onError={(e) => {
-                                        const target = e.target as HTMLImageElement
-                                        if (import.meta.env.DEV) {
-                                            console.warn('Image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                            {isContactLens ? (
+                                /* Contact Lens - Two Image Fields (Right Eye & Left Eye) */
+                                <div className="space-y-6">
+                                    {/* Parse images array */}
+                                    {(() => {
+                                        // Parse images if it's a JSON string
+                                        let imagesArray: string[] = []
+                                        if (product.images) {
+                                            if (typeof product.images === 'string') {
+                                                try {
+                                                    imagesArray = JSON.parse(product.images)
+                                                } catch (e) {
+                                                    imagesArray = [product.images]
+                                                }
+                                            } else if (Array.isArray(product.images)) {
+                                                imagesArray = product.images
+                                            }
                                         }
-                                        target.src = '/assets/images/frame1.png'
-                                    }}
-                                />
-                                {(() => {
-                                    const p = product as any
-                                    const stockStatus = p.stock_status
-                                    const stockQty = product.stock_quantity
-                                    
-                                    // Check if out of stock - stock_status takes priority
-                                    const isOutOfStock = 
-                                        stockStatus === 'out_of_stock' ||
-                                        (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                        (stockStatus === undefined && product.in_stock === false) ||
-                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                    
-                                    return isOutOfStock ? (
-                                        <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                            Out of Stock
-                                        </div>
-                                    ) : null
-                                })()}
-                                {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
-                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                        Sale
+                                        
+                                        // Get right eye image (first image) and left eye image (second image, or same as first if only one)
+                                        const rightEyeImage = imagesArray.length > 0 
+                                            ? imagesArray[0] 
+                                            : getProductImageUrl(product, 0)
+                                        const leftEyeImage = imagesArray.length > 1 
+                                            ? imagesArray[1] 
+                                            : (imagesArray.length > 0 ? imagesArray[0] : getProductImageUrl(product, 0))
+                                        
+                                        return (
+                                            <>
+                                                {/* Right Eye Image */}
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Right Eye</h3>
+                                                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                                                        <img
+                                                            key={`product-${product.id}-right-eye`}
+                                                            src={rightEyeImage}
+                                                            alt={`${product.name} - Right Eye`}
+                                                            className="w-full h-full object-cover p-8"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                if (import.meta.env.DEV) {
+                                                                    console.warn('Right eye image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                                }
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }}
+                                                        />
+                                                        {(() => {
+                                                            const p = product as any
+                                                            const stockStatus = p.stock_status
+                                                            const stockQty = product.stock_quantity
+                                                            
+                                                            const isOutOfStock = 
+                                                                stockStatus === 'out_of_stock' ||
+                                                                (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                                (stockStatus === undefined && product.in_stock === false) ||
+                                                                (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                            
+                                                            return isOutOfStock ? (
+                                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                                    {t('shop.outOfStock')}
+                                                                </div>
+                                                            ) : null
+                                                        })()}
+                                                        {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
+                                                            <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                                Sale
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Left Eye Image */}
+                                                <div>
+                                                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Left Eye</h3>
+                                                    <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                                                        <img
+                                                            key={`product-${product.id}-left-eye`}
+                                                            src={leftEyeImage}
+                                                            alt={`${product.name} - Left Eye`}
+                                                            className="w-full h-full object-cover p-8"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                if (import.meta.env.DEV) {
+                                                                    console.warn('Left eye image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                                }
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }}
+                                                        />
+                                                        {(() => {
+                                                            const p = product as any
+                                                            const stockStatus = p.stock_status
+                                                            const stockQty = product.stock_quantity
+                                                            
+                                                            const isOutOfStock = 
+                                                                stockStatus === 'out_of_stock' ||
+                                                                (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                                (stockStatus === undefined && product.in_stock === false) ||
+                                                                (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                            
+                                                            return isOutOfStock ? (
+                                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                                    {t('shop.outOfStock')}
+                                                                </div>
+                                                            ) : null
+                                                        })()}
+                                                        {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
+                                                            <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                                Sale
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )
+                                    })()}
+                                </div>
+                            ) : (
+                                /* Regular Product - Single Image Display */
+                                <>
+                                    <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
+                                        <img
+                                            key={`product-${product.id}-img-${selectedImageIndex}`}
+                                            src={getProductImageUrl(product, selectedImageIndex)}
+                                            alt={product.name}
+                                            className="w-full h-full object-cover p-8"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement
+                                                if (import.meta.env.DEV) {
+                                                    console.warn('Image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                }
+                                                target.src = '/assets/images/frame1.png'
+                                            }}
+                                        />
+                                        {(() => {
+                                            const p = product as any
+                                            const stockStatus = p.stock_status
+                                            const stockQty = product.stock_quantity
+                                            
+                                            // Check if out of stock - stock_status takes priority
+                                            const isOutOfStock = 
+                                                stockStatus === 'out_of_stock' ||
+                                                (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                (stockStatus === undefined && product.in_stock === false) ||
+                                                (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                            
+                                            return isOutOfStock ? (
+                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                    Out of Stock
+                                                </div>
+                                            ) : null
+                                        })()}
+                                        {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
+                                            <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                Sale
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                            
-                            {/* Thumbnail Images */}
-                            {(() => {
-                                // Parse images if it's a JSON string
-                                let imagesArray: string[] = []
-                                if (product.images) {
-                                    if (typeof product.images === 'string') {
-                                        try {
-                                            imagesArray = JSON.parse(product.images)
-                                        } catch (e) {
-                                            imagesArray = [product.images]
+                                    
+                                    {/* Thumbnail Images */}
+                                    {(() => {
+                                        // Parse images if it's a JSON string
+                                        let imagesArray: string[] = []
+                                        if (product.images) {
+                                            if (typeof product.images === 'string') {
+                                                try {
+                                                    imagesArray = JSON.parse(product.images)
+                                                } catch (e) {
+                                                    imagesArray = [product.images]
+                                                }
+                                            } else if (Array.isArray(product.images)) {
+                                                imagesArray = product.images
+                                            }
                                         }
-                                    } else if (Array.isArray(product.images)) {
-                                        imagesArray = product.images
-                                    }
-                                }
-                                
-                                return imagesArray.length > 1 ? (
-                                    <div className="flex gap-2 overflow-x-auto">
-                                        {imagesArray.map((image, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setSelectedImageIndex(index)}
-                                                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                                                    selectedImageIndex === index
-                                                        ? 'border-blue-950'
-                                                        : 'border-gray-200'
-                                                }`}
-                                            >
-                                                <img
-                                                    src={image}
-                                                    alt={`${product.name} view ${index + 1}`}
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.src = '/assets/images/frame1.png'
-                                                    }}
-                                                />
-                                            </button>
-                                        ))}
-                                    </div>
-                                ) : null
-                            })()}
+                                        
+                                        return imagesArray.length > 1 ? (
+                                            <div className="flex gap-2 overflow-x-auto">
+                                                {imagesArray.map((image, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setSelectedImageIndex(index)}
+                                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                                                            selectedImageIndex === index
+                                                                ? 'border-blue-950'
+                                                                : 'border-gray-200'
+                                                        }`}
+                                                    >
+                                                        <img
+                                                            src={image}
+                                                            alt={`${product.name} view ${index + 1}`}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : null
+                                    })()}
+                                </>
+                            )}
                         </div>
 
                         {/* Product Info */}
@@ -699,9 +1012,30 @@ const ProductDetail: React.FC = () => {
                                     <div className="mb-6">
                                         {/* Unit Selector */}
                                         <div className="mb-4">
-                                            <button className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg">
-                                                unit
-                                            </button>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {unitOptions.map((unitOption) => (
+                                                    <button
+                                                        key={unitOption.value}
+                                                        type="button"
+                                                        onClick={() => handleContactLensFieldChange('unit', unitOption.value)}
+                                                        disabled={isProductOutOfStock}
+                                                        className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                                                            isProductOutOfStock
+                                                                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                                                : contactLensFormData.unit === unitOption.value
+                                                                    ? 'bg-blue-600 text-white border-blue-600 font-semibold'
+                                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                                        }`}
+                                                        title={unitOption.description}
+                                                    >
+                                                        {unitOption.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            {import.meta.env.DEV && (
+                                                <p className="text-xs text-gray-500 mt-1">Selected: {contactLensFormData.unit}</p>
+                                            )}
                                         </div>
                                         
                                         {/* Price Display */}
@@ -712,8 +1046,15 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         
                                         {/* Configuration Form */}
-                                        <div className="bg-white border border-gray-300 rounded-lg p-6 mb-6">
+                                        <div className={`bg-white border border-gray-300 rounded-lg p-6 mb-6 ${isProductOutOfStock ? 'opacity-60' : ''}`}>
                                             <h3 className="text-lg font-semibold text-gray-900 mb-6">Select the parameters</h3>
+                                            {isProductOutOfStock && (
+                                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                                    <p className="text-sm text-red-700 font-medium">
+                                                        ⚠️ {t('shop.outOfStockMessage')}
+                                                    </p>
+                                                </div>
+                                            )}
                                             
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                                 {/* Right Eye */}
@@ -729,9 +1070,10 @@ const ProductDetail: React.FC = () => {
                                                                 min="1"
                                                                 value={contactLensFormData.right_qty}
                                                                 onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
+                                                                disabled={isProductOutOfStock}
                                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                                                     contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
-                                                                }`}
+                                                                } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             />
                                                             {contactLensErrors.right_qty && (
                                                                 <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_qty}</p>
@@ -744,14 +1086,22 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.right_base_curve}
                                                                 onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
-                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                disabled={isProductOutOfStock}
+                                                                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
-                                                                {baseCurveOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option.toString()}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
+                                                                {baseCurveOptions.length === 0 ? (
+                                                                    <option value="">Loading options...</option>
+                                                                ) : (
+                                                                    baseCurveOptions.map((option: number | string) => (
+                                                                        <option key={option} value={option.toString()}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))
+                                                                )}
                                                             </select>
+                                                            {import.meta.env.DEV && baseCurveOptions.length === 0 && (
+                                                                <p className="text-xs text-yellow-600 mt-1">⚠️ No base curve options available from API</p>
+                                                            )}
                                                         </div>
                                                         
                                                         {/* Diameter */}
@@ -760,14 +1110,22 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.right_diameter}
                                                                 onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
-                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                disabled={isProductOutOfStock}
+                                                                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
-                                                                {diameterOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option.toString()}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
+                                                                {diameterOptions.length === 0 ? (
+                                                                    <option value="">Loading options...</option>
+                                                                ) : (
+                                                                    diameterOptions.map((option: number | string) => (
+                                                                        <option key={option} value={option.toString()}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))
+                                                                )}
                                                             </select>
+                                                            {import.meta.env.DEV && diameterOptions.length === 0 && (
+                                                                <p className="text-xs text-yellow-600 mt-1">⚠️ No diameter options available from API</p>
+                                                            )}
                                                         </div>
                                                         
                                                         {/* Power (PWR) */}
@@ -778,9 +1136,10 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.right_power}
                                                                 onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                                disabled={isProductOutOfStock}
                                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                                                     contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                                }`}
+                                                                } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
                                                                 <option value="">-</option>
                                                                 {powerOptions.map((power) => (
@@ -809,9 +1168,10 @@ const ProductDetail: React.FC = () => {
                                                                 min="1"
                                                                 value={contactLensFormData.left_qty}
                                                                 onChange={(e) => handleContactLensFieldChange('left_qty', parseInt(e.target.value) || 1)}
+                                                                disabled={isProductOutOfStock}
                                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                                                     contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
-                                                                }`}
+                                                                } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             />
                                                             {contactLensErrors.left_qty && (
                                                                 <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_qty}</p>
@@ -824,14 +1184,22 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.left_base_curve}
                                                                 onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
-                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                disabled={isProductOutOfStock}
+                                                                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
-                                                                {baseCurveOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option.toString()}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
+                                                                {baseCurveOptions.length === 0 ? (
+                                                                    <option value="">Loading options...</option>
+                                                                ) : (
+                                                                    baseCurveOptions.map((option: number | string) => (
+                                                                        <option key={option} value={option.toString()}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))
+                                                                )}
                                                             </select>
+                                                            {import.meta.env.DEV && baseCurveOptions.length === 0 && (
+                                                                <p className="text-xs text-yellow-600 mt-1">⚠️ No base curve options available from API</p>
+                                                            )}
                                                         </div>
                                                         
                                                         {/* Diameter */}
@@ -840,14 +1208,22 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.left_diameter}
                                                                 onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
-                                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                                disabled={isProductOutOfStock}
+                                                                className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
-                                                                {diameterOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option.toString()}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
+                                                                {diameterOptions.length === 0 ? (
+                                                                    <option value="">Loading options...</option>
+                                                                ) : (
+                                                                    diameterOptions.map((option: number | string) => (
+                                                                        <option key={option} value={option.toString()}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))
+                                                                )}
                                                             </select>
+                                                            {import.meta.env.DEV && diameterOptions.length === 0 && (
+                                                                <p className="text-xs text-yellow-600 mt-1">⚠️ No diameter options available from API</p>
+                                                            )}
                                                         </div>
                                                         
                                                         {/* Power (PWR) */}
@@ -858,9 +1234,10 @@ const ProductDetail: React.FC = () => {
                                                             <select
                                                                 value={contactLensFormData.left_power}
                                                                 onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                                disabled={isProductOutOfStock}
                                                                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                                                     contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                                }`}
+                                                                } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                                                             >
                                                                 <option value="">-</option>
                                                                 {powerOptions.map((power) => (
@@ -879,13 +1256,27 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         
                                         {/* Add to Cart Button */}
-                                        <div className="flex justify-end mb-6">
+                                        <div className="flex flex-col items-end mb-6">
+                                            {isProductOutOfStock && (
+                                                <p className="text-sm text-red-600 font-medium mb-2">
+                                                    {t('shop.outOfStockMessage')}
+                                                </p>
+                                            )}
                                             <button
                                                 onClick={handleContactLensAddToCart}
-                                                disabled={contactLensLoading}
-                                                className="px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={contactLensLoading || isProductOutOfStock}
+                                                className={`px-8 py-3 rounded-lg font-semibold transition-colors ${
+                                                    isProductOutOfStock
+                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed'
+                                                }`}
                                             >
-                                                {contactLensLoading ? 'Adding to Cart...' : 'Add to Cart'}
+                                                {contactLensLoading 
+                                                    ? t('shop.addingToCart') 
+                                                    : isProductOutOfStock 
+                                                        ? t('shop.outOfStock') 
+                                                        : t('shop.addToCart')
+                                                }
                                             </button>
                                         </div>
                                     </div>

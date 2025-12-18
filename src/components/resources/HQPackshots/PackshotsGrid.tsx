@@ -24,7 +24,7 @@ const PackshotsGrid: React.FC = () => {
         const fetchCategories = async () => {
             try {
                 setLoading(true)
-                const data = await getCategories(true) // includeProducts = true
+                const data = await getCategories({ includeProducts: true })
                 setCategories(data)
                 
                 // Set default active tab to first category if available

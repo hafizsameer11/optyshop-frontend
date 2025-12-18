@@ -1,13 +1,16 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const PurchasingJourneySection: React.FC = () => {
+    const { t } = useTranslation()
+    
     return (
         <section className="bg-white py-16 px-4">
             <div className="w-[90%] max-w-6xl mx-auto">
                 {/* Heading */}
                 <h2 className="text-center text-3xl sm:text-4xl font-semibold text-slate-900 mb-12">
-                    An engaging experience to{' '}
-                    <span className="text-blue-700">improve the purchasing journey</span>
+                    {t('home.purchasingJourney.titlePart1')}{' '}
+                    <span className="text-blue-700">{t('home.purchasingJourney.titlePart2')}</span>
                 </h2>
 
                 {/* Main content: Phone mockup left, Text right */}
@@ -31,18 +34,15 @@ const PurchasingJourneySection: React.FC = () => {
                     {/* Right: Text content */}
                     <div className="space-y-4 text-slate-900">
                         <h3 className="text-2xl sm:text-3xl font-semibold">
-                            A solution to <span className="underline font-bold text-blue-700">empower</span> customers
+                            {t('home.purchasingJourney.solutionPart1')} <span className="underline font-bold text-blue-700">{t('home.purchasingJourney.solutionPart2')}</span> {t('home.purchasingJourney.solutionPart3')}
                         </h3>
 
                         <p className="text-lg sm:text-xl font-bold text-slate-800">
-                            <span className="font-bold">89%</span> of{' '}
-                            <span className="font-bold">glasses wearers</span> find Virtual Try-On helpful in choosing
-                            frames.
+                            <span className="font-bold">89%</span> {t('home.purchasingJourney.statsText')}
                         </p>
 
                         <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                            Offer them the ability to easily browse and try out your catalog, building an immersive
-                            shopping experience (wishlist, carousel, color picker, etc.).
+                            {t('home.purchasingJourney.description')}
                         </p>
                     </div>
                 </div>

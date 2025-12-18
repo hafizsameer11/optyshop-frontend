@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/products/OpticalInstruments/HeroSection'
@@ -9,6 +10,7 @@ import KidsLensRecommendation from '../../components/simulations/KidsLensRecomme
 import LifestyleRecommendation from '../../components/simulations/LifestyleRecommendation'
 
 const OpticalInstruments: React.FC = () => {
+    const { t } = useTranslation()
     const [showKidsRecommendation, setShowKidsRecommendation] = useState(false)
     const [showLifestyleRecommendation, setShowLifestyleRecommendation] = useState(false)
 
@@ -26,17 +28,17 @@ const OpticalInstruments: React.FC = () => {
                             <svg className="w-3 md:w-4 h-3 md:h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home')}</span>
                         </div>
                         <span className="text-teal-500">/</span>
-                        <span className="text-teal-500">OPTICAL INSTRUMENTS</span>
+                        <span className="text-teal-500">{t('products.opticiansInstruments')}</span>
                     </div>
                     <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8">
                         <a href="#" className="text-teal-500 hover:text-teal-400 transition-colors font-medium text-sm md:text-base">
-                            PD MEASURE
+                            {t('pages.opticalInstruments.pdMeasure')}
                         </a>
                         <a href="#" className="text-teal-500 hover:text-teal-400 transition-colors font-medium text-sm md:text-base">
-                            LENS SIMULATOR
+                            {t('pages.opticalInstruments.lensSimulator')}
                         </a>
                     </div>
                 </div>
@@ -52,31 +54,31 @@ const OpticalInstruments: React.FC = () => {
             <section className="bg-slate-50 py-16 md:py-24">
                 <div className="w-[90%] mx-auto max-w-6xl">
                     <h2 className="text-3xl md:text-4xl font-bold text-center text-slate-900 mb-12">
-                        Lens Recommendations
+                        {t('pages.opticalInstruments.lensRecommendations')}
                     </h2>
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">Kids Lens Recommendation</h3>
+                            <h3 className="text-xl font-bold text-slate-900 mb-4">{t('pages.opticalInstruments.kidsLensRecommendation')}</h3>
                             <p className="text-slate-600 mb-4">
-                                Get personalized lens recommendations for children based on age and prescription needs.
+                                {t('pages.opticalInstruments.kidsLensDescription')}
                             </p>
                             <button
                                 onClick={() => setShowKidsRecommendation(true)}
                                 className="w-full bg-green-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
                             >
-                                Get Kids Recommendation
+                                {t('pages.opticalInstruments.getKidsRecommendation')}
                             </button>
                         </div>
                         <div className="bg-white rounded-lg shadow-lg p-6">
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">Lifestyle Recommendation</h3>
+                            <h3 className="text-xl font-bold text-slate-900 mb-4">{t('pages.opticalInstruments.lifestyleRecommendation')}</h3>
                             <p className="text-slate-600 mb-4">
-                                Find the perfect lenses for your lifestyle and daily activities.
+                                {t('pages.opticalInstruments.lifestyleDescription')}
                             </p>
                             <button
                                 onClick={() => setShowLifestyleRecommendation(true)}
                                 className="w-full bg-purple-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-purple-600 transition-colors"
                             >
-                                Get Lifestyle Recommendation
+                                {t('pages.opticalInstruments.getLifestyleRecommendation')}
                             </button>
                         </div>
                     </div>

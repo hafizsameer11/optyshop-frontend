@@ -1,6 +1,9 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const Viewer3DSection: React.FC = () => {
+    const { t } = useTranslation()
+    
     const handleScrollToLiveDemo = () => {
         setTimeout(() => {
             const element = document.getElementById('live-demo')
@@ -40,17 +43,15 @@ const Viewer3DSection: React.FC = () => {
                     {/* Right: Text content */}
                     <div className="space-y-4 text-slate-900">
                         <h2 className="text-3xl sm:text-4xl font-semibold">
-                            <span className="underline text-blue-700">3D Viewer for Glasses</span>
+                            <span className="underline text-blue-700">{t('home.viewer3D.title')}</span>
                         </h2>
 
                         <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                            Allow users to seamlessly switch between 3D viewing and virtual try-on to explore every
-                            angle of your frames instantly.
+                            {t('home.viewer3D.description1')}
                         </p>
 
                         <p className="text-base sm:text-lg text-slate-700 leading-relaxed">
-                            This interactive experience keeps customers engaged and confident in choosing the perfect
-                            pair.
+                            {t('home.viewer3D.description2')}
                         </p>
                     </div>
                 </div>
@@ -61,7 +62,7 @@ const Viewer3DSection: React.FC = () => {
                         onClick={handleScrollToLiveDemo}
                         className="rounded-full bg-blue-900 text-white px-10 py-4 text-base sm:text-lg font-semibold shadow-lg hover:bg-blue-800 transition-colors cursor-pointer"
                     >
-                        Get a demo
+                        {t('common.getDemo')}
                     </button>
                 </div>
             </div>

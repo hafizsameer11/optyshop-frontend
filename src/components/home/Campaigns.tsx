@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getCampaigns } from '../../services/campaignsService'
 import type { Campaign } from '../../services/campaignsService'
 
 const CampaignsComponent: React.FC = () => {
+    const { t } = useTranslation()
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -60,7 +62,7 @@ const CampaignsComponent: React.FC = () => {
         <section className="w-full py-12 md:py-16 bg-white">
             <div className="w-[90%] mx-auto max-w-6xl">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">
-                    Special Campaigns
+                    {t('home.campaigns.title')}
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

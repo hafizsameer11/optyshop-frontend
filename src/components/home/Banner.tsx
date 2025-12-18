@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getBanners } from '../../services/bannersService'
 import type { Banner } from '../../services/bannersService'
 import Navbar from '../Navbar'
@@ -19,6 +20,7 @@ interface BannerMeta {
 }
 
 const BannerComponent: React.FC = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [banners, setBanners] = useState<Banner[]>([])
     const [loading, setLoading] = useState(true)
@@ -80,7 +82,7 @@ const BannerComponent: React.FC = () => {
             <div className="relative min-h-screen text-white">
                 <Navbar />
                 <div className="w-full h-screen bg-gray-200 animate-pulse flex items-center justify-center">
-                <div className="text-gray-400">Loading banners...</div>
+                <div className="text-gray-400">{t('home.banner.loading')}</div>
                 </div>
             </div>
         )

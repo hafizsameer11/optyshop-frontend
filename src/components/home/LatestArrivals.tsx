@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getProducts, type Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 
 const LatestArrivals: React.FC = () => {
+    const { t } = useTranslation()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -45,8 +47,8 @@ const LatestArrivals: React.FC = () => {
         return (
             <section className="bg-gray-50 py-12 md:py-16 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Latest Arrivals</h2>
-                    <div className="text-center py-8">Loading...</div>
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">{t('home.latestArrivals.title')}</h2>
+                    <div className="text-center py-8">{t('common.loading')}</div>
                 </div>
             </section>
         )
@@ -59,7 +61,7 @@ const LatestArrivals: React.FC = () => {
     return (
         <section className="bg-gray-50 py-12 md:py-16 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Latest Arrivals</h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">{t('home.latestArrivals.title')}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {products.map((product) => (
                         <Link
@@ -78,6 +80,24 @@ const LatestArrivals: React.FC = () => {
                                         target.src = '/assets/images/frame1.png'
                                     }}
                                 />
+                                {(() => {
+                                    const p = product as any
+                                    const stockStatus = p.stock_status
+                                    const stockQty = product.stock_quantity
+                                    
+                                    // Check if out of stock - comprehensive check
+                                    const isOutOfStock = 
+                                        stockStatus === 'out_of_stock' ||
+                                        (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                        (stockStatus === undefined && product.in_stock === false) ||
+                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                    
+                                    return isOutOfStock ? (
+                                        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                            {t('shop.outOfStock')}
+                                        </div>
+                                    ) : null
+                                })()}
                             </div>
                             
                             {/* Product Info */}

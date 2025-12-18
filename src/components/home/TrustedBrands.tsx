@@ -1,4 +1,5 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const brands = [
     { name: 'KITS', src: '/assets/images/kits.webp' },
@@ -14,6 +15,7 @@ const brands = [
 ]
 
 const TrustedBrands: React.FC = () => {
+    const { t } = useTranslation()
     const track = [...brands, ...brands]
 
     return (
@@ -22,7 +24,7 @@ const TrustedBrands: React.FC = () => {
 
             <div className="max-w-6xl mx-auto px-6 py-6 text-center space-y-2">
                 <h2 className="text-lg sm:text-xl font-semibold text-slate-700 tracking-wide">
-                    They already <span className="text-blue-700">trust us</span>
+                    {t('home.trustedBrands.titlePart1')} <span className="text-blue-700">{t('home.trustedBrands.titlePart2')}</span>
                 </h2>
             </div>
 

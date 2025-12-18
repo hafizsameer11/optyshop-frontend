@@ -38,30 +38,54 @@ export const API_ROUTES = {
     BY_SLUG: (slug: string) => `/products/slug/${slug}`, // PUBLIC
     RELATED: (id: number | string) => `/products/${id}/related`,  // PUBLIC
     CONFIGURATION: (id: number | string) => `/products/${id}/configuration`, // PUBLIC - Get product configuration
+    CONFIGURATION_LENS_TYPES: `/products/configuration/lens-types`, // PUBLIC - Get all prescription lens types with variants and colors
   },
 
   // ============================================
   // CATEGORIES (PUBLIC)
   // ============================================
   CATEGORIES: {
-    LIST: `/categories`,                        // PUBLIC
+    LIST: (includeProducts?: boolean, includeSubcategories?: boolean) => {
+      const params = new URLSearchParams();
+      if (includeProducts) params.append('includeProducts', 'true');
+      if (includeSubcategories) params.append('includeSubcategories', 'true');
+      const queryString = params.toString();
+      return `/categories${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get all categories with optional products and subcategories
     BY_ID: (id: number | string) => `/categories/${id}`,         // PUBLIC
     BY_SLUG: (slug: string) => `/categories/slug/${slug}`, // PUBLIC
+    RELATED: (id: number | string, limit?: number, includeNested?: boolean) => {
+      const params = new URLSearchParams();
+      if (limit) params.append('limit', String(limit));
+      if (includeNested) params.append('includeNested', 'true');
+      const queryString = params.toString();
+      return `/categories/${id}/related${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get related categories
   },
 
   // ============================================
   // SUBCATEGORIES (PUBLIC)
   // ============================================
   SUBCATEGORIES: {
-    LIST: (categoryId?: number | string, page: number = 1, limit: number = 50) => {
+    LIST: (categoryId?: number | string, page: number = 1, limit: number = 50, search?: string) => {
       const params = new URLSearchParams();
       if (categoryId) params.append('category_id', String(categoryId));
       params.append('page', String(page));
       params.append('limit', String(limit));
+      if (search) params.append('search', search);
       return `/subcategories?${params.toString()}`;
     },
-    BY_CATEGORY: (categoryId: number | string) => `/subcategories/by-category/${categoryId}`, // PUBLIC
+    BY_CATEGORY: (categoryId: number | string) => `/subcategories/by-category/${categoryId}`, // PUBLIC - Get top-level subcategories with nested children
     BY_ID: (id: number | string) => `/subcategories/${id}`, // PUBLIC
+    BY_SLUG: (slug: string) => `/subcategories/slug/${slug}`, // PUBLIC - Get subcategory by slug
+    BY_PARENT: (parentId: number | string) => `/subcategories/by-parent/${parentId}`, // PUBLIC - Get nested subcategories by parent ID
+    NESTED: (subcategoryId: number | string) => `/subcategories/${subcategoryId}/subcategories`, // PUBLIC - Get nested subcategories (children of a subcategory)
+    RELATED_CATEGORIES: (subcategoryId: number | string, includeNested?: boolean) => {
+      const params = new URLSearchParams();
+      if (includeNested) params.append('includeNested', 'true');
+      const queryString = params.toString();
+      return `/subcategories/${subcategoryId}/related-categories${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get related categories for a subcategory
   },
 
   // ============================================
@@ -238,9 +262,11 @@ export const API_ROUTES = {
     },
     THICKNESS_MATERIALS: {
       LIST: `/lens/thickness-materials`,                // PUBLIC - Get lens thickness materials
+      BY_ID: (id: number | string) => `/lens/thickness-materials/${id}`, // PUBLIC - Get lens thickness material by ID
     },
     THICKNESS_OPTIONS: {
       LIST: `/lens/thickness-options`,                  // PUBLIC - Get lens thickness options
+      BY_ID: (id: number | string) => `/lens/thickness-options/${id}`, // PUBLIC - Get lens thickness option by ID
     },
   },
 

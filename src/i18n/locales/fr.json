@@ -4,6 +4,7 @@
     "cart": "Panier",
     "orders": "Commandes",
     "prescriptions": "Ordonnances",
+    "transactions": "Transactions",
     "profile": "Profil",
     "logout": "Déconnexion",
     "login": "Connexion",
@@ -15,7 +16,105 @@
     "whoWeAre": "Qui nous sommes",
     "getDemo": "Obtenir une démo",
     "welcome": "Bienvenue",
-    "language": "Langue"
+    "language": "Langue",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "view": "Voir",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "submit": "Soumettre",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer",
+    "add": "Ajouter",
+    "remove": "Retirer",
+    "update": "Mettre à jour",
+    "create": "Créer",
+    "loading": "Chargement...",
+    "noData": "Aucune donnée trouvée",
+    "error": "Erreur",
+    "success": "Succès",
+    "price": "Prix",
+    "quantity": "Quantité",
+    "total": "Total",
+    "subtotal": "Sous-total",
+    "shipping": "Expédition",
+    "tax": "Taxe",
+    "discount": "Remise",
+    "home": "Accueil"
+  },
+  "home": {
+    "hero": {
+      "title": "Essai virtuel",
+      "subtitle": "pour lunettes",
+      "description": "Tirez parti de la réalité augmentée pour vous démarquer et renforcer la confiance des clients.",
+      "tryOnButton": "Essayer les lunettes",
+      "requestDemoButton": "Demander une démo"
+    },
+    "stats": {
+      "impact": "Impact",
+      "title": "Générer de l'engagement et",
+      "titleHighlight": "augmenter les ventes de lunettes",
+      "visitsTitle": "Visites sur les pages produits",
+      "conversionTitle": "Augmenter le taux de conversion",
+      "visitorsTitle": "Plus de visiteurs en magasin",
+      "caption": "*basé sur un test A/B sur le site e-commerce de Fielmann, basé sur 5 millions de pages vues."
+    },
+    "testimonials": {
+      "titlePart1": "Que pensent-ils de",
+      "titlePart2": "l'Essai Virtuel de Lunettes?",
+      "loading": "Chargement des témoignages...",
+      "error": "Erreur lors du chargement des témoignages",
+      "noTestimonials": "Aucun témoignage disponible pour le moment.",
+      "goToTestimonial": "Aller au témoignage {{number}}"
+    },
+    "banner": {
+      "loading": "Chargement des bannières..."
+    },
+    "campaigns": {
+      "title": "Campagnes Spéciales"
+    },
+    "latestArrivals": {
+      "title": "Dernières Arrivées"
+    },
+    "featuredArrivals": {
+      "title": "Arrivées en Vedette"
+    },
+    "trustedBrands": {
+      "titlePart1": "Ils nous",
+      "titlePart2": "font déjà confiance"
+    },
+    "purchasingJourney": {
+      "titlePart1": "Une expérience engageante pour",
+      "titlePart2": "améliorer le parcours d'achat",
+      "solutionPart1": "Une solution pour",
+      "solutionPart2": "autonomiser",
+      "solutionPart3": "les clients",
+      "statsText": "des porteurs de lunettes trouvent l'Essai Virtuel utile pour choisir des montures.",
+      "description": "Offrez-leur la possibilité de parcourir et d'essayer facilement votre catalogue, créant une expérience d'achat immersive (liste de souhaits, carrousel, sélecteur de couleur, etc.)."
+    },
+    "ultraRealistic": {
+      "titlePart1": "Un résultat ultra-réaliste des",
+      "titlePart2": "lunettes",
+      "description1Part1": "Notre",
+      "description1Part2": "solution en temps réel",
+      "description1Part3": "porte le réalisme à de nouveaux niveaux grâce au suivi facial précis et à l'attention portée aux détails de la monture.",
+      "description2Part1": "Nous pouvons gérer des matériaux complexes et des effets d'éclairage, pour fournir un",
+      "description2Part2": "rendu ultra-réaliste",
+      "description2Part3": "des montures et des lentilles."
+    },
+    "viewer3D": {
+      "title": "Visualiseur 3D pour Lunettes",
+      "description1": "Permettez aux utilisateurs de basculer facilement entre la visualisation 3D et l'essai virtuel pour explorer chaque angle de vos montures instantanément.",
+      "description2": "Cette expérience interactive maintient les clients engagés et confiants dans le choix de la paire parfaite."
+    },
+    "compatibility": {
+      "ecommercePlatforms": "Pris en charge par toutes les principales plateformes e-commerce",
+      "worksOnAnyDevice": "Fonctionne sur n'importe quel système et appareil"
+    }
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -28,13 +127,100 @@
     "cartItems": "Articles dans le Panier"
   },
   "navbar": {
+    "home": "Accueil",
+    "eyeglasses": "Lunettes",
+    "sunglasses": "Lunettes de soleil",
+    "optyKids": "Opty Kids",
+    "optyKidsLine1": "Opty",
+    "optyKidsLine2": "Kids",
+    "contactLenses": "Lentilles de contact",
+    "contactLensesLine1": "Lentilles de",
+    "contactLensesLine2": "contact",
+    "eyeHygiene": "Hygiène oculaire",
+    "eyeHygieneLine1": "Hygiène",
+    "eyeHygieneLine2": "oculaire",
+    "virtualTryOn": "Essai Virtuel",
     "products": "Produits",
     "solutions": "Solutions",
     "resources": "Ressources",
     "whoWeAre": "Qui nous sommes",
     "shop": "Boutique",
     "login": "Connexion",
-    "getDemo": "Obtenir une démo"
+    "getDemo": "Obtenir une démo",
+    "viewAll": "Voir Tout",
+    "loading": "Chargement...",
+    "noSubcategories": "Aucune sous-catégorie disponible",
+    "noNestedSubcategories": "Aucune sous-catégorie imbriquée"
+  },
+  "shop": {
+    "title": "Boutique",
+    "products": "Produits",
+    "addToCart": "Ajouter au Panier",
+    "addingToCart": "Ajout au Panier...",
+    "outOfStock": "Rupture de Stock",
+    "inStock": "En Stock",
+    "selectOptions": "Sélectionner les Options",
+    "viewDetails": "Voir les Détails",
+    "noProducts": "Aucun produit trouvé",
+    "filterBy": "Filtrer par",
+    "category": "Catégorie",
+    "allCategories": "Toutes les Catégories",
+    "priceRange": "Gamme de Prix",
+    "frameShape": "Forme de la Monture",
+    "frameMaterial": "Matériau de la Monture",
+    "gender": "Genre",
+    "all": "Tous",
+    "male": "Homme",
+    "female": "Femme",
+    "unisex": "Unisexe",
+    "sortBy": "Trier par",
+    "sortPriceLow": "Prix: Bas à Haut",
+    "sortPriceHigh": "Prix: Haut à Bas",
+    "sortNewest": "Plus Récent",
+    "sortOldest": "Plus Ancien",
+    "sortNameAZ": "Nom: A à Z",
+    "sortNameZA": "Nom: Z à A",
+    "clearFilters": "Effacer les Filtres",
+    "results": "résultats",
+    "showing": "Affichage",
+    "of": "de",
+    "brand": "Marque",
+    "each": "chaque",
+    "productNotFound": "Produit Non Trouvé",
+    "returnToShop": "Retour à la Boutique",
+    "outOfStockAlert": "Ce produit est actuellement en rupture de stock et ne peut pas être ajouté au panier.",
+    "outOfStockMessage": "Ce produit est actuellement en rupture de stock. Vous ne pouvez pas l'ajouter à votre panier pour le moment.",
+    "description": "Découvrez notre vaste collection de lunettes et de lunettes de soleil"
+  },
+  "cart": {
+    "title": "Panier d'Achat",
+    "empty": "Votre panier est vide",
+    "startShopping": "Commencez à magasiner pour ajouter des articles à votre panier",
+    "continueShopping": "Continuer les Achats",
+    "item": "article",
+    "items": "articles",
+    "removeItem": "Retirer l'Article",
+    "updateQuantity": "Mettre à Jour la Quantité",
+    "proceedToCheckout": "Passer à la Caisse",
+    "estimatedTotal": "Total Estimé"
+  },
+  "checkout": {
+    "title": "Paiement",
+    "shippingAddress": "Adresse de Livraison",
+    "billingAddress": "Adresse de Facturation",
+    "paymentMethod": "Méthode de Paiement",
+    "orderSummary": "Résumé de la Commande",
+    "placeOrder": "Passer la Commande",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "address": "Adresse",
+    "city": "Ville",
+    "zipCode": "Code Postal",
+    "country": "Pays",
+    "sameAsShipping": "Identique à l'adresse de livraison",
+    "emptyCartError": "Votre panier est vide. Veuillez ajouter des articles avant le paiement."
   },
   "products": {
     "virtualTest": "Test virtuel",
@@ -69,6 +255,37 @@
     "ourHistory": "NOTRE HISTOIRE",
     "ourTechnology": "NOTRE TECHNOLOGIE",
     "joinUs": "REJOIGNEZ-NOUS"
+  },
+  "pages": {
+    "virtualTest": {
+      "forWebsite": "Pour le site web",
+      "forShop": "Pour la boutique"
+    },
+    "digitalFrames": {
+      "3dDigitization": "Numérisation 3D",
+      "database": "Base de données",
+      "3dViewer": "Visualiseur 3D",
+      "photoPackshots": "Packshots photo"
+    },
+    "opticalInstruments": {
+      "pdMeasure": "Mesure PD",
+      "lensSimulator": "Simulateur de lentilles",
+      "lensRecommendations": "Recommandations de lentilles",
+      "kidsLensRecommendation": "Recommandation de lentilles pour enfants",
+      "kidsLensDescription": "Obtenez des recommandations personnalisées de lentilles pour enfants basées sur l'âge et les besoins de prescription.",
+      "getKidsRecommendation": "Obtenir une recommandation pour enfants",
+      "lifestyleRecommendation": "Recommandation de style de vie",
+      "lifestyleDescription": "Trouvez les lentilles parfaites pour votre style de vie et vos activités quotidiennes.",
+      "getLifestyleRecommendation": "Obtenir une recommandation de style de vie"
+    },
+    "pdMeasurement": {
+      "onlinePdMeasurementTool": "Outil de mesure PD en ligne"
+    },
+    "openInnovation": {
+      "rdCapabilities": "Capacités R&D",
+      "avantPremieres": "Avant-Premières",
+      "whatsNext": "Quoi de neuf?"
+    }
   }
 }
 

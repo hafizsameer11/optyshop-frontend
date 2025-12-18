@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getProducts, type Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { getCategoriesWithSubcategories, type Category } from '../../services/categoriesService'
@@ -15,6 +16,7 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
     categoryName, 
     limit = 4 
 }) => {
+    const { t } = useTranslation()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -64,12 +66,12 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
             <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-                        FEATURED ARRIVALS
+                        {t('home.featuredArrivals.title')}
                     </h2>
                     <h3 className="text-xl md:text-2xl font-semibold text-gray-700 mb-6">
-                        {categoryName || 'Products'}
+                        {categoryName || t('common.products')}
                     </h3>
-                    <div className="text-center py-8">Loading...</div>
+                    <div className="text-center py-8">{t('common.loading')}</div>
                 </div>
             </section>
         )
@@ -83,10 +85,10 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
         <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">
-                    FEATURED ARRIVALS
+                    {t('home.featuredArrivals.title')}
                 </h2>
                 <h3 className="text-xl md:text-2xl font-semibold text-gray-700 mb-6">
-                    {categoryName || 'Products'}
+                    {categoryName || t('common.products')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
                     {products.map((product) => (
@@ -106,6 +108,24 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                         target.src = '/assets/images/frame1.png'
                                     }}
                                 />
+                                {(() => {
+                                    const p = product as any
+                                    const stockStatus = p.stock_status
+                                    const stockQty = product.stock_quantity
+                                    
+                                    // Check if out of stock - comprehensive check
+                                    const isOutOfStock = 
+                                        stockStatus === 'out_of_stock' ||
+                                        (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                        (stockStatus === undefined && product.in_stock === false) ||
+                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                    
+                                    return isOutOfStock ? (
+                                        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                            Out of Stock
+                                        </div>
+                                    ) : null
+                                })()}
                             </div>
                             
                             {/* Product Info */}

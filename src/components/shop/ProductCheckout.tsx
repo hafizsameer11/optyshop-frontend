@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { getProductOptions, type LensType, type LensCoating, type Product } from '../../services/productsService'
@@ -1427,22 +1428,33 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
 
       // Calculate final price with lens options
-      const basePrice = product.sale_price && product.sale_price < product.price 
+      // Ensure basePrice is a number, not a string
+      const basePriceRaw = product.sale_price && Number(product.sale_price) < Number(product.price)
         ? product.sale_price 
         : product.price
+      
+      const basePrice = typeof basePriceRaw === 'string'
+        ? parseFloat(basePriceRaw.replace(/[^0-9.]/g, '')) || 0
+        : Number(basePriceRaw) || 0
 
-      let finalPrice = basePrice
+      let finalPrice: number = basePrice
       
       // Add lens type price adjustment
       // For progressive lenses, use the progressive option price
       if (lensSelection.progressiveOption) {
         const progressiveOption = progressiveOptions.find(opt => opt.id === lensSelection.progressiveOption)
-        finalPrice += progressiveOption?.price || 0
+        const progressivePrice = typeof progressiveOption?.price === 'string'
+          ? parseFloat(progressiveOption.price.replace(/[^0-9.]/g, '')) || 0
+          : Number(progressiveOption?.price) || 0
+        finalPrice += progressivePrice
       } else if (lensSelection.lensIndex) {
         // For regular lens index selection
         const selectedLensType = lensOptions.find(lt => lt.index === lensSelection.lensIndex)
         if (selectedLensType) {
-          finalPrice += Number(selectedLensType.price_adjustment) || 0
+          const lensPrice = typeof selectedLensType.price_adjustment === 'string'
+            ? parseFloat(selectedLensType.price_adjustment.replace(/[^0-9.]/g, '')) || 0
+            : Number(selectedLensType.price_adjustment) || 0
+          finalPrice += lensPrice
           // Store the lens type ID for API
           lensSelection.lensTypeId = selectedLensType.id
         }
@@ -1452,7 +1464,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       lensSelection.coatings.forEach(coatingSlug => {
         const coating = coatingOptions.find(c => c.slug === coatingSlug)
         if (coating) {
-          finalPrice += Number(coating.price_adjustment) || 0
+          const coatingPrice = typeof coating.price_adjustment === 'string'
+            ? parseFloat(coating.price_adjustment.replace(/[^0-9.]/g, '')) || 0
+            : Number(coating.price_adjustment) || 0
+          finalPrice += coatingPrice
         }
       })
 
@@ -1460,14 +1475,20 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       if (lensSelection.lensThicknessMaterialId) {
         const selectedMaterial = lensThicknessMaterials.find(m => m.id === lensSelection.lensThicknessMaterialId)
         if (selectedMaterial) {
-          finalPrice += selectedMaterial.price || 0
+          const materialPrice = typeof selectedMaterial.price === 'string'
+            ? parseFloat(selectedMaterial.price.replace(/[^0-9.]/g, '')) || 0
+            : Number(selectedMaterial.price) || 0
+          finalPrice += materialPrice
         }
       } else if (lensSelection.lensThickness) {
         // Fallback to slug-based lookup if material ID not available
         const materialSlug = lensSelection.lensThickness === 'plastic' ? 'plastic' : 'glass'
         const selectedMaterial = lensThicknessMaterials.find(m => m.slug === materialSlug)
         if (selectedMaterial) {
-          finalPrice += selectedMaterial.price || 0
+          const materialPrice = typeof selectedMaterial.price === 'string'
+            ? parseFloat(selectedMaterial.price.replace(/[^0-9.]/g, '')) || 0
+            : Number(selectedMaterial.price) || 0
+          finalPrice += materialPrice
         }
       }
 
@@ -1475,7 +1496,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       lensSelection.treatments.forEach(treatmentId => {
         const treatment = apiTreatments.find(t => t.id === treatmentId)
         if (treatment) {
-          finalPrice += treatment.price || 0
+          const treatmentPrice = typeof treatment.price === 'string'
+            ? parseFloat(treatment.price.replace(/[^0-9.]/g, '')) || 0
+            : Number(treatment.price) || 0
+          finalPrice += treatmentPrice
         }
       })
 
@@ -1564,16 +1588,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
 
       // Also add to local cart for immediate UI update (for both authenticated and guest users)
+      // Ensure finalPrice is a proper number (not string concatenation)
+      const finalPriceNumber = typeof finalPrice === 'string' 
+        ? parseFloat(finalPrice.replace(/[^0-9.]/g, '')) || 0
+        : Number(finalPrice) || 0
+      
       const cartProduct = {
         id: product.id || 0,
         name: product.name || '',
         brand: product.brand || '',
         category: product.category?.slug || 'eyeglasses',
-        price: finalPrice,
+        price: finalPriceNumber, // Ensure it's a number, not a string
         image: getProductImageUrl(product, selectedImageIndex),
         description: product.description || '',
         inStock: product.in_stock || false,
         rating: product.rating ? Number(product.rating) : undefined,
+        hasLensCustomization: true, // Flag to identify products with lens customizations
         // Additional fields for API
         lens_index: lensSelection.lensIndex,
         lens_type: lensSelection.type,
@@ -1593,6 +1623,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           prescriptionId: finalPrescriptionId
         }
       } as any
+
+      // Debug: Log the price being added
+      if (import.meta.env.DEV) {
+        console.log('🔍 Adding product to cart:', {
+          productName: product.name,
+          basePrice: basePrice,
+          finalPrice: finalPrice,
+          finalPriceNumber: finalPriceNumber,
+          lensSelection: lensSelection.type,
+          progressiveOption: lensSelection.progressiveOption,
+          cartProduct: cartProduct
+        })
+      }
 
       addToCart(cartProduct)
       
@@ -2689,7 +2732,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
             onClick={onNext}
             className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors mt-auto"
           >
-            Add to Cart
+            {t('shop.addToCart')}
           </button>
         </>
       )}
@@ -2959,7 +3002,7 @@ const LensSelectionStep: React.FC<LensSelectionStepProps> = ({
         disabled={loading}
         className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors mt-auto disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Add to Cart
+        {t('shop.addToCart')}
       </button>
     </div>
   )
@@ -3601,7 +3644,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         disabled={loading}
         className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? 'Adding to Cart...' : 'Add to Cart'}
+        {loading ? t('shop.addingToCart') : t('shop.addToCart')}
       </button>
     </div>
   )

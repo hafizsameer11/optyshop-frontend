@@ -1,5 +1,6 @@
 import React from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCaseStudy } from '../../hooks/useCaseStudy'
@@ -8,6 +9,7 @@ import BenefitsSection from '../../components/resources/CaseStudies/BenefitsSect
 import AboutCompanySection from '../../components/resources/CaseStudies/AboutCompanySection'
 
 const CaseStudyDetail: React.FC = () => {
+    const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
     const { caseStudy: study, loading, error } = useCaseStudy(slug || '')
 
@@ -17,7 +19,7 @@ const CaseStudyDetail: React.FC = () => {
                 <Navbar />
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
-                        <p className="text-gray-600">Loading case study...</p>
+                        <p className="text-gray-600">{t('pages.caseStudyDetail.loading')}</p>
                     </div>
                 </div>
                 <Footer />
@@ -32,11 +34,11 @@ const CaseStudyDetail: React.FC = () => {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <h1 className="text-2xl font-bold text-gray-900 mb-4">
-                            {error ? 'Error loading case study' : 'Case Study Not Found'}
+                            {error ? t('pages.caseStudyDetail.error') : t('pages.caseStudyDetail.notFound')}
                         </h1>
                         {error && <p className="text-red-600 mb-4">{error}</p>}
                         <Link to="/case-studies" className="text-blue-600 hover:text-blue-700">
-                            Return to Case Studies
+                            {t('pages.caseStudyDetail.returnToCaseStudies')}
                         </Link>
                     </div>
                 </div>

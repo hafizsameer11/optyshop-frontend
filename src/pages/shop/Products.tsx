@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
@@ -14,6 +15,7 @@ import { getProductImageUrl } from '../../utils/productImage'
 import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../services/categoriesService'
 
 const Products: React.FC = () => {
+    const { t } = useTranslation()
     const { addToCart } = useCart()
     const [searchParams, setSearchParams] = useSearchParams()
     const [products, setProducts] = useState<Product[]>([])
@@ -329,7 +331,7 @@ const Products: React.FC = () => {
                                 ? `Browse our collection of ${categoryInfo.subcategory.name}`
                                 : categoryInfo.category 
                                     ? `Discover our wide collection of ${categoryInfo.category.name}`
-                                    : 'Discover our wide collection of eyeglasses and sunglasses'}
+                                    : t('shop.description')}
                         </p>
                     </div>
                 </div>
@@ -660,18 +662,19 @@ const Products: React.FC = () => {
                                         />
                                             {(() => {
                                                 const p = product as any
-                                                const stockStatus = p.stock_status || product.in_stock
+                                                const stockStatus = p.stock_status
                                                 const stockQty = product.stock_quantity
                                                 
-                                                // Check if out of stock
+                                                // Check if out of stock - comprehensive check
                                                 const isOutOfStock = 
                                                     stockStatus === 'out_of_stock' ||
-                                                    stockStatus === false ||
-                                                    (stockQty !== undefined && stockQty <= 0)
+                                                    (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                                    (stockStatus === undefined && product.in_stock === false) ||
+                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
                                                 
                                                 return isOutOfStock ? (
-                                            <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                                Out of Stock
+                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                        {t('shop.outOfStock')}
                                                     </div>
                                                 ) : null
                                             })()}
@@ -724,22 +727,24 @@ const Products: React.FC = () => {
                                                     }}
                                                     disabled={(() => {
                                                         const p = product as any
-                                                        const stockStatus = p.stock_status || product.in_stock
+                                                        const stockStatus = p.stock_status
                                                         const stockQty = product.stock_quantity
                                                         
                                                         return stockStatus === 'out_of_stock' ||
-                                                               stockStatus === false ||
-                                                               (stockQty !== undefined && stockQty <= 0)
+                                                               (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                                               (stockStatus === undefined && product.in_stock === false) ||
+                                                               (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
                                                     })()}
                                                     className={`px-4 md:px-6 py-2 md:py-3 rounded-lg font-semibold text-sm md:text-base transition-colors ${
                                                         (() => {
                                                             const p = product as any
-                                                            const stockStatus = p.stock_status || product.in_stock
+                                                            const stockStatus = p.stock_status
                                                             const stockQty = product.stock_quantity
                                                             
                                                             const isInStock = stockStatus === 'in_stock' ||
-                                                                              stockStatus === true ||
-                                                                              (stockQty !== undefined && stockQty > 0)
+                                                                              (stockStatus !== 'out_of_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty > 0) ||
+                                                                              (stockStatus === undefined && product.in_stock === true) ||
+                                                                              (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
                                                             
                                                             return isInStock
                                                     ? 'bg-blue-950 text-white hover:bg-blue-900'
@@ -749,14 +754,15 @@ const Products: React.FC = () => {
                                                 >
                                                     {(() => {
                                                         const p = product as any
-                                                        const stockStatus = p.stock_status || product.in_stock
+                                                        const stockStatus = p.stock_status
                                                         const stockQty = product.stock_quantity
                                                         
                                                         const isInStock = stockStatus === 'in_stock' ||
-                                                                          stockStatus === true ||
-                                                                          (stockQty !== undefined && stockQty > 0)
+                                                                          (stockStatus !== 'out_of_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty > 0) ||
+                                                                          (stockStatus === undefined && product.in_stock === true) ||
+                                                                          (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
                                                         
-                                                        return isInStock ? 'Add to Cart' : 'Out of Stock'
+                                                        return isInStock ? t('shop.addToCart') : t('shop.outOfStock')
                                                     })()}
                                             </button>
                                             </div>

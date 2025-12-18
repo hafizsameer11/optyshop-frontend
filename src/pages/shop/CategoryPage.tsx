@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { 
@@ -11,6 +12,7 @@ import { getProductImageUrl } from '../../utils/productImage'
 import { getCategoryBySlug, getSubcategoryBySlug, getSubcategoriesByCategoryId, type Category } from '../../services/categoriesService'
 
 const CategoryPage: React.FC = () => {
+    const { t } = useTranslation()
     const { categorySlug, subcategorySlug } = useParams<{ categorySlug: string; subcategorySlug?: string }>()
     const navigate = useNavigate()
     const [products, setProducts] = useState<Product[]>([])
@@ -407,17 +409,19 @@ const CategoryPage: React.FC = () => {
                                             />
                                             {(() => {
                                                 const p = product as any
-                                                const stockStatus = p.stock_status || product.in_stock
+                                                const stockStatus = p.stock_status
                                                 const stockQty = product.stock_quantity
                                                 
+                                                // Check if out of stock - comprehensive check
                                                 const isOutOfStock = 
                                                     stockStatus === 'out_of_stock' ||
-                                                    stockStatus === false ||
-                                                    (stockQty !== undefined && stockQty <= 0)
+                                                    (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                                    (stockStatus === undefined && product.in_stock === false) ||
+                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
                                                 
                                                 return isOutOfStock ? (
-                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-                                                        Out of Stock
+                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                        {t('shop.outOfStock')}
                                                     </div>
                                                 ) : null
                                             })()}

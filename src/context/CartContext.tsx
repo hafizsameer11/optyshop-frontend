@@ -12,6 +12,25 @@ export interface CartProduct {
     description: string
     inStock: boolean
     rating?: number
+    unit?: string // Unit for contact lenses (unit, box, pack)
+    customization?: {
+        contactLens?: {
+            unit?: string
+            right?: {
+                qty: number
+                baseCurve: number
+                diameter: number
+                power: number
+            }
+            left?: {
+                qty: number
+                baseCurve: number
+                diameter: number
+                power: number
+            }
+        }
+    }
+    isContactLens?: boolean // Flag to identify contact lens products
 }
 
 export interface CartItem extends CartProduct {
@@ -97,7 +116,33 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     }
 
     const getTotalPrice = () => {
-        return cartItems.reduce((total, item) => total + (Number(item.price || 0) * item.quantity), 0)
+        return cartItems.reduce((total, item) => {
+            // Ensure price is properly converted to number
+            let price = 0
+            if (typeof item.price === 'string') {
+                // Remove any non-numeric characters except decimal point (handles "$78.00" or "78,100" etc)
+                const cleaned = item.price.replace(/[^0-9.]/g, '')
+                price = parseFloat(cleaned) || 0
+            } else {
+                price = Number(item.price) || 0
+            }
+            
+            // For contact lenses, price is already the total (right + left eye totals)
+            // So we don't multiply by quantity - quantity is just for display
+            if (item.category === 'contact-lenses' || item.isContactLens || item.customization?.contactLens) {
+                return total + price
+            }
+            
+            // For products with lens customizations (progressive, coatings, etc.), 
+            // price is already the total (base + all lens options)
+            // So we don't multiply by quantity - quantity is just for display
+            if ((item as any).hasLensCustomization || item.customization?.lensType || item.customization?.progressiveOption) {
+                return total + price
+            }
+            
+            // For regular products without customizations, multiply price by quantity
+            return total + (price * item.quantity)
+        }, 0)
     }
 
     const getTotalItems = () => {

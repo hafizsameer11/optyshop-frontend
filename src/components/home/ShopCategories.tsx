@@ -21,7 +21,7 @@ const ShopCategories: React.FC = () => {
             try {
                 setLoading(true)
                 // Fetch categories with products included from API (includeProducts=true)
-                const fetchedCategories = await getCategories(true)
+                const fetchedCategories = await getCategories({ includeProducts: true })
                 
                 if (isCancelled) return
                 

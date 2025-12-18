@@ -4,6 +4,7 @@
     "cart": "Carrello",
     "orders": "Ordini",
     "prescriptions": "Ricette",
+    "transactions": "Transazioni",
     "profile": "Profilo",
     "logout": "Esci",
     "login": "Accedi",
@@ -15,7 +16,105 @@
     "whoWeAre": "Chi siamo",
     "getDemo": "Ottieni demo",
     "welcome": "Benvenuto",
-    "language": "Lingua"
+    "language": "Lingua",
+    "search": "Cerca",
+    "filter": "Filtra",
+    "view": "Visualizza",
+    "edit": "Modifica",
+    "delete": "Elimina",
+    "save": "Salva",
+    "cancel": "Annulla",
+    "submit": "Invia",
+    "back": "Indietro",
+    "next": "Avanti",
+    "previous": "Precedente",
+    "close": "Chiudi",
+    "add": "Aggiungi",
+    "remove": "Rimuovi",
+    "update": "Aggiorna",
+    "create": "Crea",
+    "loading": "Caricamento...",
+    "noData": "Nessun dato trovato",
+    "error": "Errore",
+    "success": "Successo",
+    "price": "Prezzo",
+    "quantity": "Quantità",
+    "total": "Totale",
+    "subtotal": "Subtotale",
+    "shipping": "Spedizione",
+    "tax": "Tassa",
+    "discount": "Sconto",
+    "home": "Home"
+  },
+  "home": {
+    "hero": {
+      "title": "Prova virtuale",
+      "subtitle": "per occhiali",
+      "description": "Approfitta della realtà aumentata per distinguerti e costruire la fiducia dei clienti.",
+      "tryOnButton": "Prova gli occhiali",
+      "requestDemoButton": "Richiedi una demo"
+    },
+    "stats": {
+      "impact": "Impatto",
+      "title": "Generare coinvolgimento e",
+      "titleHighlight": "aumentare le vendite di occhiali",
+      "visitsTitle": "Visite alle pagine prodotto",
+      "conversionTitle": "Aumentare il tasso di conversione",
+      "visitorsTitle": "Più visitatori nel negozio",
+      "caption": "*basato su un test A/B sul sito e-commerce di Fielmann, basato su 5 milioni di visualizzazioni di pagina."
+    },
+    "testimonials": {
+      "titlePart1": "Cosa ne pensano di",
+      "titlePart2": "la Prova Virtuale degli Occhiali?",
+      "loading": "Caricamento testimonianze...",
+      "error": "Errore nel caricamento delle testimonianze",
+      "noTestimonials": "Nessuna testimonianza disponibile al momento.",
+      "goToTestimonial": "Vai alla testimonianza {{number}}"
+    },
+    "banner": {
+      "loading": "Caricamento banner..."
+    },
+    "campaigns": {
+      "title": "Campagne Speciali"
+    },
+    "latestArrivals": {
+      "title": "Ultimi Arrivi"
+    },
+    "featuredArrivals": {
+      "title": "Arrivi in Evidenza"
+    },
+    "trustedBrands": {
+      "titlePart1": "Si fidano già",
+      "titlePart2": "di noi"
+    },
+    "purchasingJourney": {
+      "titlePart1": "Un'esperienza coinvolgente per",
+      "titlePart2": "migliorare il percorso di acquisto",
+      "solutionPart1": "Una soluzione per",
+      "solutionPart2": "potenziare",
+      "solutionPart3": "i clienti",
+      "statsText": "dei portatori di occhiali trovano utile la Prova Virtuale nella scelta delle montature.",
+      "description": "Offri loro la possibilità di navigare e provare facilmente il tuo catalogo, creando un'esperienza di acquisto immersiva (lista dei desideri, carosello, selettore colori, ecc.)."
+    },
+    "ultraRealistic": {
+      "titlePart1": "Un risultato ultra-realistico degli",
+      "titlePart2": "occhiali",
+      "description1Part1": "La nostra",
+      "description1Part2": "soluzione in tempo reale",
+      "description1Part3": "porta il realismo a nuovi livelli grazie al tracciamento facciale accurato e all'attenzione ai dettagli della montatura.",
+      "description2Part1": "Possiamo gestire materiali complessi ed effetti di illuminazione, per fornire un",
+      "description2Part2": "rendering ultra-realistico",
+      "description2Part3": "di montature e lenti."
+    },
+    "viewer3D": {
+      "title": "Visualizzatore 3D per Occhiali",
+      "description1": "Consenti agli utenti di passare facilmente tra la visualizzazione 3D e la prova virtuale per esplorare ogni angolo delle tue montature istantaneamente.",
+      "description2": "Questa esperienza interattiva mantiene i clienti coinvolti e fiduciosi nella scelta della coppia perfetta."
+    },
+    "compatibility": {
+      "ecommercePlatforms": "Supportato da tutte le principali piattaforme e-commerce",
+      "worksOnAnyDevice": "Funziona su qualsiasi sistema e dispositivo"
+    }
   },
   "dashboard": {
     "title": "Cruscotto",
@@ -28,13 +127,100 @@
     "cartItems": "Articoli nel Carrello"
   },
   "navbar": {
+    "home": "Home",
+    "eyeglasses": "Occhiali",
+    "sunglasses": "Occhiali da Sole",
+    "optyKids": "Opty Kids",
+    "optyKidsLine1": "Opty",
+    "optyKidsLine2": "Kids",
+    "contactLenses": "Lenti a Contatto",
+    "contactLensesLine1": "Lenti a",
+    "contactLensesLine2": "Contatto",
+    "eyeHygiene": "Igiene degli Occhi",
+    "eyeHygieneLine1": "Igiene",
+    "eyeHygieneLine2": "degli Occhi",
+    "virtualTryOn": "Prova Virtuale",
     "products": "Prodotti",
     "solutions": "Soluzioni",
     "resources": "Risorse",
     "whoWeAre": "Chi siamo",
     "shop": "Negozio",
     "login": "Accedi",
-    "getDemo": "Ottieni demo"
+    "getDemo": "Ottieni demo",
+    "viewAll": "Vedi Tutto",
+    "loading": "Caricamento...",
+    "noSubcategories": "Nessuna sottocategoria disponibile",
+    "noNestedSubcategories": "Nessuna sottocategoria annidata"
+  },
+  "shop": {
+    "title": "Negozio",
+    "products": "Prodotti",
+    "addToCart": "Aggiungi al Carrello",
+    "addingToCart": "Aggiunta al Carrello...",
+    "outOfStock": "Esaurito",
+    "inStock": "Disponibile",
+    "selectOptions": "Seleziona Opzioni",
+    "viewDetails": "Vedi Dettagli",
+    "noProducts": "Nessun prodotto trovato",
+    "filterBy": "Filtra per",
+    "category": "Categoria",
+    "allCategories": "Tutte le Categorie",
+    "priceRange": "Fascia di Prezzo",
+    "frameShape": "Forma della Montatura",
+    "frameMaterial": "Materiale della Montatura",
+    "gender": "Genere",
+    "all": "Tutti",
+    "male": "Maschile",
+    "female": "Femminile",
+    "unisex": "Unisex",
+    "sortBy": "Ordina per",
+    "sortPriceLow": "Prezzo: Basso ad Alto",
+    "sortPriceHigh": "Prezzo: Alto a Basso",
+    "sortNewest": "Più Recente",
+    "sortOldest": "Più Vecchio",
+    "sortNameAZ": "Nome: A a Z",
+    "sortNameZA": "Nome: Z a A",
+    "clearFilters": "Cancella Filtri",
+    "results": "risultati",
+    "showing": "Mostrando",
+    "of": "di",
+    "brand": "Marca",
+    "each": "ciascuno",
+    "productNotFound": "Prodotto Non Trovato",
+    "returnToShop": "Torna al Negozio",
+    "outOfStockAlert": "Questo prodotto è attualmente esaurito e non può essere aggiunto al carrello.",
+    "outOfStockMessage": "Questo prodotto è attualmente esaurito. Non è possibile aggiungerlo al carrello in questo momento.",
+    "description": "Scopri la nostra vasta collezione di occhiali e occhiali da sole"
+  },
+  "cart": {
+    "title": "Carrello della Spesa",
+    "empty": "Il tuo carrello è vuoto",
+    "startShopping": "Inizia a fare acquisti per aggiungere articoli al tuo carrello",
+    "continueShopping": "Continua gli Acquisti",
+    "item": "articolo",
+    "items": "articoli",
+    "removeItem": "Rimuovi Articolo",
+    "updateQuantity": "Aggiorna Quantità",
+    "proceedToCheckout": "Procedi al Pagamento",
+    "estimatedTotal": "Totale Stimato"
+  },
+  "checkout": {
+    "title": "Pagamento",
+    "shippingAddress": "Indirizzo di Spedizione",
+    "billingAddress": "Indirizzo di Fatturazione",
+    "paymentMethod": "Metodo di Pagamento",
+    "orderSummary": "Riepilogo Ordine",
+    "placeOrder": "Effettua Ordine",
+    "firstName": "Nome",
+    "lastName": "Cognome",
+    "email": "Email",
+    "phone": "Telefono",
+    "address": "Indirizzo",
+    "city": "Città",
+    "zipCode": "Codice Postale",
+    "country": "Paese",
+    "sameAsShipping": "Uguale all'indirizzo di spedizione",
+    "emptyCartError": "Il tuo carrello è vuoto. Aggiungi articoli prima del pagamento."
   },
   "products": {
     "virtualTest": "Test virtuale",
@@ -69,6 +255,37 @@
     "ourHistory": "LA NOSTRA STORIA",
     "ourTechnology": "LA NOSTRA TECNOLOGIA",
     "joinUs": "UNISCITI A NOI"
+  },
+  "pages": {
+    "virtualTest": {
+      "forWebsite": "Per il sito web",
+      "forShop": "Per il negozio"
+    },
+    "digitalFrames": {
+      "3dDigitization": "Digitalizzazione 3D",
+      "database": "Database",
+      "3dViewer": "Visualizzatore 3D",
+      "photoPackshots": "Packshots fotografici"
+    },
+    "opticalInstruments": {
+      "pdMeasure": "Misurazione PD",
+      "lensSimulator": "Simulatore di lenti",
+      "lensRecommendations": "Raccomandazioni di lenti",
+      "kidsLensRecommendation": "Raccomandazione lenti per bambini",
+      "kidsLensDescription": "Ottieni raccomandazioni personalizzate di lenti per bambini in base all'età e alle esigenze di prescrizione.",
+      "getKidsRecommendation": "Ottieni raccomandazione per bambini",
+      "lifestyleRecommendation": "Raccomandazione stile di vita",
+      "lifestyleDescription": "Trova le lenti perfette per il tuo stile di vita e le attività quotidiane.",
+      "getLifestyleRecommendation": "Ottieni raccomandazione stile di vita"
+    },
+    "pdMeasurement": {
+      "onlinePdMeasurementTool": "Strumento di misurazione PD online"
+    },
+    "openInnovation": {
+      "rdCapabilities": "Capacità R&S",
+      "avantPremieres": "Avant-Premières",
+      "whatsNext": "Cosa c'è dopo?"
+    }
   }
 }
 

@@ -1,6 +1,8 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const CompatibilitySection: React.FC = () => {
+    const { t } = useTranslation()
     const ecommercePlatforms = [
         { name: 'Magento', logo: '/assets/images/Magento-logo-web.webp' },
         { name: 'WooCommerce', logo: '/assets/images/Woocomerce-logo-web.webp' },
@@ -15,7 +17,7 @@ const CompatibilitySection: React.FC = () => {
                 {/* Top Section: E-commerce Platforms */}
                 <div>
                     <h2 className="text-center text-2xl sm:text-3xl font-semibold text-blue-900 mb-10">
-                        Supported by all major e-commerce platforms
+                        {t('home.compatibility.ecommercePlatforms')}
                     </h2>
                     <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-12">
                         {ecommercePlatforms.map((platform) => (
@@ -43,7 +45,7 @@ const CompatibilitySection: React.FC = () => {
                 {/* Bottom Section: Systems and Devices */}
                 <div>
                     <h2 className="text-center text-2xl sm:text-3xl font-semibold text-blue-900 mb-10">
-                        Works on any system and device
+                        {t('home.compatibility.worksOnAnyDevice')}
                     </h2>
                     <div className="flex justify-center">
                         <img

@@ -49,11 +49,13 @@ import CustomerProfile from './pages/customer/Profile'
 import CustomerTransactions from './pages/customer/Transactions'
 import TransactionDetail from './pages/customer/TransactionDetail'
 import PageDetail from './pages/cms/PageDetail'
+import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
 
 function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <FloatingLanguageSwitcher />
         <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/virtual-test" element={<VirtualTest />} />

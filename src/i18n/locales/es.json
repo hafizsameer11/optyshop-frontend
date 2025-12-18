@@ -15,7 +15,78 @@
     "whoWeAre": "Quiénes somos",
     "getDemo": "Obtener demostración",
     "welcome": "Bienvenido",
-    "language": "Idioma"
+    "language": "Idioma",
+    "home": "Inicio"
+  },
+  "home": {
+    "hero": {
+      "title": "Prueba virtual",
+      "subtitle": "para gafas",
+      "description": "Aprovecha la realidad aumentada para destacar y generar confianza en los clientes.",
+      "tryOnButton": "Probar las gafas",
+      "requestDemoButton": "Solicitar una demostración"
+    },
+    "stats": {
+      "impact": "Impacto",
+      "title": "Generar compromiso y",
+      "titleHighlight": "aumentar las ventas de gafas",
+      "visitsTitle": "Visitas a páginas de productos",
+      "conversionTitle": "Aumentar la tasa de conversión",
+      "visitorsTitle": "Más visitantes en la tienda",
+      "caption": "*basado en una prueba A/B en el sitio de comercio electrónico de Fielmann, basado en 5 millones de visualizaciones de página."
+    },
+    "testimonials": {
+      "titlePart1": "¿Qué piensan de",
+      "titlePart2": "la Prueba Virtual de Gafas?",
+      "loading": "Cargando testimonios...",
+      "error": "Error al cargar testimonios",
+      "noTestimonials": "No hay testimonios disponibles en este momento.",
+      "goToTestimonial": "Ir al testimonio {{number}}"
+    },
+    "banner": {
+      "loading": "Cargando banners..."
+    },
+    "campaigns": {
+      "title": "Campañas Especiales"
+    },
+    "latestArrivals": {
+      "title": "Últimas Llegadas"
+    },
+    "featuredArrivals": {
+      "title": "Llegadas Destacadas"
+    },
+    "trustedBrands": {
+      "titlePart1": "Ya confían",
+      "titlePart2": "en nosotros"
+    },
+    "purchasingJourney": {
+      "titlePart1": "Una experiencia atractiva para",
+      "titlePart2": "mejorar el viaje de compra",
+      "solutionPart1": "Una solución para",
+      "solutionPart2": "empoderar",
+      "solutionPart3": "a los clientes",
+      "statsText": "de los usuarios de gafas encuentran útil la Prueba Virtual para elegir monturas.",
+      "description": "Ofréceles la capacidad de navegar y probar fácilmente tu catálogo, construyendo una experiencia de compra inmersiva (lista de deseos, carrusel, selector de color, etc.)."
+    },
+    "ultraRealistic": {
+      "titlePart1": "Un resultado ultra realista de las",
+      "titlePart2": "gafas",
+      "description1Part1": "Nuestra",
+      "description1Part2": "solución en tiempo real",
+      "description1Part3": "lleva el realismo a nuevos niveles gracias al seguimiento facial preciso y la atención a los detalles de la montura.",
+      "description2Part1": "Podemos manejar materiales complejos y efectos de iluminación, para proporcionar un",
+      "description2Part2": "renderizado ultra realista",
+      "description2Part3": "de monturas y lentes."
+    },
+    "viewer3D": {
+      "title": "Visor 3D para Gafas",
+      "description1": "Permite a los usuarios cambiar sin problemas entre la visualización 3D y la prueba virtual para explorar cada ángulo de tus monturas al instante.",
+      "description2": "Esta experiencia interactiva mantiene a los clientes comprometidos y seguros al elegir el par perfecto."
+    },
+    "compatibility": {
+      "ecommercePlatforms": "Compatible con todas las principales plataformas de comercio electrónico",
+      "worksOnAnyDevice": "Funciona en cualquier sistema y dispositivo"
+    }
   },
   "dashboard": {
     "title": "Panel de control",
@@ -47,7 +118,11 @@
     "whoWeAre": "Quiénes somos",
     "shop": "Tienda",
     "login": "Iniciar sesión",
-    "getDemo": "Obtener demostración"
+    "getDemo": "Obtener demostración",
+    "viewAll": "Ver Todo",
+    "loading": "Cargando...",
+    "noSubcategories": "No hay subcategorías disponibles",
+    "noNestedSubcategories": "No hay subcategorías anidadas"
   },
   "products": {
     "virtualTest": "Prueba Virtual",
@@ -79,6 +154,76 @@
     "guidesAndWebinars": "Guías y Webinarios",
     "blog": "Blog",
     "helpCenter": "Centro de Ayuda"
+  },
+  "shop": {
+    "title": "Tienda",
+    "products": "Productos",
+    "addToCart": "Añadir al Carrito",
+    "addingToCart": "Añadiendo al Carrito...",
+    "outOfStock": "Agotado",
+    "inStock": "En Stock",
+    "selectOptions": "Seleccionar Opciones",
+    "viewDetails": "Ver Detalles",
+    "noProducts": "No se encontraron productos",
+    "filterBy": "Filtrar por",
+    "category": "Categoría",
+    "allCategories": "Todas las Categorías",
+    "priceRange": "Rango de Precios",
+    "frameShape": "Forma del Marco",
+    "frameMaterial": "Material del Marco",
+    "gender": "Género",
+    "all": "Todos",
+    "male": "Masculino",
+    "female": "Femenino",
+    "unisex": "Unisex",
+    "sortBy": "Ordenar por",
+    "sortPriceLow": "Precio: Menor a Mayor",
+    "sortPriceHigh": "Precio: Mayor a Menor",
+    "sortNewest": "Más Recientes",
+    "sortOldest": "Más Antiguos",
+    "sortNameAZ": "Nombre: A a Z",
+    "sortNameZA": "Nombre: Z a A",
+    "clearFilters": "Limpiar Filtros",
+    "results": "resultados",
+    "showing": "Mostrando",
+    "of": "de",
+    "brand": "Marca",
+    "each": "cada",
+    "productNotFound": "Producto No Encontrado",
+    "returnToShop": "Volver a la Tienda",
+    "outOfStockAlert": "Este producto está actualmente agotado y no se puede agregar al carrito.",
+    "outOfStockMessage": "Este producto está actualmente agotado. No puede agregarlo a su carrito en este momento.",
+    "description": "Descubra nuestra amplia colección de gafas y gafas de sol"
+  },
+  "cart": {
+    "title": "Carrito de Compras",
+    "empty": "Su carrito está vacío",
+    "startShopping": "Comience a comprar para agregar artículos a su carrito",
+    "continueShopping": "Continuar Comprando",
+    "item": "artículo",
+    "items": "artículos",
+    "removeItem": "Eliminar Artículo",
+    "updateQuantity": "Actualizar Cantidad",
+    "proceedToCheckout": "Proceder al Pago",
+    "estimatedTotal": "Total Estimado"
+  },
+  "checkout": {
+    "title": "Pago",
+    "shippingAddress": "Dirección de Envío",
+    "billingAddress": "Dirección de Facturación",
+    "paymentMethod": "Método de Pago",
+    "orderSummary": "Resumen del Pedido",
+    "placeOrder": "Realizar Pedido",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo Electrónico",
+    "phone": "Teléfono",
+    "address": "Dirección",
+    "city": "Ciudad",
+    "zipCode": "Código Postal",
+    "country": "País",
+    "sameAsShipping": "Igual que la dirección de envío",
+    "emptyCartError": "Su carrito está vacío. Por favor agregue artículos antes del pago."
   },
   "whoWeAre": {
     "ourHistory": "Nuestra Historia",
@@ -112,5 +257,36 @@
     "contact": "Contacto",
     "login": "Iniciar sesión",
     "register": "Registrarse"
+  },
+  "pages": {
+    "virtualTest": {
+      "forWebsite": "Para el sitio web",
+      "forShop": "Para la tienda"
+    },
+    "digitalFrames": {
+      "3dDigitization": "Digitalización 3D",
+      "database": "Base de datos",
+      "3dViewer": "Visor 3D",
+      "photoPackshots": "Packshots de fotos"
+    },
+    "opticalInstruments": {
+      "pdMeasure": "Medición PD",
+      "lensSimulator": "Simulador de lentes",
+      "lensRecommendations": "Recomendaciones de lentes",
+      "kidsLensRecommendation": "Recomendación de lentes para niños",
+      "kidsLensDescription": "Obtenga recomendaciones personalizadas de lentes para niños según la edad y las necesidades de prescripción.",
+      "getKidsRecommendation": "Obtener recomendación para niños",
+      "lifestyleRecommendation": "Recomendación de estilo de vida",
+      "lifestyleDescription": "Encuentre las lentes perfectas para su estilo de vida y actividades diarias.",
+      "getLifestyleRecommendation": "Obtener recomendación de estilo de vida"
+    },
+    "pdMeasurement": {
+      "onlinePdMeasurementTool": "Herramienta de medición PD en línea"
+    },
+    "openInnovation": {
+      "rdCapabilities": "Capacidades de I+D",
+      "avantPremieres": "Avant-Premières",
+      "whatsNext": "¿Qué sigue?"
+    }
   }
 }

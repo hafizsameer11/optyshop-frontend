@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
@@ -14,6 +15,7 @@ interface CheckoutProps {
 }
 
 const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormConfig }) => {
+    const { t } = useTranslation()
     const { cartItems, getTotalPrice, getTotalItems, clearCart } = useCart()
     const { isAuthenticated } = useAuth()
     const navigate = useNavigate()
@@ -157,7 +159,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
 
         // Validate cart has items
         if (cartItems.length === 0) {
-            setError('Your cart is empty. Please add items before checkout.')
+            setError(t('checkout.emptyCartError'))
             setIsProcessing(false)
             return
         }
@@ -310,13 +312,13 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                 <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                     <div className="w-[90%] mx-auto max-w-4xl text-center">
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                            Your cart is empty
+                            {t('cart.empty')}
                         </h1>
                         <Link
                             to="/shop"
                             className="inline-block px-8 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300"
                         >
-                            Continue Shopping
+                            {t('cart.continueShopping')}
                         </Link>
                     </div>
                 </section>
@@ -364,7 +366,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                     to="/shop"
                                     className="inline-block px-8 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300"
                                 >
-                                    Continue Shopping
+                                    {t('cart.continueShopping')}
                                 </Link>
                             </div>
                         </div>

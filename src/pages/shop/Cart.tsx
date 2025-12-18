@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import CartHeroSection from '../../components/shop/CartHeroSection'
@@ -7,6 +8,7 @@ import { useCart } from '../../context/CartContext'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 
 const Cart: React.FC = () => {
+    const { t } = useTranslation()
     const { cartItems, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCart()
     const [couponCode, setCouponCode] = useState('')
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
@@ -84,13 +86,13 @@ const Cart: React.FC = () => {
                                 Your cart is empty
                             </h1>
                             <p className="text-lg text-gray-600">
-                                Start shopping to add items to your cart
+                                {t('cart.startShopping')}
                             </p>
                             <Link
                                 to="/shop"
                                 className="inline-block px-8 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300"
                             >
-                                Continue Shopping
+                                {t('cart.continueShopping')}
                             </Link>
                         </div>
                     </div>
@@ -133,7 +135,7 @@ const Cart: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="flex items-center justify-between mb-8">
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                            Shopping Cart ({getTotalItems()} items)
+                            {t('cart.title')} ({getTotalItems()} {t('cart.items')})
                         </h1>
                         <button
                             onClick={clearCart}
@@ -173,9 +175,72 @@ const Cart: React.FC = () => {
                                             <p className="text-sm text-gray-500">
                                                 {item.brand} - {item.category}
                                             </p>
-                                            <p className="text-lg font-semibold text-blue-950 mt-2">
-                                                ${Number(item.price || 0).toFixed(2)}
-                                            </p>
+                                            <div className="mt-2">
+                                                <p className="text-lg font-semibold text-blue-950">
+                                                    ${(() => {
+                                                        // Ensure price is properly converted to number
+                                                        let price = 0
+                                                        if (typeof item.price === 'string') {
+                                                            // Remove any non-numeric characters except decimal point
+                                                            const cleaned = item.price.replace(/[^0-9.]/g, '')
+                                                            price = parseFloat(cleaned) || 0
+                                                        } else {
+                                                            price = Number(item.price) || 0
+                                                        }
+                                                        
+                                                        // For contact lenses, price is already the total
+                                                        if (item.category === 'contact-lenses' || (item as any).isContactLens || (item as any).customization?.contactLens) {
+                                                            return price.toFixed(2)
+                                                        }
+                                                        
+                                                        // For products with lens customizations, price is already the total
+                                                        if ((item as any).hasLensCustomization || (item as any).customization?.lensType || (item as any).customization?.progressiveOption) {
+                                                            return price.toFixed(2)
+                                                        }
+                                                        
+                                                        // For regular products, show price per item (not multiplied by quantity)
+                                                        return price.toFixed(2)
+                                                    })()}
+                                                </p>
+                                                {/* Show item total if quantity > 1 for regular products */}
+                                                {item.quantity > 1 && item.category !== 'contact-lenses' && !(item as any).isContactLens && !(item as any).customization?.contactLens && (
+                                                    <p className="text-sm text-gray-500">
+                                                        ${(() => {
+                                                            let price = 0
+                                                            if (typeof item.price === 'string') {
+                                                                const cleaned = item.price.replace(/[^0-9.]/g, '')
+                                                                price = parseFloat(cleaned) || 0
+                                                            } else {
+                                                                price = Number(item.price) || 0
+                                                            }
+                                                            return (price * item.quantity).toFixed(2)
+                                                        })()} total ({item.quantity} × ${(() => {
+                                                            let price = 0
+                                                            if (typeof item.price === 'string') {
+                                                                const cleaned = item.price.replace(/[^0-9.]/g, '')
+                                                                price = parseFloat(cleaned) || 0
+                                                            } else {
+                                                                price = Number(item.price) || 0
+                                                            }
+                                                            return price.toFixed(2)
+                                                        })()})
+                                                    </p>
+                                                )}
+                                                {(item.category === 'contact-lenses' || (item as any).customization?.contactLens) && (
+                                                    <div className="text-xs text-gray-500 mt-1">
+                                                        {(() => {
+                                                            const custom = (item as any).customization?.contactLens
+                                                            if (custom) {
+                                                                const rightQty = custom.right?.qty || 0
+                                                                const leftQty = custom.left?.qty || 0
+                                                                const unit = custom.unit || 'unit'
+                                                                return `Right: ${rightQty} ${unit} | Left: ${leftQty} ${unit}`
+                                                            }
+                                                            return 'Contact Lens'
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Quantity Controls */}
@@ -299,14 +364,14 @@ const Cart: React.FC = () => {
                                     to="/checkout"
                                     className="block w-full text-center px-6 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 mb-4"
                                 >
-                                    Proceed to Checkout
+                                    {t('cart.proceedToCheckout')}
                                 </Link>
 
                                 <Link
                                     to="/shop"
                                     className="block w-full text-center px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors duration-300"
                                 >
-                                    Continue Shopping
+                                    {t('cart.continueShopping')}
                                 </Link>
                             </div>
                         </div>

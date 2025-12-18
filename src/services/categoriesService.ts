@@ -27,7 +27,10 @@ export interface Category {
   created_at: string;
   updated_at: string;
   products?: CategoryProduct[];
-  subcategories?: Category[]; // Subcategories (children)
+  subcategories?: Category[]; // Subcategories (children) - for top-level categories
+  children?: Category[]; // Nested subcategories (children of a subcategory)
+  parent?: Category | null; // Parent subcategory (if nested)
+  category?: Category; // Main category this subcategory belongs to
 }
 
 export interface CategoriesResponse {
@@ -65,13 +68,19 @@ export interface SubcategoryResponse {
 
 /**
  * Get all categories
- * @param includeProducts - If true, include products in each category
+ * @param options - Options for fetching categories
+ * @param options.includeProducts - If true, include products in each category
+ * @param options.includeSubcategories - If true, include top-level subcategories with nested children
  */
-export const getCategories = async (includeProducts: boolean = false): Promise<Category[]> => {
+export const getCategories = async (options?: {
+  includeProducts?: boolean;
+  includeSubcategories?: boolean;
+}): Promise<Category[]> => {
   try {
-    const endpoint = includeProducts
-      ? buildQueryString(API_ROUTES.CATEGORIES.LIST, { includeProducts: 'true' })
-      : API_ROUTES.CATEGORIES.LIST;
+    const includeProducts = options?.includeProducts || false;
+    const includeSubcategories = options?.includeSubcategories || false;
+    
+    const endpoint = API_ROUTES.CATEGORIES.LIST(includeProducts, includeSubcategories);
 
     const response = await apiClient.get<CategoriesResponse | Category[]>(
       endpoint,
@@ -151,9 +160,10 @@ const organizeCategoriesWithSubcategories = (categories: Category[]): Category[]
 /**
  * Get categories organized with subcategories
  * Returns only parent categories with their subcategories nested
+ * @param includeProducts - If true, include products in each category
  */
-export const getCategoriesWithSubcategories = async (): Promise<Category[]> => {
-  return getCategories(false);
+export const getCategoriesWithSubcategories = async (includeProducts: boolean = false): Promise<Category[]> => {
+  return getCategories({ includeProducts, includeSubcategories: true });
 };
 
 /**
@@ -267,10 +277,18 @@ export const getSubcategoriesByCategoryId = async (
 /**
  * Get subcategory by ID
  * @param id - The ID of the subcategory
+ * @param includeProducts - If true, include products associated with this subcategory
  */
-export const getSubcategoryById = async (id: number | string): Promise<Category | null> => {
+export const getSubcategoryById = async (
+  id: number | string,
+  includeProducts: boolean = false
+): Promise<Category | null> => {
   try {
-    const endpoint = API_ROUTES.SUBCATEGORIES.BY_ID(id);
+    let endpoint = API_ROUTES.SUBCATEGORIES.BY_ID(id);
+    if (includeProducts) {
+      endpoint = `${endpoint}?includeProducts=true`;
+    }
+    
     const response = await apiClient.get<SubcategoryResponse>(
       endpoint,
       false // PUBLIC endpoint
@@ -296,34 +314,289 @@ export const getSubcategoryById = async (id: number | string): Promise<Category 
 };
 
 /**
- * Get subcategory by slug
- * Fetches all subcategories and finds the one with matching slug
- * @param slug - The slug of the subcategory
- * @param categoryId - Optional category ID to narrow the search
+ * Get nested subcategories by parent ID
+ * Uses the /api/subcategories/by-parent/{parentId} endpoint
+ * Perfect for cascading dropdowns when a parent subcategory is selected
+ * @param parentId - The ID of the parent subcategory
  */
-export const getSubcategoryBySlug = async (slug: string, categoryId?: number | string): Promise<Category | null> => {
+export const getNestedSubcategoriesByParentId = async (
+  parentId: number | string
+): Promise<Category[]> => {
   try {
-    // If categoryId is provided, fetch subcategories for that category only
-    if (categoryId) {
-      const subcategories = await getSubcategoriesByCategoryId(categoryId);
-      return subcategories.find(sub => sub.slug === slug) || null;
-    }
-    
-    // Otherwise, fetch all categories and find subcategory
-    const categories = await getCategoriesWithSubcategories();
-    for (const category of categories) {
-      if (category.subcategories) {
-        const subcategory = category.subcategories.find(sub => sub.slug === slug);
-        if (subcategory) {
-          return subcategory;
+    const endpoint = API_ROUTES.SUBCATEGORIES.BY_PARENT(parentId);
+    const response = await apiClient.get<SubcategoriesResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let subcategories: Category[] = [];
+      
+      if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
+        subcategories = response.data.subcategories;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (innerData && 'subcategories' in innerData && Array.isArray(innerData.subcategories)) {
+          subcategories = innerData.subcategories;
+        } else if (Array.isArray(innerData)) {
+          subcategories = innerData;
         }
       }
+
+      // Filter active subcategories and sort by sort_order
+      const filteredSubcategories = subcategories
+        .filter((subcategory) => subcategory.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      
+      return filteredSubcategories;
     }
-    
+
+    console.error('Failed to fetch nested subcategories by parent ID:', response.message);
+    return [];
+  } catch (error) {
+    console.error('Error fetching nested subcategories by parent ID:', error);
+    return [];
+  }
+};
+
+/**
+ * Get nested subcategories (subcategories of a subcategory)
+ * Uses the /api/subcategories/{subcategoryId}/subcategories endpoint
+ * Alternative endpoint to getNestedSubcategoriesByParentId
+ * @param subcategoryId - The ID of the parent subcategory
+ */
+export const getNestedSubcategories = async (
+  subcategoryId: number | string
+): Promise<Category[]> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.NESTED(subcategoryId);
+    const response = await apiClient.get<SubcategoriesResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let subcategories: Category[] = [];
+      
+      if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
+        subcategories = response.data.subcategories;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (innerData && 'subcategories' in innerData && Array.isArray(innerData.subcategories)) {
+          subcategories = innerData.subcategories;
+        } else if (Array.isArray(innerData)) {
+          subcategories = innerData;
+        }
+      }
+
+      // Filter active subcategories and sort by sort_order
+      const filteredSubcategories = subcategories
+        .filter((subcategory) => subcategory.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      
+      return filteredSubcategories;
+    }
+
+    console.error('Failed to fetch nested subcategories:', response.message);
+    return [];
+  } catch (error) {
+    console.error('Error fetching nested subcategories:', error);
+    return [];
+  }
+};
+
+/**
+ * Get subcategory by slug
+ * Uses the API endpoint directly for better performance
+ * @param slug - The slug of the subcategory
+ */
+export const getSubcategoryBySlug = async (slug: string): Promise<Category | null> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.BY_SLUG(slug);
+    const response = await apiClient.get<SubcategoryResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      if ('subcategory' in response.data) {
+        return response.data.subcategory;
+      } else if ('data' in response.data && 'subcategory' in (response.data as any).data) {
+        return (response.data as any).data.subcategory;
+      } else if ('id' in response.data) {
+        return response.data as Category;
+      }
+    }
+
+    console.error('Failed to fetch subcategory by slug:', response.message);
     return null;
   } catch (error) {
     console.error('Error fetching subcategory by slug:', error);
     return null;
+  }
+};
+
+/**
+ * Get all subcategories with pagination and filtering
+ * @param options - Options for fetching subcategories
+ * @param options.categoryId - Filter by category ID (optional)
+ * @param options.page - Page number (default: 1)
+ * @param options.limit - Items per page (default: 50)
+ * @param options.search - Search subcategories by name (optional)
+ */
+export const getAllSubcategories = async (options?: {
+  categoryId?: number | string;
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<{
+  subcategories: Category[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}> => {
+  try {
+    const categoryId = options?.categoryId;
+    const page = options?.page || 1;
+    const limit = options?.limit || 50;
+    const search = options?.search;
+    
+    const endpoint = API_ROUTES.SUBCATEGORIES.LIST(categoryId, page, limit, search);
+    const response = await apiClient.get<SubcategoriesResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      let subcategories: Category[] = [];
+      let pagination: SubcategoriesResponse['data']['pagination'] | undefined;
+      
+      if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
+        subcategories = response.data.subcategories;
+        pagination = response.data.pagination;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (innerData && 'subcategories' in innerData && Array.isArray(innerData.subcategories)) {
+          subcategories = innerData.subcategories;
+          pagination = innerData.pagination;
+        } else if (Array.isArray(innerData)) {
+          subcategories = innerData;
+        }
+      }
+
+      // Filter active subcategories and sort by sort_order
+      const filteredSubcategories = subcategories
+        .filter((subcategory) => subcategory.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      
+      return {
+        subcategories: filteredSubcategories,
+        pagination,
+      };
+    }
+
+    console.error('Failed to fetch subcategories:', response.message);
+    return { subcategories: [] };
+  } catch (error) {
+    console.error('Error fetching subcategories:', error);
+    return { subcategories: [] };
+  }
+};
+
+/**
+ * Get related categories for a subcategory
+ * Finds categories that have subcategories with the same or similar name
+ * @param subcategoryId - The ID of the subcategory
+ * @param includeNested - If true, includes child subcategories and sibling subcategories in the search
+ */
+export const getRelatedCategoriesForSubcategory = async (
+  subcategoryId: number | string,
+  includeNested: boolean = false
+): Promise<{
+  subcategory: Category;
+  relatedCategories: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    matchingSubcategories: Category[];
+  }>;
+} | null> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.RELATED_CATEGORIES(subcategoryId, includeNested);
+    const response = await apiClient.get<{
+      subcategory: Category;
+      relatedCategories: Array<{
+        id: number;
+        name: string;
+        slug: string;
+        matchingSubcategories: Category[];
+      }>;
+    }>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    console.error('Failed to fetch related categories:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching related categories:', error);
+    return null;
+  }
+};
+
+/**
+ * Get related categories for a category
+ * Finds categories that have similar subcategories (including nested subcategories)
+ * @param categoryId - The ID of the category
+ * @param limit - Maximum number of related categories to return (optional)
+ * @param includeNested - If true, includes nested subcategories in the similarity search
+ */
+export const getRelatedCategories = async (
+  categoryId: number | string,
+  limit?: number,
+  includeNested: boolean = false
+): Promise<Category[]> => {
+  try {
+    const endpoint = API_ROUTES.CATEGORIES.RELATED(categoryId, limit, includeNested);
+    const response = await apiClient.get<Category[] | { categories: Category[] }>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      let categories: Category[] = [];
+      
+      if (Array.isArray(response.data)) {
+        categories = response.data;
+      } else if ('categories' in response.data && Array.isArray(response.data.categories)) {
+        categories = response.data.categories;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (Array.isArray(innerData)) {
+          categories = innerData;
+        } else if (innerData && Array.isArray(innerData.categories)) {
+          categories = innerData.categories;
+        }
+      }
+
+      return categories.filter((cat) => cat.is_active).sort((a, b) => a.sort_order - b.sort_order);
+    }
+
+    console.error('Failed to fetch related categories:', response.message);
+    return [];
+  } catch (error) {
+    console.error('Error fetching related categories:', error);
+    return [];
   }
 };
 

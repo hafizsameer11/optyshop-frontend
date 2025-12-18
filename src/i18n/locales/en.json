@@ -43,7 +43,8 @@
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "tax": "Tax",
-    "discount": "Discount"
+    "discount": "Discount",
+    "home": "Home"
   },
   "home": {
     "hero": {
@@ -61,6 +62,58 @@
       "conversionTitle": "Increase conversion rate",
       "visitorsTitle": "More visitors in the store",
       "caption": "*based on an A/B test on Fielmann's e-commerce site, based on 5 million page views."
+    },
+    "testimonials": {
+      "titlePart1": "What do they think of",
+      "titlePart2": "Virtual Glasses Try‑On?",
+      "loading": "Loading testimonials...",
+      "error": "Error loading testimonials",
+      "noTestimonials": "No testimonials available at the moment.",
+      "goToTestimonial": "Go to testimonial {{number}}"
+    },
+    "banner": {
+      "loading": "Loading banners..."
+    },
+    "campaigns": {
+      "title": "Special Campaigns"
+    },
+    "latestArrivals": {
+      "title": "Latest Arrivals"
+    },
+    "featuredArrivals": {
+      "title": "Featured Arrivals"
+    },
+    "trustedBrands": {
+      "titlePart1": "They already",
+      "titlePart2": "trust us"
+    },
+    "purchasingJourney": {
+      "titlePart1": "An engaging experience to",
+      "titlePart2": "improve the purchasing journey",
+      "solutionPart1": "A solution to",
+      "solutionPart2": "empower",
+      "solutionPart3": "customers",
+      "statsText": "of glasses wearers find Virtual Try-On helpful in choosing frames.",
+      "description": "Offer them the ability to easily browse and try out your catalog, building an immersive shopping experience (wishlist, carousel, color picker, etc.)."
+    },
+    "ultraRealistic": {
+      "titlePart1": "An ultra-realistic result of the",
+      "titlePart2": "glasses",
+      "description1Part1": "Our",
+      "description1Part2": "real-time solution",
+      "description1Part3": "takes realism to new levels thanks to accurate face tracking and attention to frame details.",
+      "description2Part1": "We can handle complex materials and lighting effects, to provide an",
+      "description2Part2": "ultra-realistic rendering",
+      "description2Part3": "of frames and lenses."
+    },
+    "viewer3D": {
+      "title": "3D Viewer for Glasses",
+      "description1": "Allow users to seamlessly switch between 3D viewing and virtual try-on to explore every angle of your frames instantly.",
+      "description2": "This interactive experience keeps customers engaged and confident in choosing the perfect pair."
+    },
+    "compatibility": {
+      "ecommercePlatforms": "Supported by all major e-commerce platforms",
+      "worksOnAnyDevice": "Works on any system and device"
     }
   },
   "footer": {
@@ -85,6 +138,7 @@
     "title": "Shop",
     "products": "Products",
     "addToCart": "Add to Cart",
+    "addingToCart": "Adding to Cart...",
     "outOfStock": "Out of Stock",
     "inStock": "In Stock",
     "selectOptions": "Select Options",
@@ -111,11 +165,19 @@
     "clearFilters": "Clear Filters",
     "results": "results",
     "showing": "Showing",
-    "of": "of"
+    "of": "of",
+    "brand": "Brand",
+    "each": "each",
+    "productNotFound": "Product Not Found",
+    "returnToShop": "Return to Shop",
+    "outOfStockAlert": "This product is currently out of stock and cannot be added to cart.",
+    "outOfStockMessage": "This product is currently out of stock. You cannot add it to your cart at this time.",
+    "description": "Discover our wide collection of eyeglasses and sunglasses"
   },
   "cart": {
     "title": "Shopping Cart",
     "empty": "Your cart is empty",
+    "startShopping": "Start shopping to add items to your cart",
     "continueShopping": "Continue Shopping",
     "item": "item",
     "items": "items",
@@ -139,7 +201,8 @@
     "city": "City",
     "zipCode": "Zip Code",
     "country": "Country",
-    "sameAsShipping": "Same as shipping address"
+    "sameAsShipping": "Same as shipping address",
+    "emptyCartError": "Your cart is empty. Please add items before checkout."
   },
   "orders": {
     "title": "Orders",
@@ -286,7 +349,11 @@
     "whoWeAre": "Who we are",
     "shop": "Shop",
     "login": "Login",
-    "getDemo": "Get a demo"
+    "getDemo": "Get a demo",
+    "viewAll": "View All",
+    "loading": "Loading...",
+    "noSubcategories": "No subcategories available",
+    "noNestedSubcategories": "No nested subcategories"
   },
   "products": {
     "virtualTest": "Virtual Test",
@@ -351,5 +418,42 @@
     "contact": "Contact",
     "login": "Login",
     "register": "Register"
+  },
+  "pages": {
+    "virtualTest": {
+      "forWebsite": "For the website",
+      "forShop": "For the shop"
+    },
+    "digitalFrames": {
+      "3dDigitization": "3D Digitization",
+      "database": "Database",
+      "3dViewer": "3D Viewer",
+      "photoPackshots": "Photo Packshots"
+    },
+    "opticalInstruments": {
+      "pdMeasure": "PD Measure",
+      "lensSimulator": "Lens Simulator",
+      "lensRecommendations": "Lens Recommendations",
+      "kidsLensRecommendation": "Kids Lens Recommendation",
+      "kidsLensDescription": "Get personalized lens recommendations for children based on age and prescription needs.",
+      "getKidsRecommendation": "Get Kids Recommendation",
+      "lifestyleRecommendation": "Lifestyle Recommendation",
+      "lifestyleDescription": "Find the perfect lenses for your lifestyle and daily activities.",
+      "getLifestyleRecommendation": "Get Lifestyle Recommendation"
+    },
+    "pdMeasurement": {
+      "onlinePdMeasurementTool": "Online PD Measurement Tool"
+    },
+    "openInnovation": {
+      "rdCapabilities": "R&D Capabilities",
+      "avantPremieres": "Avant-Premières",
+      "whatsNext": "What's Next?"
+    },
+    "caseStudyDetail": {
+      "loading": "Loading case study...",
+      "error": "Error loading case study",
+      "notFound": "Case Study Not Found",
+      "returnToCaseStudies": "Return to Case Studies"
+    }
   }
 }
