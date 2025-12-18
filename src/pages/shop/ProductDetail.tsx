@@ -113,117 +113,8 @@ const ProductDetail: React.FC = () => {
         }
     }, [slug, navigate])
 
-    const handleAddToCart = () => {
-        if (!product) return
-        
-        try {
-            // Convert API product to cart-compatible format
-            const salePrice = product.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product.price ? Number(product.price) : 0
-            const finalPrice = salePrice && regularPrice && salePrice < regularPrice ? salePrice : regularPrice
-            
-            const cartProduct = {
-                id: product.id || 0,
-                name: product.name || '',
-                brand: product.brand || '',
-                category: product.category?.slug || 'eyeglasses',
-                price: finalPrice,
-                image: getProductImageUrl(product, selectedImageIndex), // Use the same image extraction logic, with selected image index
-                description: product.description || '',
-                inStock: product.in_stock || false,
-                rating: product.rating ? Number(product.rating) : undefined
-            }
-            
-            // Add quantity copies
-            for (let i = 0; i < quantity; i++) {
-                addToCart(cartProduct)
-            }
-        } catch (error) {
-            console.error('Error adding to cart:', error)
-        }
-    }
-
-    if (loading) {
-        return (
-            <div className="bg-white min-h-screen">
-                <Navbar />
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950 mb-4"></div>
-                        <p className="text-lg text-gray-600">Loading product...</p>
-                    </div>
-                </div>
-                <Footer />
-            </div>
-        )
-    }
-
-    if (!product) {
-        return (
-            <div className="bg-white min-h-screen">
-                <Navbar />
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-                        <Link to="/shop" className="text-blue-600 hover:text-blue-700">
-                            Return to Shop
-                        </Link>
-                    </div>
-                </div>
-                <Footer />
-            </div>
-        )
-    }
-
-    // Calculate prices safely, ensuring they're numbers
-    // Handle price as string or number
-    const p = product as any
-    
-    // Get raw price values - check multiple possible fields
-    const rawPrice = product.price || p.price_value || p.regular_price || 0
-    const rawSalePrice = product.sale_price || p.sale_price_value || p.discounted_price || null
-    
-    // Convert price to number - handle string, number, or undefined
-    let priceValue = 0
-    if (rawPrice != null && rawPrice !== undefined) {
-        if (typeof rawPrice === 'string') {
-            const parsed = parseFloat(rawPrice)
-            priceValue = !isNaN(parsed) ? parsed : 0
-        } else {
-            priceValue = Number(rawPrice) || 0
-        }
-    }
-    
-    // Convert sale_price to number
-    let salePriceValue: number | null = null
-    if (rawSalePrice != null && rawSalePrice !== undefined) {
-        if (typeof rawSalePrice === 'string') {
-            const parsed = parseFloat(rawSalePrice)
-            salePriceValue = !isNaN(parsed) ? parsed : null
-        } else {
-            salePriceValue = Number(rawSalePrice) || null
-        }
-    }
-    
-    const salePriceNum = salePriceValue != null && !isNaN(salePriceValue) && salePriceValue > 0 ? salePriceValue : null
-    const regularPriceNum = !isNaN(priceValue) && priceValue > 0 ? priceValue : 0
-    
-    // Debug price calculation in development
-    if (import.meta.env.DEV) {
-        if (regularPriceNum === 0) {
-            console.warn('⚠️ Price calculation warning:', {
-                rawPrice,
-                priceValue,
-                regularPriceNum,
-                productPrice: product.price,
-                product: product
-            })
-        }
-    }
-    
-    const hasValidSale = salePriceNum != null && regularPriceNum > 0 && salePriceNum < regularPriceNum
-    const displayPrice = hasValidSale ? salePriceNum : regularPriceNum
-    const originalPrice = hasValidSale ? regularPriceNum : null
+    // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+    // This ensures hooks run in the same order on every render
     
     // Check if product is a contact lens (memoized to prevent infinite loops)
     const isContactLens = useMemo(() => {
@@ -371,17 +262,6 @@ const ProductDetail: React.FC = () => {
         }
     }, [product?.id])
     
-    const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
-        setContactLensFormData(prev => ({ ...prev, [field]: value }))
-        if (contactLensErrors[field]) {
-            setContactLensErrors(prev => {
-                const newErrors = { ...prev }
-                delete newErrors[field]
-                return newErrors
-            })
-        }
-    }
-    
     // Memoize product price to prevent recalculation
     const productBasePrice = useMemo(() => {
         if (!product) return 0
@@ -401,6 +281,130 @@ const ProductDetail: React.FC = () => {
         
         return rightTotal + leftTotal
     }, [productBasePrice, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
+
+    const handleAddToCart = () => {
+        if (!product) return
+        
+        try {
+            // Convert API product to cart-compatible format
+            const salePrice = product.sale_price ? Number(product.sale_price) : null
+            const regularPrice = product.price ? Number(product.price) : 0
+            const finalPrice = salePrice && regularPrice && salePrice < regularPrice ? salePrice : regularPrice
+            
+            const cartProduct = {
+                id: product.id || 0,
+                name: product.name || '',
+                brand: product.brand || '',
+                category: product.category?.slug || 'eyeglasses',
+                price: finalPrice,
+                image: getProductImageUrl(product, selectedImageIndex), // Use the same image extraction logic, with selected image index
+                description: product.description || '',
+                inStock: product.in_stock || false,
+                rating: product.rating ? Number(product.rating) : undefined
+            }
+            
+            // Add quantity copies
+            for (let i = 0; i < quantity; i++) {
+                addToCart(cartProduct)
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+        }
+    }
+    
+    const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
+        setContactLensFormData(prev => ({ ...prev, [field]: value }))
+        if (contactLensErrors[field]) {
+            setContactLensErrors(prev => {
+                const newErrors = { ...prev }
+                delete newErrors[field]
+                return newErrors
+            })
+        }
+    }
+
+    // NOW we can do conditional returns AFTER all hooks have been called
+    if (loading) {
+        return (
+            <div className="bg-white min-h-screen">
+                <Navbar />
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950 mb-4"></div>
+                        <p className="text-lg text-gray-600">Loading product...</p>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        )
+    }
+
+    if (!product) {
+        return (
+            <div className="bg-white min-h-screen">
+                <Navbar />
+                <div className="flex items-center justify-center min-h-[60vh]">
+                    <div className="text-center">
+                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
+                        <Link to="/shop" className="text-blue-600 hover:text-blue-700">
+                            Return to Shop
+                        </Link>
+                    </div>
+                </div>
+                <Footer />
+            </div>
+        )
+    }
+
+    // Calculate prices safely, ensuring they're numbers
+    // Handle price as string or number
+    const p = product as any
+    
+    // Get raw price values - check multiple possible fields
+    const rawPrice = product.price || p.price_value || p.regular_price || 0
+    const rawSalePrice = product.sale_price || p.sale_price_value || p.discounted_price || null
+    
+    // Convert price to number - handle string, number, or undefined
+    let priceValue = 0
+    if (rawPrice != null && rawPrice !== undefined) {
+        if (typeof rawPrice === 'string') {
+            const parsed = parseFloat(rawPrice)
+            priceValue = !isNaN(parsed) ? parsed : 0
+        } else {
+            priceValue = Number(rawPrice) || 0
+        }
+    }
+    
+    // Convert sale_price to number
+    let salePriceValue: number | null = null
+    if (rawSalePrice != null && rawSalePrice !== undefined) {
+        if (typeof rawSalePrice === 'string') {
+            const parsed = parseFloat(rawSalePrice)
+            salePriceValue = !isNaN(parsed) ? parsed : null
+        } else {
+            salePriceValue = Number(rawSalePrice) || null
+        }
+    }
+    
+    const salePriceNum = salePriceValue != null && !isNaN(salePriceValue) && salePriceValue > 0 ? salePriceValue : null
+    const regularPriceNum = !isNaN(priceValue) && priceValue > 0 ? priceValue : 0
+    
+    // Debug price calculation in development
+    if (import.meta.env.DEV) {
+        if (regularPriceNum === 0) {
+            console.warn('⚠️ Price calculation warning:', {
+                rawPrice,
+                priceValue,
+                regularPriceNum,
+                productPrice: product.price,
+                product: product
+            })
+        }
+    }
+    
+    const hasValidSale = salePriceNum != null && regularPriceNum > 0 && salePriceNum < regularPriceNum
+    const displayPrice = hasValidSale ? salePriceNum : regularPriceNum
+    const originalPrice = hasValidSale ? regularPriceNum : null
     
     const validateContactLensForm = (): boolean => {
         const newErrors: Record<string, string> = {}
