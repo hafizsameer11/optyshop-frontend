@@ -24,13 +24,28 @@ const Navbar: React.FC = () => {
             console.log('🔍 Navbar received categories:', categories)
             categories.forEach(cat => {
                 if (cat.subcategories && cat.subcategories.length > 0) {
-                    console.log(`📁 Navbar: Category "${cat.name}" has ${cat.subcategories.length} subcategories`)
+                    console.log(`📁 Navbar: Category "${cat.name}" (id: ${cat.id}) has ${cat.subcategories.length} subcategories`)
                     cat.subcategories.forEach(sub => {
                         const childrenCount = sub.children?.length || 0
-                        console.log(`  └─ Subcategory "${sub.name}" (id: ${sub.id}) has ${childrenCount} children:`, 
-                            sub.children?.map(c => `${c.name} (active: ${c.is_active})`) || []
-                        )
+                        const hasChildren = !!(sub.children && sub.children.length > 0)
+                        console.log(`  └─ Subcategory "${sub.name}" (id: ${sub.id}, parent_id: ${sub.parent_id})`, {
+                            hasChildren,
+                            childrenCount,
+                            children: sub.children?.map(c => ({
+                                name: c.name,
+                                id: c.id,
+                                parent_id: c.parent_id,
+                                is_active: c.is_active,
+                                slug: c.slug
+                            })) || [],
+                            fullSubcategory: sub
+                        })
+                        if (!hasChildren) {
+                            console.warn(`⚠️ WARNING: Subcategory "${sub.name}" has NO children in Navbar!`)
+                        }
                     })
+                } else {
+                    console.log(`📁 Navbar: Category "${cat.name}" has NO subcategories`)
                 }
             })
         }

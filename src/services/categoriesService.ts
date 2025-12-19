@@ -178,53 +178,128 @@ export const getCategories = async (options?: {
         })
       }
       
-      const processedCategories = categories
-        .filter((category) => category.is_active === true) // Only active categories
-        .map(category => ({
-          ...category,
-          // Ensure subcategories have their children properly structured
-          subcategories: (category.subcategories || [])
-            .filter(sub => sub.is_active === true) // Only active subcategories
-            .map(subcategory => {
-              // Check if children exist and log for debugging
-              const children = subcategory.children || []
-              if (import.meta.env.DEV && children.length > 0) {
-                console.log(`✅ Subcategory "${subcategory.name}" has ${children.length} children:`, children.map(c => c.name))
+      // Process categories and ALWAYS fetch subcategories with children using by-category endpoint
+      // This ensures we get the complete 3-level hierarchy (Category → Subcategory → Sub-subcategory)
+      const processedCategories = await Promise.all(
+        categories
+          .filter((category) => category.is_active === true) // Only active categories
+          .map(async (category) => {
+            let subcategories: Category[] = []
+            
+            // ALWAYS fetch subcategories using by-category endpoint which includes children (sub-subcategories)
+            // This is more reliable than relying on includeSubcategories parameter
+            try {
+              if (import.meta.env.DEV) {
+                console.log(`🔄 Fetching subcategories with children for category "${category.name}" (id: ${category.id})`)
               }
-              
-              return {
-                ...subcategory,
-                // Children field contains sub-subcategories - filter inactive ones
-                children: children
-                  .filter(child => {
-                    const isActive = child.is_active === true
-                    if (import.meta.env.DEV && !isActive) {
-                      console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
+              const subcategoriesWithChildren = await getSubcategoriesByCategoryId(category.id)
+              if (subcategoriesWithChildren && subcategoriesWithChildren.length > 0) {
+                subcategories = subcategoriesWithChildren
+                if (import.meta.env.DEV) {
+                  console.log(`✅ Fetched ${subcategories.length} subcategories for "${category.name}"`)
+                  subcategories.forEach(sub => {
+                    const childrenCount = sub.children?.length || 0
+                    if (childrenCount > 0) {
+                      console.log(`  └─ Subcategory "${sub.name}" has ${childrenCount} children:`, sub.children?.map(c => c.name))
                     }
-                    return isActive
                   })
-                  .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                }
+              } else {
+                // Fallback to subcategories from category if by-category endpoint returns nothing
+                subcategories = category.subcategories || []
+                if (import.meta.env.DEV) {
+                  console.log(`⚠️ No subcategories from by-category endpoint, using category.subcategories for "${category.name}"`)
+                }
               }
-            })
-            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-        }))
-        .sort((a, b) => a.sort_order - b.sort_order);
+            } catch (error) {
+              if (import.meta.env.DEV) {
+                console.warn(`⚠️ Failed to fetch subcategories for category ${category.id}:`, error)
+              }
+              // Fallback to subcategories from category if fetch fails
+              subcategories = category.subcategories || []
+            }
+            
+            // Process subcategories - filter and ensure children are properly structured
+            // If children are missing, fetch them using by-parent endpoint
+            const processedSubcategories = await Promise.all(
+              subcategories
+                .filter(sub => sub.is_active === true) // Only active subcategories
+                .map(async (subcategory) => {
+                  let children = subcategory.children || []
+                  
+                  // If children are missing, try fetching them using by-parent endpoint
+                  if (children.length === 0) {
+                    try {
+                      if (import.meta.env.DEV) {
+                        console.log(`🔄 No children found for "${subcategory.name}", fetching from /api/subcategories/by-parent/${subcategory.id}`)
+                      }
+                      const subSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
+                      if (subSubcategories && subSubcategories.length > 0) {
+                        children = subSubcategories
+                        if (import.meta.env.DEV) {
+                          console.log(`✅ Fetched ${children.length} sub-subcategories for "${subcategory.name}":`, children.map(c => c.name))
+                        }
+                      } else {
+                        if (import.meta.env.DEV) {
+                          console.log(`⚠️ No sub-subcategories found for "${subcategory.name}" (id: ${subcategory.id})`)
+                        }
+                      }
+                    } catch (error) {
+                      if (import.meta.env.DEV) {
+                        console.warn(`⚠️ Failed to fetch sub-subcategories for "${subcategory.name}" (id: ${subcategory.id}):`, error)
+                      }
+                    }
+                  } else {
+                    // Check if children exist and log for debugging
+                    if (import.meta.env.DEV && children.length > 0) {
+                      console.log(`✅ Subcategory "${subcategory.name}" already has ${children.length} children:`, children.map(c => c.name))
+                    }
+                  }
+                  
+                  return {
+                    ...subcategory,
+                    // Children field contains sub-subcategories - filter inactive ones
+                    children: children
+                      .filter(child => {
+                        const isActive = child.is_active === true
+                        if (import.meta.env.DEV && !isActive) {
+                          console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
+                        }
+                        return isActive
+                      })
+                      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                  }
+                })
+            )
+            
+            const sortedSubcategories = processedSubcategories.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            
+            return {
+              ...category,
+              subcategories: sortedSubcategories
+            }
+          })
+      )
+      
+      const sortedCategories = processedCategories.sort((a, b) => a.sort_order - b.sort_order)
 
       // Debug: Log processed categories
       if (import.meta.env.DEV) {
-        console.log('✅ Processed categories:', processedCategories)
-        processedCategories.forEach(cat => {
+        console.log('✅ Processed categories:', sortedCategories)
+        sortedCategories.forEach(cat => {
           if (cat.subcategories && cat.subcategories.length > 0) {
             cat.subcategories.forEach(sub => {
               if (sub.children && sub.children.length > 0) {
                 console.log(`✅ Final: "${cat.name}" > "${sub.name}" has ${sub.children.length} sub-subcategories:`, sub.children.map(c => c.name))
+              } else {
+                console.log(`⚠️ Final: "${cat.name}" > "${sub.name}" has NO sub-subcategories`)
               }
             })
           }
         })
       }
 
-      return processedCategories;
+      return sortedCategories;
     }
 
     console.error('Failed to fetch categories:', response.message);
@@ -475,32 +550,95 @@ export const getSubcategoriesByCategoryId = async (
       // Returns top-level subcategories (parent_id = null) with their children (sub-subcategories)
       let subcategories: Category[] = [];
       
-      // Check response.data structure
+      // Debug: Log raw response
+      if (import.meta.env.DEV) {
+        console.log(`📦 Raw response from /api/subcategories/by-category/${categoryId}:`, response.data)
+      }
+      
+      // Check response.data structure - try multiple possible structures
       if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
         subcategories = response.data.subcategories;
+        if (import.meta.env.DEV) {
+          console.log(`✅ Found subcategories in response.data.subcategories: ${subcategories.length}`)
+        }
       } else if ('data' in response.data) {
         const innerData = (response.data as any).data;
         if (innerData && 'subcategories' in innerData && Array.isArray(innerData.subcategories)) {
           subcategories = innerData.subcategories;
+          if (import.meta.env.DEV) {
+            console.log(`✅ Found subcategories in response.data.data.subcategories: ${subcategories.length}`)
+          }
         } else if (Array.isArray(innerData)) {
           subcategories = innerData;
+          if (import.meta.env.DEV) {
+            console.log(`✅ Found subcategories in response.data.data (array): ${subcategories.length}`)
+          }
         }
       } else if (Array.isArray(response.data)) {
         subcategories = response.data;
+        if (import.meta.env.DEV) {
+          console.log(`✅ Found subcategories in response.data (array): ${subcategories.length}`)
+        }
+      } else if ((response as any).subcategories && Array.isArray((response as any).subcategories)) {
+        subcategories = (response as any).subcategories;
+        if (import.meta.env.DEV) {
+          console.log(`✅ Found subcategories in response.subcategories: ${subcategories.length}`)
+        }
+      }
+
+      // Debug: Log subcategories structure
+      if (import.meta.env.DEV && subcategories.length > 0) {
+        console.log(`📋 Processing ${subcategories.length} subcategories:`)
+        subcategories.forEach((sub, idx) => {
+          const childrenCount = sub.children?.length || 0
+          console.log(`  ${idx + 1}. "${sub.name}" (id: ${sub.id}, parent_id: ${sub.parent_id}) - ${childrenCount} children`)
+          if (childrenCount > 0) {
+            console.log(`     Children:`, sub.children?.map(c => `${c.name} (id: ${c.id}, parent_id: ${c.parent_id})`))
+          }
+        })
       }
 
       // Filter active subcategories and ensure children (sub-subcategories) are properly structured
       // IMPORTANT: Only return active subcategories and sub-subcategories
       const filteredSubcategories = subcategories
-        .filter((subcategory) => subcategory.is_active === true) // Strict check for active
-        .map((subcategory) => ({
-          ...subcategory,
-          // Preserve and sort children (sub-subcategories) - filter inactive ones
-          children: (subcategory.children || [])
-            .filter((child) => child.is_active === true) // Strict check for active
+        .filter((subcategory) => {
+          const isActive = subcategory.is_active === true
+          if (import.meta.env.DEV && !isActive) {
+            console.log(`⚠️ Filtering out inactive subcategory: "${subcategory.name}"`)
+          }
+          return isActive
+        })
+        .map((subcategory) => {
+          const children = subcategory.children || []
+          if (import.meta.env.DEV && children.length > 0) {
+            console.log(`✅ Subcategory "${subcategory.name}" has ${children.length} children before filtering`)
+          }
+          
+          const filteredChildren = children
+            .filter((child) => {
+              const isActive = child.is_active === true
+              if (import.meta.env.DEV && !isActive) {
+                console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
+              }
+              return isActive
+            })
             .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-        }))
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+          
+          if (import.meta.env.DEV && filteredChildren.length > 0) {
+            console.log(`✅ Subcategory "${subcategory.name}" has ${filteredChildren.length} active children:`, filteredChildren.map(c => c.name))
+          }
+          
+          return {
+            ...subcategory,
+            // Preserve and sort children (sub-subcategories) - filter inactive ones
+            children: filteredChildren
+          }
+        })
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      
+      if (import.meta.env.DEV) {
+        console.log(`✅ Returning ${filteredSubcategories.length} filtered subcategories with children`)
+      }
       
       return filteredSubcategories;
     }

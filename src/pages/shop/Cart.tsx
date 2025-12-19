@@ -226,7 +226,7 @@ const Cart: React.FC = () => {
                                                         })()})
                                                     </p>
                                                 )}
-                                                {(item.category === 'contact-lenses' || (item as any).customization?.contactLens) && (
+                                                {(item.category === 'contact-lenses' || item.category === 'eye-hygiene' || (item as any).customization?.contactLens) && (
                                                     <div className="text-xs text-gray-500 mt-1">
                                                         {(() => {
                                                             const custom = (item as any).customization?.contactLens
@@ -236,7 +236,7 @@ const Cart: React.FC = () => {
                                                                 const unit = custom.unit || 'unit'
                                                                 return `Right: ${rightQty} ${unit} | Left: ${leftQty} ${unit}`
                                                             }
-                                                            return 'Contact Lens'
+                                                            return item.category === 'eye-hygiene' ? 'Eye Hygiene' : 'Contact Lens'
                                                         })()}
                                                     </div>
                                                 )}

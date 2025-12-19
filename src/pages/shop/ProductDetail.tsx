@@ -85,6 +85,7 @@ const ProductDetail: React.FC = () => {
                     const imageUrl = getProductImageUrl(productData, 0)
                     const p = productData as any
                     const isContactLensProduct = productData.category?.slug === 'contact-lenses' || 
+                                                productData.category?.slug === 'eye-hygiene' ||
                                                 p.product_type === 'contact_lens' ||
                                                 Array.isArray(p.base_curve_options)
                     
@@ -143,12 +144,13 @@ const ProductDetail: React.FC = () => {
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
     
-    // Check if product is a contact lens (memoized to prevent infinite loops)
+    // Check if product is a contact lens or eye hygiene (memoized to prevent infinite loops)
     const isContactLens = useMemo(() => {
         if (!product) return false
         const p = product as any
         const categorySlug = product.category?.slug
         return categorySlug === 'contact-lenses' || 
+               categorySlug === 'eye-hygiene' ||
                p.product_type === 'contact_lens' ||
                Array.isArray(p.base_curve_options)
     }, [product])
@@ -339,9 +341,10 @@ const ProductDetail: React.FC = () => {
         // Only initialize once per product ID
         if (formInitializedRef.current === currentProductId) return
         
-        // Check if it's a contact lens
+        // Check if it's a contact lens or eye hygiene
         const p = product as any
         const isContactLensProduct = product.category?.slug === 'contact-lenses' || 
+                                    product.category?.slug === 'eye-hygiene' ||
                                     p.product_type === 'contact_lens' ||
                                     Array.isArray(p.base_curve_options)
         
@@ -644,7 +647,7 @@ const ProductDetail: React.FC = () => {
                         id: product.id || 0,
                         name: product.name || '',
                         brand: product.brand || '',
-                        category: product.category?.slug || 'contact-lenses',
+                        category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
                         price: calculateContactLensTotal, // Total price (right + left eye totals)
                         image: getProductImageUrl(product, selectedImageIndex),
                         description: product.description || '',
