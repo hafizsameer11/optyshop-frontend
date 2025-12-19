@@ -9,17 +9,32 @@ import {
     type ProductFilters
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
-import { getCategoryBySlug, getSubcategoryBySlug, getSubcategoriesByCategoryId, type Category } from '../../services/categoriesService'
+import { 
+    getCategoryBySlug, 
+    getSubcategoryBySlug, 
+    getSubcategoriesByCategoryId, 
+    getNestedSubcategoriesByParentId,
+    type Category 
+} from '../../services/categoriesService'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
-    const { categorySlug, subcategorySlug } = useParams<{ categorySlug: string; subcategorySlug?: string }>()
+    const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
+        categorySlug: string; 
+        subcategorySlug?: string;
+        subSubcategorySlug?: string;
+    }>()
     const navigate = useNavigate()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
-    const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
+    const [categoryInfo, setCategoryInfo] = useState<{ 
+        category: Category | null; 
+        subcategory: Category | null;
+        subSubcategory: Category | null;
+    }>({
         category: null,
-        subcategory: null
+        subcategory: null,
+        subSubcategory: null
     })
     const [pagination, setPagination] = useState({
         total: 0,
@@ -29,8 +44,9 @@ const CategoryPage: React.FC = () => {
     })
     const [currentPage, setCurrentPage] = useState(1)
     const [subcategories, setSubcategories] = useState<Category[]>([])
+    const [subSubcategories, setSubSubcategories] = useState<Category[]>([])
 
-    // Fetch category and subcategory info
+    // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
         let isCancelled = false
 
@@ -42,6 +58,7 @@ const CategoryPage: React.FC = () => {
 
             let category: Category | null = null
             let subcategory: Category | null = null
+            let subSubcategory: Category | null = null
 
             try {
                 category = await getCategoryBySlug(categorySlug)
@@ -55,12 +72,32 @@ const CategoryPage: React.FC = () => {
                 if (subcategorySlug) {
                     subcategory = await getSubcategoryBySlug(subcategorySlug, category.id)
                     if (isCancelled) return
+                    
+                    if (!subcategory) {
+                        navigate(`/category/${categorySlug}`)
+                        return
+                    }
+
+                    // If sub-subcategory slug is provided, fetch it
+                    if (subSubcategorySlug) {
+                        // Get all nested subcategories (sub-subcategories) for this subcategory
+                        const nestedSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
+                        if (!isCancelled) {
+                            // Find the sub-subcategory by slug
+                            subSubcategory = nestedSubcategories.find(sub => sub.slug === subSubcategorySlug) || null
+                            
+                            if (!subSubcategory) {
+                                navigate(`/category/${categorySlug}/${subcategorySlug}`)
+                                return
+                            }
+                        }
+                    }
                 }
 
                 if (!isCancelled) {
-                    setCategoryInfo({ category, subcategory })
+                    setCategoryInfo({ category, subcategory, subSubcategory })
                     
-                    // Fetch subcategories if viewing category (not subcategory)
+                    // Fetch subcategories if viewing category (not subcategory or sub-subcategory)
                     if (category && !subcategory) {
                         try {
                             const fetchedSubcategories = await getSubcategoriesByCategoryId(category.id)
@@ -72,6 +109,20 @@ const CategoryPage: React.FC = () => {
                         }
                     } else {
                         setSubcategories([])
+                    }
+                    
+                    // Fetch sub-subcategories if viewing subcategory (not sub-subcategory)
+                    if (subcategory && !subSubcategory) {
+                        try {
+                            const fetchedSubSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
+                            if (!isCancelled) {
+                                setSubSubcategories(fetchedSubSubcategories)
+                            }
+                        } catch (error) {
+                            console.error('Error fetching sub-subcategories:', error)
+                        }
+                    } else {
+                        setSubSubcategories([])
                     }
                 }
             } catch (error) {
@@ -87,7 +138,7 @@ const CategoryPage: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [categorySlug, subcategorySlug, navigate])
+    }, [categorySlug, subcategorySlug, subSubcategorySlug, navigate])
 
     // Fetch products
     useEffect(() => {
@@ -103,10 +154,24 @@ const CategoryPage: React.FC = () => {
                     limit: 12,
                 }
 
-                // If subcategory is selected, filter ONLY by subcategory
-                // Otherwise, filter by category to show all products in that category
+                // Filter products based on category hierarchy
+                // Priority: sub-subcategory > subcategory > category
                 // API expects slugs (strings) for category and subCategory parameters
-                if (categoryInfo.subcategory) {
+                if (categoryInfo.subSubcategory) {
+                    // Filter ONLY by sub-subcategory - show only products linked to this sub-subcategory
+                    filters.subcategory = categoryInfo.subSubcategory.slug
+                    // Explicitly exclude category filter to ensure only sub-subcategory products are shown
+                    delete filters.category
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 Fetching products for sub-subcategory:', {
+                            subSubcategoryId: categoryInfo.subSubcategory.id,
+                            subSubcategoryName: categoryInfo.subSubcategory.name,
+                            subSubcategorySlug: categoryInfo.subSubcategory.slug,
+                            filters
+                        })
+                    }
+                } else if (categoryInfo.subcategory) {
                     // Filter ONLY by subcategory - show only products linked to this subcategory
                     filters.subcategory = categoryInfo.subcategory.slug
                     // Explicitly exclude category filter to ensure only subcategory products are shown
@@ -180,7 +245,7 @@ const CategoryPage: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, currentPage])
+    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage])
 
     const handleAddToCart = (product: Product) => {
         try {
@@ -232,12 +297,16 @@ const CategoryPage: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="text-center text-white">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                            {categoryInfo.subcategory 
+                            {categoryInfo.subSubcategory 
+                                ? categoryInfo.subSubcategory.name
+                                : categoryInfo.subcategory 
                                 ? categoryInfo.subcategory.name 
                                 : categoryInfo.category.name}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            {categoryInfo.subcategory 
+                            {categoryInfo.subSubcategory 
+                                ? `Browse our collection of ${categoryInfo.subSubcategory.name}`
+                                : categoryInfo.subcategory 
                                 ? `Browse our collection of ${categoryInfo.subcategory.name}`
                                 : `Discover our wide collection of ${categoryInfo.category.name}`}
                         </p>
@@ -269,15 +338,30 @@ const CategoryPage: React.FC = () => {
                         {categoryInfo.subcategory && (
                             <>
                                 <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{categoryInfo.subcategory.name}</span>
+                                {categoryInfo.subSubcategory ? (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
+                                        className="hover:text-gray-700 transition-colors"
+                                    >
+                                        <span className="text-gray-700 uppercase">{categoryInfo.subcategory.name}</span>
+                                    </Link>
+                                ) : (
+                                    <span className="text-gray-900 uppercase">{categoryInfo.subcategory.name}</span>
+                                )}
+                            </>
+                        )}
+                        {categoryInfo.subSubcategory && (
+                            <>
+                                <span className="text-gray-500">&gt;</span>
+                                <span className="text-gray-900 uppercase">{categoryInfo.subSubcategory.name}</span>
                             </>
                         )}
                     </nav>
                 </div>
             </div>
 
-            {/* Subcategories Section - Show when viewing category (not subcategory) */}
-            {!categoryInfo.subcategory && subcategories.length > 0 && (
+            {/* Subcategories Section - Show when viewing category (not subcategory or sub-subcategory) */}
+            {!categoryInfo.subcategory && !categoryInfo.subSubcategory && subcategories.length > 0 && (
                 <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
                     <div className="w-[90%] mx-auto max-w-7xl">
                         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
@@ -319,32 +403,83 @@ const CategoryPage: React.FC = () => {
                 </section>
             )}
 
+            {/* Sub-subcategories Section - Show when viewing subcategory (not sub-subcategory) */}
+            {categoryInfo.subcategory && !categoryInfo.subSubcategory && subSubcategories.length > 0 && (
+                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                            Browse by Sub-subcategory
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {subSubcategories.map((subSubcategory) => (
+                                <Link
+                                    key={subSubcategory.id}
+                                    to={`/category/${categoryInfo.category!.slug}/${categoryInfo.subcategory!.slug}/${subSubcategory.slug}`}
+                                    className="group bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-cyan-200 hover:border-cyan-300"
+                                >
+                                    <div className="mb-2">
+                                        {subSubcategory.image ? (
+                                            <img
+                                                src={subSubcategory.image}
+                                                alt={subSubcategory.name}
+                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement
+                                                    target.style.display = 'none'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 mx-auto bg-cyan-200 rounded-lg flex items-center justify-center">
+                                                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
+                                        {subSubcategory.name}
+                                    </h3>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* Products Grid */}
             <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    {/* Subcategory Info Banner - Show when viewing subcategory */}
-                    {categoryInfo.subcategory && (
+                    {/* Subcategory/Sub-subcategory Info Banner */}
+                    {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
                         <div className="mb-8 bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
                             <div className="flex items-center justify-between flex-wrap gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-600 mb-1">Viewing subcategory:</p>
+                                    <p className="text-sm text-gray-600 mb-1">
+                                        {categoryInfo.subSubcategory ? 'Viewing sub-subcategory:' : 'Viewing subcategory:'}
+                                    </p>
                                     <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                                        {categoryInfo.subcategory.name}
+                                        {categoryInfo.subSubcategory 
+                                            ? categoryInfo.subSubcategory.name
+                                            : categoryInfo.subcategory?.name}
                                     </h2>
-                                    {categoryInfo.subcategory.description && (
+                                    {(categoryInfo.subSubcategory?.description || categoryInfo.subcategory?.description) && (
                                         <p className="text-gray-600 mt-2 max-w-2xl">
-                                            {categoryInfo.subcategory.description}
+                                            {categoryInfo.subSubcategory?.description || categoryInfo.subcategory?.description}
                                         </p>
                                     )}
                                 </div>
                                 <Link
-                                    to={`/category/${categoryInfo.category.slug}`}
+                                    to={categoryInfo.subSubcategory 
+                                        ? `/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`
+                                        : `/category/${categoryInfo.category.slug}`}
                                     className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-2 transition-colors"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
-                                    Back to {categoryInfo.category.name}
+                                    {categoryInfo.subSubcategory 
+                                        ? `Back to ${categoryInfo.subcategory?.name}`
+                                        : `Back to ${categoryInfo.category.name}`}
                                 </Link>
                             </div>
                         </div>
@@ -362,16 +497,27 @@ const CategoryPage: React.FC = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                 </svg>
                                 <p className="text-lg md:text-xl text-gray-600 mb-2 font-semibold">
-                                    {categoryInfo.subcategory 
+                                    {categoryInfo.subSubcategory 
+                                        ? `No products found in ${categoryInfo.subSubcategory.name}`
+                                        : categoryInfo.subcategory 
                                         ? `No products found in ${categoryInfo.subcategory.name}`
                                         : `No products found in ${categoryInfo.category.name}`}
                                 </p>
                                 <p className="text-sm text-gray-500 mb-6">
-                                    {categoryInfo.subcategory 
+                                    {categoryInfo.subSubcategory 
+                                        ? "This sub-subcategory doesn't have any products yet."
+                                        : categoryInfo.subcategory 
                                         ? "This subcategory doesn't have any products yet."
                                         : "This category doesn't have any products yet."}
                                 </p>
-                                {categoryInfo.subcategory ? (
+                                {categoryInfo.subSubcategory ? (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`}
+                                        className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
+                                    >
+                                        View {categoryInfo.subcategory?.name} Products
+                                    </Link>
+                                ) : categoryInfo.subcategory ? (
                                     <Link 
                                         to={`/category/${categoryInfo.category.slug}`}
                                         className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"

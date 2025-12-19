@@ -252,22 +252,66 @@ export const getCategories = async (options?: {
                   } else {
                     // Check if children exist and log for debugging
                     if (import.meta.env.DEV && children.length > 0) {
-                      console.log(`✅ Subcategory "${subcategory.name}" already has ${children.length} children:`, children.map(c => c.name))
+                      console.log(`✅ Subcategory "${subcategory.name}" already has ${children.length} children from API:`, children)
+                      children.forEach((child, idx) => {
+                        console.log(`  Child ${idx + 1}:`, {
+                          name: child.name,
+                          id: child.id,
+                          parent_id: child.parent_id,
+                          is_active: child.is_active,
+                          hasIsActive: 'is_active' in child
+                        })
+                      })
                     }
+                  }
+                  
+                  // Process children - ensure all required fields are present
+                  const processedChildren = children
+                    .map(child => {
+                      // Ensure required fields are present with defaults
+                      // If is_active is missing, default to true (assume active)
+                      const processedChild = {
+                        ...child,
+                        is_active: child.is_active !== undefined ? child.is_active : true,
+                        category_id: child.category_id || subcategory.category_id,
+                        description: child.description || null,
+                        created_at: child.created_at || new Date().toISOString(),
+                        updated_at: child.updated_at || new Date().toISOString(),
+                        // Ensure name, slug, and id are present
+                        name: child.name || '',
+                        slug: child.slug || '',
+                        id: child.id || 0,
+                        parent_id: child.parent_id || subcategory.id,
+                        sort_order: child.sort_order || 0,
+                      }
+                      
+                      if (import.meta.env.DEV) {
+                        console.log(`  Processing child "${processedChild.name}":`, {
+                          original: child,
+                          processed: processedChild
+                        })
+                      }
+                      
+                      return processedChild
+                    })
+                    .filter(child => {
+                      // Only filter out if explicitly set to false
+                      const isActive = child.is_active !== false
+                      if (import.meta.env.DEV && !isActive) {
+                        console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
+                      }
+                      return isActive
+                    })
+                    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                  
+                  if (import.meta.env.DEV && processedChildren.length > 0) {
+                    console.log(`✅ Subcategory "${subcategory.name}" will have ${processedChildren.length} processed children:`, processedChildren.map(c => c.name))
                   }
                   
                   return {
                     ...subcategory,
                     // Children field contains sub-subcategories - filter inactive ones
-                    children: children
-                      .filter(child => {
-                        const isActive = child.is_active === true
-                        if (import.meta.env.DEV && !isActive) {
-                          console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
-                        }
-                        return isActive
-                      })
-                      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                    children: processedChildren
                   }
                 })
             )
@@ -615,8 +659,19 @@ export const getSubcategoriesByCategoryId = async (
           }
           
           const filteredChildren = children
+            .map(child => ({
+              ...child,
+              // Ensure required fields are present with defaults
+              // If is_active is missing, default to true (assume active)
+              is_active: child.is_active !== undefined ? child.is_active : true,
+              category_id: child.category_id || subcategory.category_id,
+              description: child.description || null,
+              created_at: child.created_at || new Date().toISOString(),
+              updated_at: child.updated_at || new Date().toISOString(),
+            }))
             .filter((child) => {
-              const isActive = child.is_active === true
+              // Only filter out if explicitly set to false
+              const isActive = child.is_active !== false
               if (import.meta.env.DEV && !isActive) {
                 console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
               }

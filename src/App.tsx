@@ -92,6 +92,7 @@ function App() {
         <Route path="/shop" element={<Products />} />
         <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
+        <Route path="/category/:categorySlug/:subcategorySlug/:subSubcategorySlug" element={<CategoryPage />} />
         <Route path="/shop/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />

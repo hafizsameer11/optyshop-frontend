@@ -22,6 +22,17 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [selectedFrame, setSelectedFrame] = useState<string>('')
+
+    // Debug: Log when selectedProduct changes
+    useEffect(() => {
+        if (selectedProduct && import.meta.env.DEV) {
+            console.log('🎯 VirtualTryOnModal received selectedProduct:', {
+                id: selectedProduct.id,
+                name: selectedProduct.name,
+                imageUrl: getProductImageUrl(selectedProduct)
+            })
+        }
+    }, [selectedProduct])
     const [arCoatingEnabled, setArCoatingEnabled] = useState(false)
     const [arCoatingData, setArCoatingData] = useState<ARCoatingResponse | null>(null)
     const [isLoadingARCoating, setIsLoadingARCoating] = useState(false)
@@ -42,93 +53,114 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
     // Fetch products from backend when modal opens
     useEffect(() => {
-        if (open && products.length === 0) {
-            const fetchProducts = async () => {
-                try {
-                    setLoading(true)
-                    setError(null)
-                    const result = await getProducts({ limit: 50 }) // Fetch up to 50 products
-                    if (result && result.products && result.products.length > 0) {
-                        setProducts(result.products)
-                        
-                        // If a product was passed as prop, select it; otherwise select first product
-                        if (selectedProduct) {
-                            const productImageUrl = getProductImageUrl(selectedProduct)
-                            setSelectedFrame(productImageUrl)
-                            // Make sure the selected product is in the products list
-                            const productExists = result.products.some(p => p.id === selectedProduct.id)
-                            if (!productExists) {
-                                // Add the selected product to the list if it's not already there
-                                setProducts([selectedProduct, ...result.products])
+        if (open) {
+            // If a selected product is provided, set it immediately
+            if (selectedProduct) {
+                const productImageUrl = getProductImageUrl(selectedProduct)
+                setSelectedFrame(productImageUrl)
+                // Add to products list if not already there
+                const productExists = products.some(p => p.id === selectedProduct.id)
+                if (!productExists) {
+                    setProducts([selectedProduct, ...products])
+                }
+            }
+            
+            // Fetch additional products if list is empty
+            if (products.length === 0) {
+                const fetchProducts = async () => {
+                    try {
+                        setLoading(true)
+                        setError(null)
+                        const result = await getProducts({ limit: 50 }) // Fetch up to 50 products
+                        if (result && result.products && result.products.length > 0) {
+                            // If we have a selected product, add it to the list and keep it selected
+                            if (selectedProduct) {
+                                const productExists = result.products.some(p => p.id === selectedProduct.id)
+                                if (!productExists) {
+                                    setProducts([selectedProduct, ...result.products])
+                                } else {
+                                    setProducts(result.products)
+                                }
+                                // Ensure selected product frame is set
+                                const productImageUrl = getProductImageUrl(selectedProduct)
+                                setSelectedFrame(productImageUrl)
+                            } else {
+                                setProducts(result.products)
+                                // Set first product as selected if no product prop provided
+                                const firstProduct = result.products[0]
+                                const firstImageUrl = getProductImageUrl(firstProduct)
+                                setSelectedFrame(firstImageUrl)
                             }
                         } else {
-                            // Set first product as selected if no product prop provided
-                            const firstProduct = result.products[0]
-                            const firstImageUrl = getProductImageUrl(firstProduct)
-                            setSelectedFrame(firstImageUrl)
+                            // If no products from API but we have a selected product, use it
+                            if (selectedProduct) {
+                                setProducts([selectedProduct])
+                                const productImageUrl = getProductImageUrl(selectedProduct)
+                                setSelectedFrame(productImageUrl)
+                            } else {
+                                setError('No products available. Please try again later.')
+                                // Fallback to default frame
+                                setSelectedFrame('/assets/images/frame1.png')
+                            }
                         }
-                    } else {
-                        // If no products from API but we have a selected product, use it
+                    } catch (error) {
+                        console.error('Error fetching products:', error)
+                        // If API fails but we have a selected product, use it
                         if (selectedProduct) {
                             setProducts([selectedProduct])
                             const productImageUrl = getProductImageUrl(selectedProduct)
                             setSelectedFrame(productImageUrl)
+                            setError(null)
                         } else {
-                            setError('No products available. Please try again later.')
+                            setError('Failed to load products. Please try again later.')
                             // Fallback to default frame
                             setSelectedFrame('/assets/images/frame1.png')
                         }
+                    } finally {
+                        setLoading(false)
                     }
-                } catch (error) {
-                    console.error('Error fetching products:', error)
-                    // If API fails but we have a selected product, use it
-                    if (selectedProduct) {
-                        setProducts([selectedProduct])
-                        const productImageUrl = getProductImageUrl(selectedProduct)
-                        setSelectedFrame(productImageUrl)
-                        setError(null)
-                    } else {
-                        setError('Failed to load products. Please try again later.')
-                        // Fallback to default frame
-                        setSelectedFrame('/assets/images/frame1.png')
-                    }
-                } finally {
-                    setLoading(false)
                 }
-            }
-            fetchProducts()
-        } else if (open && selectedProduct) {
-            // If modal opens with a selected product and products are already loaded
-            const productImageUrl = getProductImageUrl(selectedProduct)
-            setSelectedFrame(productImageUrl)
-            // Add to products list if not already there
-            const productExists = products.some(p => p.id === selectedProduct.id)
-            if (!productExists) {
-                setProducts([selectedProduct, ...products])
+                fetchProducts()
             }
         }
-    }, [open, products.length, selectedProduct])
+    }, [open, selectedProduct])
 
     // Load selected frame image
     useEffect(() => {
         if (selectedFrame) {
+            if (import.meta.env.DEV) {
+                console.log('🖼️ Loading frame image:', selectedFrame, 'for product:', selectedProduct?.name)
+            }
             const img = new Image()
             img.crossOrigin = 'anonymous'
             img.src = selectedFrame
             img.onload = () => {
                 frameImageRef.current = img
+                if (import.meta.env.DEV) {
+                    console.log('✅ Frame image loaded successfully:', selectedFrame, 'Dimensions:', img.width, 'x', img.height)
+                }
             }
             img.onerror = () => {
-                console.error('Failed to load frame image:', selectedFrame)
+                console.error('❌ Failed to load frame image:', selectedFrame)
                 // Fallback to default
                 const fallbackImg = new Image()
                 fallbackImg.src = '/assets/images/frame1.png'
                 fallbackImg.onload = () => {
                     frameImageRef.current = fallbackImg
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Fallback frame image loaded')
+                    }
+                }
+                fallbackImg.onerror = () => {
+                    console.error('❌ Failed to load fallback frame image')
                 }
             }
+        } else {
+            if (import.meta.env.DEV) {
+                console.log('⚠️ No selectedFrame set')
+            }
         }
-    }, [selectedFrame])
+    }, [selectedFrame, selectedProduct])
 
     // Fetch AR coating simulation when enabled
     useEffect(() => {
@@ -185,7 +217,15 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
             const video = videoRef.current
             const frameImg = frameImageRef.current
 
-            if (!canvas || !video || !results.multiFaceLandmarks?.length || !frameImg) return
+            if (!canvas || !video || !results.multiFaceLandmarks?.length) return
+            
+            // If frame image is not loaded yet, wait for it
+            if (!frameImg) {
+                if (import.meta.env.DEV) {
+                    console.log('⏳ Waiting for frame image to load...', selectedFrame)
+                }
+                return
+            }
 
             const ctx = canvas.getContext('2d')
             if (!ctx) return

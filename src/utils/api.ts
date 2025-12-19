@@ -3,7 +3,16 @@
  * Handles all API calls to the backend with authentication
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api';
+// API Base URL Configuration
+// Postman collection uses: base_url = http://localhost:5000
+// All API endpoints follow pattern: {{base_url}}/api/...
+// For production: https://optyshop-frontend.hmstech.org/api
+// For local development: http://localhost:5000/api
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
+  (import.meta.env.DEV 
+    ? 'http://localhost:5000/api'  // Local development (matches Postman collection)
+    : 'https://optyshop-frontend.hmstech.org/api'  // Production
+  );
 
 export interface ApiResponse<T = any> {
   success: boolean;
