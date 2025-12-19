@@ -120,9 +120,16 @@ const Navbar: React.FC = () => {
                     {!loading && categories.map((category) => (
                         <div
                             key={category.id}
-                            className="relative"
-                            onMouseEnter={() => category.subcategories && category.subcategories.length > 0 && setOpenDropdown(category.id)}
-                            onMouseLeave={() => setOpenDropdown(null)}
+                            className="relative group"
+                            onMouseEnter={() => {
+                                if (category.subcategories && category.subcategories.length > 0) {
+                                    setOpenDropdown(category.id)
+                                }
+                            }}
+                            onMouseLeave={() => {
+                                setOpenDropdown(null)
+                                setOpenSubDropdown(null)
+                            }}
                         >
                             <Link
                                 to={`/category/${category.slug}`}
@@ -142,37 +149,65 @@ const Navbar: React.FC = () => {
                             
                             {/* Subcategories dropdown */}
                             {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
-                                <div className="absolute top-full left-0 mt-2 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out">
+                                <div 
+                                    className="absolute top-full left-0 mt-1 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out"
+                                    onMouseEnter={() => setOpenDropdown(category.id)}
+                                    onMouseLeave={() => {
+                                        setOpenDropdown(null)
+                                        setOpenSubDropdown(null)
+                                    }}
+                                    style={{ marginTop: '4px' }}
+                                >
                                     <div className="px-2">
                                         {category.subcategories.map((subcategory, index) => (
                                             <div
                                                 key={subcategory.id}
-                                                className="relative group"
-                                                onMouseEnter={() => subcategory.children && subcategory.children.length > 0 && setOpenSubDropdown(subcategory.id)}
-                                                onMouseLeave={() => setOpenSubDropdown(null)}
+                                                className="relative group/subcat"
+                                                onMouseEnter={() => {
+                                                    if (subcategory.children && subcategory.children.length > 0) {
+                                                        setOpenSubDropdown(subcategory.id)
+                                                    }
+                                                }}
+                                                onMouseLeave={() => {
+                                                    setOpenSubDropdown(null)
+                                                }}
                                             >
                                                 {index > 0 && (
                                                     <div className="mx-2 my-1 h-px bg-cyan-400/20"></div>
                                                 )}
-                                                <Link
-                                                    to={`/category/${category.slug}/${subcategory.slug}`}
-                                                    className="block px-4 py-2.5 text-sm font-medium text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 rounded-lg transition-all duration-200 flex items-center justify-between group/item"
-                                                    onClick={() => setOpenDropdown(null)}
-                                                >
-                                                    <span className="flex items-center gap-2">
+                                                <div className="flex items-center justify-between w-full">
+                                                    <Link
+                                                        to={`/category/${category.slug}/${subcategory.slug}`}
+                                                        className="flex-1 px-4 py-2.5 text-sm font-medium text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 rounded-lg transition-all duration-200 flex items-center gap-2 group/item"
+                                                        onClick={() => setOpenDropdown(null)}
+                                                        onMouseEnter={() => {
+                                                            if (subcategory.children && subcategory.children.length > 0) {
+                                                                setOpenSubDropdown(subcategory.id)
+                                                            }
+                                                        }}
+                                                    >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 group-hover/item:bg-cyan-400 transition-colors"></span>
                                                         <span>{subcategory.name}</span>
-                                                    </span>
+                                                    </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
-                                                        <svg className="w-4 h-4 text-cyan-400/70 group-hover/item:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
+                                                        <div 
+                                                            className="px-2 cursor-pointer"
+                                                            onMouseEnter={() => setOpenSubDropdown(subcategory.id)}
+                                                        >
+                                                            <svg className="w-4 h-4 text-cyan-400/70 group-hover/subcat:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                            </svg>
+                                                        </div>
                                                     )}
-                                                </Link>
+                                                </div>
                                                 
                                                 {/* Sub-subcategories nested dropdown */}
                                                 {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
-                                                    <div className="absolute left-full top-0 ml-2 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out">
+                                                    <div 
+                                                        className="absolute left-full top-0 ml-1 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-[60] transform transition-all duration-200 ease-out"
+                                                        onMouseEnter={() => setOpenSubDropdown(subcategory.id)}
+                                                        onMouseLeave={() => setOpenSubDropdown(null)}
+                                                    >
                                                         <div className="px-2">
                                                             <div className="px-3 py-1.5 mb-1">
                                                                 <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{subcategory.name}</p>
