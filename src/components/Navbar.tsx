@@ -126,15 +126,15 @@ const Navbar: React.FC = () => {
                         >
                             <Link
                                 to={`/category/${category.slug}`}
-                                className={`h-10 px-2.5 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                                className={`h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-1.5 ${
                                     isCategoryActive(category)
-                                        ? 'bg-blue-800/50 text-blue-100' 
-                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
+                                        ? 'bg-blue-800/50 text-blue-100 shadow-md' 
+                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
                                 }`}
                             >
-                                {category.name}
+                                <span>{category.name}</span>
                                 {category.subcategories && category.subcategories.length > 0 && (
-                                    <svg className="ml-1 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === category.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                     </svg>
                                 )}
@@ -142,47 +142,65 @@ const Navbar: React.FC = () => {
                             
                             {/* Subcategories dropdown */}
                             {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
-                                <div className="absolute top-full left-0 mt-1 w-56 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/30 rounded-lg shadow-2xl py-2 z-50">
-                                    {category.subcategories.map((subcategory) => (
-                                        <div
-                                            key={subcategory.id}
-                                            className="relative"
-                                            onMouseEnter={() => subcategory.children && subcategory.children.length > 0 && setOpenSubDropdown(subcategory.id)}
-                                            onMouseLeave={() => setOpenSubDropdown(null)}
-                                        >
-                                            <Link
-                                                to={`/category/${category.slug}/${subcategory.slug}`}
-                                                className="block px-4 py-2 text-sm text-white hover:bg-blue-900/70 transition-colors flex items-center justify-between"
-                                                onClick={() => setOpenDropdown(null)}
+                                <div className="absolute top-full left-0 mt-2 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out">
+                                    <div className="px-2">
+                                        {category.subcategories.map((subcategory, index) => (
+                                            <div
+                                                key={subcategory.id}
+                                                className="relative group"
+                                                onMouseEnter={() => subcategory.children && subcategory.children.length > 0 && setOpenSubDropdown(subcategory.id)}
+                                                onMouseLeave={() => setOpenSubDropdown(null)}
                                             >
-                                                <span>{subcategory.name}</span>
-                                                {subcategory.children && subcategory.children.length > 0 && (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
+                                                {index > 0 && (
+                                                    <div className="mx-2 my-1 h-px bg-cyan-400/20"></div>
                                                 )}
-                                            </Link>
-                                            
-                                            {/* Sub-subcategories nested dropdown */}
-                                            {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
-                                                <div className="absolute left-full top-0 ml-1 w-56 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/30 rounded-lg shadow-2xl py-2 z-50">
-                                                    {subcategory.children.map((child) => (
-                                                        <Link
-                                                            key={child.id}
-                                                            to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
-                                                            className="block px-4 py-2 text-sm text-white hover:bg-blue-900/70 transition-colors"
-                                                            onClick={() => {
-                                                                setOpenDropdown(null)
-                                                                setOpenSubDropdown(null)
-                                                            }}
-                                                        >
-                                                            {child.name}
-                                                        </Link>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                                <Link
+                                                    to={`/category/${category.slug}/${subcategory.slug}`}
+                                                    className="block px-4 py-2.5 text-sm font-medium text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 rounded-lg transition-all duration-200 flex items-center justify-between group/item"
+                                                    onClick={() => setOpenDropdown(null)}
+                                                >
+                                                    <span className="flex items-center gap-2">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 group-hover/item:bg-cyan-400 transition-colors"></span>
+                                                        <span>{subcategory.name}</span>
+                                                    </span>
+                                                    {subcategory.children && subcategory.children.length > 0 && (
+                                                        <svg className="w-4 h-4 text-cyan-400/70 group-hover/item:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    )}
+                                                </Link>
+                                                
+                                                {/* Sub-subcategories nested dropdown */}
+                                                {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
+                                                    <div className="absolute left-full top-0 ml-2 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out">
+                                                        <div className="px-2">
+                                                            <div className="px-3 py-1.5 mb-1">
+                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{subcategory.name}</p>
+                                                            </div>
+                                                            {subcategory.children.map((child, childIndex) => (
+                                                                <React.Fragment key={child.id}>
+                                                                    {childIndex > 0 && (
+                                                                        <div className="mx-2 my-1 h-px bg-cyan-400/15"></div>
+                                                                    )}
+                                                                    <Link
+                                                                        to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
+                                                                        className="block px-4 py-2 text-sm text-white/90 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 rounded-lg transition-all duration-200 flex items-center gap-2"
+                                                                        onClick={() => {
+                                                                            setOpenDropdown(null)
+                                                                            setOpenSubDropdown(null)
+                                                                        }}
+                                                                    >
+                                                                        <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
+                                                                        <span>{child.name}</span>
+                                                                    </Link>
+                                                                </React.Fragment>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -261,24 +279,27 @@ const Navbar: React.FC = () => {
                         {/* Categories in mobile menu */}
                         {!loading && categories.map((category) => (
                             <div key={category.id} className="space-y-1">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-2">
                                     <Link
                                         to={`/category/${category.slug}`}
                                         onClick={() => setIsMobileOpen(false)}
-                                        className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all ${
-                                            isCategoryActive(category) ? 'bg-blue-800/50 text-blue-100' : 'bg-blue-950/60 hover:bg-blue-900/70'
+                                        className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                                            isCategoryActive(category) 
+                                                ? 'bg-blue-800/50 text-blue-100 shadow-md' 
+                                                : 'bg-blue-950/60 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200'
                                         }`}
                                     >
-                                        {category.name}
+                                        <span className="w-2 h-2 rounded-full bg-cyan-400/60"></span>
+                                        <span>{category.name}</span>
                                     </Link>
                                     {category.subcategories && category.subcategories.length > 0 && (
                                         <button
                                             onClick={() => setMobileOpenCategory(mobileOpenCategory === category.id ? null : category.id)}
-                                            className="px-2 py-2.5 text-cyan-400 hover:text-cyan-300 transition-colors"
+                                            className="px-3 py-2.5 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10 rounded-lg transition-all duration-200"
                                             aria-label="Toggle subcategories"
                                         >
                                             <svg
-                                                className={`w-5 h-5 transition-transform ${mobileOpenCategory === category.id ? 'rotate-180' : ''}`}
+                                                className={`w-5 h-5 transition-transform duration-200 ${mobileOpenCategory === category.id ? 'rotate-180' : ''}`}
                                                 fill="none"
                                                 stroke="currentColor"
                                                 viewBox="0 0 24 24"
@@ -291,25 +312,29 @@ const Navbar: React.FC = () => {
                                 
                                 {/* Subcategories */}
                                 {mobileOpenCategory === category.id && category.subcategories && category.subcategories.length > 0 && (
-                                    <div className="ml-4 space-y-1 border-l-2 border-cyan-400/30 pl-2">
-                                        {category.subcategories.map((subcategory) => (
+                                    <div className="ml-4 space-y-1 border-l-2 border-cyan-400/40 pl-3 mt-2 transition-all duration-200">
+                                        {category.subcategories.map((subcategory, index) => (
                                             <div key={subcategory.id} className="space-y-1">
+                                                {index > 0 && (
+                                                    <div className="h-px bg-cyan-400/20 -ml-3"></div>
+                                                )}
                                                 <div className="flex items-center justify-between">
                                                     <Link
                                                         to={`/category/${category.slug}/${subcategory.slug}`}
                                                         onClick={() => setIsMobileOpen(false)}
-                                                        className="flex-1 px-4 py-2 rounded-lg text-sm bg-blue-950/80 hover:bg-blue-900/70 transition-colors"
+                                                        className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-950/80 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 transition-all duration-200 flex items-center gap-2"
                                                     >
-                                                        {subcategory.name}
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></span>
+                                                        <span>{subcategory.name}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
                                                         <button
                                                             onClick={() => setMobileOpenSubcategory(mobileOpenSubcategory === subcategory.id ? null : subcategory.id)}
-                                                            className="px-2 py-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+                                                            className="px-2 py-2.5 text-cyan-400 hover:text-cyan-300 transition-colors"
                                                             aria-label="Toggle sub-subcategories"
                                                         >
                                                             <svg
-                                                                className={`w-4 h-4 transition-transform ${mobileOpenSubcategory === subcategory.id ? 'rotate-180' : ''}`}
+                                                                className={`w-4 h-4 transition-transform duration-200 ${mobileOpenSubcategory === subcategory.id ? 'rotate-180' : ''}`}
                                                                 fill="none"
                                                                 stroke="currentColor"
                                                                 viewBox="0 0 24 24"
@@ -322,16 +347,24 @@ const Navbar: React.FC = () => {
                                                 
                                                 {/* Sub-subcategories */}
                                                 {mobileOpenSubcategory === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
-                                                    <div className="ml-4 space-y-1 border-l-2 border-cyan-400/20 pl-2">
-                                                        {subcategory.children.map((child) => (
-                                                            <Link
-                                                                key={child.id}
-                                                                to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
-                                                                onClick={() => setIsMobileOpen(false)}
-                                                                className="block px-4 py-2 rounded-lg text-sm bg-blue-950/70 hover:bg-blue-900/70 transition-colors"
-                                                            >
-                                                                {child.name}
-                                                            </Link>
+                                                    <div className="ml-4 space-y-1 border-l-2 border-cyan-400/25 pl-3 mt-1 transition-all duration-200">
+                                                        <div className="px-2 py-1 mb-1">
+                                                            <p className="text-xs font-semibold text-cyan-400/70 uppercase tracking-wider">{subcategory.name}</p>
+                                                        </div>
+                                                        {subcategory.children.map((child, childIndex) => (
+                                                            <React.Fragment key={child.id}>
+                                                                {childIndex > 0 && (
+                                                                    <div className="h-px bg-cyan-400/15 -ml-3"></div>
+                                                                )}
+                                                                <Link
+                                                                    to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
+                                                                    onClick={() => setIsMobileOpen(false)}
+                                                                    className="block px-4 py-2 rounded-lg text-sm bg-blue-950/70 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 transition-all duration-200 flex items-center gap-2"
+                                                                >
+                                                                    <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
+                                                                    <span>{child.name}</span>
+                                                                </Link>
+                                                            </React.Fragment>
                                                         ))}
                                                     </div>
                                                 )}
