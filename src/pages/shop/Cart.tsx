@@ -17,7 +17,7 @@ const Cart: React.FC = () => {
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
-            setCouponError('Please enter a coupon code')
+            setCouponError(t('cart.enterCouponCode'))
             return
         }
 
@@ -39,7 +39,7 @@ const Cart: React.FC = () => {
             setCouponError('')
         } else {
             setAppliedCoupon(null)
-            setCouponError('Invalid or expired coupon code')
+            setCouponError(t('cart.invalidCoupon'))
         }
 
         setIsApplyingCoupon(false)
@@ -83,7 +83,7 @@ const Cart: React.FC = () => {
                                 </svg>
                             </div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                                Your cart is empty
+                                {t('cart.empty')}
                             </h1>
                             <p className="text-lg text-gray-600">
                                 {t('cart.startShopping')}
@@ -118,14 +118,14 @@ const Cart: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
                         <Link to="/shop" className="hover:text-gray-700 transition-colors">
-                            SHOP
+                            {t('common.shop').toUpperCase()}
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">CART</span>
+                        <span className="text-gray-900">{t('common.cart').toUpperCase()}</span>
                     </nav>
                 </div>
             </div>
@@ -141,7 +141,7 @@ const Cart: React.FC = () => {
                             onClick={clearCart}
                             className="text-red-600 hover:text-red-700 font-semibold text-sm md:text-base"
                         >
-                            Clear Cart
+                            {t('cart.clearCart') || 'Clear Cart'}
                         </button>
                     </div>
 

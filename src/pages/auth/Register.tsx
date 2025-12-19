@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 
 const Register: React.FC = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const { register } = useAuth()
     const [formData, setFormData] = useState({
@@ -41,29 +43,29 @@ const Register: React.FC = () => {
         const newErrors: { [key: string]: string } = {}
 
         if (!formData.firstName.trim()) {
-            newErrors.firstName = 'First name is required'
+            newErrors.firstName = t('auth.register.firstNameRequired')
         }
 
         if (!formData.lastName.trim()) {
-            newErrors.lastName = 'Last name is required'
+            newErrors.lastName = t('auth.register.lastNameRequired')
         }
 
         if (!formData.email.trim()) {
-            newErrors.email = 'Email is required'
+            newErrors.email = t('auth.register.emailRequired')
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address'
+            newErrors.email = t('auth.register.emailInvalid')
         }
 
         if (!formData.password.trim()) {
-            newErrors.password = 'Password is required'
+            newErrors.password = t('auth.register.passwordRequired')
         } else if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters'
+            newErrors.password = t('auth.register.passwordMinLength')
         }
 
         if (!formData.confirmPassword.trim()) {
-            newErrors.confirmPassword = 'Please confirm your password'
+            newErrors.confirmPassword = t('auth.register.confirmPasswordRequired')
         } else if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match'
+            newErrors.confirmPassword = t('auth.register.passwordsDontMatch')
         }
 
         setErrors(newErrors)
@@ -91,10 +93,10 @@ const Register: React.FC = () => {
                 // Navigate to login page after successful registration
                 navigate('/login')
             } else {
-                setSubmitError(result.message || 'Registration failed. Please try again.')
+                setSubmitError(result.message || t('auth.register.registrationFailed'))
             }
         } catch (error: any) {
-            setSubmitError(error.message || 'An error occurred during registration.')
+            setSubmitError(error.message || t('auth.register.errorOccurred'))
         } finally {
             setIsSubmitting(false)
         }
@@ -113,13 +115,13 @@ const Register: React.FC = () => {
                 <div className="absolute inset-0 bg-blue-950/70 backdrop-blur-sm"></div>
                 <div className="relative z-10 w-[90%] mx-auto max-w-4xl text-white text-center">
                     <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-                        Create Account
+                        {t('auth.register.title')}
                     </h1>
                     <h2 className="text-lg md:text-xl lg:text-2xl font-semibold mb-6">
-                        Join <span className="underline">OptiShop</span> today
+                        {t('auth.register.subtitle')} <span className="underline">{t('auth.register.optiShop')}</span> {t('auth.register.today')}
                     </h2>
                     <p className="text-base md:text-lg text-white/90 max-w-2xl mx-auto">
-                        Sign up to get started with virtual try-on and explore our eyewear collection.
+                        {t('auth.register.description')}
                     </p>
                 </div>
             </section>
@@ -132,10 +134,10 @@ const Register: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">REGISTER</span>
+                        <span className="text-gray-900">{t('common.register').toUpperCase()}</span>
                     </nav>
                 </div>
             </div>
@@ -145,8 +147,8 @@ const Register: React.FC = () => {
                     <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
                         {/* Form Header */}
                         <div className="bg-gradient-to-r from-blue-950 to-blue-900 px-8 pt-8 pb-6">
-                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Create Account</h2>
-                            <p className="text-blue-100 text-sm">Join OptiShop and start your eyewear journey today.</p>
+                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t('auth.register.createAccount')}</h2>
+                            <p className="text-blue-100 text-sm">{t('auth.register.joinMessage')}</p>
                         </div>
 
                         <div className="p-8 md:p-10">
@@ -157,7 +159,7 @@ const Register: React.FC = () => {
                                     {/* First Name Field */}
                                     <div>
                                         <label htmlFor="firstName" className="block text-sm font-semibold text-gray-700 mb-2.5">
-                                            First Name
+                                            {t('auth.register.firstName')}
                                         </label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -172,7 +174,7 @@ const Register: React.FC = () => {
                                                 value={formData.firstName}
                                                 onChange={handleChange}
                                                 className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.firstName ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                                placeholder="First name"
+                                                placeholder={t('auth.register.enterFirstName')}
                                             />
                                         </div>
                                         {errors.firstName && (
@@ -188,7 +190,7 @@ const Register: React.FC = () => {
                                     {/* Last Name Field */}
                                     <div>
                                         <label htmlFor="lastName" className="block text-sm font-semibold text-gray-700 mb-2.5">
-                                            Last Name
+                                            {t('auth.register.lastName')}
                                         </label>
                                         <div className="relative">
                                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -203,7 +205,7 @@ const Register: React.FC = () => {
                                                 value={formData.lastName}
                                                 onChange={handleChange}
                                                 className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.lastName ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                                placeholder="Last name"
+                                                placeholder={t('auth.register.enterLastName')}
                                             />
                                         </div>
                                         {errors.lastName && (
@@ -220,7 +222,7 @@ const Register: React.FC = () => {
                                 {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2.5">
-                                        Email Address
+                                        {t('auth.register.emailAddress')}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -235,7 +237,7 @@ const Register: React.FC = () => {
                                             value={formData.email}
                                             onChange={handleChange}
                                             className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.email ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                            placeholder="Enter your email"
+                                            placeholder={t('auth.register.enterEmail')}
                                         />
                                     </div>
                                     {errors.email && (
@@ -251,7 +253,7 @@ const Register: React.FC = () => {
                                 {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2.5">
-                                        Password
+                                        {t('auth.register.password')}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -266,7 +268,7 @@ const Register: React.FC = () => {
                                             value={formData.password}
                                             onChange={handleChange}
                                             className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.password ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                            placeholder="Create a password"
+                                            placeholder={t('auth.register.createPassword')}
                                         />
                                     </div>
                                     {errors.password && (
@@ -282,7 +284,7 @@ const Register: React.FC = () => {
                                 {/* Confirm Password Field */}
                                 <div>
                                     <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2.5">
-                                        Confirm Password
+                                        {t('auth.register.confirmPassword')}
                                     </label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -297,7 +299,7 @@ const Register: React.FC = () => {
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
                                             className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.confirmPassword ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                            placeholder="Confirm your password"
+                                            placeholder={t('auth.register.confirmPasswordPlaceholder')}
                                         />
                                     </div>
                                     {errors.confirmPassword && (
@@ -339,11 +341,11 @@ const Register: React.FC = () => {
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
-                                            <span>Creating account...</span>
+                                            <span>{t('auth.register.creatingAccount')}</span>
                                         </>
                                     ) : (
                                         <>
-                                            <span>Create Account</span>
+                                            <span>{t('auth.register.createAccount')}</span>
                                             <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                             </svg>
@@ -358,20 +360,20 @@ const Register: React.FC = () => {
                                     <div className="w-full border-t border-gray-200"></div>
                                 </div>
                                 <div className="relative flex justify-center text-sm">
-                                    <span className="px-4 bg-white text-gray-500">Already a member?</span>
+                                    <span className="px-4 bg-white text-gray-500">{t('auth.register.alreadyMember')}</span>
                                 </div>
                             </div>
 
                             {/* Login Link */}
                             <div className="text-center">
                                 <p className="text-gray-600 text-sm mb-3">
-                                    Already have an account?
+                                    {t('auth.register.alreadyHaveAccount')}
                                 </p>
                                 <Link
                                     to="/login"
                                     className="inline-block w-full rounded-xl border-2 border-blue-950 text-blue-950 font-semibold py-3.5 hover:bg-blue-950 hover:text-white transition-all duration-200 text-center"
                                 >
-                                    Sign In
+                                    {t('auth.register.signIn')}
                                 </Link>
                             </div>
                         </div>

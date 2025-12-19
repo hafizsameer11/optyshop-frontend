@@ -1,6 +1,8 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const HeroSection: React.FC = () => {
+    const { t } = useTranslation()
     return (
         <section
             className="relative h-[40vh] flex flex-col bg-cover bg-center bg-no-repeat"
@@ -16,7 +18,7 @@ const HeroSection: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="max-w-2xl">
                         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                            Contact us
+                            {t('contact.title')}
                         </h1>
                         <div className="w-20 h-1 bg-white"></div>
                     </div>

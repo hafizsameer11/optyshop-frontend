@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/whoWeAre/OurHistory/HeroSection'
@@ -16,6 +17,7 @@ import ExpertiseAreasSection from '../../components/whoWeAre/OurHistory/Expertis
 import WorldwideLocationsSection from '../../components/whoWeAre/OurHistory/WorldwideLocationsSection'
 
 const OurHistory: React.FC = () => {
+    const { t } = useTranslation()
     const location = useLocation()
 
     useEffect(() => {
@@ -47,10 +49,10 @@ const OurHistory: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">WHO WE ARE</span>
+                        <span className="text-gray-900">{t('common.whoWeAre').toUpperCase()}</span>
                     </nav>
                 </div>
             </div>

@@ -190,7 +190,9 @@
     "returnToShop": "Voltar à Loja",
     "outOfStockAlert": "Este produto está atualmente fora de estoque e não pode ser adicionado ao carrinho.",
     "outOfStockMessage": "Este produto está atualmente fora de estoque. Você não pode adicioná-lo ao seu carrinho no momento.",
-    "description": "Descubra nossa ampla coleção de óculos e óculos de sol"
+    "description": "Descubra nossa ampla coleção de óculos e óculos de sol",
+    "browseCollection": "Navegue pela nossa coleção de {{name}}",
+    "discoverCollection": "Descubra nossa ampla coleção de {{name}}"
   },
   "cart": {
     "title": "Carrinho de Compras",
@@ -202,7 +204,16 @@
     "removeItem": "Remover Item",
     "updateQuantity": "Atualizar Quantidade",
     "proceedToCheckout": "Prosseguir para o Pagamento",
-    "estimatedTotal": "Total Estimado"
+    "estimatedTotal": "Total Estimado",
+    "couponCode": "Código do Cupom",
+    "applyCoupon": "Aplicar Cupom",
+    "applying": "Aplicando...",
+    "removeCoupon": "Remover Cupom",
+    "enterCouponCode": "Por favor, insira um código de cupom",
+    "invalidCoupon": "Código de cupom inválido ou expirado",
+    "discount": "Desconto",
+    "finalTotal": "Total Final",
+    "clearCart": "Esvaziar Carrinho"
   },
   "checkout": {
     "title": "Pagamento",
@@ -254,7 +265,115 @@
   "whoWeAre": {
     "ourHistory": "NOSSA HISTÓRIA",
     "ourTechnology": "NOSSA TECNOLOGIA",
-    "joinUs": "JUNTE-SE A NÓS"
+    "joinUs": "JUNTE-SE A NÓS",
+    "jobOpportunities": "Oportunidades de Emprego"
+  },
+  "jobs": {
+    "openPositions": "Vagas Abertas",
+    "exploreOpenings": "Explore nossas vagas de emprego atuais e encontre a posição perfeita para você",
+    "loading": "Carregando oportunidades de emprego...",
+    "failedToLoad": "Falha ao carregar empregos",
+    "joinTeam": "Junte-se à nossa equipe e ajude a moldar o futuro dos óculos digitais",
+    "noJobs": "Nenhuma oportunidade de emprego disponível no momento",
+    "applyNow": "Candidatar-se Agora",
+    "viewDetails": "Ver Detalhes",
+    "department": "Departamento",
+    "location": "Localização",
+    "type": "Tipo",
+    "requirements": "Requisitos",
+    "description": "Descrição"
+  },
+  "auth": {
+    "login": {
+      "title": "Bem-vindo de Volta",
+      "subtitle": "Entre na sua",
+      "account": "conta",
+      "description": "Acesse sua conta OptiShop para continuar comprando e gerenciar seus pedidos.",
+      "signIn": "Entrar",
+      "signingIn": "Entrando...",
+      "emailAddress": "Endereço de E-mail",
+      "password": "Senha",
+      "enterEmail": "Digite seu e-mail",
+      "enterPassword": "Digite sua senha",
+      "forgotPassword": "Esqueceu a senha?",
+      "newToOptiShop": "Novo no OptiShop?",
+      "dontHaveAccount": "Não tem uma conta?",
+      "createAccount": "Criar Conta",
+      "emailRequired": "O e-mail é obrigatório",
+      "emailInvalid": "Por favor, insira um endereço de e-mail válido",
+      "passwordRequired": "A senha é obrigatória",
+      "passwordMinLength": "A senha deve ter pelo menos 6 caracteres",
+      "loginFailed": "Falha no login. Verifique suas credenciais.",
+      "errorOccurred": "Ocorreu um erro durante o login.",
+      "welcomeMessage": "Bem-vindo de volta! Por favor, insira suas credenciais."
+    },
+    "register": {
+      "title": "Criar Conta",
+      "subtitle": "Junte-se ao",
+      "optiShop": "OptiShop",
+      "today": "hoje",
+      "description": "Cadastre-se para começar com a experimentação virtual e explorar nossa coleção de óculos.",
+      "createAccount": "Criar Conta",
+      "creatingAccount": "Criando conta...",
+      "firstName": "Nome",
+      "lastName": "Sobrenome",
+      "emailAddress": "Endereço de E-mail",
+      "password": "Senha",
+      "confirmPassword": "Confirmar Senha",
+      "phone": "Telefone",
+      "enterFirstName": "Nome",
+      "enterLastName": "Sobrenome",
+      "enterEmail": "Digite seu e-mail",
+      "createPassword": "Crie uma senha",
+      "confirmPasswordPlaceholder": "Confirme sua senha",
+      "firstNameRequired": "O nome é obrigatório",
+      "lastNameRequired": "O sobrenome é obrigatório",
+      "emailRequired": "O e-mail é obrigatório",
+      "emailInvalid": "Por favor, insira um endereço de e-mail válido",
+      "passwordRequired": "A senha é obrigatória",
+      "passwordMinLength": "A senha deve ter pelo menos 6 caracteres",
+      "confirmPasswordRequired": "Por favor, confirme sua senha",
+      "passwordsDontMatch": "As senhas não coincidem",
+      "welcomeMessage": "Bem-vindo de volta! Por favor, insira suas credenciais.",
+      "joinMessage": "Junte-se ao OptiShop e comece sua jornada de óculos hoje.",
+      "alreadyMember": "Já é membro?",
+      "alreadyHaveAccount": "Já tem uma conta?",
+      "signIn": "Entrar",
+      "registrationFailed": "Falha no registro. Tente novamente.",
+      "errorOccurred": "Ocorreu um erro durante o registro."
+    }
+  },
+  "contact": {
+    "title": "Entre em Contato",
+    "subtitle": "Fale Conosco",
+    "description": "Adoraríamos ouvir de você. Envie-nos uma mensagem e responderemos o mais rápido possível.",
+    "name": "Nome",
+    "firstName": "Nome",
+    "lastName": "Sobrenome",
+    "email": "E-mail",
+    "subject": "Assunto",
+    "message": "Mensagem",
+    "messagePlaceholder": "Conte-nos mais sobre suas necessidades.",
+    "sendMessage": "Enviar Mensagem",
+    "sendRequest": "Envie-nos sua solicitação",
+    "sending": "Enviando...",
+    "country": "País",
+    "selectCountry": "Por Favor Selecione",
+    "companyName": "Nome da Empresa",
+    "locations": "Localizações",
+    "europe": "EUROPA",
+    "northAmerica": "AMÉRICA DO NORTE",
+    "headquarters": "Sede",
+    "phone": "Telefone",
+    "usSubsidiary": "Subsidiária dos EUA",
+    "fillAllFields": "Por favor, preencha todos os campos obrigatórios",
+    "nameRequired": "O nome é obrigatório",
+    "emailRequired": "O e-mail é obrigatório",
+    "emailInvalid": "Por favor, insira um endereço de e-mail válido",
+    "subjectRequired": "O assunto é obrigatório",
+    "messageRequired": "A mensagem é obrigatória",
+    "messageSent": "Mensagem enviada com sucesso!",
+    "errorSending": "Erro ao enviar a mensagem. Tente novamente."
   },
   "pages": {
     "virtualTest": {
@@ -285,6 +404,33 @@
       "rdCapabilities": "Capacidades de P&D",
       "avantPremieres": "Avant-Premières",
       "whatsNext": "O que vem a seguir?"
+    }
+  },
+  "blog": {
+    "andNews": "e notícias"
+  },
+  "caseStudies": {
+    "hero": {
+      "title": "Estudos de caso e depoimentos",
+      "subtitle": "Descubra o que os líderes do setor óptico estão ",
+      "saying": "dizendo",
+      "description1": "Aprenda a usar com sucesso a experimentação virtual da Fittingbox explorando ",
+      "and": "e ",
+      "testimonials": "depoimentos",
+      "fromProfessionals": "de profissionais de óptica.",
+      "description2": "Você pode descobrir e ",
+      "downloadFree": "baixar gratuitamente",
+      "results": "Os ",
+      "resultsText": "resultados",
+      "resultsAchieved": " alcançados por alguns de nossos clientes.",
+      "feedback": "Feedback e reflexões",
+      "afterImplementation": " após a implementação de nossas soluções."
+    },
+    "filters": {
+      "everyone": "TODOS",
+      "online": "ONLINE",
+      "inStore": "NA LOJA",
+      "producer": "PRODUTOR"
     }
   }
 }

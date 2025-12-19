@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
 
 const ContactFormSection: React.FC = () => {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [formData, setFormData] = useState({
         email: '',
@@ -33,7 +35,7 @@ const ContactFormSection: React.FC = () => {
 
         // Basic validation
         if (!formData.email || !formData.firstName || !formData.lastName || !formData.country || !formData.companyName || !formData.message) {
-            setSubmitError('Please fill in all required fields')
+            setSubmitError(t('contact.fillAllFields') || 'Please fill in all required fields')
             return
         }
 
@@ -65,13 +67,13 @@ const ContactFormSection: React.FC = () => {
             } else {
                 // Show detailed error message from backend
                 const errorMsg = response.error || response.message || 'Failed to submit contact form. Please try again.'
-                setSubmitError(errorMsg)
+                setSubmitError(errorMsg || t('contact.errorSending'))
                 if (import.meta.env.DEV) {
                     console.error('Contact form submission error:', response)
                 }
             }
         } catch (error: any) {
-            setSubmitError(error.message || 'An error occurred. Please try again.')
+            setSubmitError(error.message || t('contact.errorSending'))
             if (import.meta.env.DEV) {
                 console.error('Contact form submission exception:', error)
             }
@@ -87,14 +89,14 @@ const ContactFormSection: React.FC = () => {
                     {/* Left Section - Contact Form */}
                     <div className="bg-white rounded-2xl p-6 md:p-8 lg:h-[880px] lg:p-10 shadow-lg">
                         <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8">
-                            Send us your request
+                            {t('contact.sendRequest') || 'Send us your request'}
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
                             {/* Email */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Email <span className="text-red-500">*</span>
+                                    {t('contact.email')} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="email"
@@ -111,7 +113,7 @@ const ContactFormSection: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
                                     <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                                        First name <span className="text-red-500">*</span>
+                                        {t('contact.firstName') || 'First name'} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -125,7 +127,7 @@ const ContactFormSection: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                                        Last name <span className="text-red-500">*</span>
+                                        {t('contact.lastName') || 'Last name'} <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         type="text"
@@ -142,7 +144,7 @@ const ContactFormSection: React.FC = () => {
                             {/* Country */}
                             <div>
                                 <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Country <span className="text-red-500">*</span>
+                                    {t('contact.country') || 'Country'} <span className="text-red-500">*</span>
                                 </label>
                                 <select
                                     id="country"
@@ -152,7 +154,7 @@ const ContactFormSection: React.FC = () => {
                                     onChange={handleChange}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
-                                    <option value="">Please Select</option>
+                                    <option value="">{t('contact.selectCountry') || 'Please Select'}</option>
                                     <option value="US">United States</option>
                                     <option value="CA">Canada</option>
                                     <option value="UK">United Kingdom</option>
@@ -167,7 +169,7 @@ const ContactFormSection: React.FC = () => {
                             {/* Company Name */}
                             <div>
                                 <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Company name <span className="text-red-500">*</span>
+                                    {t('contact.companyName') || 'Company name'} <span className="text-red-500">*</span>
                                 </label>
                                 <input
                                     type="text"
@@ -183,7 +185,7 @@ const ContactFormSection: React.FC = () => {
                             {/* Message */}
                             <div>
                                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Message <span className="text-red-500">*</span>
+                                    {t('contact.message')} <span className="text-red-500">*</span>
                                 </label>
                                 <textarea
                                     id="message"
@@ -192,7 +194,7 @@ const ContactFormSection: React.FC = () => {
                                     rows={5}
                                     value={formData.message}
                                     onChange={handleChange}
-                                    placeholder="Tell us more about your needs."
+                                    placeholder={t('contact.messagePlaceholder') || 'Tell us more about your needs.'}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                                 />
                             </div>
@@ -225,10 +227,10 @@ const ContactFormSection: React.FC = () => {
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
-                                        <span>Submitting...</span>
+                                        <span>{t('contact.sending')}</span>
                                     </>
                                 ) : (
-                                    'Contact us'
+                                    t('contact.sendMessage')
                                 )}
                             </button>
                         </form>
@@ -237,16 +239,16 @@ const ContactFormSection: React.FC = () => {
                     {/* Right Section - Locations and Contact Details */}
                     <div className="bg-white rounded-2xl p-6 md:p-8 lg:p-10 shadow-lg">
                         <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8">
-                            Locations
+                            {t('contact.locations') || 'Locations'}
                         </h2>
 
                         <div className="space-y-8">
                             {/* Europe */}
                             <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">EUROPE</h3>
+                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">{t('contact.europe') || 'EUROPE'}</h3>
                                 <div className="space-y-3 text-gray-700">
                                     <div>
-                                        <p className="font-semibold mb-1">Headquarters</p>
+                                        <p className="font-semibold mb-1">{t('contact.headquarters') || 'Headquarters'}</p>
                                         <p>209 Rue de l'Innovation</p>
                                         <p>31670 Labège</p>
                                         <p>France</p>
@@ -270,10 +272,10 @@ const ContactFormSection: React.FC = () => {
 
                             {/* North America */}
                             <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">NORTH AMERICA</h3>
+                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">{t('contact.northAmerica') || 'NORTH AMERICA'}</h3>
                                 <div className="space-y-3 text-gray-700">
                                     <div>
-                                        <p className="font-semibold mb-1">US Subsidiary</p>
+                                        <p className="font-semibold mb-1">{t('contact.usSubsidiary') || 'US Subsidiary'}</p>
                                         <p>19790 W Dixie Hwy, Suite 311</p>
                                         <p>Aventura, FL 33180</p>
                                         <p>USA</p>

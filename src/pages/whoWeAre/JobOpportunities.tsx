@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { apiClient } from '../../utils/api'
@@ -16,6 +17,7 @@ interface Job {
 }
 
 const JobOpportunities: React.FC = () => {
+    const { t } = useTranslation()
     const [jobs, setJobs] = useState<Job[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string>('')
@@ -56,10 +58,10 @@ const JobOpportunities: React.FC = () => {
                     }))
                     setJobs(normalizedJobs)
                 } else {
-                    setError(response.message || 'Failed to load jobs')
+                    setError(response.message || t('jobs.failedToLoad') || 'Failed to load jobs')
                 }
             } catch (err: any) {
-                setError(err.message || 'Failed to load jobs')
+                setError(err.message || t('jobs.failedToLoad') || 'Failed to load jobs')
             } finally {
                 setIsLoading(false)
             }
@@ -181,10 +183,10 @@ const JobOpportunities: React.FC = () => {
                 <div className="relative px-4 sm:px-6 md:px-12 lg:px-16 py-12 md:py-16 lg:py-20">
                     <div className="max-w-4xl">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 md:mb-6 leading-tight">
-                            Job Opportunities
+                            {t('whoWeAre.jobOpportunities')}
                         </h1>
                         <p className="text-lg sm:text-xl md:text-2xl text-white/90 mb-4">
-                            Join our team and help shape the future of digital eyewear
+                            {t('jobs.joinTeam') || 'Join our team and help shape the future of digital eyewear'}
                         </p>
                         <div className="w-16 sm:w-20 md:w-24 h-0.5 md:h-1 bg-white"></div>
                     </div>
@@ -202,18 +204,18 @@ const JobOpportunities: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
                         <Link to="/our-history" className="hover:text-gray-700 transition-colors">
-                            WHO WE ARE
+                            {t('common.whoWeAre').toUpperCase()}
                         </Link>
                         <span className="text-gray-500">&gt;</span>
                         <Link to="/join-us" className="hover:text-gray-700 transition-colors">
-                            JOIN US
+                            {t('whoWeAre.joinUs').toUpperCase()}
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">JOB OPPORTUNITIES</span>
+                        <span className="text-gray-900">{t('whoWeAre.jobOpportunities').toUpperCase()}</span>
                     </nav>
                 </div>
             </div>
@@ -225,10 +227,10 @@ const JobOpportunities: React.FC = () => {
                         {/* Section Header */}
                         <div className="text-center">
                             <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-blue-950 mb-4">
-                                Open Positions
+                                {t('jobs.openPositions') || 'Open Positions'}
                             </h2>
                             <p className="text-lg md:text-xl text-gray-700 max-w-3xl mx-auto">
-                                Explore our current job openings and find the perfect role for you
+                                {t('jobs.exploreOpenings') || 'Explore our current job openings and find the perfect role for you'}
                             </p>
                         </div>
 
@@ -236,7 +238,7 @@ const JobOpportunities: React.FC = () => {
                         {isLoading && (
                             <div className="text-center py-12">
                                 <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-[#253C69]"></div>
-                                <p className="mt-4 text-gray-600">Loading job opportunities...</p>
+                                <p className="mt-4 text-gray-600">{t('jobs.loading') || 'Loading job opportunities...'}</p>
                             </div>
                         )}
 

@@ -324,13 +324,13 @@ const Products: React.FC = () => {
                                 ? categoryInfo.subcategory.name 
                                 : categoryInfo.category 
                                     ? categoryInfo.category.name 
-                                    : 'Shop Glasses'}
+                                    : t('shop.title')}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
                             {categoryInfo.subcategory 
-                                ? `Browse our collection of ${categoryInfo.subcategory.name}`
+                                ? t('shop.browseCollection', { name: categoryInfo.subcategory.name }) || `Browse our collection of ${categoryInfo.subcategory.name}`
                                 : categoryInfo.category 
-                                    ? `Discover our wide collection of ${categoryInfo.category.name}`
+                                    ? t('shop.discoverCollection', { name: categoryInfo.category.name }) || `Discover our wide collection of ${categoryInfo.category.name}`
                                     : t('shop.description')}
                         </p>
                     </div>
@@ -345,11 +345,11 @@ const Products: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
                         <Link to="/shop" className="hover:text-gray-700 transition-colors">
-                            <span>SHOP</span>
+                            <span>{t('common.shop').toUpperCase()}</span>
                         </Link>
                         {categoryInfo.category && (
                             <>

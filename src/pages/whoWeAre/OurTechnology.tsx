@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import HeroSection from '../../components/whoWeAre/OurTechnology/HeroSection'
@@ -11,6 +12,7 @@ import OpenInnovationSection from '../../components/whoWeAre/OurTechnology/OpenI
 import InterviewsSection from '../../components/whoWeAre/OurTechnology/InterviewsSection'
 
 const OurTechnology: React.FC = () => {
+    const { t } = useTranslation()
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
@@ -24,14 +26,14 @@ const OurTechnology: React.FC = () => {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
                             </svg>
-                            <span>HOME</span>
+                            <span>{t('common.home').toUpperCase()}</span>
                         </Link>
                         <span className="text-gray-500">&gt;</span>
                         <Link to="/our-history" className="hover:text-gray-700 transition-colors">
-                            WHO WE ARE
+                            {t('common.whoWeAre').toUpperCase()}
                         </Link>
                         <span className="text-gray-500">&gt;</span>
-                        <span className="text-gray-900">OUR TECHNOLOGY</span>
+                        <span className="text-gray-900">{t('whoWeAre.ourTechnology').toUpperCase()}</span>
                     </nav>
                 </div>
             </div>

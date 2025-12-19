@@ -1,6 +1,8 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 const HeroSection: React.FC = () => {
+    const { t } = useTranslation()
     return (
         <section
             className="relative overflow-hidden pt-20 md:pt-0 bg-cover bg-center bg-no-repeat h-[80vh]"
@@ -17,10 +19,10 @@ const HeroSection: React.FC = () => {
                     <div className="relative z-10 w-full sm:w-[95%] mx-auto max-w-4xl">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-bold mb-4 sm:mb-5 md:mb-6 leading-tight">
                             <span className="relative inline-block">
-                                Blog
+                                {t('resources.blog')}
                                 <span className="absolute bottom-0 left-0 right-0 h-0.5 sm:h-1 bg-white"></span>
                             </span>
-                            {' '}and news
+                            {' '}{t('blog.andNews') || 'and news'}
                         </h1>
                     </div>
                 </div>
