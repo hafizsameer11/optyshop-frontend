@@ -29,14 +29,14 @@ const FloatingLanguageSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-6 right-6 z-[100]">
       <div className="relative">
         {/* Main button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-center gap-2 h-14 w-14 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-2xl hover:shadow-cyan-500/50 hover:scale-110 transition-all duration-300 border-2 border-white/20 backdrop-blur-sm"
           aria-label="Change language"
-          title={`Current: ${currentLanguage.name}`}
+          title={`Current: ${currentLanguage.name} - Click to change language`}
         >
           <span className="text-2xl">{currentLanguage.flag}</span>
           <svg
@@ -57,13 +57,13 @@ const FloatingLanguageSwitcher: React.FC = () => {
               onClick={() => setIsOpen(false)}
             />
             <div 
-              className="absolute bottom-full right-0 mb-3 w-56 bg-white rounded-2xl shadow-2xl border-2 border-cyan-200/50 z-50 py-2 overflow-hidden"
+              className="absolute bottom-full right-0 mb-3 w-56 bg-white rounded-2xl shadow-2xl border-2 border-cyan-200/50 z-[110] py-2 overflow-hidden"
               style={{ 
                 boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2)'
               }}
             >
               <div className="px-3 py-2 border-b border-gray-200 bg-gradient-to-r from-cyan-50 to-blue-50">
-                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Select Language</p>
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{i18n.t('common.language') || 'Select Language'}</p>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 {languages.map((lang) => (

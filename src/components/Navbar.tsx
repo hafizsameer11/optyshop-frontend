@@ -289,14 +289,14 @@ const Navbar: React.FC = () => {
 
                 {/* Right side actions */}
                 <div className="flex items-center gap-2 md:gap-2 flex-shrink-0 ml-auto pr-2 md:pr-4">
+                    {/* Language Switcher - Always visible */}
+                    <div className="flex-shrink-0">
+                        <LanguageSwitcher variant="navbar" />
+                    </div>
+                    
                     {/* Cart Icon */}
                     <div className="hidden md:flex items-center justify-center flex-shrink-0">
                         <CartIcon />
-                    </div>
-                    
-                    {/* Language Switcher */}
-                    <div className="hidden md:block flex-shrink-0">
-                        <LanguageSwitcher variant="navbar" />
                     </div>
                     
                     {/* Mobile menu toggle */}
@@ -456,8 +456,12 @@ const Navbar: React.FC = () => {
                     </div>
 
                     <div className="pt-4 border-t border-cyan-400/30 space-y-3">
-                        <div className="flex justify-center">
-                            <LanguageSwitcher variant="navbar" />
+                        {/* Language Switcher - Prominent in mobile menu */}
+                        <div className="pb-2">
+                            <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider mb-2 px-1">{t('common.language') || 'Language'}</p>
+                            <div className="flex justify-center">
+                                <LanguageSwitcher variant="navbar" />
+                            </div>
                         </div>
                         <Link
                             to="/login"

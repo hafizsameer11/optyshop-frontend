@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const Footer: React.FC = () => {
     const { t } = useTranslation()
@@ -191,6 +192,13 @@ const Footer: React.FC = () => {
                     <div>
                         <h3 className="text-white font-semibold mb-3 text-base">{t('footer.companyAndShop')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
+                        {/* Language Switcher */}
+                        <div className="mb-6">
+                            <p className="text-sm text-slate-400 mb-2">{t('common.language') || 'Language'}</p>
+                            <div className="bg-white/10 rounded-lg p-2">
+                                <LanguageSwitcher variant="navbar" />
+                            </div>
+                        </div>
                         <ul className="space-y-2.5 text-sm text-slate-400 mb-6">
                             <li>
                                 <Link to="/our-history" className="hover:text-white transition-colors">
@@ -264,9 +272,9 @@ const Footer: React.FC = () => {
                 </div>
             </div>
 
-            {/* Floating chat button */}
+            {/* Floating chat button - moved to left side to avoid conflict with language switcher */}
             <button
-                className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center z-50 transition-colors"
+                className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center z-50 transition-colors"
                 aria-label="Chat"
             >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
