@@ -202,7 +202,10 @@ class ApiClient {
    */
   async get<T = any>(endpoint: string, requireAuth: boolean = false): Promise<ApiResponse<T>> {
     try {
-      const url = `${this.baseURL}${endpoint}`;
+      // Add cache-busting parameter to prevent stale data
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const cacheBuster = `_t=${Date.now()}`;
+      const url = `${this.baseURL}${endpoint}${separator}${cacheBuster}`;
       if (import.meta.env.DEV) {
         console.log(`[API] GET ${url}`);
       }
@@ -210,6 +213,7 @@ class ApiClient {
       const response = await fetch(url, {
         method: 'GET',
         headers: this.buildHeaders(requireAuth),
+        cache: 'no-store', // Prevent browser caching
       });
 
       return await this.handleResponse<T>(response);

@@ -5,6 +5,7 @@
 
 import { apiClient } from '../utils/api';
 import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
+import type { Product } from './productsService';
 
 // Type definitions for category data
 export interface CategoryProduct {
@@ -23,18 +24,36 @@ export interface Category {
   image: string | null;
   is_active: boolean;
   sort_order: number;
-  parent_id?: number | null;
+  parent_id?: number | null; // For sub-subcategories: parent subcategory ID
+  category_id?: number; // For subcategories: parent category ID
   created_at: string;
   updated_at: string;
   products?: CategoryProduct[];
   subcategories?: Category[]; // Subcategories (children) - for top-level categories
   children?: Category[]; // Nested subcategories (children of a subcategory)
-  parent?: Category | null; // Parent subcategory (if nested)
-  category?: Category; // Main category this subcategory belongs to
+  parent?: Category | null; // Parent subcategory (if nested) - from API response
+  category?: Category; // Main category this subcategory belongs to - from API response
 }
 
 export interface CategoriesResponse {
-  categories: Category[];
+  success?: boolean;
+  message?: string;
+  data?: {
+    categories?: Category[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      pages: number;
+    };
+  };
+  categories?: Category[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 export interface CategoryResponse {
@@ -42,10 +61,12 @@ export interface CategoryResponse {
 }
 
 export interface SubcategoriesResponse {
-  success: boolean;
-  message: string;
-  data: {
-    subcategories: Category[];
+  success?: boolean;
+  message?: string;
+  data?: {
+    subcategories?: Category[];
+    topLevelSubcategories?: Category[];
+    subSubcategories?: Category[];
     pagination?: {
       total: number;
       page: number;
@@ -53,21 +74,39 @@ export interface SubcategoriesResponse {
       pages: number;
     };
     category?: Category;
+    parentSubcategory?: Category;
+  };
+  subcategories?: Category[];
+  topLevelSubcategories?: Category[];
+  subSubcategories?: Category[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
   };
 }
 
 export interface SubcategoryResponse {
-  success: boolean;
-  message: string;
-  data: {
+  success?: boolean;
+  message?: string;
+  data?: {
     subcategory: Category & {
       category?: Category;
+      parent?: Category | null;
+      children?: Category[];
     };
+  };
+  subcategory?: Category & {
+    category?: Category;
+    parent?: Category | null;
+    children?: Category[];
   };
 }
 
 /**
  * Get all categories
+ * API response structure: { success: true, message: "...", data: { categories: [], pagination: {} } }
  * @param options - Options for fetching categories
  * @param options.includeProducts - If true, include products in each category
  * @param options.includeSubcategories - If true, include top-level subcategories with nested children
@@ -89,15 +128,16 @@ export const getCategories = async (options?: {
 
     if (response.success && response.data) {
       // Handle different response structures
+      // API response: { success: true, message: "...", data: { categories: [], pagination: {} } }
       let categories: Category[] = [];
       
-      // Check if response.data is an array directly
-      if (Array.isArray(response.data)) {
-        categories = response.data;
-      } 
-      // Check if response.data has a categories property
-      else if ('categories' in response.data && Array.isArray(response.data.categories)) {
+      // Check if response.data has a categories property (most common structure)
+      if ('categories' in response.data && Array.isArray(response.data.categories)) {
         categories = response.data.categories;
+      }
+      // Check if response.data is an array directly (fallback)
+      else if (Array.isArray(response.data)) {
+        categories = response.data;
       }
       // Check if response.data has a data.categories structure (nested)
       else if ('data' in response.data) {
@@ -108,14 +148,33 @@ export const getCategories = async (options?: {
           categories = innerData.categories;
         }
       }
+      // Check if response has categories at root level (fallback)
+      else if (response.categories && Array.isArray(response.categories)) {
+        categories = response.categories;
+      }
 
-      // Filter active categories and sort by sort_order
-      const activeCategories = categories
-        .filter((category) => category.is_active)
+      // When includeSubcategories=true, API returns categories with subcategories that have children field
+      // The structure is already nested, so we just need to ensure it's properly formatted
+      // IMPORTANT: Filter out inactive categories, subcategories, and sub-subcategories
+      const processedCategories = categories
+        .filter((category) => category.is_active === true) // Only active categories
+        .map(category => ({
+          ...category,
+          // Ensure subcategories have their children properly structured
+          subcategories: (category.subcategories || [])
+            .filter(sub => sub.is_active === true) // Only active subcategories
+            .map(subcategory => ({
+              ...subcategory,
+              // Children field contains sub-subcategories - filter inactive ones
+              children: (subcategory.children || [])
+                .filter(child => child.is_active === true) // Only active sub-subcategories
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            }))
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        }))
         .sort((a, b) => a.sort_order - b.sort_order);
 
-      // Organize categories with subcategories
-      return organizeCategoriesWithSubcategories(activeCategories);
+      return processedCategories;
     }
 
     console.error('Failed to fetch categories:', response.message);
@@ -127,34 +186,107 @@ export const getCategories = async (options?: {
 };
 
 /**
- * Organize categories into parent categories with their subcategories
+ * Organize categories into parent categories with their subcategories (3-level hierarchy)
+ * Supports: Category → Subcategory (parent_id: null) → Sub-subcategory (parent_id: subcategory.id)
+ * 
+ * The API returns categories with nested subcategories when includeSubcategories=true.
+ * This function handles both:
+ * 1. Nested structure from API (preserves children field)
+ * 2. Flat structure (organizes into hierarchy)
  */
 const organizeCategoriesWithSubcategories = (categories: Category[]): Category[] => {
-  // Separate parent categories (no parent_id or parent_id is null) and subcategories
-  const parentCategories: Category[] = [];
-  const subcategoriesMap: Map<number, Category[]> = new Map();
+  // If categories already have nested subcategories with children, return as-is
+  // Otherwise, organize flat list into hierarchy
+  
+  // Check if data is already nested (has subcategories with children)
+  const hasNestedStructure = categories.some(
+    cat => cat.subcategories && cat.subcategories.some(sub => sub.children && sub.children.length > 0)
+  );
+  
+  if (hasNestedStructure) {
+    // Data is already nested, filter inactive items and ensure children are sorted
+    return categories
+      .filter(category => category.is_active === true) // Only active categories
+      .map(category => ({
+        ...category,
+        subcategories: (category.subcategories || [])
+          .filter(sub => sub.is_active === true) // Only active subcategories
+          .map(subcategory => ({
+            ...subcategory,
+            children: (subcategory.children || [])
+              .filter(child => child.is_active === true) // Only active sub-subcategories
+              .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+          }))
+          .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      }))
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }
 
-  categories.forEach((category) => {
-    if (!category.parent_id || category.parent_id === null) {
-      // This is a parent category
-      parentCategories.push({ ...category, subcategories: [] });
-    } else {
-      // This is a subcategory
-      const parentId = category.parent_id;
-      if (!subcategoriesMap.has(parentId)) {
-        subcategoriesMap.set(parentId, []);
+  // Organize flat list into hierarchy
+  const parentCategories: Category[] = [];
+  const topLevelSubcategoriesMap: Map<number, Category[]> = new Map(); // category_id → subcategories
+  const subSubcategoriesMap: Map<number, Category[]> = new Map(); // parent_subcategory_id → sub-subcategories
+
+  categories.forEach((item) => {
+    // Only process active items
+    if (item.is_active !== true) {
+      return;
+    }
+    
+    // Categories don't have parent_id or category_id
+    // Top-level subcategories have parent_id = null and category_id set
+    // Sub-subcategories have parent_id = subcategory.id
+    
+    const hasCategoryId = !!(item as any).category_id || !!(item as any).category;
+    
+    if (!item.parent_id || item.parent_id === null) {
+      if (hasCategoryId) {
+        // This is a top-level subcategory (parent_id = null, has category_id)
+        const categoryId = (item as any).category_id || ((item as any).category?.id);
+        if (categoryId) {
+          if (!topLevelSubcategoriesMap.has(categoryId)) {
+            topLevelSubcategoriesMap.set(categoryId, []);
+          }
+          topLevelSubcategoriesMap.get(categoryId)!.push({ ...item, children: item.children || [] });
+        }
+      } else {
+        // This is a parent category
+        parentCategories.push({ ...item, subcategories: [], children: [] });
       }
-      subcategoriesMap.get(parentId)!.push(category);
+    } else {
+      // This has a parent_id - it's a sub-subcategory
+      const parentId = item.parent_id;
+      if (!subSubcategoriesMap.has(parentId)) {
+        subSubcategoriesMap.set(parentId, []);
+      }
+      subSubcategoriesMap.get(parentId)!.push(item);
     }
   });
 
-  // Attach subcategories to their parent categories
-  parentCategories.forEach((parent) => {
-    const subcategories = subcategoriesMap.get(parent.id) || [];
-    parent.subcategories = subcategories.sort((a, b) => a.sort_order - b.sort_order);
+  // Attach sub-subcategories to their parent subcategories
+  topLevelSubcategoriesMap.forEach((subcategories) => {
+    subcategories.forEach((subcategory) => {
+      const children = subSubcategoriesMap.get(subcategory.id) || subcategory.children || [];
+      // Filter inactive children and sort
+      subcategory.children = children
+        .filter(child => child.is_active === true) // Only active sub-subcategories
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    });
   });
 
-  return parentCategories;
+  // Attach top-level subcategories to their parent categories
+  parentCategories.forEach((category) => {
+    const subcategories = topLevelSubcategoriesMap.get(category.id) || category.subcategories || [];
+    // Filter inactive subcategories and sort
+    category.subcategories = subcategories
+      .filter(sub => sub.is_active === true) // Only active subcategories
+      .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  });
+
+  // Return only active parent categories, sorted
+  return parentCategories
+    .filter(category => category.is_active === true) // Only active categories
+    .sort((a, b) => a.sort_order - b.sort_order);
 };
 
 /**
@@ -178,12 +310,36 @@ export const getCategoryById = async (id: number | string): Promise<Category | n
 
     if (response.success && response.data) {
       // Handle different response structures
+      let category: Category | null = null;
+      
       if ('category' in response.data) {
-        return response.data.category;
+        category = response.data.category;
       } else if ('data' in response.data && 'category' in (response.data as any).data) {
-        return (response.data as any).data.category;
+        category = (response.data as any).data.category;
       } else if ('id' in response.data) {
-        return response.data as Category;
+        category = response.data as Category;
+      }
+
+      if (category) {
+        // Only return if category is active
+        if (category.is_active !== true) {
+          return null;
+        }
+        
+        // Filter inactive subcategories and sub-subcategories
+        if (category.subcategories) {
+          category.subcategories = category.subcategories
+            .filter(sub => sub.is_active === true)
+            .map(subcategory => ({
+              ...subcategory,
+              children: (subcategory.children || [])
+                .filter(child => child.is_active === true)
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            }))
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+        
+        return category;
       }
     }
 
@@ -207,12 +363,36 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
 
     if (response.success && response.data) {
       // Handle different response structures
+      let category: Category | null = null;
+      
       if ('category' in response.data) {
-        return response.data.category;
+        category = response.data.category;
       } else if ('data' in response.data && 'category' in (response.data as any).data) {
-        return (response.data as any).data.category;
+        category = (response.data as any).data.category;
       } else if ('id' in response.data) {
-        return response.data as Category;
+        category = response.data as Category;
+      }
+
+      if (category) {
+        // Only return if category is active
+        if (category.is_active !== true) {
+          return null;
+        }
+        
+        // Filter inactive subcategories and sub-subcategories
+        if (category.subcategories) {
+          category.subcategories = category.subcategories
+            .filter(sub => sub.is_active === true)
+            .map(subcategory => ({
+              ...subcategory,
+              children: (subcategory.children || [])
+                .filter(child => child.is_active === true)
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            }))
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+        
+        return category;
       }
     }
 
@@ -241,8 +421,11 @@ export const getSubcategoriesByCategoryId = async (
 
     if (response.success && response.data) {
       // Handle different response structures
+      // API endpoint: GET /api/subcategories/by-category/:categoryId
+      // Returns top-level subcategories (parent_id = null) with their children (sub-subcategories)
       let subcategories: Category[] = [];
       
+      // Check response.data structure
       if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
         subcategories = response.data.subcategories;
       } else if ('data' in response.data) {
@@ -252,16 +435,22 @@ export const getSubcategoriesByCategoryId = async (
         } else if (Array.isArray(innerData)) {
           subcategories = innerData;
         }
+      } else if (Array.isArray(response.data)) {
+        subcategories = response.data;
       }
 
-      console.log('Fetched subcategories:', subcategories);
-
-      // Filter active subcategories (default to true if is_active is not present) and sort by sort_order
+      // Filter active subcategories and ensure children (sub-subcategories) are properly structured
+      // IMPORTANT: Only return active subcategories and sub-subcategories
       const filteredSubcategories = subcategories
-        .filter((subcategory) => subcategory.is_active !== false) // Include if is_active is true, undefined, or null
+        .filter((subcategory) => subcategory.is_active === true) // Strict check for active
+        .map((subcategory) => ({
+          ...subcategory,
+          // Preserve and sort children (sub-subcategories) - filter inactive ones
+          children: (subcategory.children || [])
+            .filter((child) => child.is_active === true) // Strict check for active
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        }))
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      
-      console.log('Filtered subcategories:', filteredSubcategories);
       
       return filteredSubcategories;
     }
@@ -296,12 +485,39 @@ export const getSubcategoryById = async (
 
     if (response.success && response.data) {
       // Handle different response structures
+      // API endpoint: GET /api/subcategories/:id
+      // Returns subcategory with category, parent, and children information
+      let subcategory: Category | null = null;
+      
       if ('subcategory' in response.data) {
-        return response.data.subcategory;
+        subcategory = response.data.subcategory;
       } else if ('data' in response.data && 'subcategory' in (response.data as any).data) {
-        return (response.data as any).data.subcategory;
+        subcategory = (response.data as any).data.subcategory;
       } else if ('id' in response.data) {
-        return response.data as Category;
+        subcategory = response.data as Category;
+      } else if (response.subcategory) {
+        subcategory = response.subcategory;
+      }
+
+      if (subcategory) {
+        // Only return if subcategory is active
+        if (subcategory.is_active !== true) {
+          return null;
+        }
+        
+        // Ensure nested objects (category, parent) are properly preserved
+        // The API returns: { subcategory: { ..., category: {...}, parent: {...}, children: [] } }
+        // Preserve category and parent objects from API response
+        // These are nested objects that provide additional context
+        
+        // Ensure children (sub-subcategories) are properly structured - filter inactive ones
+        if (subcategory.children) {
+          subcategory.children = subcategory.children
+            .filter((child) => child.is_active === true) // Strict check for active
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+        
+        return subcategory;
       }
     }
 
@@ -331,6 +547,8 @@ export const getNestedSubcategoriesByParentId = async (
 
     if (response.success && response.data) {
       // Handle different response structures
+      // API endpoint: GET /api/subcategories/by-parent/:parentId
+      // Returns: { parentSubcategory: {...}, subcategories: [...] }
       let subcategories: Category[] = [];
       
       if ('subcategories' in response.data && Array.isArray(response.data.subcategories)) {
@@ -342,11 +560,14 @@ export const getNestedSubcategoriesByParentId = async (
         } else if (Array.isArray(innerData)) {
           subcategories = innerData;
         }
+      } else if (Array.isArray(response.data)) {
+        subcategories = response.data;
       }
 
-      // Filter active subcategories and sort by sort_order
+      // Filter active sub-subcategories and sort by sort_order
+      // IMPORTANT: Only return active sub-subcategories
       const filteredSubcategories = subcategories
-        .filter((subcategory) => subcategory.is_active !== false)
+        .filter((subcategory) => subcategory.is_active === true) // Strict check for active
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       
       return filteredSubcategories;
@@ -392,8 +613,9 @@ export const getNestedSubcategories = async (
       }
 
       // Filter active subcategories and sort by sort_order
+      // IMPORTANT: Only return active subcategories
       const filteredSubcategories = subcategories
-        .filter((subcategory) => subcategory.is_active !== false)
+        .filter((subcategory) => subcategory.is_active === true) // Strict check for active
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       
       return filteredSubcategories;
@@ -411,8 +633,12 @@ export const getNestedSubcategories = async (
  * Get subcategory by slug
  * Uses the API endpoint directly for better performance
  * @param slug - The slug of the subcategory
+ * @param categoryId - Optional category ID for validation (not sent to API, used for client-side validation)
  */
-export const getSubcategoryBySlug = async (slug: string): Promise<Category | null> => {
+export const getSubcategoryBySlug = async (
+  slug: string,
+  categoryId?: number | string
+): Promise<Category | null> => {
   try {
     const endpoint = API_ROUTES.SUBCATEGORIES.BY_SLUG(slug);
     const response = await apiClient.get<SubcategoryResponse>(
@@ -422,12 +648,50 @@ export const getSubcategoryBySlug = async (slug: string): Promise<Category | nul
 
     if (response.success && response.data) {
       // Handle different response structures
+      // API endpoint: GET /api/subcategories/slug/:slug
+      // Returns subcategory with category, parent, and children information
+      let subcategory: Category | null = null;
+      
       if ('subcategory' in response.data) {
-        return response.data.subcategory;
+        subcategory = response.data.subcategory;
       } else if ('data' in response.data && 'subcategory' in (response.data as any).data) {
-        return (response.data as any).data.subcategory;
+        subcategory = (response.data as any).data.subcategory;
       } else if ('id' in response.data) {
-        return response.data as Category;
+        subcategory = response.data as Category;
+      } else if (response.subcategory) {
+        subcategory = response.subcategory;
+      }
+
+      if (subcategory) {
+        // Validate categoryId if provided (client-side validation)
+        if (categoryId !== undefined) {
+          // Check category_id field or nested category object
+          const subcategoryCategoryId = subcategory.category_id || subcategory.category?.id;
+          if (subcategoryCategoryId && String(subcategoryCategoryId) !== String(categoryId)) {
+            console.warn(`Subcategory ${slug} does not belong to category ${categoryId}`);
+            // Still return the subcategory, but log a warning
+          }
+        }
+
+        // Only return if subcategory is active
+        if (subcategory.is_active !== true) {
+          return null;
+        }
+        
+        // Preserve nested objects from API response:
+        // - category: { id, name, slug } - Main category this subcategory belongs to
+        // - parent: { id, name, slug } - Parent subcategory (if this is a sub-subcategory)
+        // - children: [] - Array of sub-subcategories (if this is a parent subcategory)
+        // API response structure: { success: true, data: { subcategory: { ..., category: {...}, parent: {...}, children: [] } } }
+        
+        // Ensure children (sub-subcategories) are properly included and sorted - filter inactive ones
+        if (subcategory.children) {
+          subcategory.children = subcategory.children
+            .filter((child) => child.is_active === true) // Strict check for active
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+
+        return subcategory;
       }
     }
 
@@ -474,6 +738,9 @@ export const getAllSubcategories = async (options?: {
     );
 
     if (response.success && response.data) {
+      // Handle different response structures
+      // API endpoint: GET /api/subcategories?page=1&limit=50&category_id=1
+      // Returns paginated subcategories with parent/children info
       let subcategories: Category[] = [];
       let pagination: SubcategoriesResponse['data']['pagination'] | undefined;
       
@@ -488,11 +755,22 @@ export const getAllSubcategories = async (options?: {
         } else if (Array.isArray(innerData)) {
           subcategories = innerData;
         }
+      } else if (response.subcategories && Array.isArray(response.subcategories)) {
+        subcategories = response.subcategories;
+        pagination = response.pagination;
       }
 
-      // Filter active subcategories and sort by sort_order
+      // Filter active subcategories and ensure children are properly structured
+      // IMPORTANT: Only return active subcategories and sub-subcategories
       const filteredSubcategories = subcategories
-        .filter((subcategory) => subcategory.is_active !== false)
+        .filter((subcategory) => subcategory.is_active === true) // Strict check for active
+        .map((subcategory) => ({
+          ...subcategory,
+          // Preserve and sort children (sub-subcategories) - filter inactive ones
+          children: (subcategory.children || [])
+            .filter((child) => child.is_active === true) // Strict check for active
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        }))
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       
       return {
@@ -597,6 +875,117 @@ export const getRelatedCategories = async (
   } catch (error) {
     console.error('Error fetching related categories:', error);
     return [];
+  }
+};
+
+/**
+ * Get products by subcategory ID
+ * API endpoint: GET /api/subcategories/:id/products
+ * Returns products for the subcategory (includes products from sub-subcategories if it's a parent)
+ * @param subcategoryId - The ID of the subcategory
+ * @param options - Options for fetching products
+ * @param options.page - Page number (default: 1)
+ * @param options.limit - Items per page (default: 12)
+ * @param options.sortBy - Sort field: created_at, price, name, rating, updated_at (default: created_at)
+ * @param options.sortOrder - Sort order: asc or desc (default: desc)
+ */
+export const getProductsBySubcategoryId = async (
+  subcategoryId: number | string,
+  options?: {
+    page?: number;
+    limit?: number;
+    sortBy?: 'created_at' | 'price' | 'name' | 'rating' | 'updated_at';
+    sortOrder?: 'asc' | 'desc';
+  }
+): Promise<{
+  subcategory: Category | null;
+  products: Product[];
+  pagination?: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+}> => {
+  try {
+    const page = options?.page || 1;
+    const limit = options?.limit || 12;
+    const sortBy = options?.sortBy || 'created_at';
+    const sortOrder = options?.sortOrder || 'desc';
+
+    const endpoint = API_ROUTES.SUBCATEGORIES.PRODUCTS(subcategoryId, page, limit, sortBy, sortOrder);
+    const response = await apiClient.get<{
+      success: boolean;
+      message?: string;
+      data?: {
+        subcategory?: Category;
+        products?: Product[];
+        pagination?: {
+          total: number;
+          page: number;
+          limit: number;
+          pages: number;
+        };
+      };
+      subcategory?: Category;
+      products?: Product[];
+      pagination?: {
+        total: number;
+        page: number;
+        limit: number;
+        pages: number;
+      };
+    }>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let subcategory: Category | null = null;
+      let products: Product[] = [];
+      let pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        pages: number;
+      } | undefined;
+
+      if ('subcategory' in response.data && 'products' in response.data) {
+        subcategory = response.data.subcategory || null;
+        products = response.data.products || [];
+        pagination = response.data.pagination;
+      } else if ('data' in response.data) {
+        const innerData = (response.data as any).data;
+        if (innerData) {
+          subcategory = innerData.subcategory || null;
+          products = innerData.products || [];
+          pagination = innerData.pagination;
+        }
+      } else if (response.subcategory || response.products) {
+        subcategory = response.subcategory || null;
+        products = response.products || [];
+        pagination = response.pagination;
+      }
+
+      return {
+        subcategory,
+        products,
+        pagination,
+      };
+    }
+
+    console.error('Failed to fetch products by subcategory:', response.message);
+    return {
+      subcategory: null,
+      products: [],
+    };
+  } catch (error) {
+    console.error('Error fetching products by subcategory:', error);
+    return {
+      subcategory: null,
+      products: [],
+    };
   }
 };
 

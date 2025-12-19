@@ -2329,6 +2329,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   error = null,
   onRetry
 }) => {
+  const { t } = useTranslation()
   const [showPhotochromic, setShowPhotochromic] = useState(false)
   const [showPrescriptionSun, setShowPrescriptionSun] = useState(false)
   const [selectedPhotochromicType, setSelectedPhotochromicType] = useState<string | null>(null)
@@ -3497,6 +3498,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   onAddToCart,
   loading
 }) => {
+  const { t } = useTranslation()
   const basePrice = product.sale_price && Number(product.sale_price) < Number(product.price)
     ? Number(product.sale_price)
     : Number(product.price) || 0

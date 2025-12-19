@@ -80,6 +80,15 @@ export const API_ROUTES = {
     BY_SLUG: (slug: string) => `/subcategories/slug/${slug}`, // PUBLIC - Get subcategory by slug
     BY_PARENT: (parentId: number | string) => `/subcategories/by-parent/${parentId}`, // PUBLIC - Get nested subcategories by parent ID
     NESTED: (subcategoryId: number | string) => `/subcategories/${subcategoryId}/subcategories`, // PUBLIC - Get nested subcategories (children of a subcategory)
+    PRODUCTS: (id: number | string, page?: number, limit?: number, sortBy?: string, sortOrder?: 'asc' | 'desc') => {
+      const params = new URLSearchParams();
+      if (page) params.append('page', String(page));
+      if (limit) params.append('limit', String(limit));
+      if (sortBy) params.append('sortBy', sortBy);
+      if (sortOrder) params.append('sortOrder', sortOrder);
+      const queryString = params.toString();
+      return `/subcategories/${id}/products${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get products for a subcategory (includes products from sub-subcategories if parent)
     RELATED_CATEGORIES: (subcategoryId: number | string, includeNested?: boolean) => {
       const params = new URLSearchParams();
       if (includeNested) params.append('includeNested', 'true');
