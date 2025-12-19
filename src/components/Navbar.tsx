@@ -18,6 +18,24 @@ const Navbar: React.FC = () => {
     const dropdownRef = useRef<HTMLDivElement>(null)
     const { categories, loading } = useCategories()
 
+    // Debug: Log categories structure
+    useEffect(() => {
+        if (!loading && categories.length > 0 && import.meta.env.DEV) {
+            console.log('🔍 Navbar received categories:', categories)
+            categories.forEach(cat => {
+                if (cat.subcategories && cat.subcategories.length > 0) {
+                    console.log(`📁 Navbar: Category "${cat.name}" has ${cat.subcategories.length} subcategories`)
+                    cat.subcategories.forEach(sub => {
+                        const childrenCount = sub.children?.length || 0
+                        console.log(`  └─ Subcategory "${sub.name}" (id: ${sub.id}) has ${childrenCount} children:`, 
+                            sub.children?.map(c => `${c.name} (active: ${c.is_active})`) || []
+                        )
+                    })
+                }
+            })
+        }
+    }, [categories, loading])
+
     // Check if current path matches link
     const isActive = (path: string) => {
         if (path === '/') {

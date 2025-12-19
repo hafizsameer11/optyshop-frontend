@@ -156,6 +156,28 @@ export const getCategories = async (options?: {
       // When includeSubcategories=true, API returns categories with subcategories that have children field
       // The structure is already nested, so we just need to ensure it's properly formatted
       // IMPORTANT: Filter out inactive categories, subcategories, and sub-subcategories
+      
+      // Debug: Log raw categories to see structure
+      if (import.meta.env.DEV) {
+        console.log('📦 Raw categories from API:', categories)
+        console.log('📦 Full response structure:', JSON.stringify(categories, null, 2).substring(0, 2000))
+        categories.forEach(cat => {
+          if (cat.subcategories && cat.subcategories.length > 0) {
+            console.log(`📁 Category "${cat.name}" has ${cat.subcategories.length} subcategories:`)
+            cat.subcategories.forEach(sub => {
+              console.log(`  └─ Subcategory "${sub.name}" (id: ${sub.id}, parent_id: ${sub.parent_id})`, {
+                hasChildren: !!(sub.children && sub.children.length > 0),
+                childrenCount: sub.children?.length || 0,
+                children: sub.children,
+                fullSubcategory: sub
+              })
+            })
+          } else {
+            console.log(`📁 Category "${cat.name}" has NO subcategories`)
+          }
+        })
+      }
+      
       const processedCategories = categories
         .filter((category) => category.is_active === true) // Only active categories
         .map(category => ({
@@ -163,16 +185,44 @@ export const getCategories = async (options?: {
           // Ensure subcategories have their children properly structured
           subcategories: (category.subcategories || [])
             .filter(sub => sub.is_active === true) // Only active subcategories
-            .map(subcategory => ({
-              ...subcategory,
-              // Children field contains sub-subcategories - filter inactive ones
-              children: (subcategory.children || [])
-                .filter(child => child.is_active === true) // Only active sub-subcategories
-                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-            }))
+            .map(subcategory => {
+              // Check if children exist and log for debugging
+              const children = subcategory.children || []
+              if (import.meta.env.DEV && children.length > 0) {
+                console.log(`✅ Subcategory "${subcategory.name}" has ${children.length} children:`, children.map(c => c.name))
+              }
+              
+              return {
+                ...subcategory,
+                // Children field contains sub-subcategories - filter inactive ones
+                children: children
+                  .filter(child => {
+                    const isActive = child.is_active === true
+                    if (import.meta.env.DEV && !isActive) {
+                      console.log(`⚠️ Filtering out inactive sub-subcategory: "${child.name}"`)
+                    }
+                    return isActive
+                  })
+                  .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+              }
+            })
             .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
         }))
         .sort((a, b) => a.sort_order - b.sort_order);
+
+      // Debug: Log processed categories
+      if (import.meta.env.DEV) {
+        console.log('✅ Processed categories:', processedCategories)
+        processedCategories.forEach(cat => {
+          if (cat.subcategories && cat.subcategories.length > 0) {
+            cat.subcategories.forEach(sub => {
+              if (sub.children && sub.children.length > 0) {
+                console.log(`✅ Final: "${cat.name}" > "${sub.name}" has ${sub.children.length} sub-subcategories:`, sub.children.map(c => c.name))
+              }
+            })
+          }
+        })
+      }
 
       return processedCategories;
     }
