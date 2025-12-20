@@ -1449,7 +1449,31 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   }, [updateOrderSummary])
 
   const handlePrescriptionChange = (field: keyof PrescriptionFormData, value: string) => {
-    setPrescriptionData(prev => ({ ...prev, [field]: value }))
+    setPrescriptionData(prev => {
+      const updated = { ...prev, [field]: value }
+      
+      // Auto-calculate pd_mm when both pd_binocular (left) and pd_right are filled
+      if (field === 'pd_binocular' || field === 'pd_right') {
+        const leftPD = field === 'pd_binocular' ? value : prev.pd_binocular
+        const rightPD = field === 'pd_right' ? value : prev.pd_right
+        
+        // If both are filled and are valid numbers, calculate the sum
+        if (leftPD && rightPD) {
+          const leftNum = parseFloat(leftPD)
+          const rightNum = parseFloat(rightPD)
+          
+          if (!isNaN(leftNum) && !isNaN(rightNum)) {
+            updated.pd_mm = (leftNum + rightNum).toString()
+          }
+        } else {
+          // If either is cleared, clear pd_mm
+          updated.pd_mm = ''
+        }
+      }
+      
+      return updated
+    })
+    
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => {

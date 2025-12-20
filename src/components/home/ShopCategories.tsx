@@ -4,6 +4,7 @@ import { getCategories, type Category } from '../../services/categoriesService'
 import { getProducts, type Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useTranslation } from 'react-i18next'
+import { useCategoryTranslation } from '../../utils/categoryTranslations'
 
 interface CategoryWithProducts extends Category {
     fetchedProducts?: Product[]
@@ -11,6 +12,7 @@ interface CategoryWithProducts extends Category {
 
 const ShopCategories: React.FC = () => {
     const { t } = useTranslation()
+    const { translateCategory } = useCategoryTranslation()
     const [categories, setCategories] = useState<CategoryWithProducts[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -121,7 +123,7 @@ const ShopCategories: React.FC = () => {
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
                                         <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                                            {category.name}
+                                            {translateCategory(category)}
                                         </h3>
                                         {category.description && (
                                             <p className="text-gray-600">{category.description}</p>
@@ -131,7 +133,7 @@ const ShopCategories: React.FC = () => {
                                         to={`/category/${category.slug}`}
                                         className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"
                                     >
-                                        View All
+                                        {t('navbar.viewAll')}
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                         </svg>

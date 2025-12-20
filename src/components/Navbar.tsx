@@ -5,9 +5,11 @@ import CartIcon from './CartIcon'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useCategories } from '../hooks/useCategories'
 import type { Category } from '../services/categoriesService'
+import { useCategoryTranslation } from '../utils/categoryTranslations'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
+    const { translateCategory } = useCategoryTranslation()
     const location = useLocation()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -202,7 +204,7 @@ const Navbar: React.FC = () => {
                                             : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
                                     }`}
                                 >
-                                    <span>{category.name}</span>
+                                    <span>{translateCategory(category)}</span>
                                 </Link>
                                 {category.subcategories && category.subcategories.length > 0 && (
                                     <button
@@ -318,7 +320,7 @@ const Navbar: React.FC = () => {
                                                         }}
                                                     >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 group-hover/item:bg-cyan-400 transition-colors"></span>
-                                                        <span>{subcategory.name}</span>
+                                                        <span>{translateCategory(subcategory)}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
                                                         <button
@@ -386,7 +388,7 @@ const Navbar: React.FC = () => {
                                                     >
                                                         <div className="px-2">
                                                             <div className="px-3 py-1.5 mb-1">
-                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{subcategory.name}</p>
+                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{translateCategory(subcategory)}</p>
                                                             </div>
                                                             {subcategory.children.map((child, childIndex) => (
                                                                 <React.Fragment key={child.id}>
@@ -404,7 +406,7 @@ const Navbar: React.FC = () => {
                                                                         }}
                                                                     >
                                                                         <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
-                                                                        <span>{child.name}</span>
+                                                                        <span>{translateCategory(child)}</span>
                                                                     </Link>
                                                                 </React.Fragment>
                                                             ))}
@@ -503,7 +505,7 @@ const Navbar: React.FC = () => {
                                         }`}
                                     >
                                         <span className="w-2 h-2 rounded-full bg-cyan-400/60"></span>
-                                        <span>{category.name}</span>
+                                        <span>{translateCategory(category)}</span>
                                     </Link>
                                     {category.subcategories && category.subcategories.length > 0 && (
                                         <button
@@ -538,7 +540,7 @@ const Navbar: React.FC = () => {
                                                         className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-950/80 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 transition-all duration-200 flex items-center gap-2"
                                                     >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></span>
-                                                        <span>{subcategory.name}</span>
+                                                        <span>{translateCategory(subcategory)}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
                                                         <button
@@ -562,7 +564,7 @@ const Navbar: React.FC = () => {
                                                 {mobileOpenSubcategory === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
                                                     <div className="ml-4 space-y-1 border-l-2 border-cyan-400/25 pl-3 mt-1 transition-all duration-200">
                                                         <div className="px-2 py-1 mb-1">
-                                                            <p className="text-xs font-semibold text-cyan-400/70 uppercase tracking-wider">{subcategory.name}</p>
+                                                            <p className="text-xs font-semibold text-cyan-400/70 uppercase tracking-wider">{translateCategory(subcategory)}</p>
                                                         </div>
                                                         {subcategory.children.map((child, childIndex) => (
                                                             <React.Fragment key={child.id}>
@@ -575,7 +577,7 @@ const Navbar: React.FC = () => {
                                                                     className="block px-4 py-2 rounded-lg text-sm bg-blue-950/70 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 transition-all duration-200 flex items-center gap-2"
                                                                 >
                                                                     <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
-                                                                    <span>{child.name}</span>
+                                                                    <span>{translateCategory(child)}</span>
                                                                 </Link>
                                                             </React.Fragment>
                                                         ))}

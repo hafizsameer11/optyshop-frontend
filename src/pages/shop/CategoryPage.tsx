@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getProducts, 
     type Product,
@@ -19,6 +20,7 @@ import {
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
+    const { translateCategory } = useCategoryTranslation()
     const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
         categorySlug: string; 
         subcategorySlug?: string;
@@ -298,17 +300,17 @@ const CategoryPage: React.FC = () => {
                     <div className="text-center text-white">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
                             {categoryInfo.subSubcategory 
-                                ? categoryInfo.subSubcategory.name
+                                ? translateCategory(categoryInfo.subSubcategory)
                                 : categoryInfo.subcategory 
-                                ? categoryInfo.subcategory.name 
-                                : categoryInfo.category.name}
+                                ? translateCategory(categoryInfo.subcategory)
+                                : translateCategory(categoryInfo.category)}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
                             {categoryInfo.subSubcategory 
-                                ? `Browse our collection of ${categoryInfo.subSubcategory.name}`
+                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subSubcategory) })
                                 : categoryInfo.subcategory 
-                                ? `Browse our collection of ${categoryInfo.subcategory.name}`
-                                : `Discover our wide collection of ${categoryInfo.category.name}`}
+                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
+                                : t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })}
                         </p>
                     </div>
                 </div>
@@ -333,7 +335,7 @@ const CategoryPage: React.FC = () => {
                             to={`/category/${categoryInfo.category.slug}`}
                             className="hover:text-gray-700 transition-colors"
                         >
-                            <span className="text-gray-900 uppercase">{categoryInfo.category.name}</span>
+                            <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.category)}</span>
                         </Link>
                         {categoryInfo.subcategory && (
                             <>
@@ -343,17 +345,17 @@ const CategoryPage: React.FC = () => {
                                         to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
                                         className="hover:text-gray-700 transition-colors"
                                     >
-                                        <span className="text-gray-700 uppercase">{categoryInfo.subcategory.name}</span>
+                                        <span className="text-gray-700 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
                                     </Link>
                                 ) : (
-                                    <span className="text-gray-900 uppercase">{categoryInfo.subcategory.name}</span>
+                                    <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
                                 )}
                             </>
                         )}
                         {categoryInfo.subSubcategory && (
                             <>
                                 <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{categoryInfo.subSubcategory.name}</span>
+                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subSubcategory)}</span>
                             </>
                         )}
                     </nav>
@@ -394,7 +396,7 @@ const CategoryPage: React.FC = () => {
                                         )}
                                     </div>
                                     <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
-                                        {subcategory.name}
+                                        {translateCategory(subcategory)}
                                     </h3>
                                 </Link>
                             ))}
@@ -437,7 +439,7 @@ const CategoryPage: React.FC = () => {
                                         )}
                                     </div>
                                     <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
-                                        {subSubcategory.name}
+                                        {translateCategory(subSubcategory)}
                                     </h3>
                                 </Link>
                             ))}
@@ -459,8 +461,8 @@ const CategoryPage: React.FC = () => {
                                     </p>
                                     <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                                         {categoryInfo.subSubcategory 
-                                            ? categoryInfo.subSubcategory.name
-                                            : categoryInfo.subcategory?.name}
+                                            ? translateCategory(categoryInfo.subSubcategory)
+                                            : translateCategory(categoryInfo.subcategory)}
                                     </h2>
                                     {(categoryInfo.subSubcategory?.description || categoryInfo.subcategory?.description) && (
                                         <p className="text-gray-600 mt-2 max-w-2xl">
@@ -478,8 +480,8 @@ const CategoryPage: React.FC = () => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
                                     {categoryInfo.subSubcategory 
-                                        ? `Back to ${categoryInfo.subcategory?.name}`
-                                        : `Back to ${categoryInfo.category.name}`}
+                                        ? `${t('common.back')} ${translateCategory(categoryInfo.subcategory)}`
+                                        : `${t('common.back')} ${translateCategory(categoryInfo.category)}`}
                                 </Link>
                             </div>
                         </div>
@@ -498,10 +500,10 @@ const CategoryPage: React.FC = () => {
                                 </svg>
                                 <p className="text-lg md:text-xl text-gray-600 mb-2 font-semibold">
                                     {categoryInfo.subSubcategory 
-                                        ? `No products found in ${categoryInfo.subSubcategory.name}`
+                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subSubcategory) })
                                         : categoryInfo.subcategory 
-                                        ? `No products found in ${categoryInfo.subcategory.name}`
-                                        : `No products found in ${categoryInfo.category.name}`}
+                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subcategory) })
+                                        : t('shop.noProducts', { category: translateCategory(categoryInfo.category) })}
                                 </p>
                                 <p className="text-sm text-gray-500 mb-6">
                                     {categoryInfo.subSubcategory 
@@ -515,14 +517,14 @@ const CategoryPage: React.FC = () => {
                                         to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`}
                                         className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
                                     >
-                                        View {categoryInfo.subcategory?.name} Products
+                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
                                     </Link>
                                 ) : categoryInfo.subcategory ? (
                                     <Link 
                                         to={`/category/${categoryInfo.category.slug}`}
                                         className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
                                     >
-                                        View {categoryInfo.category.name} Products
+                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.category) })}
                                     </Link>
                                 ) : null}
                                 <Link 

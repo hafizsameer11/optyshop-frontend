@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
+import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getProducts, 
     getProductOptions,
@@ -16,6 +17,7 @@ import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../se
 
 const Products: React.FC = () => {
     const { t } = useTranslation()
+    const { translateCategory } = useCategoryTranslation()
     const { addToCart } = useCart()
     const [searchParams, setSearchParams] = useSearchParams()
     const [products, setProducts] = useState<Product[]>([])
@@ -321,16 +323,16 @@ const Products: React.FC = () => {
                     <div className="text-center text-white">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
                             {categoryInfo.subcategory 
-                                ? categoryInfo.subcategory.name 
+                                ? translateCategory(categoryInfo.subcategory)
                                 : categoryInfo.category 
-                                    ? categoryInfo.category.name 
+                                    ? translateCategory(categoryInfo.category)
                                     : t('shop.title')}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
                             {categoryInfo.subcategory 
-                                ? t('shop.browseCollection', { name: categoryInfo.subcategory.name }) || `Browse our collection of ${categoryInfo.subcategory.name}`
+                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
                                 : categoryInfo.category 
-                                    ? t('shop.discoverCollection', { name: categoryInfo.category.name }) || `Discover our wide collection of ${categoryInfo.category.name}`
+                                    ? t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })
                                     : t('shop.description')}
                         </p>
                     </div>
