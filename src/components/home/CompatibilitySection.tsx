@@ -8,7 +8,7 @@ const CompatibilitySection: React.FC = () => {
         { name: 'WooCommerce', logo: '/assets/images/Woocomerce-logo-web.webp' },
         { name: 'Shopify', logo: '/assets/images/Shopify-logo-web.webp' },
         { name: 'PrestaShop', logo: '/assets/images/Prestashop-logo-web.webp' },
-        { name: 'Drupal', logo: '/assets/images/Drupal-logo-web.webp' },
+        { name: 'Drupal', logo: '/assets/images/drupal-logo-web.webp' },
     ]
 
     return (

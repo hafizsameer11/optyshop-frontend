@@ -97,33 +97,63 @@ const BannerComponent: React.FC = () => {
         // Fallback to a default hero image if none is provided by admin
         const fallback = '/assets/images/banner CES-Frame Removal-desktop.webp'
 
-        if (!imageUrl) return fallback
+        if (!imageUrl || imageUrl.trim() === '') return fallback
+
+        // Clean up the URL - remove any whitespace
+        const cleanedUrl = imageUrl.trim()
 
         // If it's a full URL with localhost:5000, convert to relative path (dev environment)
-        if (imageUrl.includes('http://localhost:5000') || imageUrl.includes('http://127.0.0.1:5000')) {
-            const url = new URL(imageUrl)
-            return url.pathname || fallback
+        if (cleanedUrl.includes('http://localhost:5000') || cleanedUrl.includes('http://127.0.0.1:5000')) {
+            try {
+                const url = new URL(cleanedUrl)
+                return url.pathname || fallback
+            } catch {
+                // If URL parsing fails, try to extract path manually
+                const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
+                if (pathMatch && pathMatch[1]) {
+                    return pathMatch[1]
+                }
+                return fallback
+            }
         }
 
         // If backend returned an insecure http URL on a https site, upgrade to https
-        if (imageUrl.startsWith('http://')) {
+        if (cleanedUrl.startsWith('http://')) {
             try {
-                const url = new URL(imageUrl)
+                const url = new URL(cleanedUrl)
                 url.protocol = 'https:'
                 return url.toString()
             } catch {
-                // If parsing fails, fall back to default
+                // If parsing fails, try to manually convert
+                if (cleanedUrl.startsWith('http://')) {
+                    return cleanedUrl.replace('http://', 'https://')
+                }
                 return fallback
             }
         }
 
         // If it's already a relative path, return as is
-        if (imageUrl.startsWith('/')) {
-            return imageUrl
+        if (cleanedUrl.startsWith('/')) {
+            return cleanedUrl
         }
 
-        // Otherwise return the full URL
-        return imageUrl
+        // If it's a data URL, return as is
+        if (cleanedUrl.startsWith('data:')) {
+            return cleanedUrl
+        }
+
+        // If it starts with https://, return as is
+        if (cleanedUrl.startsWith('https://')) {
+            return cleanedUrl
+        }
+
+        // If it's a relative path without leading slash, add it
+        if (!cleanedUrl.startsWith('http') && !cleanedUrl.startsWith('/')) {
+            return '/' + cleanedUrl
+        }
+
+        // Otherwise return the full URL or cleaned URL
+        return cleanedUrl || fallback
     }
 
     // Parse meta field for banner metadata (description, buttons, etc.)
@@ -207,20 +237,22 @@ const BannerComponent: React.FC = () => {
                 <Navbar />
 
                 {/* Banner Slider Container */}
-                <div className="relative flex-1 overflow-hidden">
+                <div className="relative flex-1 overflow-hidden min-h-screen">
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"
                     style={{
                         transform: `translateX(-${currentIndex * 100}%)`,
+                        height: '100%',
                     }}
                 >
                         {banners.map((banner, index) => {
                             const bannerMeta = parseMeta(banner.meta)
+                            const imageUrl = getImageUrl(banner.image_url)
                             return (
                         <div
                             key={banner.id || index}
-                            className="min-w-full h-full relative cursor-pointer"
+                            className="min-w-full h-full relative cursor-pointer flex-shrink-0 w-full"
                             onClick={() => {
                                 // Only handle banner click if there's a link_url and no buttons
                                 const meta = parseMeta(banner.meta)
@@ -233,17 +265,43 @@ const BannerComponent: React.FC = () => {
                                 }
                             }}
                             style={{
-                                backgroundImage: `url(${getImageUrl(banner.image_url)})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat',
+                                height: '100%',
+                                minHeight: '100vh',
+                                width: '100%',
                             }}
                         >
+                            {/* Background Image - Primary method */}
+                            <div
+                                className="absolute inset-0 w-full h-full bg-slate-900"
+                                style={{
+                                    backgroundImage: `url(${imageUrl})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                    backgroundRepeat: 'no-repeat',
+                                }}
+                            />
+                            
+                            {/* Fallback Image Tag - Ensures display even if background-image fails */}
+                            <img
+                                src={imageUrl}
+                                alt={banner.title || 'Banner'}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                style={{
+                                    objectFit: 'cover',
+                                    objectPosition: 'center',
+                                }}
+                                onError={(e) => {
+                                    // If image fails to load, hide the img tag and rely on background
+                                    const target = e.target as HTMLImageElement
+                                    target.style.display = 'none'
+                                }}
+                            />
+                            
                             {/* Overlay for better text readability */}
-                                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80" />
+                                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 z-10" />
 
                             {/* Banner Content */}
-                                    <main className="relative z-10 flex-1 flex items-center justify-center px-6 lg:px-20 pb-16 min-h-screen">
+                                    <main className="relative z-20 flex-1 flex items-center justify-center px-6 lg:px-20 pb-16 h-full min-h-screen">
                                         <div className="max-w-3xl text-center">
                             {banner.title && (
                                                 <h1 className="text-3xl sm:text-4xl lg:text-6xl font-semibold leading-tight">
