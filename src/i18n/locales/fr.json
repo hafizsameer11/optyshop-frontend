@@ -44,7 +44,9 @@
     "shipping": "Expédition",
     "tax": "Taxe",
     "discount": "Remise",
-    "home": "Accueil"
+    "home": "Accueil",
+    "yes": "OUI",
+    "no": "NON"
   },
   "home": {
     "hero": {
@@ -192,7 +194,26 @@
     "outOfStockMessage": "Ce produit est actuellement en rupture de stock. Vous ne pouvez pas l'ajouter à votre panier pour le moment.",
     "description": "Découvrez notre vaste collection de lunettes et de lunettes de soleil",
     "browseCollection": "Parcourez notre collection de {{name}}",
-    "discoverCollection": "Découvrez notre vaste collection de {{name}}"
+    "discoverCollection": "Découvrez notre vaste collection de {{name}}",
+    "unit": "Unité",
+    "box": "Boîte",
+    "pack": "Paquet",
+    "selected": "Sélectionné",
+    "unitDescription": "Lentille unique",
+    "boxDescription": "Boîte de lentilles (généralement 6-30 lentilles)",
+    "packDescription": "Paquet de lentilles",
+    "productSpecifications": "Spécifications du Produit",
+    "sleepingWithLenses": "Dormir avec les Lentilles",
+    "uvFilter": "Filtre UV",
+    "medicalDevice": "Dispositif Médical",
+    "noTreatmentsAvailable": "Aucun traitement disponible pour le moment.",
+    "treatment": "Traitement",
+    "loadingTreatments": "Chargement des traitements...",
+    "items": "articles",
+    "free": "Gratuit",
+    "businessDays": "jours ouvrables",
+    "loadingShipping": "Chargement des options d'expédition...",
+    "estimateTotal": "Total Estimé"
   },
   "cart": {
     "title": "Panier d'Achat",

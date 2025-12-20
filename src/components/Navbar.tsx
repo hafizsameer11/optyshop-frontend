@@ -15,7 +15,11 @@ const Navbar: React.FC = () => {
     const [openSubDropdown, setOpenSubDropdown] = useState<number | null>(null)
     const [mobileOpenCategory, setMobileOpenCategory] = useState<number | null>(null)
     const [mobileOpenSubcategory, setMobileOpenSubcategory] = useState<number | null>(null)
+    const [clickedDropdown, setClickedDropdown] = useState<number | null>(null) // Track which dropdown was opened by click
+    const [clickedSubDropdown, setClickedSubDropdown] = useState<number | null>(null) // Track which sub-dropdown was opened by click
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const subDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const { categories, loading } = useCategories()
 
     // Debug: Log categories structure
@@ -76,6 +80,8 @@ const Navbar: React.FC = () => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setOpenDropdown(null)
                 setOpenSubDropdown(null)
+                setClickedDropdown(null) // Reset click state
+                setClickedSubDropdown(null) // Reset sub-dropdown click state
             }
         }
 
@@ -87,6 +93,18 @@ const Navbar: React.FC = () => {
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [openDropdown])
+
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (dropdownTimeoutRef.current) {
+                clearTimeout(dropdownTimeoutRef.current)
+            }
+            if (subDropdownTimeoutRef.current) {
+                clearTimeout(subDropdownTimeoutRef.current)
+            }
+        }
+    }, [])
 
     // Helper function to check if path matches category/subcategory
     const isCategoryActive = (category: Category) => {
@@ -155,41 +173,100 @@ const Navbar: React.FC = () => {
                             key={category.id}
                             className="relative group"
                             onMouseEnter={() => {
+                                // Clear any pending close timeout
+                                if (dropdownTimeoutRef.current) {
+                                    clearTimeout(dropdownTimeoutRef.current)
+                                    dropdownTimeoutRef.current = null
+                                }
                                 if (category.subcategories && category.subcategories.length > 0) {
                                     setOpenDropdown(category.id)
                                 }
                             }}
                             onMouseLeave={() => {
-                                setOpenDropdown(null)
-                                setOpenSubDropdown(null)
+                                // Only close on mouse leave if not opened by click
+                                if (clickedDropdown !== category.id) {
+                                    // Add delay before closing to allow smooth transition
+                                    dropdownTimeoutRef.current = setTimeout(() => {
+                                        setOpenDropdown(null)
+                                        setOpenSubDropdown(null)
+                                    }, 200) // 200ms delay
+                                }
                             }}
                         >
-                            <Link
-                                to={`/category/${category.slug}`}
-                                className={`h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-1.5 ${
-                                    isCategoryActive(category)
-                                        ? 'bg-blue-800/50 text-blue-100 shadow-md' 
-                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
-                                }`}
-                            >
-                                <span>{category.name}</span>
+                            <div className="flex items-center">
+                                <Link
+                                    to={`/category/${category.slug}`}
+                                    className={`h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-1.5 ${
+                                        isCategoryActive(category)
+                                            ? 'bg-blue-800/50 text-blue-100 shadow-md' 
+                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
+                                    }`}
+                                >
+                                    <span>{category.name}</span>
+                                </Link>
                                 {category.subcategories && category.subcategories.length > 0 && (
-                                    <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === category.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
+                                    <button
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            // Toggle dropdown on click
+                                            if (openDropdown === category.id && clickedDropdown === category.id) {
+                                                // Close if already open and was opened by click
+                                                setOpenDropdown(null)
+                                                setOpenSubDropdown(null)
+                                                setClickedDropdown(null)
+                                            } else {
+                                                // Open dropdown
+                                                setOpenDropdown(category.id)
+                                                setClickedDropdown(category.id)
+                                                setOpenSubDropdown(null)
+                                            }
+                                        }}
+                                        className={`h-10 px-1.5 flex items-center justify-center text-white transition-all duration-200 ${
+                                            openDropdown === category.id
+                                                ? 'text-cyan-200' 
+                                                : 'hover:text-cyan-200'
+                                        }`}
+                                        aria-label="Toggle subcategories"
+                                    >
+                                        <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === category.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
                                 )}
-                            </Link>
+                            </div>
+                            
+                            {/* Visual bridge to prevent gap issues */}
+                            {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
+                                <div 
+                                    className="absolute top-full left-0 right-0 h-2 z-40"
+                                    style={{ pointerEvents: 'none' }}
+                                />
+                            )}
                             
                             {/* Subcategories dropdown */}
                             {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
                                 <div 
-                                    className="absolute top-full left-0 mt-1 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out"
-                                    onMouseEnter={() => setOpenDropdown(category.id)}
-                                    onMouseLeave={() => {
-                                        setOpenDropdown(null)
-                                        setOpenSubDropdown(null)
+                                    className="absolute top-full left-0 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out"
+                                    style={{ marginTop: '2px', paddingTop: '8px' }}
+                                    onMouseEnter={() => {
+                                        // Clear any pending close timeout
+                                        if (dropdownTimeoutRef.current) {
+                                            clearTimeout(dropdownTimeoutRef.current)
+                                            dropdownTimeoutRef.current = null
+                                        }
+                                        setOpenDropdown(category.id)
                                     }}
-                                    style={{ marginTop: '4px' }}
+                                    onMouseLeave={() => {
+                                        // Only close on mouse leave if not opened by click
+                                        if (clickedDropdown !== category.id) {
+                                            // Add delay before closing
+                                            dropdownTimeoutRef.current = setTimeout(() => {
+                                                setOpenDropdown(null)
+                                                setOpenSubDropdown(null)
+                                            }, 200)
+                                        }
+                                    }}
                                 >
                                     <div className="px-2">
                                         {category.subcategories.map((subcategory, index) => (
@@ -197,12 +274,23 @@ const Navbar: React.FC = () => {
                                                 key={subcategory.id}
                                                 className="relative group/subcat"
                                                 onMouseEnter={() => {
+                                                    // Clear any pending close timeout
+                                                    if (subDropdownTimeoutRef.current) {
+                                                        clearTimeout(subDropdownTimeoutRef.current)
+                                                        subDropdownTimeoutRef.current = null
+                                                    }
                                                     if (subcategory.children && subcategory.children.length > 0) {
                                                         setOpenSubDropdown(subcategory.id)
                                                     }
                                                 }}
                                                 onMouseLeave={() => {
-                                                    setOpenSubDropdown(null)
+                                                    // Only close on mouse leave if not opened by click
+                                                    if (clickedSubDropdown !== subcategory.id) {
+                                                        // Add delay before closing sub-dropdown
+                                                        subDropdownTimeoutRef.current = setTimeout(() => {
+                                                            setOpenSubDropdown(null)
+                                                        }, 150)
+                                                    }
                                                 }}
                                             >
                                                 {index > 0 && (
@@ -212,8 +300,18 @@ const Navbar: React.FC = () => {
                                                     <Link
                                                         to={`/category/${category.slug}/${subcategory.slug}`}
                                                         className="flex-1 px-4 py-2.5 text-sm font-medium text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 rounded-lg transition-all duration-200 flex items-center gap-2 group/item"
-                                                        onClick={() => setOpenDropdown(null)}
+                                                        onClick={() => {
+                                                            // Only close if not opened by click, or close on link click
+                                                            if (clickedDropdown !== category.id) {
+                                                                setOpenDropdown(null)
+                                                            }
+                                                        }}
                                                         onMouseEnter={() => {
+                                                            // Clear any pending close timeout
+                                                            if (subDropdownTimeoutRef.current) {
+                                                                clearTimeout(subDropdownTimeoutRef.current)
+                                                                subDropdownTimeoutRef.current = null
+                                                            }
                                                             if (subcategory.children && subcategory.children.length > 0) {
                                                                 setOpenSubDropdown(subcategory.id)
                                                             }
@@ -223,23 +321,68 @@ const Navbar: React.FC = () => {
                                                         <span>{subcategory.name}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
-                                                        <div 
-                                                            className="px-2 cursor-pointer"
-                                                            onMouseEnter={() => setOpenSubDropdown(subcategory.id)}
+                                                        <button
+                                                            type="button"
+                                                            className="px-2 cursor-pointer focus:outline-none"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                // Toggle sub-dropdown on click
+                                                                if (openSubDropdown === subcategory.id && clickedSubDropdown === subcategory.id) {
+                                                                    setOpenSubDropdown(null)
+                                                                    setClickedSubDropdown(null)
+                                                                } else {
+                                                                    setOpenSubDropdown(subcategory.id)
+                                                                    setClickedSubDropdown(subcategory.id)
+                                                                }
+                                                            }}
+                                                            onMouseEnter={() => {
+                                                                // Clear any pending close timeout
+                                                                if (subDropdownTimeoutRef.current) {
+                                                                    clearTimeout(subDropdownTimeoutRef.current)
+                                                                    subDropdownTimeoutRef.current = null
+                                                                }
+                                                                setOpenSubDropdown(subcategory.id)
+                                                            }}
+                                                            aria-label="Toggle sub-subcategories"
                                                         >
-                                                            <svg className="w-4 h-4 text-cyan-400/70 group-hover/subcat:text-cyan-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <svg className={`w-4 h-4 text-cyan-400/70 group-hover/subcat:text-cyan-300 transition-colors ${openSubDropdown === subcategory.id ? 'text-cyan-300' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                             </svg>
-                                                        </div>
+                                                        </button>
                                                     )}
                                                 </div>
+                                                
+                                                {/* Visual bridge for sub-subcategories */}
+                                                {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
+                                                    <div 
+                                                        className="absolute left-full top-0 bottom-0 w-2 z-[55]"
+                                                        style={{ pointerEvents: 'none' }}
+                                                    />
+                                                )}
                                                 
                                                 {/* Sub-subcategories nested dropdown */}
                                                 {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
                                                     <div 
-                                                        className="absolute left-full top-0 ml-1 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-[60] transform transition-all duration-200 ease-out"
-                                                        onMouseEnter={() => setOpenSubDropdown(subcategory.id)}
-                                                        onMouseLeave={() => setOpenSubDropdown(null)}
+                                                        className="absolute left-full top-0 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-[60] transform transition-all duration-200 ease-out"
+                                                        style={{ marginLeft: '4px' }}
+                                                        onMouseEnter={() => {
+                                                            // Clear any pending close timeout
+                                                            if (subDropdownTimeoutRef.current) {
+                                                                clearTimeout(subDropdownTimeoutRef.current)
+                                                                subDropdownTimeoutRef.current = null
+                                                            }
+                                                            setOpenSubDropdown(subcategory.id)
+                                                        }}
+                                                        onMouseLeave={() => {
+                                                            // Only close on mouse leave if not opened by click
+                                                            if (clickedSubDropdown !== subcategory.id) {
+                                                                // Add delay before closing
+                                                                subDropdownTimeoutRef.current = setTimeout(() => {
+                                                                    setOpenSubDropdown(null)
+                                                                }, 150)
+                                                            }
+                                                        }}
                                                     >
                                                         <div className="px-2">
                                                             <div className="px-3 py-1.5 mb-1">
@@ -256,6 +399,8 @@ const Navbar: React.FC = () => {
                                                                         onClick={() => {
                                                                             setOpenDropdown(null)
                                                                             setOpenSubDropdown(null)
+                                                                            setClickedDropdown(null)
+                                                                            setClickedSubDropdown(null)
                                                                         }}
                                                                     >
                                                                         <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>

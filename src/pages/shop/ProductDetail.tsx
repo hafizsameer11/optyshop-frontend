@@ -56,9 +56,9 @@ const ProductDetail: React.FC = () => {
     
     // Unit options for contact lenses
     const unitOptions = [
-        { value: 'unit', label: 'Unit', description: 'Single lens' },
-        { value: 'box', label: 'Box', description: 'Box of lenses (typically 6-30 lenses)' },
-        { value: 'pack', label: 'Pack', description: 'Pack of lenses' }
+        { value: 'unit', label: t('shop.unit'), description: t('shop.unitDescription', 'Single lens') },
+        { value: 'box', label: t('shop.box'), description: t('shop.boxDescription', 'Box of lenses (typically 6-30 lenses)') },
+        { value: 'pack', label: t('shop.pack'), description: t('shop.packDescription', 'Pack of lenses') }
     ]
     const [contactLensErrors, setContactLensErrors] = useState<Record<string, string>>({})
     const [contactLensLoading, setContactLensLoading] = useState(false)
@@ -431,17 +431,63 @@ const ProductDetail: React.FC = () => {
             : Number(product.price || 0)
     }, [product])
     
+    // Get unit-based pricing from product or calculate based on multipliers
+    const getUnitPrice = useMemo(() => {
+        if (!product) {
+            return (unit: string) => productBasePrice
+        }
+        const p = product as any
+        
+        // Check if API provides unit-specific prices
+        const boxPrice = p.box_price || null
+        const packPrice = p.pack_price || null
+        
+        // Return function that calculates price based on unit
+        return (unit: string) => {
+            if (unit === 'unit') {
+                return productBasePrice
+            } else if (unit === 'box' && boxPrice) {
+                return Number(boxPrice)
+            } else if (unit === 'pack' && packPrice) {
+                return Number(packPrice)
+            } else {
+                // Calculate based on multipliers (box = 6x, pack = 12x)
+                const multipliers: Record<string, number> = {
+                    unit: 1,
+                    box: 6,
+                    pack: 12
+                }
+                return productBasePrice * (multipliers[unit] || 1)
+            }
+        }
+    }, [product, productBasePrice])
+    
     // Memoize total calculation to prevent recalculation on every render
+    // Now includes unit-based pricing
     const calculateContactLensTotal = useMemo(() => {
         if (!contactLensFormData.right_power || !contactLensFormData.left_power || productBasePrice === 0) {
             return 0
         }
         
-        const rightTotal = productBasePrice * contactLensFormData.right_qty
-        const leftTotal = productBasePrice * contactLensFormData.left_qty
+        // Get price per unit (unit/box/pack)
+        const unitPrice = getUnitPrice(contactLensFormData.unit)
+        
+        // For unit selection, calculate total based on quantity
+        // If unit is 'box' or 'pack', the price is already for the whole box/pack
+        // So we multiply by quantity of boxes/packs
+        const rightTotal = unitPrice * contactLensFormData.right_qty
+        const leftTotal = unitPrice * contactLensFormData.left_qty
         
         return rightTotal + leftTotal
-    }, [productBasePrice, contactLensFormData.right_power, contactLensFormData.left_power, contactLensFormData.right_qty, contactLensFormData.left_qty])
+    }, [
+        productBasePrice, 
+        contactLensFormData.right_power, 
+        contactLensFormData.left_power, 
+        contactLensFormData.right_qty, 
+        contactLensFormData.left_qty,
+        contactLensFormData.unit,
+        getUnitPrice
+    ])
 
     // Helper function to check if product is out of stock (MUST be before conditional returns)
     const isProductOutOfStock = useMemo(() => {
@@ -1014,21 +1060,21 @@ const ProductDetail: React.FC = () => {
                                 {isContactLens ? (
                                     <div className="mb-6">
                                         {/* Unit Selector */}
-                                        <div className="mb-4">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Unit</label>
-                                            <div className="flex gap-2 flex-wrap">
+                                        <div className="mb-6">
+                                            <label className="block text-base font-semibold text-gray-900 mb-3">{t('shop.unit')}</label>
+                                            <div className="flex gap-3 flex-wrap">
                                                 {unitOptions.map((unitOption) => (
                                                     <button
                                                         key={unitOption.value}
                                                         type="button"
                                                         onClick={() => handleContactLensFieldChange('unit', unitOption.value)}
                                                         disabled={isProductOutOfStock}
-                                                        className={`px-4 py-2 text-sm rounded-lg border transition-colors ${
+                                                        className={`px-6 py-3 text-sm font-medium rounded-lg border-2 transition-all duration-200 ${
                                                             isProductOutOfStock
                                                                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
                                                                 : contactLensFormData.unit === unitOption.value
-                                                                    ? 'bg-blue-600 text-white border-blue-600 font-semibold'
-                                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200'
+                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md scale-105'
+                                                                    : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100 hover:border-gray-400'
                                                         }`}
                                                         title={unitOption.description}
                                                     >
@@ -1036,14 +1082,12 @@ const ProductDetail: React.FC = () => {
                                                     </button>
                                                 ))}
                                             </div>
-                                            {import.meta.env.DEV && (
-                                                <p className="text-xs text-gray-500 mt-1">Selected: {contactLensFormData.unit}</p>
-                                            )}
+                                            <p className="text-sm text-gray-600 mt-2">{t('shop.selected')}: {contactLensFormData.unit}</p>
                                         </div>
                                         
                                         {/* Price Display */}
                                         <div className="mb-6">
-                                            <div className="text-3xl font-bold text-gray-900">
+                                            <div className="text-4xl font-bold text-gray-900">
                                                 ${calculateContactLensTotal.toFixed(2)}
                                             </div>
                                         </div>
@@ -1391,75 +1435,34 @@ const ProductDetail: React.FC = () => {
             {isContactLens && (
                 <section className="py-12 md:py-16 bg-gray-50 px-4 sm:px-6">
                     <div className="w-[90%] mx-auto max-w-7xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Product Specifications</h2>
-                        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
+                        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">{t('shop.productSpecifications')}</h2>
+                        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {p.contact_lens_brand && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Producer:</span>
-                                        <span className="text-gray-600">{p.contact_lens_brand}</span>
-                                    </div>
-                                )}
-                                {p.brand && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Brand:</span>
-                                        <span className="text-gray-600">{p.brand}</span>
-                                    </div>
-                                )}
-                                {p.contact_lens_material && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Material:</span>
-                                        <span className="text-gray-600">{p.contact_lens_material}</span>
-                                    </div>
-                                )}
-                                {p.contact_lens_color && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Lens Color:</span>
-                                        <span className="text-gray-600">{p.contact_lens_color}</span>
-                                    </div>
-                                )}
-                                {p.contact_lens_type && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Product Type:</span>
-                                        <span className="text-gray-600">{p.contact_lens_type}</span>
-                                    </div>
-                                )}
-                                {p.replacement_frequency && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Replacement Frequency:</span>
-                                        <span className="text-gray-600">{p.replacement_frequency}</span>
-                                    </div>
-                                )}
-                                {p.water_content !== undefined && p.water_content !== null && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Water Content:</span>
-                                        <span className="text-gray-600">{p.water_content}%</span>
-                                    </div>
-                                )}
-                                {p.powers_range && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Powers:</span>
-                                        <span className="text-gray-600">{typeof p.powers_range === 'string' ? p.powers_range : JSON.stringify(p.powers_range)}</span>
-                                    </div>
-                                )}
-                                {p.can_sleep_with !== undefined && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Sleeping with Lenses:</span>
-                                        <span className="text-gray-600">{p.can_sleep_with ? 'YES' : 'NO'}</span>
-                                    </div>
-                                )}
-                                {p.is_medical_device !== undefined && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">Medical Device:</span>
-                                        <span className="text-gray-600">{p.is_medical_device ? 'YES' : 'NO'}</span>
-                                    </div>
-                                )}
-                                {p.has_uv_filter !== undefined && (
-                                    <div className="flex">
-                                        <span className="font-semibold text-gray-700 w-48">UV Filter:</span>
-                                        <span className="text-gray-600">{p.has_uv_filter ? 'YES' : 'NO'}</span>
-                                    </div>
-                                )}
+                                {/* Left Column */}
+                                <div className="space-y-4">
+                                    {p.can_sleep_with !== undefined && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-semibold text-gray-700">{t('shop.sleepingWithLenses')}:</span>
+                                            <span className="text-gray-900 font-medium">{p.can_sleep_with ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
+                                        </div>
+                                    )}
+                                    {p.has_uv_filter !== undefined && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-semibold text-gray-700">{t('shop.uvFilter')}:</span>
+                                            <span className="text-gray-900 font-medium">{p.has_uv_filter ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Right Column */}
+                                <div className="space-y-4">
+                                    {p.is_medical_device !== undefined && (
+                                        <div className="flex items-center justify-between">
+                                            <span className="font-semibold text-gray-700">{t('shop.medicalDevice')}:</span>
+                                            <span className="text-gray-900 font-medium">{p.is_medical_device ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

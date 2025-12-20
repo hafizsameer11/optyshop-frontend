@@ -14,7 +14,6 @@ import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '..
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
 import { 
-  getPrescriptionLensTypes as getPrescriptionLensTypesFromCustomization, 
   calculateCustomizationPriceWithPrescription,
   getProductCustomizationOptions,
   calculateCustomizationPrice,
@@ -35,9 +34,16 @@ import {
   type ProductConfiguration as ProductConfig,
   type LensThicknessMaterial,
   type LensThicknessOption,
-  type LensTreatment,
-  type PrescriptionLensType as ConfigPrescriptionLensType
+  type LensTreatment
 } from '../../services/productConfigurationService'
+import {
+  getShippingMethods,
+  type ShippingMethod
+} from '../../services/shippingMethodsService'
+import {
+  getLensOptions,
+  type LensOption
+} from '../../services/lensOptionsService'
 
 interface ProductCheckoutProps {
   product: Product
@@ -80,6 +86,7 @@ interface PrescriptionFormData {
 }
 
 const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
@@ -88,7 +95,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [coatingOptions, setCoatingOptions] = useState<LensCoating[]>([])
   const [lensIndexOptions, setLensIndexOptions] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [selectedImageIndex] = useState(0)
   
   const [lensSelection, setLensSelection] = useState<LensSelection>({
     type: 'distance_vision',
@@ -100,7 +107,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [orderSummary, setOrderSummary] = useState<Array<{
     name: string
     price: number
-    type: 'product' | 'lens_type' | 'coating' | 'treatment'
+    type: 'product' | 'lens_type' | 'coating' | 'treatment' | 'lens_thickness' | 'shipping'
+    id?: string | number
+    removable?: boolean
   }>>([])
 
   // Use the API hook to fetch treatments, lens types, and shipping options
@@ -134,8 +143,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [prescriptionLensTypes, setPrescriptionLensTypes] = useState<PrescriptionLensType[]>([])
   // Store the actual API prescription lens types with their IDs for fetching variants
   const [apiPrescriptionLensTypes, setApiPrescriptionLensTypes] = useState<PrescriptionLensType[]>([])
-  const [priceCalculation, setPriceCalculation] = useState<{ total: number; breakdown: Array<{ item: string; price: number }> } | null>(null)
-  const [productCustomizationOptions, setProductCustomizationOptions] = useState<ProductCustomizationOptions | null>(null)
+  const [, setPriceCalculation] = useState<{ total: number; breakdown: Array<{ item: string; price: number }> } | null>(null)
+  const [, setProductCustomizationOptions] = useState<ProductCustomizationOptions | null>(null)
   // Start with empty array - will be populated from API (admin data)
   // Type matches API guide structure: isRecommended, viewingRange, useCases
   const [progressiveOptions, setProgressiveOptions] = useState<Array<{ 
@@ -157,6 +166,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [lensThicknessOptions, setLensThicknessOptions] = useState<LensThicknessOption[]>([])
   const [configTreatments, setConfigTreatments] = useState<LensTreatment[]>([])
   const [configLoading, setConfigLoading] = useState(true)
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
+  const [shippingLoading, setShippingLoading] = useState(true)
+  const [photochromicOptions, setPhotochromicOptions] = useState<LensOption[]>([])
+  const [prescriptionSunOptions, setPrescriptionSunOptions] = useState<LensOption[]>([])
+  const [lensOptionsLoading, setLensOptionsLoading] = useState(true)
 
   useEffect(() => {
     // PRIMARY API: GET /api/products/:id/configuration (from API guide)
@@ -165,6 +180,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     fetchProductConfiguration()
     fetchProductOptions()
     fetchProductCustomizationOptions()
+    fetchPhotochromicOptions()
+    fetchPrescriptionSunOptions()
+    fetchShippingMethods()
     if (isAuthenticated) {
       fetchSavedPrescriptions()
     }
@@ -186,14 +204,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         
         // Set prescription lens types from configuration
         if (config.prescriptionLensTypes && config.prescriptionLensTypes.length > 0) {
-          // Store the actual API types with their real IDs
-          const apiTypes: PrescriptionLensType[] = config.prescriptionLensTypes.map(type => ({
+          // Store the actual API types with their real IDs - map to ApiPrescriptionLensType format
+          const apiTypes: ApiPrescriptionLensType[] = config.prescriptionLensTypes.map(type => ({
             id: type.id,
             name: type.name,
             slug: type.slug,
             description: type.description || '',
             prescription_type: type.prescriptionType === 'progressive' ? 'progressive' : 'single_vision',
+            base_price: type.basePrice || 0,
             is_active: true,
+            sort_order: 0,
+            colors: [],
             variants: type.variants || []
           }))
           setApiPrescriptionLensTypes(apiTypes)
@@ -208,7 +229,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                   type.slug === 'distance-vision' ? 'distance_vision' : 'near_vision'
           })))
           console.log('✅ [API] Prescription lens types loaded from configuration:', config.prescriptionLensTypes.length)
-          console.log('📋 [API] Actual API types with IDs:', apiTypes.map(t => ({ id: t.id, name: t.name, prescription_type: t.prescription_type })))
+          console.log('📋 [API] Actual API types with IDs:', apiTypes.map(t => ({ id: t.id, name: t.name, prescription_type: t.prescription_type, is_active: t.is_active })))
         }
         
         // Extract Progressive variants from configuration (PRIMARY METHOD)
@@ -246,8 +267,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
             mappedOptions.sort((a, b) => {
               const variantA = activeVariants.find((v: any) => (v.slug || v.id.toString()) === a.id)
               const variantB = activeVariants.find((v: any) => (v.slug || v.id.toString()) === b.id)
-              const sortOrderA = variantA?.sortOrder || variantA?.sort_order || 0
-              const sortOrderB = variantB?.sortOrder || variantB?.sort_order || 0
+              const sortOrderA = (variantA as any)?.sortOrder || (variantA as any)?.sort_order || 0
+              const sortOrderB = (variantB as any)?.sortOrder || (variantB as any)?.sort_order || 0
               if (sortOrderA !== sortOrderB) return sortOrderA - sortOrderB
               if (a.recommended && !b.recommended) return -1
               if (!a.recommended && b.recommended) return 1
@@ -315,17 +336,21 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       if (!types || types.length === 0) {
         console.log('📥 [API] No stored types, fetching from API...')
         // First try to get active types
-        types = await getPrescriptionLensTypes({ isActive: true })
+        const activeTypes = await getPrescriptionLensTypes({ isActive: true })
         
         // If no active types found, try fetching all types (including inactive)
-        if (!types || types.length === 0) {
+        if (!activeTypes || activeTypes.length === 0) {
           console.log('📥 [API] No active types found, fetching all types (including inactive)...')
-          types = await getPrescriptionLensTypes({}) // No filter - get all types
-        }
-        
-        if (types && types.length > 0) {
-          setApiPrescriptionLensTypes(types)
-          console.log(`✅ [API] Fetched ${types.length} prescription lens types (including inactive)`)
+          const allTypes = await getPrescriptionLensTypes({}) // No filter - get all types
+          if (allTypes && allTypes.length > 0) {
+            types = allTypes
+            setApiPrescriptionLensTypes(allTypes)
+            console.log(`✅ [API] Fetched ${allTypes.length} prescription lens types (including inactive)`)
+          }
+        } else {
+          types = activeTypes
+          setApiPrescriptionLensTypes(activeTypes)
+          console.log(`✅ [API] Fetched ${activeTypes.length} active prescription lens types`)
         }
       } else {
         console.log('✅ [API] Using stored API types:', types.length)
@@ -524,7 +549,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           total: variants?.length || 0,
           variantIds: variants?.map(v => v.id) || [],
           variantNames: variants?.map(v => v.name) || [],
-          activeCount: variants?.filter(v => v.is_active === true || v.is_active === 1 || v.is_active === '1').length || 0
+          activeCount: variants?.filter(v => {
+            const active = (v as any).is_active
+            return active === true || active === 1 || active === '1'
+          }).length || 0
         })
       }
       
@@ -594,7 +622,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       
       // Filter to only active variants (double-check even though API should filter)
       const activeVariants = variants.filter(v => {
-        const isActive = v.is_active === true || v.is_active === 1 || v.is_active === '1'
+        const active = (v as any).is_active
+        const isActive = active === true || active === 1 || active === '1'
         if (!isActive) {
           console.debug(`   ⚠️ Variant ${v.id} (${v.name}) is inactive - filtering out`)
         }
@@ -777,8 +806,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         console.log('📋 [API] Thickness options:', options.map(o => ({
           id: o.id,
           name: o.name,
-          thicknessValue: o.thicknessValue,
-          price: o.price
+          thicknessValue: o.thicknessValue
         })))
       } else {
         console.warn('⚠️ [API] No lens thickness options found in API response')
@@ -800,6 +828,72 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
     } catch (error) {
       console.error('❌ [API] Error fetching lens treatments:', error)
+    }
+  }
+
+  // Fetch shipping methods using documented API
+  // GET /api/shipping-methods
+  const fetchShippingMethods = async () => {
+    setShippingLoading(true)
+    try {
+      console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
+      const methods = await getShippingMethods({ isActive: true })
+      if (methods && methods.length > 0) {
+        setShippingMethods(methods)
+        // Auto-select the first shipping method (or free shipping if available)
+        const freeShipping = methods.find(m => m.price === 0 || m.type === 'free')
+        setSelectedShippingMethod(freeShipping || methods[0])
+        console.log('✅ [API] Shipping methods loaded:', methods.length)
+      } else {
+        console.warn('⚠️ [API] No shipping methods available')
+      }
+    } catch (error) {
+      console.error('❌ [API] Error fetching shipping methods:', error)
+    } finally {
+      setShippingLoading(false)
+    }
+  }
+
+  // Fetch photochromic lens options from API
+  // GET /api/lens/options?type=photochromic
+  const fetchPhotochromicOptions = async () => {
+    try {
+      console.log('🔄 [API] Fetching photochromic options: GET /api/lens/options?type=photochromic')
+      const options = await getLensOptions({ type: 'photochromic', isActive: true })
+      if (options && options.length > 0) {
+        setPhotochromicOptions(options)
+        console.log('✅ [API] Photochromic options loaded:', options.length)
+      } else {
+        console.warn('⚠️ [API] No photochromic options available')
+      }
+    } catch (error) {
+      console.error('❌ [API] Error fetching photochromic options:', error)
+    } finally {
+      setLensOptionsLoading(false)
+    }
+  }
+
+  // Fetch prescription sun lens options from API
+  // GET /api/lens/options?type=prescription_sun
+  const fetchPrescriptionSunOptions = async () => {
+    try {
+      console.log('🔄 [API] Fetching prescription sun options: GET /api/lens/options?type=prescription_sun')
+      const options = await getLensOptions({ type: 'prescription_sun', isActive: true })
+      if (options && options.length > 0) {
+        setPrescriptionSunOptions(options)
+        console.log('✅ [API] Prescription sun options loaded:', options.length)
+      } else {
+        // Also try alternative type names
+        const altOptions = await getLensOptions({ type: 'prescription-sun', isActive: true })
+        if (altOptions && altOptions.length > 0) {
+          setPrescriptionSunOptions(altOptions)
+          console.log('✅ [API] Prescription sun options loaded (alt type):', altOptions.length)
+        } else {
+          console.warn('⚠️ [API] No prescription sun options available')
+        }
+      }
+    } catch (error) {
+      console.error('❌ [API] Error fetching prescription sun options:', error)
     }
   }
 
@@ -859,38 +953,38 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 
 
 
-  // Helper function for default progressive options
-  const getDefaultProgressiveOptions = () => [
-          {
-            id: 'premium',
-            name: 'Premium',
-            price: 52.95,
-            description: 'Up to 40% wider viewing areas than Standard. Maximum comfort & balanced vision.',
-            recommended: true,
-            icon: 'premium'
-          },
-          {
-            id: 'standard',
-            name: 'Standard',
-            price: 37.95,
-            description: 'Perfect for everyday tasks, offering a comfortable and well-balanced view.',
-            icon: 'standard'
-          },
-          {
-            id: 'mid-range',
-            name: 'Mid-Range',
-            price: 37.95,
-            description: 'Clear vision within 14 ft, ideal for work, dining out or watching TV. Not for driving.',
-            icon: 'mid-range'
-          },
-          {
-            id: 'near-range',
-            name: 'Near-Range',
-            price: 37.95,
-            description: 'Clear vision within 3 ft, ideal for reading and heavy screen use. Not for driving.',
-            icon: 'near-range'
-          }
-  ]
+  // Helper function for default progressive options (unused - kept for reference)
+  // const getDefaultProgressiveOptions = () => [
+  //   {
+  //     id: 'premium',
+  //     name: 'Premium',
+  //     price: 52.95,
+  //     description: 'Up to 40% wider viewing areas than Standard. Maximum comfort & balanced vision.',
+  //     recommended: true,
+  //     icon: 'premium'
+  //   },
+  //   {
+  //     id: 'standard',
+  //     name: 'Standard',
+  //     price: 37.95,
+  //     description: 'Perfect for everyday tasks, offering a comfortable and well-balanced view.',
+  //     icon: 'standard'
+  //   },
+  //   {
+  //     id: 'mid-range',
+  //     name: 'Mid-Range',
+  //     price: 37.95,
+  //     description: 'Clear vision within 14 ft, ideal for work, dining out or watching TV. Not for driving.',
+  //     icon: 'mid-range'
+  //   },
+  //   {
+  //     id: 'near-range',
+  //     name: 'Near-Range',
+  //     price: 37.95,
+  //     description: 'Clear vision within 3 ft, ideal for reading and heavy screen use. Not for driving.',
+  //     icon: 'near-range'
+  //   }
+  // ]
 
   // Calculate price using API when selections change (debounced)
   useEffect(() => {
@@ -1127,9 +1221,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     setLensSelection(prev => ({ ...prev, lensThicknessOption: option }))
   }
 
-  const handleLensIndexChange = (index: number) => {
-    setLensSelection(prev => ({ ...prev, lensIndex: index, progressiveOption: undefined, progressiveVariantId: undefined }))
-  }
+  // const handleLensIndexChange = (index: number) => {
+  //   setLensSelection(prev => ({ ...prev, lensIndex: index, progressiveOption: undefined, progressiveVariantId: undefined }))
+  // }
 
   const handleProgressiveOptionChange = (optionId: string) => {
     // Find the variant ID for the selected option
@@ -1142,14 +1236,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }))
   }
 
-  const handleCoatingToggle = (coatingSlug: string) => {
-    setLensSelection(prev => ({
-      ...prev,
-      coatings: prev.coatings.includes(coatingSlug)
-        ? prev.coatings.filter(c => c !== coatingSlug)
-        : [...prev.coatings, coatingSlug]
-    }))
-  }
+  // const handleCoatingToggle = (coatingSlug: string) => {
+  //   setLensSelection(prev => ({
+  //     ...prev,
+  //     coatings: prev.coatings.includes(coatingSlug)
+  //       ? prev.coatings.filter(c => c !== coatingSlug)
+  //       : [...prev.coatings, coatingSlug]
+  //   }))
+  // }
 
   // Handle removing items from order summary
   const handleRemoveFromSummary = (item: { name: string; price: number; type: string; id?: string | number; removable?: boolean }) => {
@@ -1194,7 +1288,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 
   // Update order summary whenever selections change
   const updateOrderSummary = useCallback(() => {
-    const summary: Array<{ name: string; price: number; type: 'product' | 'lens_type' | 'coating' | 'treatment' | 'lens_thickness'; id?: string | number; removable?: boolean }> = []
+    const summary: Array<{ name: string; price: number; type: 'product' | 'lens_type' | 'coating' | 'treatment' | 'lens_thickness' | 'shipping'; id?: string | number; removable?: boolean }> = []
     
     // Add base product (not removable)
     const basePrice = product.sale_price && Number(product.sale_price) < Number(product.price)
@@ -1289,9 +1383,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
     }
 
-    // Add selected treatments
+    // Add selected treatments from API
     lensSelection.treatments.forEach(treatmentId => {
-      const treatment = apiTreatments.find(t => t.id === treatmentId)
+      const treatment = configTreatments.find(t => t.id.toString() === treatmentId) || 
+                        apiTreatments.find(t => t.id === treatmentId)
       if (treatment) {
         summary.push({
           name: treatment.name,
@@ -1303,8 +1398,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
     })
 
+    // Add selected shipping method
+    if (selectedShippingMethod) {
+      summary.push({
+        name: selectedShippingMethod.name,
+        price: selectedShippingMethod.price || 0,
+        type: 'shipping',
+        id: `shipping_${selectedShippingMethod.id}`,
+        removable: false
+      })
+    }
+
     setOrderSummary(summary)
-  }, [lensSelection, apiLensTypes, apiTreatments, coatingOptions, product, progressiveOptions, lensThicknessMaterials])
+  }, [lensSelection, apiLensTypes, apiTreatments, configTreatments, coatingOptions, product, progressiveOptions, lensThicknessMaterials, selectedShippingMethod])
 
   const handleTreatmentToggle = (treatmentId: string) => {
     setLensSelection(prev => ({
@@ -1315,14 +1421,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }))
   }
 
-  const handleLensTypeSelect = (lensTypeId: string, colorId: string, color: { id: string; name: string; color: string; gradient?: boolean }) => {
-    setLensSelection(prev => ({
-      ...prev,
-      selectedLensTypeId: lensTypeId,
-      selectedColorId: colorId,
-      selectedColor: color
-    }))
-  }
+  // const handleLensTypeSelect = (lensTypeId: string, colorId: string, color: { id: string; name: string; color: string; gradient?: boolean }) => {
+  //   setLensSelection(prev => ({
+  //     ...prev,
+  //     selectedLensTypeId: lensTypeId,
+  //     selectedColorId: colorId,
+  //     selectedColor: color
+  //   }))
+  // }
 
   // Update order summary when selections change
   useEffect(() => {
@@ -1443,17 +1549,21 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // For progressive lenses, use the progressive option price
       if (lensSelection.progressiveOption) {
         const progressiveOption = progressiveOptions.find(opt => opt.id === lensSelection.progressiveOption)
-        const progressivePrice = typeof progressiveOption?.price === 'string'
-          ? parseFloat(progressiveOption.price.replace(/[^0-9.]/g, '')) || 0
-          : Number(progressiveOption?.price) || 0
+        if (progressiveOption) {
+          const priceValue = progressiveOption.price
+          const progressivePrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
         finalPrice += progressivePrice
+        }
       } else if (lensSelection.lensIndex) {
         // For regular lens index selection
         const selectedLensType = lensOptions.find(lt => lt.index === lensSelection.lensIndex)
-        if (selectedLensType) {
-          const lensPrice = typeof selectedLensType.price_adjustment === 'string'
-            ? parseFloat(selectedLensType.price_adjustment.replace(/[^0-9.]/g, '')) || 0
-            : Number(selectedLensType.price_adjustment) || 0
+        if (selectedLensType && selectedLensType.price_adjustment != null) {
+          const priceValue = selectedLensType.price_adjustment
+          const lensPrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
           finalPrice += lensPrice
           // Store the lens type ID for API
           lensSelection.lensTypeId = selectedLensType.id
@@ -1463,10 +1573,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // Add coating price adjustments
       lensSelection.coatings.forEach(coatingSlug => {
         const coating = coatingOptions.find(c => c.slug === coatingSlug)
-        if (coating) {
-          const coatingPrice = typeof coating.price_adjustment === 'string'
-            ? parseFloat(coating.price_adjustment.replace(/[^0-9.]/g, '')) || 0
-            : Number(coating.price_adjustment) || 0
+        if (coating && coating.price_adjustment != null) {
+          const priceValue = coating.price_adjustment
+          const coatingPrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
           finalPrice += coatingPrice
         }
       })
@@ -1474,20 +1585,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // Add lens thickness price from API
       if (lensSelection.lensThicknessMaterialId) {
         const selectedMaterial = lensThicknessMaterials.find(m => m.id === lensSelection.lensThicknessMaterialId)
-        if (selectedMaterial) {
-          const materialPrice = typeof selectedMaterial.price === 'string'
-            ? parseFloat(selectedMaterial.price.replace(/[^0-9.]/g, '')) || 0
-            : Number(selectedMaterial.price) || 0
+        if (selectedMaterial && selectedMaterial.price != null) {
+          const priceValue = selectedMaterial.price
+          const materialPrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
           finalPrice += materialPrice
         }
       } else if (lensSelection.lensThickness) {
         // Fallback to slug-based lookup if material ID not available
         const materialSlug = lensSelection.lensThickness === 'plastic' ? 'plastic' : 'glass'
         const selectedMaterial = lensThicknessMaterials.find(m => m.slug === materialSlug)
-        if (selectedMaterial) {
-          const materialPrice = typeof selectedMaterial.price === 'string'
-            ? parseFloat(selectedMaterial.price.replace(/[^0-9.]/g, '')) || 0
-            : Number(selectedMaterial.price) || 0
+        if (selectedMaterial && selectedMaterial.price != null) {
+          const priceValue = selectedMaterial.price
+          const materialPrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
           finalPrice += materialPrice
         }
       }
@@ -1495,13 +1608,23 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // Add treatment price adjustments from API
       lensSelection.treatments.forEach(treatmentId => {
         const treatment = apiTreatments.find(t => t.id === treatmentId)
-        if (treatment) {
-          const treatmentPrice = typeof treatment.price === 'string'
-            ? parseFloat(treatment.price.replace(/[^0-9.]/g, '')) || 0
-            : Number(treatment.price) || 0
+        if (treatment && treatment.price != null) {
+          const priceValue = treatment.price
+          const treatmentPrice = typeof priceValue === 'string'
+            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            : Number(priceValue) || 0
           finalPrice += treatmentPrice
         }
       })
+
+      // Add shipping method price to final price
+      if (selectedShippingMethod && selectedShippingMethod.price != null) {
+        const priceValue = selectedShippingMethod.price
+        const shippingPrice = typeof priceValue === 'string'
+          ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
+          : Number(priceValue) || 0
+        finalPrice += shippingPrice
+      }
 
       // If authenticated, add to cart via API
       if (isAuthenticated) {
@@ -1569,17 +1692,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           ? (productConfig?.prescriptionSunColors?.find(c => c.hexCode === lensSelection.prescriptionSunColor?.color)?.id || null)
           : null
 
+        // Map lens type to valid API type
+        const apiLensType = lensSelection.type === 'progressive' ? 'progressive' :
+                           lensSelection.type === 'distance_vision' ? 'distance_vision' :
+                           lensSelection.type === 'near_vision' ? 'near_vision' :
+                           undefined
+
         const cartResult = await addItemToCart({
           product_id: product.id || 0,
           quantity: 1,
-          lens_type: lensSelection.type,
+          lens_type: apiLensType,
           prescription_data: cartPrescriptionData,
           progressive_variant_id: lensSelection.progressiveVariantId,
           lens_thickness_material_id: lensThicknessMaterialId,
           lens_thickness_option_id: lensThicknessOptionId,
           treatment_ids: treatmentIds.length > 0 ? treatmentIds : undefined,
           photochromic_color_id: photochromicColorId,
-          prescription_sun_color_id: prescriptionSunColorId
+          prescription_sun_color_id: prescriptionSunColorId,
+          shipping_method_id: selectedShippingMethod?.id
         })
 
         if (!cartResult.success) {
@@ -1590,7 +1720,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // Also add to local cart for immediate UI update (for both authenticated and guest users)
       // Ensure finalPrice is a proper number (not string concatenation)
       const finalPriceNumber = typeof finalPrice === 'string' 
-        ? parseFloat(finalPrice.replace(/[^0-9.]/g, '')) || 0
+        ? parseFloat(String(finalPrice).replace(/[^0-9.]/g, '')) || 0
         : Number(finalPrice) || 0
       
       const cartProduct = {
@@ -1620,7 +1750,16 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           coatings: lensSelection.coatings,
           treatments: lensSelection.treatments,
           prescription: prescriptionData,
-          prescriptionId: finalPrescriptionId
+          prescriptionId: finalPrescriptionId,
+          // Store shipping method info
+          shippingMethod: selectedShippingMethod ? {
+            id: selectedShippingMethod.id,
+            name: selectedShippingMethod.name,
+            price: selectedShippingMethod.price || 0,
+            estimatedDays: selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays,
+            description: selectedShippingMethod.description,
+            type: selectedShippingMethod.type
+          } : undefined
         }
       } as any
 
@@ -1653,22 +1792,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }
   }
 
-  // Get product images
-  const productImages: string[] = (() => {
-    if (product.images) {
-      if (typeof product.images === 'string') {
-        try {
-          return JSON.parse(product.images)
-        } catch {
-          return [product.images]
-        }
-      }
-      if (Array.isArray(product.images)) {
-        return product.images
-      }
-    }
-    return [product.image || product.image_url || '/assets/images/frame1.png']
-  })()
+  // Get product images (unused - kept for reference)
+  // const productImages: string[] = (() => {
+  //   if (product.images) {
+  //     if (typeof product.images === 'string') {
+  //       try {
+  //         return JSON.parse(product.images)
+  //       } catch {
+  //         return [product.images]
+  //       }
+  //     }
+  //     if (Array.isArray(product.images)) {
+  //       return product.images
+  //     }
+  //   }
+  //   return [product.image || product.image_url || '/assets/images/frame1.png']
+  // })()
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -1722,11 +1861,100 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                   ))
                 )}
               </div>
+              
+              {/* Shipping Method Selection */}
+              {shippingMethods.length > 0 && (
+                <div className="pt-4 border-t border-gray-200 mt-4">
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    {t('common.shipping')}
+                  </label>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {shippingMethods.map((method) => (
+                      <label
+                        key={method.id}
+                        className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                          selectedShippingMethod?.id === method.id
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipping-method"
+                          checked={selectedShippingMethod?.id === method.id}
+                          onChange={() => setSelectedShippingMethod(method)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">{method.name}</div>
+                              {method.description && (
+                                <div className="text-xs text-gray-600 mt-0.5 truncate">{method.description}</div>
+                              )}
+                              {(method.estimated_days || method.estimatedDays) && (
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                  {(method.estimated_days || method.estimatedDays)} {t('shop.businessDays', 'business days')}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-sm font-semibold text-gray-900 whitespace-nowrap ml-2">
+                              {method.price === 0 ? (
+                                <span className="text-green-600">{t('shop.free', 'Free')}</span>
+                              ) : (
+                                `$${method.price.toFixed(2)}`
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {shippingLoading && (
+                <div className="pt-4 border-t border-gray-200 mt-4">
+                  <div className="text-sm text-gray-500">{t('shop.loadingShipping', 'Loading shipping options...')}</div>
+                </div>
+              )}
+
               <div className="pt-4 border-t-2 border-gray-300 mt-4">
-                <div className="text-sm text-gray-500 mb-1">Estimate Total</div>
+                <div className="flex justify-between items-center mb-2">
+                  <div className="text-sm text-gray-500">
+                    {t('common.subtotal')} ({orderSummary.filter(item => item.type !== 'shipping').length} {t('shop.items', 'items')})
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    ${(() => {
+                      const subtotal = orderSummary
+                        .filter(item => item.type !== 'shipping')
+                        .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+                      return subtotal.toFixed(2)
+                    })()}
+                  </div>
+                </div>
+                {selectedShippingMethod && (
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-gray-500">
+                      {t('common.shipping')} 
+                      {selectedShippingMethod.name && (
+                        <span className="ml-1 text-xs text-gray-400">({selectedShippingMethod.name})</span>
+                      )}
+                      {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays) && (
+                        <span className="ml-1 text-xs text-gray-400">
+                          - {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays)} {t('shop.businessDays', 'business days')}
+                        </span>
+                      )}
+                    </div>
+                    <div className={`text-sm font-medium ${selectedShippingMethod.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                      {selectedShippingMethod.price === 0 ? t('shop.free', 'Free') : `$${selectedShippingMethod.price.toFixed(2)}`}
+                    </div>
+                  </div>
+                )}
+                <div className="text-sm text-gray-500 mb-1 mt-3">{t('shop.estimateTotal', 'Estimate Total')}</div>
                 <div className="text-2xl font-bold text-gray-900">
                   ${(() => {
-                    // Always calculate total from order summary (source of truth)
+                    // Always calculate total from order summary (source of truth) - includes shipping
                     const total = orderSummary.reduce((sum, item) => {
                       return sum + (Number(item.price) || 0)
                     }, 0)
@@ -1865,7 +2093,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
             {currentStep === 'treatment' && (
               <TreatmentStep
                 lensSelection={lensSelection}
-                treatments={apiTreatments}
+                treatments={configTreatments.map(t => ({
+                  id: t.id.toString(),
+                  name: t.name,
+                  price: t.price,
+                  description: t.description,
+                  slug: t.slug,
+                  type: t.type
+                }))}
+                productConfig={productConfig}
+                photochromicOptions={photochromicOptions}
+                prescriptionSunOptions={prescriptionSunOptions}
                 onTreatmentToggle={handleTreatmentToggle}
                 onColorSelect={(colorType, color) => {
                   if (colorType === 'photochromic') {
@@ -1876,9 +2114,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 }}
                 onNext={handleNext}
                 onBack={handleBack}
-                loading={customizationLoading}
+                loading={configLoading || customizationLoading || lensOptionsLoading}
                 error={customizationError}
-                onRetry={refetchCustomization}
+                onRetry={() => {
+                  fetchLensTreatments()
+                  refetchCustomization()
+                  fetchPhotochromicOptions()
+                  fetchPrescriptionSunOptions()
+                }}
               />
             )}
 
@@ -1926,12 +2169,15 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   // Use API data if available, otherwise fallback to defaults
   const lensTypeOptions = prescriptionLensTypes.length > 0
     ? prescriptionLensTypes
-        .map(type => ({
-          id: type.type || type.id || 'unknown',
+        .map(type => {
+          const typeId = type.type || (typeof type.id === 'string' ? type.id : String(type.id))
+          return {
+            id: typeId,
           name: type.name || 'Unknown',
           description: type.description || ''
-        }))
-        .filter(option => option.id && option.id !== 'unknown') // Filter out invalid options
+          }
+        })
+        .filter(option => option.id && ['distance_vision', 'near_vision', 'progressive'].includes(option.id)) // Filter out invalid options
     : [
         {
           id: 'distance_vision',
@@ -2306,8 +2552,10 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
 // Treatment Step Component
 interface TreatmentStepProps {
   lensSelection: LensSelection
-  treatments: Array<{ id: string; name: string; price: number; description?: string }>
+  treatments: Array<{ id: string; name: string; price: number; description?: string; slug?: string; type?: string }>
   productConfig?: ProductConfig | null
+  photochromicOptions?: LensOption[]
+  prescriptionSunOptions?: LensOption[]
   onTreatmentToggle: (treatmentId: string) => void
   onColorSelect?: (colorType: 'photochromic' | 'prescription_sun', color: { id: string; name: string; color: string; gradient?: boolean }) => void
   onNext: () => void
@@ -2321,6 +2569,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   lensSelection,
   treatments,
   productConfig,
+  photochromicOptions: apiPhotochromicOptions = [],
+  prescriptionSunOptions: apiPrescriptionSunOptions = [],
   onTreatmentToggle,
   onColorSelect,
   onNext,
@@ -2336,184 +2586,190 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   const [selectedPrescriptionSunType, setSelectedPrescriptionSunType] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<{ type: string; colorId: string } | null>(null)
 
-  // Standard treatments
-  const standardTreatments = [
-    { id: 'scratch_proof', name: 'Scratch Proof', price: 30.00, icon: 'scratch' },
-    { id: 'anti_glare', name: 'Anti Glare', price: 30.00, icon: 'glare' },
-    { id: 'blue_lens_anti_glare', name: 'Blue Lens Anti Glare', price: 30.00, icon: 'blue', selected: lensSelection.treatments.includes('blue_lens_anti_glare') }
-  ]
+  // Use API treatments - filter out photochromic and prescription_sun as they have special handling
+  // Standard treatments are those that are not photochromic or prescription_sun
+  const standardTreatments = treatments
+    .filter(t => {
+      const treatmentType = t.type?.toLowerCase() || t.slug?.toLowerCase() || ''
+      return treatmentType !== 'photochromic' && 
+             treatmentType !== 'prescription_sun' && 
+             treatmentType !== 'prescription-sun' &&
+             t.type !== 'photochromic' &&
+             t.slug !== 'photochromic' &&
+             t.slug !== 'prescription-sun'
+    })
+    .map(t => ({
+      id: t.id,
+      name: t.name,
+      price: t.price || 0,
+      description: t.description,
+      slug: t.slug,
+      type: t.type
+    }))
 
-  // Use API colors if available, otherwise fallback to defaults
-  const photochromicColors = productConfig?.photochromicColors || []
-  const prescriptionSunColors = productConfig?.prescriptionSunColors || []
-  
-  // Photochromic options (with API colors if available)
-  const photochromicOptions = [
-    {
-      id: 'eyeqlenz_zenni',
-      name: 'EyeQLenz™ with Zenni ID Guard™',
-      description: '4-in-1 lens that reflects infrared light to disrupt unwanted tracking technology, filters blue light & blocks 100% UV. Stays clear indoors and darkens outdoors, with a subtle pink sheen.',
-      colors: [
-        { id: '1', name: 'Grey-Pink', color: 'linear-gradient(135deg, #4a5568, #ec4899)', gradient: true },
-        { id: '2', name: 'Brown-Pink', color: 'linear-gradient(135deg, #92400e, #ec4899)', gradient: true },
-        { id: '3', name: 'Teal-Pink', color: 'linear-gradient(135deg, #0d9488, #ec4899)', gradient: true },
-        { id: '4', name: 'Purple-Pink', color: 'linear-gradient(135deg, #7c3aed, #ec4899)', gradient: true },
-        { id: '5', name: 'Red-Pink', color: 'linear-gradient(135deg, #991b1b, #ec4899)', gradient: true },
-        { id: '6', name: 'Pink-Pink', color: 'linear-gradient(135deg, #ec4899, #f9a8d4)', gradient: true },
-        { id: '7', name: 'Green-Pink', color: 'linear-gradient(135deg, #166534, #ec4899)', gradient: true }
-      ]
-    },
-    {
-      id: 'eyeqlenz',
-      name: 'EyeQLenz™',
-      description: 'Block infrared, UV, and blue light with lenses that stay clear indoors and darken outdoors, featuring a subtle pink sheen.',
-      colors: [
-        { id: '1', name: 'Grey', color: '#4a5568', gradient: false },
-        { id: '2', name: 'Brown', color: '#92400e', gradient: false },
-        { id: '3', name: 'Teal', color: '#0d9488', gradient: false },
-        { id: '4', name: 'Purple', color: '#7c3aed', gradient: false },
-        { id: '5', name: 'Red', color: '#991b1b', gradient: false },
-        { id: '6', name: 'Pink', color: '#ec4899', gradient: false },
-        { id: '7', name: 'Green', color: '#166534', gradient: false }
-      ]
-    },
-    {
-      id: 'transitions_gen_s',
-      name: 'Transitions® GEN S™',
-      description: 'Darken outdoors in seconds and come in 8 vibrant colors. The perfect everyday lens.',
-      colors: [
-        { id: '1', name: 'Grey', color: '#6b7280', gradient: false },
-        { id: '2', name: 'Slate', color: '#475569', gradient: false },
-        { id: '3', name: 'Brown', color: '#92400e', gradient: false },
-        { id: '4', name: 'Plum', color: '#581c87', gradient: false },
-        { id: '5', name: 'Blue', color: '#1e40af', gradient: false },
-        { id: '6', name: 'Teal', color: '#0f766e', gradient: false },
-        { id: '7', name: 'Olive', color: '#365314', gradient: false },
-        { id: '8', name: 'Magenta', color: '#831843', gradient: false }
-      ]
-    },
-    {
-      id: 'standard',
-      name: 'Standard',
-      description: 'Lenses that are clear indoors, darken outdoors, and block 100% UV rays.',
-      colors: [
-        { id: '1', name: 'Grey', color: '#6b7280', gradient: false },
-        { id: '2', name: 'Brown', color: '#92400e', gradient: false }
-      ]
-    },
-    {
-      id: 'blokz_photochromic',
-      name: 'Blokz Photochromic',
-      description: 'Virtually clear indoors, automatically darkens outdoors for blue light and UV protection.',
-      colors: [
-        { id: '1', name: 'Grey', color: '#4a5568', gradient: false }
-      ]
+  // Map API photochromic options to UI format
+  const mapPhotochromicOptions = () => {
+    if (apiPhotochromicOptions && apiPhotochromicOptions.length > 0) {
+      console.log('📥 [API] Mapping photochromic options from API:', apiPhotochromicOptions.length, 'options')
+      return apiPhotochromicOptions
+        .filter(option => option.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map(option => ({
+          id: option.slug || option.id.toString(),
+          name: option.name,
+          description: option.description || '',
+          price: option.base_price || 0,
+          colors: (option.colors || [])
+            .filter(color => color.is_active !== false)
+            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+            .map(color => ({
+              id: color.id.toString(),
+              name: color.name,
+              color: color.hex_code || color.color_code || '#000000',
+              gradient: color.color_code?.toLowerCase().includes('gradient') || false
+            }))
+        }))
     }
-  ]
+    
+    // Return empty array if no API data - don't use dummy data
+    console.warn('⚠️ [API] No photochromic options available from API')
+    return []
+  }
 
-  // Prescription Lenses Sun options
-  const prescriptionSunOptions = [
-    {
-      id: 'polarized',
-      name: 'Polarized',
-      price: 76.95,
-      description: 'Reduce glare and see clearly for outdoor activities and driving.',
-      subOptions: [
-        {
-          id: 'polarized_classic',
-          name: 'Classic',
-          price: 0,
-          colors: [
-            { id: '1', name: 'Charcoal', color: '#1f2937', gradient: false },
-            { id: '2', name: 'Brown', color: '#78350f', gradient: false },
-            { id: '3', name: 'Green', color: '#14532d', gradient: false }
-          ]
-        },
-        {
-          id: 'polarized_mirror',
-          name: 'Mirror',
-          price: 27.95,
-          colors: [
-            { id: '1', name: 'Green-Yellow', color: 'linear-gradient(135deg, #84cc16, #eab308)', gradient: true },
-            { id: '2', name: 'Blue', color: '#3b82f6', gradient: false },
-            { id: '3', name: 'Silver', color: '#9ca3af', gradient: false },
-            { id: '4', name: 'Purple', color: '#a855f7', gradient: false },
-            { id: '5', name: 'Orange', color: '#f97316', gradient: false },
-            { id: '6', name: 'Turquoise', color: '#06b6d4', gradient: false },
-            { id: '7', name: 'Yellow', color: '#eab308', gradient: false },
-            { id: '8', name: 'Pink-Purple', color: 'linear-gradient(135deg, #ec4899, #a855f7)', gradient: true }
-          ]
+  // Map API prescription sun options to UI format
+  // The API returns lens options with type='prescription_sun' or similar
+  // Each option can have colors, and we need to group them by main type (polarized, classic, blokz)
+  const mapPrescriptionSunOptions = () => {
+    if (apiPrescriptionSunOptions && apiPrescriptionSunOptions.length > 0) {
+      console.log('📥 [API] Mapping prescription sun options from API:', apiPrescriptionSunOptions.length, 'options')
+      
+      // Filter active options and sort
+      const activeOptions = apiPrescriptionSunOptions
+        .filter(option => option.is_active !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      
+      // Group by main option type (polarized, classic, blokz, etc.)
+      // The grouping is based on the option name or slug
+      const grouped: Record<string, any> = {}
+      
+      activeOptions.forEach(option => {
+        // Determine main type from name or slug
+        // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
+        const nameLower = option.name.toLowerCase()
+        const slugLower = (option.slug || '').toLowerCase()
+        
+        let mainType = ''
+        if (nameLower.includes('polarized') || slugLower.includes('polarized')) {
+          mainType = 'polarized'
+        } else if (nameLower.includes('blokz') || slugLower.includes('blokz')) {
+          mainType = 'blokz'
+        } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+          mainType = 'classic'
+        } else {
+          // Use first word of name or slug as main type
+          mainType = option.name.split(' ')[0].toLowerCase() || option.slug?.split('_')[0] || 'other'
         }
-      ]
-    },
-    {
-      id: 'classic',
-      name: 'Classic',
-      price: 60.90,
-      description: 'Subtle color and basic UV protection for a timeless look.',
-      subOptions: [
-        {
-          id: 'classic_fashion',
-          name: 'Fashion',
-          price: 0,
-          colors: [
-            { id: '1', name: 'Lavender', color: '#c084fc', gradient: false },
-            { id: '2', name: 'Cream', color: '#fef3c7', gradient: false },
-            { id: '3', name: 'Blue', color: '#bfdbfe', gradient: false },
-            { id: '4', name: 'Pink', color: '#fbcfe8', gradient: false },
-            { id: '5', name: 'Hot Pink', color: '#f472b6', gradient: false }
-          ]
-        },
-        {
-          id: 'classic_mirror',
-          name: 'Mirror',
-          price: 20.00,
-          colors: [
-            { id: '1', name: 'Yellow', color: '#eab308', gradient: false },
-            { id: '2', name: 'Purple', color: '#a855f7', gradient: false },
-            { id: '3', name: 'Turquoise', color: '#06b6d4', gradient: false },
-            { id: '4', name: 'Pink-Purple', color: 'linear-gradient(135deg, #ec4899, #a855f7)', gradient: true },
-            { id: '5', name: 'Lime', color: '#84cc16', gradient: false },
-            { id: '6', name: 'Orange', color: '#f97316', gradient: false },
-            { id: '7', name: 'Blue', color: '#3b82f6', gradient: false },
-            { id: '8', name: 'Silver', color: '#9ca3af', gradient: false }
-          ]
-        },
-        {
-          id: 'classic_gradient',
-          name: 'Gradient',
-          price: 4.00,
-          colors: []
-        },
-        {
-          id: 'classic_classic',
-          name: 'Classic',
-          price: 0,
-          colors: []
+        
+        // Initialize main option if not exists
+        if (!grouped[mainType]) {
+          // Find the base option for this type (usually the one without sub-type in name)
+          const baseOption = activeOptions.find(opt => {
+            const optName = opt.name.toLowerCase()
+            const optSlug = (opt.slug || '').toLowerCase()
+            return (optName === mainType || optName.includes(mainType)) && 
+                   !optName.includes('mirror') && 
+                   !optName.includes('gradient') && 
+                   !optName.includes('fashion')
+          }) || option
+          
+          grouped[mainType] = {
+            id: baseOption.slug || baseOption.id.toString(),
+            name: baseOption.name,
+            price: baseOption.base_price || 0,
+            description: baseOption.description || '',
+            subOptions: []
+          }
         }
-      ]
-    },
-    {
-      id: 'blokz_sunglasses',
-      name: 'Blokz® Sunglasses',
-      price: 95.90,
-      description: 'Protects your eyes from harmful blue light and UV rays.',
-      subOptions: [
-        {
-          id: 'blokz_mirror',
-          name: 'Mirror',
-          price: 20.00,
-          colors: []
-        },
-        {
-          id: 'blokz_classic',
-          name: 'Classic',
-          price: 0,
-          colors: []
+        
+        // Determine sub-option type (classic, mirror, gradient, fashion)
+        let subOptionType = 'classic'
+        if (nameLower.includes('mirror') || slugLower.includes('mirror')) {
+          subOptionType = 'mirror'
+        } else if (nameLower.includes('gradient') || slugLower.includes('gradient')) {
+          subOptionType = 'gradient'
+        } else if (nameLower.includes('fashion') || slugLower.includes('fashion')) {
+          subOptionType = 'fashion'
+        } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+          subOptionType = 'classic'
         }
-      ]
+        
+        // Check if sub-option already exists
+        const existingSubOption = grouped[mainType].subOptions.find((sub: any) => sub.name.toLowerCase() === option.name.toLowerCase())
+        
+        if (!existingSubOption && option.colors && option.colors.length > 0) {
+          // Add as new sub-option with colors
+          grouped[mainType].subOptions.push({
+            id: `${mainType}_${subOptionType}_${option.id}`,
+            name: option.name,
+            price: option.base_price || 0,
+            colors: option.colors
+              .filter(color => color.is_active !== false)
+              .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+              .map(color => ({
+                id: color.id.toString(),
+                name: color.name,
+                color: color.hex_code || color.color_code || '#000000',
+                gradient: color.color_code?.toLowerCase().includes('gradient') || false
+              }))
+          })
+        } else if (existingSubOption && option.colors && option.colors.length > 0) {
+          // Merge colors into existing sub-option
+          const newColors = option.colors
+            .filter(color => color.is_active !== false)
+            .map(color => ({
+              id: color.id.toString(),
+              name: color.name,
+              color: color.hex_code || color.color_code || '#000000',
+              gradient: color.color_code?.toLowerCase().includes('gradient') || false
+            }))
+          existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
+        } else if (!existingSubOption) {
+          // Add sub-option without colors (e.g., Gradient option)
+          grouped[mainType].subOptions.push({
+            id: `${mainType}_${subOptionType}_${option.id}`,
+            name: option.name,
+            price: option.base_price || 0,
+          colors: []
+          })
+        }
+      })
+      
+      // Sort sub-options and return grouped values
+      Object.values(grouped).forEach((group: any) => {
+        group.subOptions.sort((a: any, b: any) => {
+          const order = ['classic', 'fashion', 'mirror', 'gradient']
+          const aIndex = order.findIndex(o => a.name.toLowerCase().includes(o))
+          const bIndex = order.findIndex(o => b.name.toLowerCase().includes(o))
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+          if (aIndex !== -1) return -1
+          if (bIndex !== -1) return 1
+          return a.name.localeCompare(b.name)
+        })
+      })
+      
+      const result = Object.values(grouped)
+      console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
+      return result
     }
-  ]
+    
+    // Return empty array if no API data - don't use dummy data
+    console.warn('⚠️ [API] No prescription sun options available from API')
+    return []
+  }
+
+  // Use mapped API options or fallback
+  const photochromicOptions = mapPhotochromicOptions()
+  const prescriptionSunOptions = mapPrescriptionSunOptions()
 
   const handlePhotochromicClick = () => {
     setShowPhotochromic(!showPhotochromic)
@@ -2529,13 +2785,23 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     setSelectedColor({ type, colorId })
     onTreatmentToggle(treatmentId)
     
-    // Determine if this is photochromic or prescription sun
-    if (type.startsWith('eyeqlenz') || type.startsWith('transitions') || type.startsWith('standard') || type.startsWith('blokz_photochromic')) {
+    // Determine if this is photochromic or prescription sun based on the option type
+    // Check if it's from photochromic options
+    const isPhotochromic = photochromicOptions.some(opt => 
+      type.includes(opt.id) || opt.id === type.split('_')[0]
+    )
+    
+    // Check if it's from prescription sun options
+    const isPrescriptionSun = prescriptionSunOptions.some(opt => 
+      type.includes(opt.id) || opt.id === type.split('_')[0]
+    )
+    
+    if (isPhotochromic) {
       // Photochromic color
       if (onColorSelect) {
         onColorSelect('photochromic', color)
       }
-    } else if (type.startsWith('polarized') || type.startsWith('classic') || type.startsWith('blokz_sunglasses')) {
+    } else if (isPrescriptionSun) {
       // Prescription sun color
       if (onColorSelect) {
         onColorSelect('prescription_sun', color)
@@ -2560,7 +2826,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       {loading && (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-950"></div>
-          <span className="ml-3 text-gray-600">Loading treatments...</span>
+          <span className="ml-3 text-gray-600">{t('shop.loadingTreatments')}</span>
         </div>
       )}
 
@@ -2581,8 +2847,9 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       {!loading && (
         <>
           <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-3">
-            {/* Standard Treatments */}
-            {standardTreatments.map((treatment) => {
+            {/* Standard Treatments from API */}
+            {standardTreatments.length > 0 ? (
+              standardTreatments.map((treatment) => {
               const isSelected = lensSelection.treatments.includes(treatment.id)
               
               return (
@@ -2593,18 +2860,28 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   }`}
                 >
                   <input
-                    type="radio"
+                      type="checkbox"
                     checked={isSelected}
                     onChange={() => onTreatmentToggle(treatment.id)}
-                    className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                      className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer rounded"
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{treatment.name}</div>
+                      {treatment.description && (
+                        <div className="text-sm text-gray-600 mt-1">{treatment.description}</div>
+                      )}
                   </div>
                   <span className="text-sm font-semibold text-gray-700">${treatment.price.toFixed(2)}</span>
                 </label>
               )
-            })}
+              })
+            ) : (
+              !loading && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>{t('shop.noTreatmentsAvailable', 'No treatments available at the moment.')}</p>
+                </div>
+              )
+            )}
 
             {/* Photochromic */}
             <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
@@ -2625,11 +2902,14 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               
               {showPhotochromic && (
                 <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {photochromicOptions.map((option) => (
+                  {photochromicOptions.length > 0 ? (
+                    photochromicOptions.map((option) => (
                     <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
                       <h4 className="font-semibold text-gray-900 mb-2">{option.name}</h4>
+                        {option.description && (
                       <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                      {option.colors.length > 0 && (
+                        )}
+                        {option.colors.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {option.colors.map((color) => (
                             <button
@@ -2648,9 +2928,16 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                             />
                           ))}
                         </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">No colors available for this option</p>
                         )}
                       </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">{t('shop.noPhotochromicOptions', 'No photochromic options available. Please configure them in the admin panel.')}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2674,7 +2961,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               
               {showPrescriptionSun && (
                 <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {prescriptionSunOptions.map((option) => (
+                  {prescriptionSunOptions.length > 0 ? (
+                    prescriptionSunOptions.map((option) => (
                     <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-semibold text-gray-900">
@@ -2686,8 +2974,11 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                           )}
                         </h4>
                 </div>
+                        {option.description && (
                       <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                      {option.subOptions && option.subOptions.map((subOption) => (
+                        )}
+                        {option.subOptions && option.subOptions.length > 0 ? (
+                          option.subOptions.map((subOption: any) => (
                         <div key={subOption.id} className="mt-3">
                           <div className="text-sm font-medium text-gray-700 mb-2">
                             {subOption.name}
@@ -2700,9 +2991,9 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                               <span className="ml-2 text-xs text-green-600">Free</span>
                             )}
                           </div>
-                          {subOption.colors && subOption.colors.length > 0 && (
+                              {subOption.colors && subOption.colors.length > 0 ? (
                             <div className="flex flex-wrap gap-2">
-                              {subOption.colors.map((color) => (
+                                  {subOption.colors.map((color: any) => (
                                 <button
                                   key={color.id}
                                   onClick={() => handleColorSelect(`${option.id}_${subOption.id}`, color.id, `${option.id}_${subOption.id}`, color)}
@@ -2719,11 +3010,21 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                 />
                               ))}
                             </div>
+                              ) : (
+                                <p className="text-xs text-gray-500 italic">No colors available for this option</p>
                           )}
                         </div>
-                      ))}
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">No sub-options available</p>
+                        )}
                     </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">{t('shop.noPrescriptionSunOptions', 'No prescription sun options available. Please configure them in the admin panel.')}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -2779,6 +3080,7 @@ const LensSelectionStep: React.FC<LensSelectionStepProps> = ({
   onNext,
   onRetry
 }) => {
+  const { t } = useTranslation()
   // Combine all selectable options into a single list
   const allOptions: Array<{
     id: string

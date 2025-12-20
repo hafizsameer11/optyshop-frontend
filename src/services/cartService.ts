@@ -66,6 +66,7 @@ export interface AddToCartRequest {
   treatment_ids?: number[];
   photochromic_color_id?: number | null;
   prescription_sun_color_id?: number | null;
+  shipping_method_id?: number;
   // Contact Lens Fields
   contact_lens_right_qty?: number;
   contact_lens_right_base_curve?: number;

@@ -44,7 +44,9 @@
     "shipping": "Spedizione",
     "tax": "Tassa",
     "discount": "Sconto",
-    "home": "Home"
+    "home": "Home",
+    "yes": "SÌ",
+    "no": "NO"
   },
   "home": {
     "hero": {
@@ -192,7 +194,26 @@
     "outOfStockMessage": "Questo prodotto è attualmente esaurito. Non è possibile aggiungerlo al carrello in questo momento.",
     "description": "Scopri la nostra vasta collezione di occhiali e occhiali da sole",
     "browseCollection": "Sfoglia la nostra collezione di {{name}}",
-    "discoverCollection": "Scopri la nostra vasta collezione di {{name}}"
+    "discoverCollection": "Scopri la nostra vasta collezione di {{name}}",
+    "unit": "Unità",
+    "box": "Scatola",
+    "pack": "Confezione",
+    "selected": "Selezionato",
+    "unitDescription": "Lente singola",
+    "boxDescription": "Scatola di lenti (tipicamente 6-30 lenti)",
+    "packDescription": "Confezione di lenti",
+    "productSpecifications": "Specifiche del Prodotto",
+    "sleepingWithLenses": "Dormire con le Lenti",
+    "uvFilter": "Filtro UV",
+    "medicalDevice": "Dispositivo Medico",
+    "noTreatmentsAvailable": "Nessun trattamento disponibile al momento.",
+    "treatment": "Trattamento",
+    "loadingTreatments": "Caricamento trattamenti...",
+    "items": "articoli",
+    "free": "Gratis",
+    "businessDays": "giorni lavorativi",
+    "loadingShipping": "Caricamento opzioni di spedizione...",
+    "estimateTotal": "Totale Stimato"
   },
   "cart": {
     "title": "Carrello della Spesa",

@@ -44,7 +44,9 @@
     "shipping": "Versand",
     "tax": "Steuer",
     "discount": "Rabatt",
-    "home": "Startseite"
+    "home": "Startseite",
+    "yes": "JA",
+    "no": "NEIN"
   },
   "home": {
     "hero": {
@@ -192,7 +194,26 @@
     "outOfStockMessage": "Dieses Produkt ist derzeit nicht vorrätig. Sie können es derzeit nicht zu Ihrem Warenkorb hinzufügen.",
     "description": "Entdecken Sie unsere große Auswahl an Brillen und Sonnenbrillen",
     "browseCollection": "Durchsuchen Sie unsere Kollektion von {{name}}",
-    "discoverCollection": "Entdecken Sie unsere große Auswahl an {{name}}"
+    "discoverCollection": "Entdecken Sie unsere große Auswahl an {{name}}",
+    "unit": "Einheit",
+    "box": "Schachtel",
+    "pack": "Packung",
+    "selected": "Ausgewählt",
+    "unitDescription": "Einzelne Linse",
+    "boxDescription": "Schachtel mit Linsen (typischerweise 6-30 Linsen)",
+    "packDescription": "Packung mit Linsen",
+    "productSpecifications": "Produktspezifikationen",
+    "sleepingWithLenses": "Schlafen mit Linsen",
+    "uvFilter": "UV-Filter",
+    "medicalDevice": "Medizinisches Gerät",
+    "noTreatmentsAvailable": "Derzeit sind keine Behandlungen verfügbar.",
+    "treatment": "Behandlung",
+    "loadingTreatments": "Behandlungen werden geladen...",
+    "items": "Artikel",
+    "free": "Kostenlos",
+    "businessDays": "Werktage",
+    "loadingShipping": "Versandoptionen werden geladen...",
+    "estimateTotal": "Geschätzter Gesamtbetrag"
   },
   "cart": {
     "title": "Warenkorb",

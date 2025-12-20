@@ -195,7 +195,25 @@
     "outOfStockMessage": "Este producto está actualmente agotado. No puede agregarlo a su carrito en este momento.",
     "description": "Descubra nuestra amplia colección de gafas y gafas de sol",
     "browseCollection": "Explore nuestra colección de {{name}}",
-    "discoverCollection": "Descubra nuestra amplia colección de {{name}}"
+    "discoverCollection": "Descubra nuestra amplia colección de {{name}}",
+    "unit": "Unidad",
+    "box": "Caja",
+    "pack": "Paquete",
+    "selected": "Seleccionado",
+    "unitDescription": "Lente individual",
+    "boxDescription": "Caja de lentes (típicamente 6-30 lentes)",
+    "packDescription": "Paquete de lentes",
+    "productSpecifications": "Especificaciones del Producto",
+    "sleepingWithLenses": "Dormir con Lentes",
+    "uvFilter": "Filtro UV",
+    "medicalDevice": "Dispositivo Médico",
+    "noTreatmentsAvailable": "No hay tratamientos disponibles en este momento.",
+    "treatment": "Tratamiento",
+    "loadingTreatments": "Cargando tratamientos...",
+    "free": "Gratis",
+    "businessDays": "días hábiles",
+    "loadingShipping": "Cargando opciones de envío...",
+    "estimateTotal": "Total Estimado"
   },
   "cart": {
     "title": "Carrito de Compras",
@@ -216,7 +234,10 @@
     "invalidCoupon": "Código de cupón inválido o expirado",
     "discount": "Descuento",
     "finalTotal": "Total Final",
-    "clearCart": "Vaciar Carrito"
+    "clearCart": "Vaciar Carrito",
+    "home": "Inicio",
+    "yes": "SÍ",
+    "no": "NO"
   },
   "checkout": {
     "title": "Pago",

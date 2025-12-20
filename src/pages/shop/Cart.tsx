@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -6,6 +6,7 @@ import Footer from '../../components/Footer'
 import CartHeroSection from '../../components/shop/CartHeroSection'
 import { useCart } from '../../context/CartContext'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
+import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 
 const Cart: React.FC = () => {
     const { t } = useTranslation()
@@ -14,6 +15,9 @@ const Cart: React.FC = () => {
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
     const [couponError, setCouponError] = useState('')
+    const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
+    const [shippingLoading, setShippingLoading] = useState(true)
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
@@ -63,6 +67,57 @@ const Cart: React.FC = () => {
             return Number(appliedCoupon.discount_amount || 0)
         }
         return 0
+    }
+
+    // Fetch shipping methods
+    useEffect(() => {
+        const fetchShippingMethods = async () => {
+            setShippingLoading(true)
+            try {
+                console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
+                const methods = await getShippingMethods({ isActive: true })
+                if (methods && methods.length > 0) {
+                    setShippingMethods(methods)
+                    // Auto-select free shipping if available, otherwise first method
+                    const freeShipping = methods.find(m => m.price === 0 || m.type === 'free')
+                    setSelectedShippingMethod(freeShipping || methods[0])
+                    console.log('✅ [API] Shipping methods loaded:', methods.length)
+                } else {
+                    console.warn('⚠️ [API] No shipping methods available')
+                }
+            } catch (error) {
+                console.error('❌ [API] Error fetching shipping methods:', error)
+            } finally {
+                setShippingLoading(false)
+            }
+        }
+
+        fetchShippingMethods()
+    }, [])
+
+    const getShippingPrice = () => {
+        if (selectedShippingMethod) {
+            return Number(selectedShippingMethod.price || 0)
+        }
+        return 0
+    }
+
+    const getSubtotal = () => {
+        return getTotalPrice()
+    }
+
+    const getTotal = () => {
+        const subtotal = getSubtotal()
+        const discount = getDiscountAmount()
+        const shipping = getShippingPrice()
+        const total = subtotal - discount + shipping
+        
+        if (appliedCoupon) {
+            // If coupon is applied, use the coupon's final_total and add shipping
+            return Number(appliedCoupon.final_total || 0) + shipping
+        }
+        
+        return total
     }
 
     if (cartItems.length === 0) {
@@ -337,10 +392,60 @@ const Cart: React.FC = () => {
                                     )}
                                 </div>
 
+                                {/* Shipping Method Selection */}
+                                {shippingMethods.length > 0 && (
+                                    <div className="mb-6 pb-6 border-b border-gray-200">
+                                        <h3 className="text-sm font-semibold text-gray-700 mb-3">{t('common.shipping')}</h3>
+                                        {shippingLoading ? (
+                                            <div className="text-sm text-gray-500">{t('shop.loadingShipping', 'Loading shipping options...')}</div>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {shippingMethods.map((method) => {
+                                                    const isSelected = selectedShippingMethod?.id === method.id
+                                                    return (
+                                                        <label
+                                                            key={method.id}
+                                                            className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                                                isSelected
+                                                                    ? 'border-blue-600 bg-blue-50'
+                                                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <input
+                                                                type="radio"
+                                                                name="shippingMethod"
+                                                                checked={isSelected}
+                                                                onChange={() => setSelectedShippingMethod(method)}
+                                                                className="mt-1 w-4 h-4 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                            />
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="font-medium text-gray-900">{method.name}</span>
+                                                                    <span className={`text-sm font-semibold ${method.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                                                                        {method.price === 0 ? t('shop.free', 'Free') : `$${method.price.toFixed(2)}`}
+                                                                    </span>
+                                                                </div>
+                                                                {method.description && (
+                                                                    <div className="text-xs text-gray-600 mt-0.5 truncate">{method.description}</div>
+                                                                )}
+                                                                {(method.estimated_days || method.estimatedDays) && (
+                                                                    <div className="text-xs text-gray-500 mt-0.5">
+                                                                        {(method.estimated_days || method.estimatedDays)} {t('shop.businessDays', 'business days')}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-gray-700">
                                         <span>Subtotal ({getTotalItems()} items)</span>
-                                        <span>${getTotalPrice().toFixed(2)}</span>
+                                        <span>${getSubtotal().toFixed(2)}</span>
                                     </div>
                                     {appliedCoupon && getDiscountAmount() > 0 && (
                                         <div className="flex justify-between text-green-600">
@@ -349,13 +454,23 @@ const Cart: React.FC = () => {
                                         </div>
                                     )}
                                     <div className="flex justify-between text-gray-700">
-                                        <span>Shipping</span>
-                                        <span className="text-green-600">Free</span>
+                                        <span>{t('common.shipping')}</span>
+                                        <span className={selectedShippingMethod?.price === 0 ? 'text-green-600' : 'text-gray-900'}>
+                                            {selectedShippingMethod ? (
+                                                selectedShippingMethod.price === 0 ? (
+                                                    t('shop.free', 'Free')
+                                                ) : (
+                                                    `$${selectedShippingMethod.price.toFixed(2)}`
+                                                )
+                                            ) : (
+                                                t('shop.calculatedAtCheckout', 'Calculated at checkout')
+                                            )}
+                                        </span>
                                     </div>
                                     <div className="border-t border-gray-200 pt-4">
                                         <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900">
-                                            <span>Total</span>
-                                            <span>${getFinalTotal().toFixed(2)}</span>
+                                            <span>{t('common.total')}</span>
+                                            <span>${getTotal().toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
