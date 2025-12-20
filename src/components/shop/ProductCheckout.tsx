@@ -142,7 +142,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [selectedSavedPrescription, setSelectedSavedPrescription] = useState<number | null>(null)
   const [prescriptionLensTypes, setPrescriptionLensTypes] = useState<PrescriptionLensType[]>([])
   // Store the actual API prescription lens types with their IDs for fetching variants
-  const [apiPrescriptionLensTypes, setApiPrescriptionLensTypes] = useState<PrescriptionLensType[]>([])
+  const [apiPrescriptionLensTypes, setApiPrescriptionLensTypes] = useState<ApiPrescriptionLensType[]>([])
   const [, setPriceCalculation] = useState<{ total: number; breakdown: Array<{ item: string; price: number }> } | null>(null)
   const [, setProductCustomizationOptions] = useState<ProductCustomizationOptions | null>(null)
   // Start with empty array - will be populated from API (admin data)
@@ -215,7 +215,20 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
             is_active: true,
             sort_order: 0,
             colors: [],
-            variants: type.variants || []
+            variants: (type.variants || []).map(variant => ({
+              id: variant.id,
+              prescription_lens_type_id: type.id,
+              name: variant.name,
+              slug: variant.slug,
+              description: variant.description,
+              price: variant.price,
+              is_recommended: variant.isRecommended || false,
+              viewing_range: variant.viewingRange || null,
+              use_cases: variant.useCases || undefined,
+              is_active: true,
+              sort_order: 0,
+              colors: []
+            }))
           }))
           setApiPrescriptionLensTypes(apiTypes)
           
@@ -331,7 +344,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       console.log('🔄 [API] FALLBACK: Using alternative endpoints for Progressive variants')
       
       // Step 1: Use stored API types if available, otherwise fetch from API
-      let types = apiPrescriptionLensTypes
+      let types: ApiPrescriptionLensType[] = apiPrescriptionLensTypes
       
       if (!types || types.length === 0) {
         console.log('📥 [API] No stored types, fetching from API...')
@@ -1535,12 +1548,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 
       // Calculate final price with lens options
       // Ensure basePrice is a number, not a string
-      const basePriceRaw = product.sale_price && Number(product.sale_price) < Number(product.price)
+      const basePriceRaw: string | number = product.sale_price && Number(product.sale_price) < Number(product.price)
         ? product.sale_price 
         : product.price
       
       const basePrice = typeof basePriceRaw === 'string'
-        ? parseFloat(basePriceRaw.replace(/[^0-9.]/g, '')) || 0
+        ? parseFloat(String(basePriceRaw).replace(/[^0-9.]/g, '')) || 0
         : Number(basePriceRaw) || 0
 
       let finalPrice: number = basePrice
@@ -1550,9 +1563,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       if (lensSelection.progressiveOption) {
         const progressiveOption = progressiveOptions.find(opt => opt.id === lensSelection.progressiveOption)
         if (progressiveOption) {
-          const priceValue = progressiveOption.price
+          const priceValue: string | number | undefined = progressiveOption.price
           const progressivePrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
         finalPrice += progressivePrice
         }
@@ -1560,9 +1573,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         // For regular lens index selection
         const selectedLensType = lensOptions.find(lt => lt.index === lensSelection.lensIndex)
         if (selectedLensType && selectedLensType.price_adjustment != null) {
-          const priceValue = selectedLensType.price_adjustment
+          const priceValue: string | number | undefined = selectedLensType.price_adjustment
           const lensPrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
           finalPrice += lensPrice
           // Store the lens type ID for API
@@ -1574,9 +1587,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       lensSelection.coatings.forEach(coatingSlug => {
         const coating = coatingOptions.find(c => c.slug === coatingSlug)
         if (coating && coating.price_adjustment != null) {
-          const priceValue = coating.price_adjustment
+          const priceValue: string | number | undefined = coating.price_adjustment
           const coatingPrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
           finalPrice += coatingPrice
         }
@@ -1586,9 +1599,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       if (lensSelection.lensThicknessMaterialId) {
         const selectedMaterial = lensThicknessMaterials.find(m => m.id === lensSelection.lensThicknessMaterialId)
         if (selectedMaterial && selectedMaterial.price != null) {
-          const priceValue = selectedMaterial.price
+          const priceValue: string | number | undefined = selectedMaterial.price
           const materialPrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
           finalPrice += materialPrice
         }
@@ -1597,9 +1610,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         const materialSlug = lensSelection.lensThickness === 'plastic' ? 'plastic' : 'glass'
         const selectedMaterial = lensThicknessMaterials.find(m => m.slug === materialSlug)
         if (selectedMaterial && selectedMaterial.price != null) {
-          const priceValue = selectedMaterial.price
+          const priceValue: string | number | undefined = selectedMaterial.price
           const materialPrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
           finalPrice += materialPrice
         }
@@ -1609,9 +1622,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       lensSelection.treatments.forEach(treatmentId => {
         const treatment = apiTreatments.find(t => t.id === treatmentId)
         if (treatment && treatment.price != null) {
-          const priceValue = treatment.price
+          const priceValue: string | number | undefined = treatment.price
           const treatmentPrice = typeof priceValue === 'string'
-            ? parseFloat(priceValue.replace(/[^0-9.]/g, '')) || 0
+            ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
           finalPrice += treatmentPrice
         }
@@ -2568,7 +2581,7 @@ interface TreatmentStepProps {
 const TreatmentStep: React.FC<TreatmentStepProps> = ({
   lensSelection,
   treatments,
-  productConfig,
+  productConfig: _productConfig,
   photochromicOptions: apiPhotochromicOptions = [],
   prescriptionSunOptions: apiPrescriptionSunOptions = [],
   onTreatmentToggle,
@@ -2582,8 +2595,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   const { t } = useTranslation()
   const [showPhotochromic, setShowPhotochromic] = useState(false)
   const [showPrescriptionSun, setShowPrescriptionSun] = useState(false)
-  const [selectedPhotochromicType, setSelectedPhotochromicType] = useState<string | null>(null)
-  const [selectedPrescriptionSunType, setSelectedPrescriptionSunType] = useState<string | null>(null)
   const [selectedColor, setSelectedColor] = useState<{ type: string; colorId: string } | null>(null)
 
   // Use API treatments - filter out photochromic and prescription_sun as they have special handling
@@ -2675,7 +2686,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           // Find the base option for this type (usually the one without sub-type in name)
           const baseOption = activeOptions.find(opt => {
             const optName = opt.name.toLowerCase()
-            const optSlug = (opt.slug || '').toLowerCase()
             return (optName === mainType || optName.includes(mainType)) && 
                    !optName.includes('mirror') && 
                    !optName.includes('gradient') && 
@@ -3042,275 +3052,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   )
 }
 
-// Lens Selection Step Component
-interface LensSelectionStepProps {
-  lensSelection: LensSelection
-  lensOptions: LensType[]
-  coatingOptions: LensCoating[]
-  treatments: Array<{ id: string; name: string; price: number; description?: string }>
-  apiLensTypes: Array<{ id: string; name: string; description: string; price?: number; priceLabel?: string; colors: Array<{ id: string; name: string; color: string; gradient?: boolean }> }>
-  progressiveOptions: Array<{ id: string; name: string; price: number; description: string; recommended?: boolean; icon?: string; variantId?: number }>
-  loading?: boolean
-  error?: string | null
-  onLensTypeChange: (type: LensSelection['type']) => void
-  onLensIndexChange: (index: number) => void
-  onCoatingToggle: (coatingSlug: string) => void
-  onTreatmentToggle: (treatmentId: string) => void
-  onLensTypeSelect: (lensTypeId: string, colorId: string, color: { id: string; name: string; color: string; gradient?: boolean }) => void
-  onProgressiveOptionChange?: (optionId: string) => void
-  onNext: () => void
-  onRetry?: () => void
-}
-
-const LensSelectionStep: React.FC<LensSelectionStepProps> = ({
-  lensSelection,
-  lensOptions,
-  coatingOptions,
-  treatments,
-  apiLensTypes,
-  progressiveOptions,
-  loading = false,
-  error = null,
-  onLensTypeChange,
-  onLensIndexChange,
-  onCoatingToggle,
-  onTreatmentToggle,
-  onLensTypeSelect,
-  onProgressiveOptionChange,
-  onNext,
-  onRetry
-}) => {
-  const { t } = useTranslation()
-  // Combine all selectable options into a single list
-  const allOptions: Array<{
-    id: string
-    name: string
-    price: number
-    type: 'progressive' | 'lens_index' | 'coating' | 'treatment'
-    checked: boolean
-    onToggle: () => void
-  }> = []
-
-  // Add progressive options if progressive type is selected
-  if (lensSelection.type === 'progressive') {
-    progressiveOptions.forEach(option => {
-      allOptions.push({
-        id: `progressive-${option.id}`,
-        name: option.name,
-        price: option.price,
-        type: 'progressive',
-        checked: lensSelection.progressiveOption === option.id || (option.id === 'premium' && !lensSelection.progressiveOption),
-        onToggle: () => {
-          onLensTypeChange('progressive')
-          if (onProgressiveOptionChange) {
-            onProgressiveOptionChange(option.id)
-          }
-        }
-      })
-    })
-  }
-
-  // Add lens index options
-  lensOptions.forEach(lens => {
-    allOptions.push({
-      id: `lens-${lens.id}`,
-      name: lens.name,
-      price: Number(lens.price_adjustment) || 0,
-      type: 'lens_index',
-      checked: lensSelection.lensIndex === lens.index,
-      onToggle: () => {
-        onLensIndexChange(lens.index)
-      }
-    })
-  })
-
-  // Add coating options
-  coatingOptions.forEach(coating => {
-    allOptions.push({
-      id: `coating-${coating.id}`,
-      name: coating.name,
-      price: Number(coating.price_adjustment) || 0,
-      type: 'coating',
-      checked: lensSelection.coatings.includes(coating.slug),
-      onToggle: () => {
-        onCoatingToggle(coating.slug)
-      }
-    })
-  })
-
-  // Add treatment options from API
-  treatments.forEach(treatment => {
-    allOptions.push({
-      id: `treatment-${treatment.id}`,
-      name: treatment.name,
-      price: treatment.price || 0,
-      type: 'treatment',
-      checked: lensSelection.treatments.includes(treatment.id),
-      onToggle: () => {
-        onTreatmentToggle(treatment.id)
-      }
-    })
-  })
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Loading State */}
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-950"></div>
-          <span className="ml-3 text-gray-600">Loading options...</span>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && !loading && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-red-800 mb-2">{error}</p>
-          {onRetry && (
-            <button
-              onClick={onRetry}
-              className="text-sm text-red-600 hover:text-red-800 underline"
-            >
-              Retry
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Scrollable options list */}
-      {!loading && (
-        <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-4">
-          {/* Lens Types from API with Color Swatches */}
-          {apiLensTypes.length > 0 && (
-            <div className="space-y-4">
-              {apiLensTypes.map((lensType) => {
-                const isSelected = lensSelection.selectedLensTypeId === lensType.id
-                
-                return (
-                  <div
-                    key={lensType.id}
-                    className={`border-2 rounded-lg p-4 transition-all ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-50'
-                        : 'border-gray-200 bg-white'
-                    }`}
-                  >
-                    {/* Lens Type Header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900">
-                        {lensType.name}
-                        {lensType.priceLabel && (
-                          <span className="ml-2 text-sm font-normal text-gray-600">
-                            ({lensType.priceLabel})
-                          </span>
-                        )}
-                      </h3>
-                    </div>
-                    
-                    {/* Description */}
-                    {lensType.description && (
-                      <p className="text-sm text-gray-600 mb-3">{lensType.description}</p>
-                    )}
-                    
-                    {/* Color Swatches */}
-                    {lensType.colors.length > 0 && (
-                      <div>
-                        <div className="text-xs font-medium text-gray-500 mb-2">
-                          {lensType.colors[0]?.name || 'Select Color'}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {lensType.colors.map((color) => {
-                            const isColorSelected = isSelected && lensSelection.selectedColorId === color.id
-                            
-                            return (
-                              <button
-                                key={color.id}
-                                onClick={() => {
-                                  onLensTypeSelect(lensType.id, color.id, {
-                                    id: color.id,
-                                    name: color.name,
-                                    color: color.color,
-                                    gradient: color.gradient
-                                  })
-                                }}
-                                className={`
-                                  relative w-10 h-10 rounded-full border-2 transition-all
-                                  ${isColorSelected
-                                    ? 'border-blue-600 ring-2 ring-blue-200 scale-110'
-                                    : 'border-gray-300 hover:border-gray-400'
-                                  }
-                                `}
-                                style={{
-                                  background: color.gradient 
-                                    ? `linear-gradient(135deg, ${color.color})`
-                                    : color.color
-                                }}
-                                title={color.name}
-                              >
-                                {isColorSelected && (
-                                  <div className="absolute inset-0 flex items-center justify-center">
-                                    <svg className="w-5 h-5 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                    </svg>
-                                  </div>
-                                )}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Other Options (Coatings, Treatments) */}
-          {allOptions.length > 0 && (
-            <div className="space-y-2 pt-4 border-t border-gray-200">
-              {allOptions.map((option) => (
-                <label
-                  key={option.id}
-                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={option.checked}
-                    onChange={option.onToggle}
-                    className="w-5 h-5 text-blue-950 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span className="flex-1 text-sm font-medium text-gray-900">
-                    {option.name}
-                  </span>
-                  {option.price > 0 && (
-                    <span className="text-sm font-semibold text-gray-700">
-                      +${option.price.toFixed(2)}
-                    </span>
-                  )}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {apiLensTypes.length === 0 && allOptions.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-8">No options available</p>
-          )}
-        </div>
-      )}
-
-      {/* Add to Cart button at bottom */}
-      <button
-        onClick={onNext}
-        disabled={loading}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors mt-auto disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {t('shop.addToCart')}
-      </button>
-    </div>
-  )
-}
-
 // Prescription Input Step Component
 interface PrescriptionInputStepProps {
   prescriptionData: PrescriptionFormData
@@ -3332,10 +3073,10 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   onPrescriptionChange,
   onNext,
   onBack,
-  savedPrescriptions = [],
-  selectedSavedPrescription,
-  onLoadSavedPrescription,
-  isAuthenticated = false
+  savedPrescriptions: _savedPrescriptions = [],
+  selectedSavedPrescription: _selectedSavedPrescription,
+  onLoadSavedPrescription: _onLoadSavedPrescription,
+  isAuthenticated: _isAuthenticated = false
 }) => {
   const isProgressive = lensType === 'progressive'
   const isDistanceVision = lensType === 'distance_vision'

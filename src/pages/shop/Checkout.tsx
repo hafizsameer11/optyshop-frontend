@@ -138,11 +138,32 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         setCouponError('')
     }
 
-    const getFinalTotal = () => {
-        if (appliedCoupon) {
-            return appliedCoupon.final_total
+    // Get shipping method from cart items (use the first item's shipping method if available)
+    const getShippingMethod = () => {
+        for (const item of cartItems) {
+            if (item.customization?.shippingMethod) {
+                return item.customization.shippingMethod
+            }
         }
-        return getTotalPrice()
+        return null
+    }
+
+    // Calculate shipping price
+    const getShippingPrice = () => {
+        const shippingMethod = getShippingMethod()
+        if (!shippingMethod) return 0
+        
+        const price = typeof shippingMethod.price === 'string'
+            ? parseFloat(String(shippingMethod.price).replace(/[^0-9.]/g, '')) || 0
+            : Number(shippingMethod.price) || 0
+        
+        return price
+    }
+
+    const getFinalTotal = () => {
+        const subtotal = appliedCoupon ? appliedCoupon.final_total : getTotalPrice()
+        const shippingPrice = getShippingPrice()
+        return subtotal + shippingPrice
     }
 
     const getDiscountAmount = () => {
@@ -629,10 +650,30 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                             <span>-${Number(getDiscountAmount()).toFixed(2)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-gray-700">
-                                        <span>Shipping</span>
-                                        <span className="text-green-600">Free</span>
-                                    </div>
+                                    {(() => {
+                                        const shippingMethod = getShippingMethod()
+                                        const shippingPrice = getShippingPrice()
+                                        return (
+                                            <div className="flex justify-between items-center text-gray-700">
+                                                <div className="flex flex-col">
+                                                    <span>Shipping</span>
+                                                    {shippingMethod && shippingMethod.name && (
+                                                        <span className="text-xs text-gray-500">
+                                                            {shippingMethod.name}
+                                                            {shippingMethod.estimatedDays && (
+                                                                <span className="ml-1">
+                                                                    ({shippingMethod.estimatedDays} {t('shop.businessDays', 'business days')})
+                                                                </span>
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={shippingPrice === 0 ? 'text-green-600' : 'text-gray-900 font-medium'}>
+                                                    {shippingPrice === 0 ? 'Free' : `$${shippingPrice.toFixed(2)}`}
+                                                </span>
+                                            </div>
+                                        )
+                                    })()}
                                     <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
                                         <span>Total</span>
                                         <span>${Number(getFinalTotal()).toFixed(2)}</span>
