@@ -7,7 +7,9 @@ import { useCart } from '../../context/CartContext'
 import { 
     getProductBySlug, 
     getRelatedProducts,
-    type Product
+    getProductOptions,
+    type Product,
+    type ProductOptions
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
@@ -41,6 +43,9 @@ const ProductDetail: React.FC = () => {
     const [quantity, setQuantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
+    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
+    const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
+    const [selectedLensType, setSelectedLensType] = useState<string>('') // Single selection
     
     // Contact lens form state
     const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
@@ -80,6 +85,9 @@ const ProductDetail: React.FC = () => {
             if (productData) {
                 // Reset selected image index when loading a new product
                 setSelectedImageIndex(0)
+                // Reset selections when product changes
+                setSelectedFrameMaterial('')
+                setSelectedLensType('')
                 
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
@@ -141,6 +149,21 @@ const ProductDetail: React.FC = () => {
             isCancelled = true
         }
     }, [slug, navigate])
+
+    // Fetch product options (frame materials, etc.)
+    useEffect(() => {
+        const fetchOptions = async () => {
+            try {
+                const options = await getProductOptions()
+                if (options) {
+                    setProductOptions(options)
+                }
+            } catch (error) {
+                console.error('Error fetching product options:', error)
+            }
+        }
+        fetchOptions()
+    }, [])
 
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
@@ -522,7 +545,9 @@ const ProductDetail: React.FC = () => {
                 description: product.description || '',
                 inStock: product.in_stock || false,
                 rating: product.rating ? Number(product.rating) : undefined,
-                quantity: quantity // Include quantity
+                quantity: quantity, // Include quantity
+                frame_material: selectedFrameMaterial || undefined, // Include selected frame material (single)
+                lens_type: selectedLensType || undefined // Include selected lens type (single)
             }
             
             // Add quantity copies
@@ -1432,6 +1457,183 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                     </div>
                                     
+                                    {/* Lens Type Selection - Show only types available for this product */}
+                                    {(() => {
+                                        // Get available lens types for this product
+                                        const getAvailableLensTypes = (): string[] => {
+                                            if (!product || !productOptions?.lensTypeEnums) return []
+                                            
+                                            const p = product as any
+                                            
+                                            // Check if product has lens_types array
+                                            if (Array.isArray(p.lens_types) && p.lens_types.length > 0) {
+                                                const filtered = p.lens_types.filter((t: string) => 
+                                                    productOptions.lensTypeEnums.includes(t)
+                                                )
+                                                if (import.meta.env.DEV) {
+                                                    console.log('🔍 [Lens Types] Product has lens_types array:', p.lens_types)
+                                                    console.log('🔍 [Lens Types] Filtered available types:', filtered)
+                                                }
+                                                return filtered
+                                            }
+                                            
+                                            // Check if product has lensTypes array (from lensTypes field)
+                                            if (Array.isArray(p.lensTypes) && p.lensTypes.length > 0) {
+                                                const filtered = p.lensTypes
+                                                    .map((lt: any) => lt.type || lt.name || lt)
+                                                    .filter((t: string) => 
+                                                        productOptions.lensTypeEnums.includes(t)
+                                                    )
+                                                if (import.meta.env.DEV) {
+                                                    console.log('🔍 [Lens Types] Product has lensTypes array:', p.lensTypes)
+                                                    console.log('🔍 [Lens Types] Filtered available types:', filtered)
+                                                }
+                                                return filtered
+                                            }
+                                            
+                                            // Check if product has lens_type (singular)
+                                            if (p.lens_type) {
+                                                if (productOptions.lensTypeEnums.includes(p.lens_type)) {
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('🔍 [Lens Types] Product has single lens_type:', p.lens_type)
+                                                    }
+                                                    return [p.lens_type]
+                                                }
+                                            }
+                                            
+                                            // If product doesn't specify types, don't show lens type selection
+                                            if (import.meta.env.DEV) {
+                                                console.log('🔍 [Lens Types] Product has no specific lens types. Available options:', productOptions.lensTypeEnums)
+                                                console.log('🔍 [Lens Types] Product data:', {
+                                                    lens_types: p.lens_types,
+                                                    lensTypes: p.lensTypes,
+                                                    lens_type: p.lens_type
+                                                })
+                                            }
+                                            return []
+                                        }
+                                        
+                                        const availableLensTypes = getAvailableLensTypes()
+                                        
+                                        // Only show if there are available lens types
+                                        if (availableLensTypes.length === 0) return null
+                                        
+                                        return (
+                                            <div className="mb-6">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                    {t('shop.lensType', 'Lens Type')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                    {availableLensTypes.map((lensType) => {
+                                                        const isSelected = selectedLensType === lensType
+                                                        return (
+                                                            <label
+                                                                key={lensType}
+                                                                className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
+                                                                    isSelected
+                                                                        ? 'bg-blue-50 border-2 border-blue-500'
+                                                                        : 'bg-white border-2 border-gray-200 hover:border-gray-300'
+                                                                }`}
+                                                            >
+                                                                <input
+                                                                    type="radio"
+                                                                    name="lensType"
+                                                                    value={lensType}
+                                                                    checked={isSelected}
+                                                                    onChange={() => setSelectedLensType(lensType)}
+                                                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                                />
+                                                                <span className="text-sm font-medium text-gray-700 capitalize">
+                                                                    {lensType.replace('_', ' ')}
+                                                                </span>
+                                                            </label>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
+                                    
+                                    {/* Frame Material Selection - Show only materials available for this product */}
+                                    {(() => {
+                                        // Get available frame materials for this product
+                                        const getAvailableFrameMaterials = (): string[] => {
+                                            if (!product || !productOptions?.frameMaterials) return []
+                                            
+                                            const p = product as any
+                                            
+                                            // Check if product has frame_materials array (plural)
+                                            if (Array.isArray(p.frame_materials) && p.frame_materials.length > 0) {
+                                                // Filter to show only materials that exist in productOptions
+                                                const filtered = p.frame_materials.filter((m: string) => 
+                                                    productOptions.frameMaterials.includes(m)
+                                                )
+                                                if (import.meta.env.DEV) {
+                                                    console.log('🔍 [Frame Materials] Product has frame_materials array:', p.frame_materials)
+                                                    console.log('🔍 [Frame Materials] Filtered available materials:', filtered)
+                                                }
+                                                return filtered
+                                            }
+                                            
+                                            // Check if product has frame_material (singular)
+                                            if (p.frame_material) {
+                                                // If the product's frame_material exists in available options, show it
+                                                if (productOptions.frameMaterials.includes(p.frame_material)) {
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('🔍 [Frame Materials] Product has single frame_material:', p.frame_material)
+                                                    }
+                                                    return [p.frame_material]
+                                                }
+                                            }
+                                            
+                                            // If product doesn't specify materials, don't show frame material selection
+                                            if (import.meta.env.DEV) {
+                                                console.log('🔍 [Frame Materials] Product has no specific materials')
+                                            }
+                                            return []
+                                        }
+                                        
+                                        const availableMaterials = getAvailableFrameMaterials()
+                                        
+                                        // Only show if there are available materials
+                                        if (availableMaterials.length === 0) return null
+                                        
+                                        return (
+                                            <div className="mb-6">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                    {t('shop.frameMaterial', 'Frame Material')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
+                                                </label>
+                                                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                    {availableMaterials.map((material) => {
+                                                        const isSelected = selectedFrameMaterial === material
+                                                        return (
+                                                            <label
+                                                                key={material}
+                                                                className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
+                                                                    isSelected
+                                                                        ? 'bg-blue-50 border-2 border-blue-500'
+                                                                        : 'bg-white border-2 border-gray-200 hover:border-gray-300'
+                                                                }`}
+                                                            >
+                                                                <input
+                                                                    type="radio"
+                                                                    name="frameMaterial"
+                                                                    value={material}
+                                                                    checked={isSelected}
+                                                                    onChange={() => setSelectedFrameMaterial(material)}
+                                                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                                />
+                                                                <span className="text-sm font-medium text-gray-700 capitalize">
+                                                                    {material.replace('_', ' ')}
+                                                                </span>
+                                                            </label>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
+                                    
                                     <div className="space-y-3">
                                         <button
                                             onClick={handleAddToCart}
@@ -1634,6 +1836,8 @@ const ProductDetail: React.FC = () => {
                 <ProductCheckout
                     product={product}
                     onClose={() => setShowCheckout(false)}
+                    initialFrameMaterials={selectedFrameMaterial ? [selectedFrameMaterial] : []}
+                    initialLensType={selectedLensType || undefined}
                 />
             )}
 

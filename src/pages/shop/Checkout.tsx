@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { createOrder, createGuestOrder, type OrderCartItem } from '../../services/ordersService'
+import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 import DynamicFormField from '../../components/checkout/DynamicFormField'
 import { defaultCheckoutFormConfig, type CheckoutFormConfig } from '../../config/checkoutFormConfig'
 
@@ -29,6 +30,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     const [couponError, setCouponError] = useState('')
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
     
+    // Shipping and Payment methods
+    const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
+    const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
+    const [shippingLoading, setShippingLoading] = useState(false)
+    const [paymentMethod, setPaymentMethod] = useState<string>('stripe')
+    
     // Initialize form data from configuration
     const initializeFormData = () => {
         const data: Record<string, string> = {}
@@ -47,6 +54,32 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     }
     
     const [formData, setFormData] = useState(initializeFormData())
+
+    // Fetch shipping methods on component mount
+    useEffect(() => {
+        const fetchShippingMethods = async () => {
+            setShippingLoading(true)
+            try {
+                console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
+                const methods = await getShippingMethods({ isActive: true })
+                if (methods && methods.length > 0) {
+                    setShippingMethods(methods)
+                    // Auto-select free shipping if available, otherwise first method
+                    const freeShipping = methods.find(m => m.price === 0 || m.type === 'free')
+                    setSelectedShippingMethod(freeShipping || methods[0])
+                    console.log('✅ [API] Shipping methods loaded:', methods.length)
+                } else {
+                    console.warn('⚠️ [API] No shipping methods available')
+                }
+            } catch (error) {
+                console.error('❌ [API] Error fetching shipping methods:', error)
+            } finally {
+                setShippingLoading(false)
+            }
+        }
+
+        fetchShippingMethods()
+    }, [])
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target
@@ -138,26 +171,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         setCouponError('')
     }
 
-    // Get shipping method from cart items (use the first item's shipping method if available)
-    const getShippingMethod = () => {
-        for (const item of cartItems) {
-            if (item.customization?.shippingMethod) {
-                return item.customization.shippingMethod
-            }
-        }
-        return null
-    }
-
-    // Calculate shipping price
+    // Calculate shipping price from selected shipping method
     const getShippingPrice = () => {
-        const shippingMethod = getShippingMethod()
-        if (!shippingMethod) return 0
-        
-        const price = typeof shippingMethod.price === 'string'
-            ? parseFloat(String(shippingMethod.price).replace(/[^0-9.]/g, '')) || 0
-            : Number(shippingMethod.price) || 0
-        
-        return price
+        if (selectedShippingMethod) {
+            return Number(selectedShippingMethod.price || 0)
+        }
+        return 0
     }
 
     const getFinalTotal = () => {
@@ -255,7 +274,8 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                         zip_code: getFieldValue('zipCode'),
                         country: getFieldValue('country'),
                     },
-                    payment_method: 'CARD', // Backend expects PaymentMethod enum (uppercase)
+                    payment_method: paymentMethod.toUpperCase(), // Backend expects PaymentMethod enum (uppercase)
+                    shipping_method_id: selectedShippingMethod?.id,
                     coupon_code: appliedCoupon ? couponCode : undefined,
                     // Include cart items - backend requires this
                     cart_items: orderCartItems,
@@ -650,30 +670,129 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                             <span>-${Number(getDiscountAmount()).toFixed(2)}</span>
                                         </div>
                                     )}
-                                    {(() => {
-                                        const shippingMethod = getShippingMethod()
-                                        const shippingPrice = getShippingPrice()
-                                        return (
-                                            <div className="flex justify-between items-center text-gray-700">
-                                                <div className="flex flex-col">
-                                                    <span>Shipping</span>
-                                                    {shippingMethod && shippingMethod.name && (
-                                                        <span className="text-xs text-gray-500">
-                                                            {shippingMethod.name}
-                                                            {shippingMethod.estimatedDays && (
-                                                                <span className="ml-1">
-                                                                    ({shippingMethod.estimatedDays} {t('shop.businessDays', 'business days')})
-                                                                </span>
-                                                            )}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className={shippingPrice === 0 ? 'text-green-600' : 'text-gray-900 font-medium'}>
-                                                    {shippingPrice === 0 ? 'Free' : `$${shippingPrice.toFixed(2)}`}
-                                                </span>
+                                    {/* Shipping Method Selection */}
+                                    {shippingMethods.length > 0 && (
+                                        <div className="pt-4 border-t border-gray-200 mt-4">
+                                            <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                                {t('common.shipping')}
+                                            </label>
+                                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                                {shippingMethods.map((method) => (
+                                                    <label
+                                                        key={method.id}
+                                                        className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                                            selectedShippingMethod?.id === method.id
+                                                                ? 'border-blue-600 bg-blue-50'
+                                                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name="shipping-method"
+                                                            checked={selectedShippingMethod?.id === method.id}
+                                                            onChange={() => setSelectedShippingMethod(method)}
+                                                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center justify-between gap-2">
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-medium text-gray-900">{method.name}</div>
+                                                                    {method.description && (
+                                                                        <div className="text-xs text-gray-600 mt-0.5 truncate">{method.description}</div>
+                                                                    )}
+                                                                    {(method.estimated_days || method.estimatedDays) && (
+                                                                        <div className="text-xs text-gray-500 mt-0.5">
+                                                                            {(method.estimated_days || method.estimatedDays)} {t('shop.businessDays', 'business days')}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-sm font-semibold text-gray-900 whitespace-nowrap ml-2">
+                                                                    {method.price === 0 ? (
+                                                                        <span className="text-green-600">{t('shop.free', 'Free')}</span>
+                                                                    ) : (
+                                                                        `$${method.price.toFixed(2)}`
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                ))}
                                             </div>
-                                        )
-                                    })()}
+                                        </div>
+                                    )}
+                                    
+                                    {shippingLoading && (
+                                        <div className="pt-4 border-t border-gray-200 mt-4">
+                                            <div className="text-sm text-gray-500">{t('shop.loadingShipping', 'Loading shipping options...')}</div>
+                                        </div>
+                                    )}
+
+                                    {/* Payment Method Selection */}
+                                    <div className="pt-4 border-t border-gray-200 mt-4">
+                                        <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                            {t('shop.paymentMethod', 'Payment Method')}
+                                        </label>
+                                        <div className="space-y-2">
+                                            {[
+                                                { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe', icon: '💳' },
+                                                { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account', icon: '🔵' },
+                                                { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' }
+                                            ].map((method) => (
+                                                <label
+                                                    key={method.id}
+                                                    className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                                        paymentMethod === method.id
+                                                            ? 'border-blue-600 bg-blue-50'
+                                                            : 'border-gray-200 bg-white hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="payment-method"
+                                                        value={method.id}
+                                                        checked={paymentMethod === method.id}
+                                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                <span className="text-lg">{method.icon}</span>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="font-medium text-gray-900">{method.name}</div>
+                                                                    {method.description && (
+                                                                        <div className="text-xs text-gray-600 mt-0.5">{method.description}</div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Shipping Cost Display */}
+                                    {selectedShippingMethod && (
+                                        <div className="flex justify-between items-center text-gray-700 pt-2">
+                                            <div className="flex flex-col">
+                                                <span>Shipping</span>
+                                                {selectedShippingMethod.name && (
+                                                    <span className="text-xs text-gray-500">
+                                                        {selectedShippingMethod.name}
+                                                        {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays) && (
+                                                            <span className="ml-1">
+                                                                ({(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays)} {t('shop.businessDays', 'business days')})
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={getShippingPrice() === 0 ? 'text-green-600 font-medium' : 'text-gray-900 font-medium'}>
+                                                {getShippingPrice() === 0 ? 'Free' : `$${getShippingPrice().toFixed(2)}`}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
                                         <span>Total</span>
                                         <span>${Number(getFinalTotal()).toFixed(2)}</span>

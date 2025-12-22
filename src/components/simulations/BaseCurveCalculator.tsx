@@ -7,8 +7,8 @@ interface BaseCurveCalculatorProps {
 }
 
 const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, className = '' }) => {
-  const [spherePower, setSpherePower] = useState<string>('-3')
-  const [cylinderPower, setCylinderPower] = useState<string>('-0.75')
+  const [spherePower, setSpherePower] = useState<string>('')
+  const [cylinderPower, setCylinderPower] = useState<string>('')
   const [cornealCurvature, setCornealCurvature] = useState<string>('')
   const [result, setResult] = useState<BaseCurveResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -19,23 +19,54 @@ const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, clas
     setError(null)
     setResult(null)
 
+    // Trim whitespace from inputs
+    const sphereStr = spherePower.trim()
+    const cylinderStr = cylinderPower.trim()
+    const cornealStr = cornealCurvature.trim()
+
+    // Validate that required fields are filled
+    if (!sphereStr) {
+      setError('Please enter a sphere power')
+      return
+    }
+
+    if (!cylinderStr) {
+      setError('Please enter a cylinder power')
+      return
+    }
+
     // Validate inputs
-    const sphere = parseFloat(spherePower)
-    const cylinder = parseFloat(cylinderPower)
-    const corneal = cornealCurvature ? parseFloat(cornealCurvature) : null
+    const sphere = parseFloat(sphereStr)
+    const cylinder = parseFloat(cylinderStr)
+    const corneal = cornealStr ? parseFloat(cornealStr) : null
 
     if (isNaN(sphere)) {
-      setError('Sphere power must be a valid number')
+      setError('Sphere power must be a valid number (e.g., -3.00 or +2.50)')
+      return
+    }
+
+    if (Math.abs(sphere) > 20) {
+      setError('Sphere power seems too high. Please enter a value between -20 and +20')
       return
     }
 
     if (isNaN(cylinder)) {
-      setError('Cylinder power must be a valid number')
+      setError('Cylinder power must be a valid number (e.g., -0.75 or +1.25)')
       return
     }
 
-    if (cornealCurvature && corneal !== null && isNaN(corneal)) {
-      setError('Corneal curvature must be a valid number or empty')
+    if (Math.abs(cylinder) > 6) {
+      setError('Cylinder power seems too high. Please enter a value between -6 and +6')
+      return
+    }
+
+    if (cornealStr && corneal !== null && isNaN(corneal)) {
+      setError('Corneal curvature must be a valid number or left empty')
+      return
+    }
+
+    if (corneal !== null && (corneal < 35 || corneal > 50)) {
+      setError('Corneal curvature should be between 35-50 mm (typical range: 40-46 mm)')
       return
     }
 
@@ -81,8 +112,8 @@ const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, clas
   }
 
   const handleReset = () => {
-    setSpherePower('-3')
-    setCylinderPower('-0.75')
+    setSpherePower('')
+    setCylinderPower('')
     setCornealCurvature('')
     setResult(null)
     setError(null)
@@ -115,11 +146,13 @@ const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, clas
             type="number"
             id="spherePower"
             step="0.25"
+            min="-20"
+            max="20"
             value={spherePower}
             onChange={(e) => setSpherePower(e.target.value)}
             required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="-3.00"
+            placeholder="Enter sphere power (e.g., -3.00 or +2.50)"
           />
         </div>
 
@@ -132,11 +165,13 @@ const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, clas
             type="number"
             id="cylinderPower"
             step="0.25"
+            min="-6"
+            max="6"
             value={cylinderPower}
             onChange={(e) => setCylinderPower(e.target.value)}
             required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="-0.75"
+            placeholder="Enter cylinder power (e.g., -0.75 or +1.25)"
           />
         </div>
 
@@ -149,10 +184,12 @@ const BaseCurveCalculator: React.FC<BaseCurveCalculatorProps> = ({ onClose, clas
             type="number"
             id="cornealCurvature"
             step="0.1"
+            min="35"
+            max="50"
             value={cornealCurvature}
             onChange={(e) => setCornealCurvature(e.target.value)}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Leave empty if unknown"
+            placeholder="Enter corneal curvature (e.g., 42.5) or leave empty"
           />
         </div>
 

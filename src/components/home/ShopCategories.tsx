@@ -232,7 +232,6 @@ const ShopCategories: React.FC = () => {
                                                 const productSlug = (product as any).slug || (product as any).id || product.id
                                                 const productSku = (product as any).sku
                                                 const productReviewCount = (product as any).review_count
-                                                const productColorImages = (product as any).color_images
                                                 
                                                 return (
                                                     <div

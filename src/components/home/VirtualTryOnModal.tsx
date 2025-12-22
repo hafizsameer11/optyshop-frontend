@@ -246,12 +246,17 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
     // Fetch AR coating simulation when enabled
     useEffect(() => {
-        if (arCoatingEnabled && !arCoatingData) {
+        if (arCoatingEnabled && !arCoatingData && !isLoadingARCoating) {
             setIsLoadingARCoating(true)
             simulateARCoating({ lensType: 'standard' })
                 .then((data) => {
                     if (data) {
                         setArCoatingData(data)
+                        if (import.meta.env.DEV) {
+                            console.log('✅ AR Coating data loaded:', data)
+                        }
+                    } else {
+                        console.warn('⚠️ AR Coating API returned no data')
                     }
                 })
                 .catch((error) => {
@@ -263,16 +268,21 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
         } else if (!arCoatingEnabled) {
             setArCoatingData(null)
         }
-    }, [arCoatingEnabled, arCoatingData])
+    }, [arCoatingEnabled])
 
     // Fetch photochromic simulation when enabled
     useEffect(() => {
-        if (photochromicEnabled && !photochromicData) {
+        if (photochromicEnabled && !photochromicData && !isLoadingPhotochromic) {
             setIsLoadingPhotochromic(true)
             simulatePhotochromic({ sunlightLevel: 75 })
                 .then((data) => {
                     if (data) {
                         setPhotochromicData(data)
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Photochromic data loaded:', data)
+                        }
+                    } else {
+                        console.warn('⚠️ Photochromic API returned no data')
                     }
                 })
                 .catch((error) => {
@@ -284,7 +294,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
         } else if (!photochromicEnabled) {
             setPhotochromicData(null)
         }
-    }, [photochromicEnabled, photochromicData])
+    }, [photochromicEnabled])
 
     useEffect(() => {
         if (!open) return
@@ -293,6 +303,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
         let camera: Camera | null = null
         let faceMesh: FaceMesh | null = null
+        let resizeHandler: (() => void) | null = null
 
         const onResults = (results: Results) => {
             const canvas = canvasRef.current
@@ -312,10 +323,19 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
             const ctx = canvas.getContext('2d')
             if (!ctx) return
 
+            const dpr = window.devicePixelRatio || 1
+            const rect = video.getBoundingClientRect()
+            const displayWidth = rect.width
+            const displayHeight = rect.height
             const width = canvas.width
             const height = canvas.height
 
+            // Clear canvas
             ctx.clearRect(0, 0, width, height)
+            
+            // Reset transform and scale to match display dimensions
+            ctx.setTransform(1, 0, 0, 1, 0, 0)
+            ctx.scale(dpr, dpr)
 
             const landmarks = results.multiFaceLandmarks[0]
 
@@ -326,11 +346,12 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
             if (!leftEye || !rightEye || !nose) return
 
-            const lx = leftEye.x * width
-            const ly = leftEye.y * height
-            const rx = rightEye.x * width
-            const ry = rightEye.y * height
-            const ny = nose.y * height
+            // Use display dimensions for coordinate calculations
+            const lx = leftEye.x * displayWidth
+            const ly = leftEye.y * displayHeight
+            const rx = rightEye.x * displayWidth
+            const ry = rightEye.y * displayHeight
+            const ny = nose.y * displayHeight
 
             const eyeCenterX = (lx + rx) / 2
             const eyeCenterY = (ly + ry) / 2
@@ -372,7 +393,11 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                     const arCtx = arCanvas.getContext('2d')
                     if (arCtx) {
                         // Clear previous AR coating effects
-                        arCtx.clearRect(0, 0, width, height)
+                        arCtx.clearRect(0, 0, arCanvas.width, arCanvas.height)
+                        
+                        // Reset transform and scale to match display dimensions
+                        arCtx.setTransform(1, 0, 0, 1, 0, 0)
+                        arCtx.scale(dpr, dpr)
 
                         const { simulation } = arCoatingData
                         const { reflectionIntensity, reflectionOpacity, colorIntensity, colors } = simulation
@@ -462,7 +487,11 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                     const photoCtx = photoCanvas.getContext('2d')
                     if (photoCtx) {
                         // Clear previous photochromic effects
-                        photoCtx.clearRect(0, 0, width, height)
+                        photoCtx.clearRect(0, 0, photoCanvas.width, photoCanvas.height)
+                        
+                        // Reset transform and scale to match display dimensions
+                        photoCtx.setTransform(1, 0, 0, 1, 0, 0)
+                        photoCtx.scale(dpr, dpr)
 
                         const { simulation } = photochromicData
                         const { opacity, brightness, contrast, color } = simulation
@@ -550,28 +579,43 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
             const canvas = canvasRef.current
             if (!video || !canvas) return
 
-            // Match canvas size to the rendered video size
+            // Standard camera dimensions - use 16:9 aspect ratio for better compatibility
+            const STANDARD_WIDTH = 1280
+            const STANDARD_HEIGHT = 720
+
+            // Match canvas size to the rendered video size with proper scaling
             const resizeCanvas = () => {
                 const rect = video.getBoundingClientRect()
-                const dpr = window.devicePixelRatio
+                const dpr = window.devicePixelRatio || 1
+                
+                // Set canvas internal dimensions (for drawing)
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
+                
+                // Set canvas display size (CSS)
+                canvas.style.width = `${rect.width}px`
+                canvas.style.height = `${rect.height}px`
                 
                 // Also resize AR coating and photochromic canvases
                 const arCanvas = arCoatingCanvasRef.current
                 if (arCanvas) {
                     arCanvas.width = rect.width * dpr
                     arCanvas.height = rect.height * dpr
+                    arCanvas.style.width = `${rect.width}px`
+                    arCanvas.style.height = `${rect.height}px`
                 }
                 const photoCanvas = photochromicCanvasRef.current
                 if (photoCanvas) {
                     photoCanvas.width = rect.width * dpr
                     photoCanvas.height = rect.height * dpr
+                    photoCanvas.style.width = `${rect.width}px`
+                    photoCanvas.style.height = `${rect.height}px`
                 }
             }
 
             resizeCanvas()
-            window.addEventListener('resize', resizeCanvas)
+            resizeHandler = resizeCanvas
+            window.addEventListener('resize', resizeHandler)
 
             faceMesh = new FaceMesh({
                 locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
@@ -592,8 +636,8 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                         await faceMesh.send({ image: video })
                     }
                 },
-                width: 640,
-                height: 480,
+                width: STANDARD_WIDTH,
+                height: STANDARD_HEIGHT,
             })
 
             try {
@@ -623,6 +667,9 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
         })
 
         return () => {
+            if (resizeHandler) {
+                window.removeEventListener('resize', resizeHandler)
+            }
             if (camera) {
                 camera.stop()
             }
@@ -630,7 +677,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                 faceMesh.close()
             }
         }
-    }, [open])
+    }, [open, arCoatingEnabled, photochromicEnabled, arCoatingData, photochromicData, selectedFrame])
 
     if (!open) return null
 
@@ -698,8 +745,8 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
                 <div className="flex flex-1 overflow-hidden">
                     {/* Left: camera + bottom strip */}
-                    <div className="relative flex-1 bg-black/80 flex flex-col">
-                        <div className="flex-1 relative">
+                    <div className="relative flex-1 bg-black/80 flex flex-col min-h-0">
+                        <div className="flex-1 relative min-h-0 flex items-center justify-center">
                             {/* Error message overlay */}
                             {error && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
@@ -722,7 +769,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                             {/* Video feed */}
                             <video
                                 ref={videoRef}
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-contain"
                                 muted
                                 autoPlay
                                 playsInline

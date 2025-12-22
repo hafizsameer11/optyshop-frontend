@@ -277,6 +277,8 @@ export const API_ROUTES = {
       LIST: `/lens/thickness-options`,                  // PUBLIC - Get lens thickness options
       BY_ID: (id: number | string) => `/lens/thickness-options/${id}`, // PUBLIC - Get lens thickness option by ID
     },
+    COLORS: `/lens/colors`,                             // PUBLIC - Get all lens colors
+    PRESCRIPTION_SUN_COLORS: `/lens/prescription-sun-colors`, // PUBLIC - Get prescription sun colors
   },
 
   // ============================================

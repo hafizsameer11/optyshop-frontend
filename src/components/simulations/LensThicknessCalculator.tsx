@@ -7,9 +7,9 @@ interface LensThicknessCalculatorProps {
 }
 
 const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClose, className = '' }) => {
-  const [frameDiameter, setFrameDiameter] = useState<string>('52')
-  const [lensPower, setLensPower] = useState<string>('-4.5')
-  const [lensIndex, setLensIndex] = useState<string>('1.67')
+  const [frameDiameter, setFrameDiameter] = useState<string>('')
+  const [lensPower, setLensPower] = useState<string>('')
+  const [lensIndex, setLensIndex] = useState<string>('')
   const [result, setResult] = useState<LensThicknessResponse | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -19,22 +19,58 @@ const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClo
     setError(null)
     setResult(null)
 
-    const diameter = parseFloat(frameDiameter)
-    const power = parseFloat(lensPower)
-    const index = parseFloat(lensIndex)
+    // Trim whitespace from inputs
+    const diameterStr = frameDiameter.trim()
+    const powerStr = lensPower.trim()
+    const indexStr = lensIndex.trim()
+
+    // Validate that all required fields are filled
+    if (!diameterStr) {
+      setError('Please enter a frame diameter')
+      return
+    }
+
+    if (!powerStr) {
+      setError('Please enter a lens power')
+      return
+    }
+
+    if (!indexStr) {
+      setError('Please enter a lens index')
+      return
+    }
+
+    const diameter = parseFloat(diameterStr)
+    const power = parseFloat(powerStr)
+    const index = parseFloat(indexStr)
 
     if (isNaN(diameter) || diameter <= 0) {
-      setError('Frame diameter must be a valid positive number')
+      setError('Frame diameter must be a valid positive number (e.g., 52)')
+      return
+    }
+
+    if (diameter > 100) {
+      setError('Frame diameter seems too large. Please enter a value between 40-80 mm')
       return
     }
 
     if (isNaN(power)) {
-      setError('Lens power must be a valid number')
+      setError('Lens power must be a valid number (e.g., -4.5 or +2.0)')
+      return
+    }
+
+    if (Math.abs(power) > 20) {
+      setError('Lens power seems too high. Please enter a value between -20 and +20')
       return
     }
 
     if (isNaN(index) || index <= 0) {
-      setError('Lens index must be a valid positive number')
+      setError('Lens index must be a valid positive number (e.g., 1.49, 1.56, 1.60, 1.67, 1.74)')
+      return
+    }
+
+    if (index < 1.4 || index > 1.8) {
+      setError('Lens index should be between 1.4 and 1.8 (common values: 1.49, 1.56, 1.60, 1.67, 1.74)')
       return
     }
 
@@ -47,22 +83,24 @@ const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClo
         lensIndex: index,
       })
 
-      if (response) {
+      if (response && response.calculation) {
         setResult(response)
       } else {
-        setError('Failed to calculate lens thickness. Please try again.')
+        setError('Failed to calculate lens thickness. Please check your inputs and try again.')
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred while calculating lens thickness.')
+      const errorMessage = err.message || err.error || 'An error occurred while calculating lens thickness. Please try again.'
+      setError(errorMessage)
+      console.error('Lens thickness calculation error:', err)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleReset = () => {
-    setFrameDiameter('52')
-    setLensPower('-4.5')
-    setLensIndex('1.67')
+    setFrameDiameter('')
+    setLensPower('')
+    setLensIndex('')
     setResult(null)
     setError(null)
   }
@@ -94,11 +132,13 @@ const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClo
             type="number"
             id="frameDiameter"
             step="0.1"
+            min="40"
+            max="80"
             value={frameDiameter}
             onChange={(e) => setFrameDiameter(e.target.value)}
             required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="52"
+            placeholder="Enter frame diameter (e.g., 52)"
           />
         </div>
 
@@ -111,11 +151,13 @@ const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClo
             type="number"
             id="lensPower"
             step="0.25"
+            min="-20"
+            max="20"
             value={lensPower}
             onChange={(e) => setLensPower(e.target.value)}
             required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="-4.5"
+            placeholder="Enter lens power (e.g., -4.5 or +2.0)"
           />
         </div>
 
@@ -128,11 +170,13 @@ const LensThicknessCalculator: React.FC<LensThicknessCalculatorProps> = ({ onClo
             type="number"
             id="lensIndex"
             step="0.01"
+            min="1.4"
+            max="1.8"
             value={lensIndex}
             onChange={(e) => setLensIndex(e.target.value)}
             required
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="1.67"
+            placeholder="Enter lens index (e.g., 1.49, 1.56, 1.60, 1.67, 1.74)"
           />
         </div>
 

@@ -44,7 +44,10 @@ import {
 } from '../../services/shippingMethodsService'
 import {
   getLensOptions,
-  type LensOption
+  getLensColors,
+  getPrescriptionSunColors,
+  type LensOption,
+  type LensColor
 } from '../../services/lensOptionsService'
 
 // Import test function in dev mode
@@ -59,6 +62,8 @@ if (import.meta.env.DEV) {
 interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
+  initialFrameMaterials?: string[] // Optional: pre-selected frame materials from product page
+  initialLensType?: string // Optional: pre-selected lens type from product page
 }
 
 type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
@@ -182,6 +187,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [shippingLoading, setShippingLoading] = useState(true)
   const [photochromicOptions, setPhotochromicOptions] = useState<LensOption[]>([])
   const [prescriptionSunOptions, setPrescriptionSunOptions] = useState<LensOption[]>([])
+  const [prescriptionSunColors, setPrescriptionSunColors] = useState<LensColor[]>([])
+  const [lensColors, setLensColors] = useState<LensColor[]>([])
   const [lensOptionsLoading, setLensOptionsLoading] = useState(true)
   
   // Checkout flow states
@@ -211,11 +218,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     fetchProductCustomizationOptions()
     fetchPhotochromicOptions()
     fetchPrescriptionSunOptions()
+    fetchPrescriptionSunColors()
+    fetchLensColors()
     fetchShippingMethods()
     if (isAuthenticated) {
       fetchSavedPrescriptions()
     }
   }, [isAuthenticated, product.id])
+  
+  // Debug: Log when lensColors state changes
+  useEffect(() => {
+    console.log('🔄 [ProductCheckout] lensColors state changed:', lensColors.length, 'colors')
+    if (lensColors.length > 0) {
+      console.log('🔄 [ProductCheckout] First lens color:', lensColors[0])
+      console.log('🔄 [ProductCheckout] First lens color lensOption:', lensColors[0].lensOption)
+    }
+  }, [lensColors])
   
   // PRIMARY METHOD: Get Product Configuration
   // GET /api/products/:id/configuration
@@ -1084,6 +1102,55 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     } catch (error) {
       console.error('❌ [API] Error fetching prescription sun options:', error)
       setPrescriptionSunOptions([])
+    }
+  }
+
+  // Fetch all lens colors from dedicated endpoint
+  // GET /api/lens/colors
+  const fetchLensColors = async () => {
+    try {
+      console.log('🔄 [ProductCheckout] fetchLensColors called')
+      console.log('🔄 [API] Fetching all lens colors: GET /api/lens/colors')
+      
+      const colors = await getLensColors()
+      
+      console.log('🔄 [ProductCheckout] getLensColors returned:', colors?.length || 0, 'colors')
+      
+      if (colors && colors.length > 0) {
+        console.log('✅ [ProductCheckout] Found', colors.length, 'lens colors, setting state')
+        console.log('✅ [ProductCheckout] First color:', colors[0])
+        setLensColors(colors)
+      } else {
+        console.log('⚠️ [ProductCheckout] No lens colors found, setting empty array')
+        setLensColors([])
+      }
+    } catch (error) {
+      console.error('❌ [ProductCheckout] Error fetching lens colors:', error)
+      if (error instanceof Error) {
+        console.error('   Error details:', error.message, error.stack)
+      }
+      setLensColors([])
+    }
+  }
+
+  // Fetch prescription sun colors from dedicated endpoint
+  // GET /api/lens/prescription-sun-colors
+  const fetchPrescriptionSunColors = async () => {
+    try {
+      console.log('🔄 [API] Fetching prescription sun colors: GET /api/lens/prescription-sun-colors')
+      
+      const colors = await getPrescriptionSunColors()
+      
+      if (colors && colors.length > 0) {
+        console.log('✅ [API] Found', colors.length, 'prescription sun colors from dedicated endpoint')
+        setPrescriptionSunColors(colors)
+      } else {
+        console.log('⚠️ [API] No prescription sun colors found from dedicated endpoint')
+        setPrescriptionSunColors([])
+      }
+    } catch (error) {
+      console.error('❌ [API] Error fetching prescription sun colors:', error)
+      setPrescriptionSunColors([])
     }
   }
 
@@ -2460,6 +2527,51 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 </div>
               )}
 
+              {/* Payment Method Selection */}
+              <div className="pt-4 border-t border-gray-200 mt-4">
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  {t('shop.paymentMethod', 'Payment Method')}
+                </label>
+                <div className="space-y-2">
+                  {[
+                    { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe', icon: '💳' },
+                    { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account', icon: '🔵' },
+                    { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' }
+                  ].map((method) => (
+                    <label
+                      key={method.id}
+                      className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                        paymentMethod === method.id
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        value={method.id}
+                        checked={paymentMethod === method.id}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-lg">{method.icon}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900">{method.name}</div>
+                              {method.description && (
+                                <div className="text-xs text-gray-600 mt-0.5">{method.description}</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="pt-4 border-t-2 border-gray-300 mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <div className="text-sm text-gray-500">
@@ -2659,6 +2771,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 productConfig={productConfig}
                 photochromicOptions={photochromicOptions}
                 prescriptionSunOptions={prescriptionSunOptions}
+                prescriptionSunColors={prescriptionSunColors}
+                lensColors={lensColors}
                 onTreatmentToggle={handleTreatmentToggle}
                 onColorSelect={(colorType, color) => {
                   if (colorType === 'photochromic') {
@@ -3251,6 +3365,8 @@ interface TreatmentStepProps {
   productConfig?: ProductConfig | null
   photochromicOptions?: LensOption[]
   prescriptionSunOptions?: LensOption[]
+  prescriptionSunColors?: LensColor[]
+  lensColors?: LensColor[]
   onTreatmentToggle: (treatmentId: string) => void
   onColorSelect?: (colorType: 'photochromic' | 'prescription_sun', color: { id: string; name: string; color: string; gradient?: boolean }) => void
   onNext: () => void
@@ -3266,6 +3382,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   productConfig: _productConfig,
   photochromicOptions: apiPhotochromicOptions = [],
   prescriptionSunOptions: apiPrescriptionSunOptions = [],
+  prescriptionSunColors: apiPrescriptionSunColors = [],
+  lensColors: apiLensColors = [],
   onTreatmentToggle,
   onColorSelect,
   onNext,
@@ -3301,12 +3419,151 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     }))
 
   // Map API photochromic options to UI format
+  // Also merges colors from the dedicated /api/lens/colors endpoint
   const mapPhotochromicOptions = () => {
-    console.log('🔍 [UI] mapPhotochromicOptions called with:', apiPhotochromicOptions?.length || 0, 'options')
+    console.log('🔍 [UI] mapPhotochromicOptions called')
+    console.log('🔍 [UI] apiPhotochromicOptions:', apiPhotochromicOptions?.length || 0, 'options')
+    console.log('🔍 [UI] apiLensColors:', apiLensColors?.length || 0, 'colors')
+    console.log('🔍 [UI] apiLensColors type:', typeof apiLensColors, 'isArray:', Array.isArray(apiLensColors))
+    
+    if (apiLensColors && apiLensColors.length > 0) {
+      console.log('🔍 [UI] First lens color sample:', {
+        id: apiLensColors[0].id,
+        name: apiLensColors[0].name,
+        hasLensOption: !!apiLensColors[0].lensOption,
+        lensOptionType: apiLensColors[0].lensOption?.type,
+        lensOptionName: apiLensColors[0].lensOption?.name
+      })
+    }
+    
+    // Filter colors that belong to photochromic lens options
+    const photochromicColors = apiLensColors?.filter(color => {
+      if (!color.lensOption) {
+        console.log('  ⚠️ Color', color.id, 'has no lensOption')
+        return false
+      }
+      const type = (color.lensOption.type || '').toLowerCase()
+      const slug = (color.lensOption.slug || '').toLowerCase()
+      const name = (color.lensOption.name || '').toLowerCase()
+      const isPhotochromic = type === 'photochromic' || 
+             slug === 'photochromic' ||
+             name.includes('photochromic')
+      
+      if (isPhotochromic) {
+        console.log('  ✅ Color', color.id, 'is photochromic (type:', type, 'slug:', slug, 'name:', name, ')')
+      }
+      
+      return isPhotochromic
+    }) || []
+    
+    console.log('📥 [API] Found', photochromicColors.length, 'photochromic colors from /api/lens/colors')
+    if (photochromicColors.length > 0) {
+      console.log('📥 [API] First photochromic color:', JSON.stringify(photochromicColors[0], null, 2))
+    } else if (apiLensColors && apiLensColors.length > 0) {
+      console.log('📥 [API] No photochromic colors found, but we have', apiLensColors.length, 'total colors')
+      console.log('📥 [API] Sample lensOption types:', apiLensColors.slice(0, 5).map(c => c.lensOption?.type || 'null').join(', '))
+    }
+    
+    // If we have colors from the dedicated endpoint but no options, create options from colors
+    if ((!apiPhotochromicOptions || apiPhotochromicOptions.length === 0) && 
+        photochromicColors.length > 0) {
+      console.log('📥 [API] No photochromic options found, creating options from lens colors endpoint')
+      
+      // Group colors by lensOption
+      const colorsByOption: Record<number, LensColor[]> = {}
+      photochromicColors.forEach(color => {
+        if (color.lensOption && color.lensOption.id) {
+          if (!colorsByOption[color.lensOption.id]) {
+            colorsByOption[color.lensOption.id] = []
+          }
+          colorsByOption[color.lensOption.id].push(color)
+        }
+      })
+      
+      console.log('📥 [API] Grouped colors into', Object.keys(colorsByOption).length, 'options')
+      
+      // Create options from grouped colors
+      const optionsFromColors: LensOption[] = Object.entries(colorsByOption).map(([optionId, colors]) => {
+        const firstColor = colors[0]
+        const lensOption = firstColor.lensOption!
+        return {
+          id: parseInt(optionId),
+          name: lensOption.name || 'Photochromic',
+          slug: lensOption.slug || lensOption.type || 'photochromic',
+          type: lensOption.type || 'photochromic',
+          colors: colors.map(color => ({
+            ...color,
+            // Ensure consistent field names
+            hexCode: color.hexCode || color.hex_code,
+            colorCode: color.colorCode || color.color_code,
+            isActive: color.isActive !== undefined ? color.isActive : color.is_active,
+            priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
+          }))
+        } as LensOption
+      })
+      
+      console.log('📥 [API] Created', optionsFromColors.length, 'photochromic options from colors')
+      console.log('📥 [API] First option colors:', optionsFromColors[0]?.colors?.length || 0)
+      
+      // Use these options for mapping (this will format colors properly)
+      return mapPhotochromicOptionsToUI(optionsFromColors, apiLensColors)
+    }
+    
     if (apiPhotochromicOptions && apiPhotochromicOptions.length > 0) {
       console.log('📥 [API] Mapping photochromic options from API:', apiPhotochromicOptions.length, 'options')
       console.log('📥 [API] Raw options data:', JSON.stringify(apiPhotochromicOptions, null, 2))
-      return apiPhotochromicOptions
+      return mapPhotochromicOptionsToUI(apiPhotochromicOptions, apiLensColors)
+    }
+    
+    // Return empty array if no API data
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ [UI] No photochromic options to map.')
+      console.warn('   → apiPhotochromicOptions:', apiPhotochromicOptions?.length || 0)
+      console.warn('   → photochromicColors from /api/lens/colors:', photochromicColors.length)
+      console.warn('   → Check if fetchPhotochromicOptions and fetchLensColors were called')
+    }
+    return []
+  }
+  
+  // Helper function to map photochromic options to UI format
+  const mapPhotochromicOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
+    // Merge colors from dedicated endpoint into options
+    if (additionalColors && additionalColors.length > 0) {
+      console.log('🔄 [UI] Merging', additionalColors.length, 'colors from dedicated endpoint into photochromic options')
+      options.forEach(option => {
+        // Find colors that belong to this option (by lensOption.id or type matching)
+        const matchingColors = additionalColors.filter(color => {
+          if (!color.lensOption) return false
+          // Match by ID if available
+          if (color.lensOption.id === option.id) return true
+          // Match by type/slug if IDs don't match
+          const optionType = (option.type || option.slug || '').toLowerCase()
+          const colorType = (color.lensOption.type || color.lensOption.slug || '').toLowerCase()
+          return optionType === 'photochromic' && 
+                 (colorType === 'photochromic' || colorType.includes('photochromic'))
+        })
+        
+        if (matchingColors.length > 0) {
+          console.log(`  ✅ Found ${matchingColors.length} colors for photochromic option ${option.name} (id: ${option.id})`)
+          // Merge colors, avoiding duplicates
+          const existingColorIds = new Set((option.colors || []).map(c => c.id))
+          const newColors = matchingColors
+            .filter(c => !existingColorIds.has(c.id))
+            .map(color => ({
+              ...color,
+              // Ensure consistent field names
+              hexCode: color.hexCode || color.hex_code,
+              colorCode: color.colorCode || color.color_code,
+              isActive: color.isActive !== undefined ? color.isActive : color.is_active,
+              priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
+            }))
+          
+          option.colors = [...(option.colors || []), ...newColors]
+        }
+      })
+    }
+    
+    return options
         .filter(option => {
           // Support both camelCase and snake_case
           const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
@@ -3349,29 +3606,130 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               })
           };
         })
-    }
-    
-    // Return empty array if no API data - don't use dummy data
-    // Only log in dev mode to reduce console noise
-    if (import.meta.env.DEV) {
-      console.warn('⚠️ [UI] No photochromic options to map. apiPhotochromicOptions:', apiPhotochromicOptions)
-      console.warn('   → Check if fetchPhotochromicOptions was called and returned data')
-      console.warn('   → Check browser console for API fetch logs')
-    }
-    return []
   }
 
   // Map API prescription sun options to UI format
   // The API returns lens options with type='prescription_sun' or similar
   // Each option can have colors, and we need to group them by main type (polarized, classic, blokz)
+  // Also merges colors from the dedicated prescription-sun-colors endpoint and /api/lens/colors
   const mapPrescriptionSunOptions = () => {
     console.log('🔍 [UI] mapPrescriptionSunOptions called with:', apiPrescriptionSunOptions?.length || 0, 'options')
+    console.log('🔍 [UI] Prescription sun colors from dedicated endpoint:', apiPrescriptionSunColors?.length || 0, 'colors')
+    console.log('🔍 [UI] All lens colors from /api/lens/colors:', apiLensColors?.length || 0, 'colors')
+    
+    // Collect all prescription sun colors from both endpoints
+    const allPrescriptionSunColors: LensColor[] = []
+    
+    // Add colors from prescription-sun-colors endpoint
+    if (apiPrescriptionSunColors && apiPrescriptionSunColors.length > 0) {
+      allPrescriptionSunColors.push(...apiPrescriptionSunColors)
+    }
+    
+    // Add colors from /api/lens/colors that have prescriptionLensType
+    if (apiLensColors && apiLensColors.length > 0) {
+      const prescriptionSunColorsFromLensColors = apiLensColors.filter(color => 
+        color.prescriptionLensType !== null && color.prescriptionLensType !== undefined
+      )
+      console.log('📥 [API] Found', prescriptionSunColorsFromLensColors.length, 'prescription sun colors from /api/lens/colors')
+      allPrescriptionSunColors.push(...prescriptionSunColorsFromLensColors)
+    }
+    
+    // If we have colors but no options, create options from colors
+    if ((!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0) && 
+        allPrescriptionSunColors.length > 0) {
+      console.log('📥 [API] No options found, creating options from prescription sun colors')
+      
+      // Group colors by prescriptionLensType
+      const colorsByType: Record<number, LensColor[]> = {}
+      allPrescriptionSunColors.forEach(color => {
+        if (color.prescriptionLensType && color.prescriptionLensType.id) {
+          const typeId = color.prescriptionLensType.id
+          if (!colorsByType[typeId]) {
+            colorsByType[typeId] = []
+          }
+          colorsByType[typeId].push(color)
+        } else if (color.lensOption && color.lensOption.id) {
+          // Fallback to lensOption if prescriptionLensType is not available
+          const optionId = color.lensOption.id
+          if (!colorsByType[optionId]) {
+            colorsByType[optionId] = []
+          }
+          colorsByType[optionId].push(color)
+        }
+      })
+      
+      // Create options from grouped colors
+      const optionsFromColors: LensOption[] = Object.entries(colorsByType).map(([typeId, colors]) => {
+        const firstColor = colors[0]
+        const prescriptionType = firstColor.prescriptionLensType || firstColor.lensOption
+        if (!prescriptionType) return null
+        
+        return {
+          id: parseInt(typeId),
+          name: prescriptionType.name || 'Prescription Sun',
+          slug: prescriptionType.slug || 'prescription-sun',
+          type: 'prescription_sun',
+          colors: colors
+        } as LensOption
+      }).filter((opt): opt is LensOption => opt !== null)
+      
+      if (optionsFromColors.length > 0) {
+        // Use these options for mapping
+        return mapOptionsToUI(optionsFromColors, allPrescriptionSunColors)
+      }
+    }
+    
     if (apiPrescriptionSunOptions && apiPrescriptionSunOptions.length > 0) {
       console.log('📥 [API] Mapping prescription sun options from API:', apiPrescriptionSunOptions.length, 'options')
       console.log('📥 [API] Raw options data:', JSON.stringify(apiPrescriptionSunOptions, null, 2))
       
+      // Merge colors from both endpoints
+      const allColors = [...(apiPrescriptionSunColors || []), ...(apiLensColors?.filter(c => c.prescriptionLensType) || [])]
+      return mapOptionsToUI(apiPrescriptionSunOptions, allColors)
+    }
+    
+    // Return empty array if no API data
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
+      console.warn('   → Check if fetchPrescriptionSunOptions was called and returned data')
+      console.warn('   → Check browser console for API fetch logs')
+    }
+    return []
+  }
+  
+  // Helper function to map options to UI format
+  const mapOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
+    // Merge colors from dedicated endpoint into options
+    if (additionalColors && additionalColors.length > 0) {
+      console.log('🔄 [UI] Merging', additionalColors.length, 'colors from dedicated endpoint into options')
+      options.forEach(option => {
+        // Find colors that belong to this option
+        const matchingColors = additionalColors.filter(color => 
+          color.lensOption && color.lensOption.id === option.id
+        )
+        
+        if (matchingColors.length > 0) {
+          console.log(`  ✅ Found ${matchingColors.length} colors for option ${option.name} (id: ${option.id})`)
+          // Merge colors, avoiding duplicates
+          const existingColorIds = new Set((option.colors || []).map(c => c.id))
+          const newColors = matchingColors
+            .filter(c => !existingColorIds.has(c.id))
+            .map(color => ({
+              ...color,
+              // Ensure consistent field names
+              hexCode: color.hexCode || color.hex_code,
+              colorCode: color.colorCode || color.color_code,
+              isActive: color.isActive !== undefined ? color.isActive : color.is_active,
+              priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
+            }))
+          
+          option.colors = [...(option.colors || []), ...newColors]
+        }
+      })
+    }
+      
       // Filter active options and sort
-      const activeOptions = apiPrescriptionSunOptions
+    const activeOptions = options
         .filter(option => {
           // Support both camelCase and snake_case
           const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
@@ -3520,21 +3878,26 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       const result = Object.values(grouped)
       console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
       return result
-    }
-    
-    // Return empty array if no API data - don't use dummy data
-    // Only log in dev mode to reduce console noise
-    if (import.meta.env.DEV) {
-      console.warn('⚠️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
-      console.warn('   → Check if fetchPrescriptionSunOptions was called and returned data')
-      console.warn('   → Check browser console for API fetch logs')
-    }
-    return []
   }
 
   // Use mapped API options or fallback
   const photochromicOptions = mapPhotochromicOptions()
   const prescriptionSunOptions = mapPrescriptionSunOptions()
+  
+  // Debug logging
+  console.log('🎨 [UI] Final photochromicOptions:', photochromicOptions.length, 'options')
+  if (photochromicOptions.length > 0) {
+    console.log('🎨 [UI] First photochromic option:', {
+      id: photochromicOptions[0].id,
+      name: photochromicOptions[0].name,
+      colorsCount: photochromicOptions[0].colors?.length || 0,
+      colors: photochromicOptions[0].colors?.map((c: any) => ({ 
+        id: c.id, 
+        name: c.name, 
+        hex: c.hexCode || c.hex_code || c.color 
+      }))
+    })
+  }
 
   const handlePhotochromicClick = () => {
     setShowPhotochromic(!showPhotochromic)
@@ -3651,245 +4014,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               )
             )}
 
-            {/* Photochromic */}
-            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-                    <button
-                onClick={handlePhotochromicClick}
-                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-                    >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                      <div className="flex-1 text-left">
-                  <div className="font-semibold text-gray-900">Photochromic</div>
-                      </div>
-                <svg className={`w-5 h-5 text-gray-400 transition-transform ${showPhotochromic ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-              
-              {showPhotochromic && (
-                <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                      <span className="ml-3 text-sm text-gray-600">{t('shop.loadingPhotochromic', 'Loading photochromic options...')}</span>
-                    </div>
-                  ) : photochromicOptions.length > 0 ? (
-                    photochromicOptions.map((option) => {
-                      // Support both camelCase and snake_case field names
-                      const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price;
-                      const colors = option.colors || [];
-                      // Filter active colors - support both camelCase and snake_case
-                      const activeColors = colors.filter((c: any) => {
-                        const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
-                        return isActive !== false;
-                      });
-                      
-                      return (
-                      <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900">{option.name}</h4>
-                          {basePrice && basePrice > 0 && (
-                            <span className="text-sm font-normal text-gray-600">
-                              (+${basePrice.toFixed(2)})
-                            </span>
-                          )}
-                        </div>
-                          {option.description && (
-                        <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                          )}
-                          {activeColors.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {activeColors.map((color: any) => {
-                              // Support both camelCase and snake_case for color fields
-                              const hexCode = color.hexCode || color.hex_code;
-                              const colorCode = color.colorCode || color.color_code;
-                              const colorValue = hexCode || colorCode || '#000000';
-                              
-                              return (
-                              <button
-                                key={color.id}
-                                onClick={() => handleColorSelect(option.id, color.id, option.id, color)}
-                                className={`w-10 h-10 rounded-full border-2 transition-all ${
-                                  (selectedColor?.type === option.id && selectedColor?.colorId === color.id) ||
-                                  (lensSelection.photochromicColor?.id === color.id)
-                                    ? 'border-blue-600 ring-2 ring-blue-200'
-                                    : 'border-gray-300 hover:border-gray-400'
-                                }`}
-                                style={{
-                                  background: colorValue
-                                }}
-                                title={color.name}
-                              />
-                              );
-                            })}
-                          </div>
-                          ) : (
-                            <p className="text-sm text-gray-500 italic">{t('shop.noColorsAvailable', 'No colors available for this option')}</p>
-                          )}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t('shop.noPhotochromicOptions', 'No photochromic options available. Please configure them in the admin panel.')}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Prescription Lenses Sun */}
-            <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={handlePrescriptionSunClick}
-                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <div className="flex-1 text-left">
-                  <div className="font-semibold text-gray-900">Prescription Lenses Sun</div>
-                </div>
-                <svg className={`w-5 h-5 text-gray-400 transition-transform ${showPrescriptionSun ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              
-              {showPrescriptionSun && (
-                <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {loading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                      <span className="ml-3 text-sm text-gray-600">{t('shop.loadingPrescriptionSun', 'Loading prescription sun options...')}</span>
-                    </div>
-                  ) : prescriptionSunOptions.length > 0 ? (
-                    prescriptionSunOptions.map((option) => {
-                      // Support both camelCase and snake_case field names
-                      const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price;
-                      
-                      return (
-                      <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="font-semibold text-gray-900">
-                            {option.name}
-                            {basePrice && basePrice > 0 && (
-                              <span className="ml-2 text-sm font-normal text-gray-600">
-                                (+${basePrice.toFixed(2)})
-                              </span>
-                            )}
-                          </h4>
-                  </div>
-                          {option.description && (
-                        <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                          )}
-                          {option.subOptions && option.subOptions.length > 0 ? (
-                            option.subOptions.map((subOption: any) => {
-                              const subBasePrice = subOption.basePrice !== undefined ? subOption.basePrice : subOption.base_price;
-                              const subPrice = subOption.price !== undefined ? subOption.price : subBasePrice;
-                              const colors = subOption.colors || [];
-                              // Filter active colors - support both camelCase and snake_case
-                              const activeColors = colors.filter((c: any) => {
-                                const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
-                                return isActive !== false;
-                              });
-                              
-                              return (
-                            <div key={subOption.id} className="mt-3">
-                              <div className="text-sm font-medium text-gray-700 mb-2">
-                                {subOption.name}
-                                {subPrice && subPrice > 0 && (
-                                  <span className="ml-2 text-xs text-gray-500">
-                                    (+${subPrice.toFixed(2)})
-                                  </span>
-                                )}
-                                {(!subPrice || subPrice === 0) && subOption.name !== 'Classic' && (
-                                  <span className="ml-2 text-xs text-green-600">Free</span>
-                                )}
-                              </div>
-                                  {activeColors.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                      {activeColors.map((color: any) => {
-                                        // Support both camelCase and snake_case for color fields
-                                        const hexCode = color.hexCode || color.hex_code;
-                                        const colorCode = color.colorCode || color.color_code;
-                                        const colorValue = hexCode || colorCode || '#000000';
-                                        
-                                        return (
-                                      <button
-                                        key={color.id}
-                                        onClick={() => handleColorSelect(`${option.id}_${subOption.id}`, color.id, `${option.id}_${subOption.id}`, color)}
-                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
-                                          (selectedColor?.type === `${option.id}_${subOption.id}` && selectedColor?.colorId === color.id) ||
-                                          (lensSelection.prescriptionSunColor?.id === color.id)
-                                            ? 'border-blue-600 ring-2 ring-blue-200'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                        }`}
-                                        style={{
-                                          background: colorValue
-                                        }}
-                                        title={color.name}
-                                      />
-                                        );
-                                      })}
-                                </div>
-                                  ) : (
-                                    <p className="text-xs text-gray-500 italic">No colors available for this option</p>
-                              )}
-                            </div>
-                              );
-                            })
-                          ) : (
-                            // If no subOptions, check for direct colors on the option
-                            (() => {
-                              const colors = option.colors || [];
-                              const activeColors = colors.filter((c: any) => {
-                                const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
-                                return isActive !== false;
-                              });
-                              
-                              return activeColors.length > 0 ? (
-                                <div className="flex flex-wrap gap-2">
-                                  {activeColors.map((color: any) => {
-                                    const hexCode = color.hexCode || color.hex_code;
-                                    const colorCode = color.colorCode || color.color_code;
-                                    const colorValue = hexCode || colorCode || '#000000';
-                                    
-                                    return (
-                                      <button
-                                        key={color.id}
-                                        onClick={() => handleColorSelect(option.id, color.id, option.id, color)}
-                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
-                                          (selectedColor?.type === option.id && selectedColor?.colorId === color.id) ||
-                                          (lensSelection.prescriptionSunColor?.id === color.id)
-                                            ? 'border-blue-600 ring-2 ring-blue-200'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                        }`}
-                                        style={{
-                                          background: colorValue
-                                        }}
-                                        title={color.name}
-                                      />
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <p className="text-sm text-gray-500 italic">No colors available</p>
-                              );
-                            })()
-                          )}
-                      </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center py-8 text-gray-500">
-                      <p className="text-sm">{t('shop.noPrescriptionSunOptions', 'No prescription sun options available. Please configure them in the admin panel.')}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
           </div>
 
           <button

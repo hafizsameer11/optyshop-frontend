@@ -33,8 +33,16 @@ export interface LensColor {
   lensOption?: {
     id: number;
     name: string;
-    type: string;
+    type?: string;
+    slug?: string;
   };
+  // Nested prescription lens type object (from API)
+  prescriptionLensType?: {
+    id: number;
+    name: string;
+    slug?: string;
+  };
+  lensFinish?: any;
 }
 
 export interface LensOption {
@@ -69,6 +77,31 @@ export interface LensOptionsResponse {
 export interface LensOptionResponse {
   success: boolean;
   data: LensOption;
+}
+
+export interface LensColorsResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    colors: LensColor[];
+    count?: number;
+    pagination?: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  };
+}
+
+export interface PrescriptionSunColorsResponse {
+  success: boolean;
+  message?: string;
+  data: {
+    colors: LensColor[];
+    prescriptionLensTypes?: any[];
+    count: number;
+  };
 }
 
 // ============================================
@@ -217,8 +250,129 @@ export const getLensOptionById = async (id: number | string): Promise<LensOption
   }
 };
 
+/**
+ * Get all lens colors
+ * GET /api/lens/colors
+ */
+export const getLensColors = async (): Promise<LensColor[]> => {
+  try {
+    console.log('🌐 [API] Fetching all lens colors: GET', API_ROUTES.LENS.COLORS);
+    
+    const response = await apiClient.get<LensColorsResponse>(
+      API_ROUTES.LENS.COLORS,
+      false // PUBLIC endpoint
+    );
+
+    console.log('📥 [API] Lens Colors API response (full):', JSON.stringify(response, null, 2));
+    console.log('📥 [API] Lens Colors API response (summary):', {
+      success: response.success,
+      message: response.message,
+      hasData: !!response.data,
+      dataType: typeof response.data,
+      isArray: Array.isArray(response.data),
+      colorsCount: response.data?.colors?.length || 0,
+      count: response.data?.count || 0,
+      hasPagination: !!response.data?.pagination
+    });
+
+    // Handle different response structures
+    let colors: LensColor[] = [];
+    
+    if (response.success && response.data) {
+      // Check if data.colors exists (expected structure)
+      if (response.data.colors && Array.isArray(response.data.colors)) {
+        colors = response.data.colors;
+        console.log(`✅ [API] Found ${colors.length} lens colors in data.colors`);
+      } 
+      // Check if data is directly an array (alternative structure)
+      else if (Array.isArray(response.data)) {
+        colors = response.data as LensColor[];
+        console.log(`✅ [API] Found ${colors.length} lens colors (data is array)`);
+      }
+      // Check if response.data.data.colors exists (nested structure)
+      else if ((response.data as any).data && Array.isArray((response.data as any).data.colors)) {
+        colors = (response.data as any).data.colors;
+        console.log(`✅ [API] Found ${colors.length} lens colors in data.data.colors`);
+      }
+      
+      // Log first color structure for debugging
+      if (colors.length > 0) {
+        console.log('📋 [API] First color structure:', JSON.stringify(colors[0], null, 2));
+        console.log('📋 [API] First color lensOption:', colors[0].lensOption);
+      } else {
+        console.warn('⚠️ [API] No colors found in response, data structure:', response.data);
+      }
+      
+      return colors;
+    }
+
+    if (response.message) {
+      console.warn('⚠️ [API] API returned:', response.message);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('❌ [API] Error fetching lens colors:', error);
+    if (error instanceof Error) {
+      console.error('   Error message:', error.message);
+      console.error('   Error stack:', error.stack);
+    }
+    return [];
+  }
+};
+
+/**
+ * Get prescription sun colors
+ * GET /api/lens/prescription-sun-colors
+ */
+export const getPrescriptionSunColors = async (): Promise<LensColor[]> => {
+  try {
+    console.log('🌐 [API] Fetching prescription sun colors: GET', API_ROUTES.LENS.PRESCRIPTION_SUN_COLORS);
+    
+    const response = await apiClient.get<PrescriptionSunColorsResponse>(
+      API_ROUTES.LENS.PRESCRIPTION_SUN_COLORS,
+      false // PUBLIC endpoint
+    );
+
+    console.log('📥 [API] Prescription Sun Colors API response:', {
+      success: response.success,
+      message: response.message,
+      hasData: !!response.data,
+      colorsCount: response.data?.colors?.length || 0,
+      count: response.data?.count || 0
+    });
+
+    if (response.success && response.data && response.data.colors) {
+      const colors = response.data.colors;
+      console.log(`✅ [API] Found ${colors.length} prescription sun colors`);
+      
+      // Log first color structure for debugging
+      if (colors.length > 0) {
+        console.log('📋 [API] First color structure:', JSON.stringify(colors[0], null, 2));
+      }
+      
+      return colors;
+    }
+
+    if (response.message) {
+      console.warn('⚠️ [API] API returned:', response.message);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('❌ [API] Error fetching prescription sun colors:', error);
+    if (error instanceof Error) {
+      console.error('   Error message:', error.message);
+      console.error('   Error stack:', error.stack);
+    }
+    return [];
+  }
+};
+
 export default {
   getLensOptions,
   getLensOptionById,
+  getLensColors,
+  getPrescriptionSunColors,
 };
 
