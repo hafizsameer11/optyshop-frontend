@@ -20,8 +20,8 @@ const Navbar: React.FC = () => {
     const [clickedDropdown, setClickedDropdown] = useState<number | null>(null) // Track which dropdown was opened by click
     const [clickedSubDropdown, setClickedSubDropdown] = useState<number | null>(null) // Track which sub-dropdown was opened by click
     const dropdownRef = useRef<HTMLDivElement>(null)
-    const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-    const subDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const subDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const { categories, loading } = useCategories()
 
     // Debug: Log categories structure
@@ -145,22 +145,22 @@ const Navbar: React.FC = () => {
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex items-center w-full max-w-[1920px] mx-auto py-3 md:py-4 px-2 md:px-4 lg:px-6 gap-2 md:gap-3">
+            <div className="flex items-center w-full max-w-[1920px] mx-auto py-3 md:py-4 px-2 md:px-4 lg:px-6 gap-1.5 md:gap-2">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0 group">
-                    <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
-                        <span className="text-white font-bold text-sm">OS</span>
+                <Link to="/" className="flex items-center space-x-1.5 md:space-x-2 flex-shrink-0 group">
+                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
+                        <span className="text-white font-bold text-xs md:text-sm">OS</span>
                     </div>
-                    <span className="text-lg md:text-xl font-bold tracking-[0.35em] uppercase text-white group-hover:text-cyan-200 transition-colors">
+                    <span className="text-sm md:text-base font-bold tracking-[0.2em] md:tracking-[0.25em] uppercase text-white group-hover:text-cyan-200 transition-colors">
                         OPTISHOP
                     </span>
                 </Link>
 
                 {/* Desktop navigation */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1 md:space-x-1.5 lg:space-x-2 mx-1 md:mx-2 lg:mx-4" ref={dropdownRef}>
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-1 md:space-x-1 lg:space-x-1.5 mx-1 md:mx-1.5 lg:mx-2" ref={dropdownRef}>
                     <Link
                         to="/"
-                        className={`h-10 px-2.5 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                        className={`h-10 px-2 md:px-2.5 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap flex-shrink-0 ${
                             isActive('/') 
                                 ? 'bg-blue-800/50 text-blue-100' 
                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -198,7 +198,7 @@ const Navbar: React.FC = () => {
                             <div className="flex items-center">
                                 <Link
                                     to={`/category/${category.slug}`}
-                                    className={`h-10 px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-1.5 ${
+                                    className={`h-10 px-2 md:px-2.5 lg:px-3 py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-1 ${
                                         isCategoryActive(category)
                                             ? 'bg-blue-800/50 text-blue-100 shadow-md' 
                                             : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
@@ -423,7 +423,7 @@ const Navbar: React.FC = () => {
                     
                     <Link
                         to="/virtual-test"
-                        className="h-9 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-2.5 py-1.5 text-[10px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50"
+                        className="h-9 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-2 md:px-2.5 py-1.5 text-[10px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0"
                         title={t('navbar.virtualTryOn')}
                     >
                         <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -433,9 +433,9 @@ const Navbar: React.FC = () => {
                         <span className="lg:hidden">Try On</span>
                     </Link>
                 </nav>
-
+                
                 {/* Right side actions */}
-                <div className="flex items-center gap-2 md:gap-2 flex-shrink-0 ml-auto pr-2 md:pr-4">
+                <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0 ml-1 md:ml-2 pr-1 md:pr-2 lg:pr-4">
                     {/* Language Switcher - Always visible */}
                     <div className="flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
@@ -470,7 +470,7 @@ const Navbar: React.FC = () => {
                     {/* Login Button */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[70px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        className="hidden md:inline-flex items-center justify-center h-10 min-w-[60px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 md:px-3 py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                     >
                         {t('navbar.login')}
                     </Link>

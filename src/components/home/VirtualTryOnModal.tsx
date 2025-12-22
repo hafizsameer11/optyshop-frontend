@@ -53,83 +53,104 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
 
     // Fetch products from backend when modal opens
     useEffect(() => {
-        if (open) {
-            // If a selected product is provided, set it immediately
-            if (selectedProduct) {
-                const productImageUrl = getProductImageUrl(selectedProduct)
-                setSelectedFrame(productImageUrl)
-                // Add to products list if not already there
-                const productExists = products.some(p => p.id === selectedProduct.id)
-                if (!productExists) {
-                    setProducts([selectedProduct, ...products])
+        if (!open) {
+            // Reset products when modal closes to ensure fresh fetch on next open
+            setProducts([])
+            setSelectedFrame('')
+            return
+        }
+
+        const fetchProducts = async () => {
+            try {
+                setLoading(true)
+                setError(null)
+                
+                if (import.meta.env.DEV) {
+                    console.log('🔄 Fetching products for virtual try-on...')
                 }
-            }
-            
-            // Fetch additional products if list is empty
-            if (products.length === 0) {
-                const fetchProducts = async () => {
-                    try {
-                        setLoading(true)
-                        setError(null)
-                        const result = await getProducts({ limit: 50 }) // Fetch up to 50 products
-                        if (result && result.products && result.products.length > 0) {
-                            // If we have a selected product, add it to the list and keep it selected
-                            if (selectedProduct) {
-                                const productExists = result.products.some(p => p.id === selectedProduct.id)
-                                if (!productExists) {
-                                    setProducts([selectedProduct, ...result.products])
-                                } else {
-                                    setProducts(result.products)
-                                }
-                                // Ensure selected product frame is set
-                                const productImageUrl = getProductImageUrl(selectedProduct)
-                                setSelectedFrame(productImageUrl)
-                            } else {
-                                setProducts(result.products)
-                                // Set first product as selected if no product prop provided
-                                const firstProduct = result.products[0]
-                                const firstImageUrl = getProductImageUrl(firstProduct)
-                                setSelectedFrame(firstImageUrl)
-                            }
+                
+                const result = await getProducts({ limit: 50 }) // Fetch up to 50 products
+                
+                if (import.meta.env.DEV) {
+                    console.log('📦 Products fetch result:', {
+                        success: !!result,
+                        count: result?.products?.length || 0,
+                        hasSelectedProduct: !!selectedProduct
+                    })
+                }
+                
+                if (result && result.products && result.products.length > 0) {
+                    // If we have a selected product, add it to the list and keep it selected
+                    if (selectedProduct) {
+                        const productExists = result.products.some(p => p.id === selectedProduct.id)
+                        if (!productExists) {
+                            setProducts([selectedProduct, ...result.products])
                         } else {
-                            // If no products from API but we have a selected product, use it
-                            if (selectedProduct) {
-                                setProducts([selectedProduct])
-                                const productImageUrl = getProductImageUrl(selectedProduct)
-                                setSelectedFrame(productImageUrl)
-                            } else {
-                                setError('No products available. Please try again later.')
-                                // Fallback to default frame
-                                setSelectedFrame('/assets/images/frame1.png')
-                            }
+                            setProducts(result.products)
                         }
-                    } catch (error) {
-                        console.error('Error fetching products:', error)
-                        // If API fails but we have a selected product, use it
-                        if (selectedProduct) {
-                            setProducts([selectedProduct])
-                            const productImageUrl = getProductImageUrl(selectedProduct)
-                            setSelectedFrame(productImageUrl)
-                            setError(null)
-                        } else {
-                            setError('Failed to load products. Please try again later.')
-                            // Fallback to default frame
-                            setSelectedFrame('/assets/images/frame1.png')
+                        // Ensure selected product frame is set
+                        const productImageUrl = getProductImageUrl(selectedProduct)
+                        setSelectedFrame(productImageUrl)
+                    } else {
+                        setProducts(result.products)
+                        // Set first product as selected if no product prop provided
+                        const firstProduct = result.products[0]
+                        const firstImageUrl = getProductImageUrl(firstProduct)
+                        setSelectedFrame(firstImageUrl)
+                    }
+                } else {
+                    // If no products from API but we have a selected product, use it
+                    if (selectedProduct) {
+                        setProducts([selectedProduct])
+                        const productImageUrl = getProductImageUrl(selectedProduct)
+                        setSelectedFrame(productImageUrl)
+                        if (import.meta.env.DEV) {
+                            console.log('⚠️ No products from API, using selected product only')
                         }
-                    } finally {
-                        setLoading(false)
+                    } else {
+                        setError('No products available. Please try again later.')
+                        if (import.meta.env.DEV) {
+                            console.error('❌ No products available and no selected product')
+                        }
+                        // Fallback to default frame
+                        setSelectedFrame('/assets/images/frame1.png')
                     }
                 }
-                fetchProducts()
+            } catch (error) {
+                console.error('Error fetching products:', error)
+                // If API fails but we have a selected product, use it
+                if (selectedProduct) {
+                    setProducts([selectedProduct])
+                    const productImageUrl = getProductImageUrl(selectedProduct)
+                    setSelectedFrame(productImageUrl)
+                    setError(null)
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using selected product as fallback after API error')
+                    }
+                } else {
+                    setError('Failed to load products. Please try again later.')
+                    if (import.meta.env.DEV) {
+                        console.error('❌ API error and no selected product available')
+                    }
+                    // Fallback to default frame
+                    setSelectedFrame('/assets/images/frame1.png')
+                }
+            } finally {
+                setLoading(false)
             }
         }
+        
+        fetchProducts()
     }, [open, selectedProduct])
 
     // Load selected frame image
     useEffect(() => {
         if (selectedFrame) {
             if (import.meta.env.DEV) {
-                console.log('🖼️ Loading frame image:', selectedFrame, 'for product:', selectedProduct?.name)
+                const productInfo = selectedProduct 
+                    ? `for product: ${selectedProduct.name} (ID: ${selectedProduct.id})`
+                    : 'from products list'
+                console.log('🖼️ Loading frame image:', selectedFrame, productInfo)
             }
             const img = new Image()
             img.crossOrigin = 'anonymous'
@@ -514,11 +535,30 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                 height: 480,
             })
 
-            await camera.start()
+            try {
+                await camera.start()
+            } catch (cameraError: any) {
+                console.error('Camera initialization error:', cameraError)
+                // Handle common camera errors
+                if (cameraError.name === 'NotAllowedError' || cameraError.message?.includes('permission')) {
+                    setError('Camera permission denied. Please allow camera access in your browser settings.')
+                } else if (cameraError.name === 'NotFoundError' || cameraError.message?.includes('not found')) {
+                    setError('No camera found. Please connect a camera and try again.')
+                } else if (cameraError.name === 'NotReadableError' || cameraError.message?.includes('not readable')) {
+                    setError('Camera is already in use by another application.')
+                } else {
+                    setError('Failed to access camera. Please check your camera settings and try again.')
+                }
+                throw cameraError
+            }
         }
 
         setup().catch((err) => {
             console.error('Error initializing virtual try-on', err)
+            // Error state is already set in setup() for camera errors
+            if (!err.name || !['NotAllowedError', 'NotFoundError', 'NotReadableError'].includes(err.name)) {
+                setError('Failed to initialize virtual try-on. Please try again.')
+            }
         })
 
         return () => {
@@ -599,6 +639,25 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                     {/* Left: camera + bottom strip */}
                     <div className="relative flex-1 bg-black/80 flex flex-col">
                         <div className="flex-1 relative">
+                            {/* Error message overlay */}
+                            {error && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+                                    <div className="bg-red-600 text-white px-6 py-4 rounded-lg max-w-md text-center">
+                                        <p className="font-semibold mb-2">Camera Error</p>
+                                        <p className="text-sm">{error}</p>
+                                        <button
+                                            onClick={() => {
+                                                setError(null)
+                                                // Force re-render to retry camera initialization
+                                                // The useEffect will handle the retry when error is cleared
+                                            }}
+                                            className="mt-4 px-4 py-2 bg-white text-red-600 rounded hover:bg-gray-100 transition-colors font-medium"
+                                        >
+                                            Try Again
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             {/* Video feed */}
                             <video
                                 ref={videoRef}

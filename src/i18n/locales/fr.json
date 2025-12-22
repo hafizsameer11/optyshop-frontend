@@ -154,6 +154,16 @@
     "noSubcategories": "Aucune sous-catégorie disponible",
     "noNestedSubcategories": "Aucune sous-catégorie imbriquée"
   },
+  "subcategories": {
+    "babyGirl": "Petite Fille",
+    "baby-girl": "Petite Fille",
+    "baby_girl": "Petite Fille",
+    "babygirl": "Petite Fille",
+    "babyBoy": "Petit Garçon",
+    "baby-boy": "Petit Garçon",
+    "baby_boy": "Petit Garçon",
+    "babyboy": "Petit Garçon"
+  },
   "shop": {
     "title": "Boutique",
     "products": "Produits",

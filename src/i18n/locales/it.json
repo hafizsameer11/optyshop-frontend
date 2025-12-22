@@ -154,6 +154,16 @@
     "noSubcategories": "Nessuna sottocategoria disponibile",
     "noNestedSubcategories": "Nessuna sottocategoria annidata"
   },
+  "subcategories": {
+    "babyGirl": "Bambina",
+    "baby-girl": "Bambina",
+    "baby_girl": "Bambina",
+    "babygirl": "Bambina",
+    "babyBoy": "Bambino",
+    "baby-boy": "Bambino",
+    "baby_boy": "Bambino",
+    "babyboy": "Bambino"
+  },
   "shop": {
     "title": "Negozio",
     "products": "Prodotti",

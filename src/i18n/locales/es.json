@@ -124,6 +124,16 @@
     "noSubcategories": "No hay subcategorías disponibles",
     "noNestedSubcategories": "No hay subcategorías anidadas"
   },
+  "subcategories": {
+    "babyGirl": "Niña",
+    "baby-girl": "Niña",
+    "baby_girl": "Niña",
+    "babygirl": "Niña",
+    "babyBoy": "Niño",
+    "baby-boy": "Niño",
+    "baby_boy": "Niño",
+    "babyboy": "Niño"
+  },
   "products": {
     "virtualTest": "Prueba Virtual",
     "digitalizedFrames": "Marcos Digitales",

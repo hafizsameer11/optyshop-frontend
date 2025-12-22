@@ -520,15 +520,20 @@ const ProductDetail: React.FC = () => {
                 image: getProductImageUrl(product, selectedImageIndex), // Use the same image extraction logic, with selected image index
                 description: product.description || '',
                 inStock: product.in_stock || false,
-                rating: product.rating ? Number(product.rating) : undefined
+                rating: product.rating ? Number(product.rating) : undefined,
+                quantity: quantity // Include quantity
             }
             
             // Add quantity copies
             for (let i = 0; i < quantity; i++) {
                 addToCart(cartProduct)
             }
+            
+            // Navigate to cart after adding
+            navigate('/cart')
         } catch (error) {
             console.error('Error adding to cart:', error)
+            alert('Failed to add product to cart. Please try again.')
         }
     }
     
@@ -1362,6 +1367,38 @@ const ProductDetail: React.FC = () => {
                                     
                                     <div className="space-y-3">
                                         <button
+                                            onClick={handleAddToCart}
+                                            disabled={(() => {
+                                                const p = product as any
+                                                const stockStatus = p.stock_status
+                                                const stockQty = product.stock_quantity
+                                                
+                                                return stockStatus === 'out_of_stock' ||
+                                                       (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                       (stockStatus === undefined && product.in_stock === false) ||
+                                                       (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                            })()}
+                                            className={`w-full px-6 py-3 rounded-lg font-semibold text-base transition-colors ${
+                                                (() => {
+                                                    const p = product as any
+                                                    const stockStatus = p.stock_status
+                                                    const stockQty = product.stock_quantity
+                                                    
+                                                    const isInStock = stockStatus === 'in_stock' ||
+                                                                      (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
+                                                                      (stockStatus === undefined && product.in_stock === true) ||
+                                                                      (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
+                                                    
+                                                    return isInStock
+                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                })()
+                                            }`}
+                                        >
+                                            Buy Glasses Only
+                                        </button>
+                                        
+                                        <button
                                             onClick={() => setShowCheckout(true)}
                                             disabled={(() => {
                                                 const p = product as any
@@ -1373,7 +1410,7 @@ const ProductDetail: React.FC = () => {
                                                        (stockStatus === undefined && product.in_stock === false) ||
                                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
                                             })()}
-                                            className={`w-full px-6 py-4 rounded-lg font-semibold text-lg transition-colors ${
+                                            className={`w-full px-6 py-3 rounded-lg font-semibold text-base transition-colors ${
                                                 (() => {
                                                     const p = product as any
                                                     const stockStatus = p.stock_status

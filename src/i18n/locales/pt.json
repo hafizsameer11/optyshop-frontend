@@ -154,6 +154,16 @@
     "noSubcategories": "Nenhuma subcategoria disponível",
     "noNestedSubcategories": "Nenhuma subcategoria aninhada"
   },
+  "subcategories": {
+    "babyGirl": "Bebê Menina",
+    "baby-girl": "Bebê Menina",
+    "baby_girl": "Bebê Menina",
+    "babygirl": "Bebê Menina",
+    "babyBoy": "Bebê Menino",
+    "baby-boy": "Bebê Menino",
+    "baby_boy": "Bebê Menino",
+    "babyboy": "Bebê Menino"
+  },
   "shop": {
     "title": "Loja",
     "products": "Produtos",

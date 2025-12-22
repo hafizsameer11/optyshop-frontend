@@ -154,6 +154,16 @@
     "noSubcategories": "Keine Unterkategorien verfügbar",
     "noNestedSubcategories": "Keine verschachtelten Unterkategorien"
   },
+  "subcategories": {
+    "babyGirl": "Mädchen",
+    "baby-girl": "Mädchen",
+    "baby_girl": "Mädchen",
+    "babygirl": "Mädchen",
+    "babyBoy": "Junge",
+    "baby-boy": "Junge",
+    "baby_boy": "Junge",
+    "babyboy": "Junge"
+  },
   "shop": {
     "title": "Shop",
     "products": "Produkte",

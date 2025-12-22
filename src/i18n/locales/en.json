@@ -118,24 +118,6 @@
       "worksOnAnyDevice": "Works on any system and device"
     }
   },
-  "footer": {
-    "tagline": "The Digital Eyewear Company®",
-    "usefulLinks": "Useful links",
-    "customerService": "Customer Service",
-    "helpCenter": "Help Center (English)",
-    "faq": "FAQ",
-    "siteMap": "Site map",
-    "generalTerms": "General terms",
-    "corporate": "Corporate",
-    "whoWeAre": "Who we are",
-    "ourTechnology": "Our technology",
-    "joinUs": "join us",
-    "followUs": "Follow us",
-    "contactUs": "Contact Us",
-    "copyright": "© OptiShop 2025",
-    "termsOfUse": "Terms of use",
-    "privacyLegal": "Privacy & Legal"
-  },
   "shop": {
     "title": "Shop",
     "products": "Products",
@@ -198,18 +180,6 @@
     "browseCollection": "Browse our collection of {{name}}",
     "discoverCollection": "Discover our wide collection of {{name}}"
   },
-  "cart": {
-    "title": "Shopping Cart",
-    "empty": "Your cart is empty",
-    "startShopping": "Start shopping to add items to your cart",
-    "continueShopping": "Continue Shopping",
-    "item": "item",
-    "items": "items",
-    "removeItem": "Remove Item",
-    "updateQuantity": "Update Quantity",
-    "proceedToCheckout": "Proceed to Checkout",
-    "estimatedTotal": "Estimated Total"
-  },
   "checkout": {
     "title": "Checkout",
     "shippingAddress": "Shipping Address",
@@ -264,8 +234,6 @@
     "method": "Method",
     "orderNotes": "Order Notes",
     "shippingInformation": "Shipping Information",
-    "shipped": "Shipped",
-    "delivered": "Delivered",
     "unitPrice": "Unit Price",
     "totalPrice": "Total Price",
     "sku": "SKU",
@@ -378,6 +346,16 @@
     "loading": "Loading...",
     "noSubcategories": "No subcategories available",
     "noNestedSubcategories": "No nested subcategories"
+  },
+  "subcategories": {
+    "babyGirl": "Baby Girl",
+    "baby-girl": "Baby Girl",
+    "baby_girl": "Baby Girl",
+    "babygirl": "Baby Girl",
+    "babyBoy": "Baby Boy",
+    "baby-boy": "Baby Boy",
+    "baby_boy": "Baby Boy",
+    "babyboy": "Baby Boy"
   },
   "products": {
     "virtualTest": "Virtual Test",

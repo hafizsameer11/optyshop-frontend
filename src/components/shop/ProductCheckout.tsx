@@ -1138,8 +1138,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         newErrors.pd_mm = 'Pupillary Distance is required'
       } else {
         const pd = parseFloat(prescriptionData.pd_mm)
-        if (isNaN(pd) || pd < 50 || pd > 80) {
-          newErrors.pd_mm = 'PD must be between 50 and 80mm'
+        if (isNaN(pd) || pd <= 0) {
+          newErrors.pd_mm = 'PD must be a valid positive number'
         }
       }
     } else {
@@ -1222,6 +1222,26 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }))
   }
 
+  // Calculate recommended lens index based on SPH + CYL (absolute sum)
+  const calculateRecommendedLensIndex = (prescription: PrescriptionFormData): number => {
+    const odSph = Math.abs(parseFloat(prescription.od_sphere) || 0)
+    const odCyl = Math.abs(parseFloat(prescription.od_cylinder) || 0)
+    const osSph = Math.abs(parseFloat(prescription.os_sphere) || 0)
+    const osCyl = Math.abs(parseFloat(prescription.os_cylinder) || 0)
+    
+    // Use the higher total (worst eye) for recommendation
+    const odTotal = odSph + odCyl
+    const osTotal = osSph + osCyl
+    const total = Math.max(odTotal, osTotal)
+    
+    // Recommend index based on total
+    if (total <= 1.50) return 1.49
+    if (total <= 3.50) return 1.56
+    if (total <= 5.50) return 1.60
+    if (total <= 8.00) return 1.67
+    return 1.74 // For total > 8.00
+  }
+
   const handleLensThicknessChange = (thickness: 'plastic' | 'glass', materialId?: number) => {
     setLensSelection(prev => ({ 
       ...prev, 
@@ -1233,6 +1253,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const handleLensThicknessOptionChange = (option: string) => {
     setLensSelection(prev => ({ ...prev, lensThicknessOption: option }))
   }
+
 
   // const handleLensIndexChange = (index: number) => {
   //   setLensSelection(prev => ({ ...prev, lensIndex: index, progressiveOption: undefined, progressiveVariantId: undefined }))
@@ -2120,6 +2141,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 lensThicknessMaterials={lensThicknessMaterials}
                 lensThicknessOptions={lensThicknessOptions}
                 lensIndexOptions={lensIndexOptions}
+                prescriptionData={prescriptionData}
                 onLensThicknessChange={handleLensThicknessChange}
                 onLensThicknessOptionChange={handleLensThicknessOptionChange}
                 onNext={handleNext}
@@ -2446,6 +2468,7 @@ interface LensThicknessStepProps {
   lensThicknessMaterials?: LensThicknessMaterial[]
   lensThicknessOptions?: LensThicknessOption[]
   lensIndexOptions?: number[]
+  prescriptionData?: PrescriptionFormData
   onLensThicknessChange: (thickness: 'plastic' | 'glass', materialId?: number) => void
   onLensThicknessOptionChange: (option: string) => void
   onNext: () => void
@@ -2456,15 +2479,42 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
   lensSelection,
   lensThicknessMaterials = [],
   lensThicknessOptions = [],
-  lensIndexOptions = [1.50, 1.60, 1.67, 1.74],
+  lensIndexOptions = [1.49, 1.56, 1.60, 1.67, 1.74],
+  prescriptionData,
   onLensThicknessChange,
   onLensThicknessOptionChange,
   onNext,
   onBack
 }) => {
+  // Calculate recommended lens index based on SPH + CYL
+  const calculateRecommendedIndex = (): number | null => {
+    if (!prescriptionData || !prescriptionData.od_sphere || !prescriptionData.os_sphere) {
+      return null
+    }
+    
+    const odSph = Math.abs(parseFloat(prescriptionData.od_sphere) || 0)
+    const odCyl = Math.abs(parseFloat(prescriptionData.od_cylinder) || 0)
+    const osSph = Math.abs(parseFloat(prescriptionData.os_sphere) || 0)
+    const osCyl = Math.abs(parseFloat(prescriptionData.os_cylinder) || 0)
+    
+    const odTotal = odSph + odCyl
+    const osTotal = osSph + osCyl
+    const total = Math.max(odTotal, osTotal)
+    
+    if (total <= 1.50) return 1.49
+    if (total <= 3.50) return 1.56
+    if (total <= 5.50) return 1.60
+    if (total <= 8.00) return 1.67
+    return 1.74
+  }
+
+  const recommendedIndex = calculateRecommendedIndex()
+
   // Helper function to format lens index option label
   const getLensIndexLabel = (index: number): string => {
+    if (index === 1.49) return 'Standard (1.49)'
     if (index === 1.50) return 'Standard (1.50)'
+    if (index === 1.56) return 'Thin (1.56)'
     if (index === 1.60) return 'Thin (1.60)'
     if (index === 1.67) return 'Extra Thin (1.67)'
     if (index === 1.74) return 'Ultra Thin (1.74)'
@@ -2542,37 +2592,55 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
 
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium text-gray-700">Lens Thickness</label>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-600"
-              title="Select additional thickness option"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
+            <label className="text-sm font-medium text-gray-700">Lens Index (Thickness)</label>
+            {recommendedIndex && (
+              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                Auto-recommended: {recommendedIndex}
+              </span>
+            )}
           </div>
+          {recommendedIndex && (
+            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900">
+                <strong>Recommended lens thickness: {recommendedIndex}</strong>
+                <br />
+                <span className="text-xs text-blue-700">
+                  Based on your prescription (SPH + CYL)
+                </span>
+              </p>
+            </div>
+          )}
           <select
-            value={lensSelection.lensThicknessOption || ''}
+            value={lensSelection.lensThicknessOption || (recommendedIndex ? `index_${recommendedIndex}` : '')}
             onChange={(e) => onLensThicknessOptionChange(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">Please select</option>
             {lensThicknessOptions.length > 0 ? (
-              lensThicknessOptions.map((option) => (
-                <option key={option.id} value={`option_${option.id}`}>
-                  {option.name} {option.thicknessValue ? `(${option.thicknessValue})` : ''}
-                </option>
-              ))
+              lensThicknessOptions.map((option) => {
+                const isRecommended = recommendedIndex && option.thicknessValue === recommendedIndex.toString()
+                return (
+                  <option key={option.id} value={`option_${option.id}`}>
+                    {option.name} {option.thicknessValue ? `(${option.thicknessValue})` : ''} {isRecommended ? '⭐ Recommended' : ''}
+                  </option>
+                )
+              })
             ) : (
-              lensIndexOptions.map((index) => (
-              <option key={index} value={`index_${index}`}>
-                {getLensIndexLabel(index)}
-              </option>
-              ))
+              lensIndexOptions.map((index) => {
+                const isRecommended = recommendedIndex === index
+                return (
+                  <option key={index} value={`index_${index}`}>
+                    {getLensIndexLabel(index)} {isRecommended ? '⭐ Recommended' : ''}
+                  </option>
+                )
+              })
             )}
           </select>
+          {recommendedIndex && (
+            <p className="mt-2 text-xs text-gray-500">
+              You can override the recommendation by selecting a different option above.
+            </p>
+          )}
         </div>
       </div>
 
