@@ -685,10 +685,26 @@ const Products: React.FC = () => {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
                                 {products && products.length > 0 && products.map((product) => {
-                                    const selectedColor = productColorSelections[product.id]
+                                    // Get selected color or default to first color if available
+                                    let selectedColor = productColorSelections[product.id]
+                                    if (!selectedColor && product.color_images && product.color_images.length > 0) {
+                                        selectedColor = product.color_images[0].color
+                                        // Set default selection if not already set
+                                        if (!productColorSelections[product.id]) {
+                                            setProductColorSelections(prev => ({
+                                                ...prev,
+                                                [product.id]: selectedColor
+                                            }))
+                                        }
+                                    }
+                                    
+                                    // Get image URL based on selected color
                                     const productImageUrl = selectedColor && product.color_images
                                         ? (() => {
-                                            const colorImage = product.color_images.find(ci => ci.color === selectedColor)
+                                            // Case-insensitive color matching
+                                            const colorImage = product.color_images.find(ci => 
+                                                ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                            )
                                             return colorImage?.images?.[0] || getProductImageUrl(product)
                                         })()
                                         : getProductImageUrl(product)
@@ -704,7 +720,9 @@ const Products: React.FC = () => {
                                                 <img
                                                     src={productImageUrl}
                                                     alt={product.name}
-                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                                                    key={`${product.id}-${selectedColor || 'default'}`}
+                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                    style={{ transition: 'opacity 0.3s ease-in-out' }}
                                                     onError={(e) => {
                                                         const target = e.target as HTMLImageElement
                                                         if (import.meta.env.DEV) {
@@ -828,6 +846,7 @@ const Products: React.FC = () => {
                                                             onClick={(e) => {
                                                                 e.preventDefault()
                                                                 e.stopPropagation()
+                                                                // Update color selection - this will trigger image change
                                                                 setProductColorSelections(prev => ({
                                                                     ...prev,
                                                                     [product.id]: colorImage.color

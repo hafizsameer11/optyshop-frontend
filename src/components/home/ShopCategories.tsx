@@ -203,10 +203,27 @@ const ShopCategories: React.FC = () => {
                                                 // Handle both API product format (Product) and category product format (CategoryProduct)
                                                 const isApiProduct = 'image' in product || 'image_url' in product || 'images' in product
                                                 const productAsProduct = product as any as Product
-                                                const selectedColor = productColorSelections[product.id]
-                                                const productImageUrl = selectedColor && productAsProduct.color_images
+                                                // Get selected color or default to first color if available
+                                                let selectedColor = productColorSelections[product.id]
+                                                const productColorImages = (product as any).color_images || productAsProduct.color_images
+                                                if (!selectedColor && productColorImages && productColorImages.length > 0) {
+                                                    selectedColor = productColorImages[0].color
+                                                    // Set default selection if not already set
+                                                    if (!productColorSelections[product.id]) {
+                                                        setProductColorSelections(prev => ({
+                                                            ...prev,
+                                                            [product.id]: selectedColor
+                                                        }))
+                                                    }
+                                                }
+                                                
+                                                // Get image URL based on selected color
+                                                const productImageUrl = selectedColor && productColorImages
                                                     ? (() => {
-                                                        const colorImage = productAsProduct.color_images.find((ci: any) => ci.color === selectedColor)
+                                                        // Case-insensitive color matching
+                                                        const colorImage = productColorImages.find((ci: any) => 
+                                                            ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                                        )
                                                         return colorImage?.images?.[0] || (isApiProduct ? getProductImageUrl(productAsProduct) : getImageUrl(product as Category['products'][0]))
                                                     })()
                                                     : (isApiProduct ? getProductImageUrl(productAsProduct) : getImageUrl(product as Category['products'][0]))
@@ -227,8 +244,10 @@ const ShopCategories: React.FC = () => {
                                                             <Link to={`/shop/product/${productSlug}`} className="block h-full">
                                                             <img
                                                                     src={productImageUrl}
+                                                                    key={`${product.id}-${selectedColor || 'default'}`}
                                                                 alt={productName}
-                                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                                    style={{ transition: 'opacity 0.3s ease-in-out' }}
                                                                 onError={(e) => {
                                                                     const target = e.target as HTMLImageElement
                                                                     target.src = '/assets/images/frame1.png'

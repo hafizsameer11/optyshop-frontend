@@ -919,6 +919,23 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       })
       
       if (options && options.length > 0) {
+        // Check if colors are included in the list response
+        const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
+        
+        // If colors are missing, fetch each option individually to get colors
+        if (!hasColors) {
+          console.log('🔄 [API] Colors not in list response, fetching individual options...')
+          const { getLensOptionById } = await import('../../services/lensOptionsService')
+          const optionsWithColors = await Promise.all(
+            options.map(async (option) => {
+              const fullOption = await getLensOptionById(option.id)
+              return fullOption || option
+            })
+          )
+          options = optionsWithColors
+          console.log('✅ [API] Fetched individual options with colors')
+        }
+        
         setPhotochromicOptions(options)
         console.log('✅ [API] Photochromic options loaded:', options.length, 'options')
         options.forEach((opt, idx) => {
@@ -926,6 +943,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
           if (opt.colors && opt.colors.length > 0) {
             console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
+          } else {
+            console.warn(`    ⚠️ No colors found for ${opt.name}`)
           }
         })
       } else {
@@ -978,11 +997,33 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       })
       
       if (options && options.length > 0) {
+        // Check if colors are included in the list response
+        const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
+        
+        // If colors are missing, fetch each option individually to get colors
+        if (!hasColors) {
+          console.log('🔄 [API] Colors not in list response, fetching individual options...')
+          const { getLensOptionById } = await import('../../services/lensOptionsService')
+          const optionsWithColors = await Promise.all(
+            options.map(async (option) => {
+              const fullOption = await getLensOptionById(option.id)
+              return fullOption || option
+            })
+          )
+          options = optionsWithColors
+          console.log('✅ [API] Fetched individual options with colors')
+        }
+        
         setPrescriptionSunOptions(options)
         console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
         options.forEach((opt, idx) => {
           const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
           console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+          if (opt.colors && opt.colors.length > 0) {
+            console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
+          } else {
+            console.warn(`    ⚠️ No colors found for ${opt.name}`)
+          }
         })
       } else {
         // Only log warning in dev mode to reduce console noise
