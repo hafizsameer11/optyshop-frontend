@@ -125,9 +125,13 @@ export const getLensOptions = async (params?: {
         console.log('✅ [API] Direct array response, found', options.length, 'options');
       } else if (response.data && typeof response.data === 'object') {
         // Response with nested data property
-        if (Array.isArray(response.data.data)) {
+        // Check for data.options structure (most common)
+        if (Array.isArray((response.data as any).options)) {
+          options = (response.data as any).options;
+          console.log('✅ [API] data.options array, found', options.length, 'options');
+        } else if (Array.isArray(response.data.data)) {
           options = response.data.data;
-          console.log('✅ [API] Nested data array, found', options.length, 'options');
+          console.log('✅ [API] Nested data.data array, found', options.length, 'options');
         } else if (Array.isArray((response.data as any).lensOptions)) {
           // Alternative structure
           options = (response.data as any).lensOptions;
@@ -172,7 +176,14 @@ export const getLensOptions = async (params?: {
     // This prevents errors in the UI when data doesn't exist yet
     if (response.message) {
       console.warn('⚠️ [API] API returned success:false:', response.message);
+      console.warn('⚠️ [API] Full response:', JSON.stringify(response, null, 2));
     }
+    
+    // Also check if response.data exists but is not in expected format
+    if (response.data && !Array.isArray(response.data)) {
+      console.warn('⚠️ [API] Response data is not an array:', typeof response.data, response.data);
+    }
+    
     return [];
   } catch (error) {
     console.error('❌ [API] Error fetching lens options:', error);

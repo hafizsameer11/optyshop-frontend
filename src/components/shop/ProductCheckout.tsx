@@ -64,7 +64,7 @@ interface ProductCheckoutProps {
 type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
 
 interface LensSelection {
-  type: 'distance_vision' | 'near_vision' | 'progressive' | 'single_vision' | 'bifocal' | 'reading'
+  type: 'distance_vision' | 'near_vision' | 'progressive' | 'single_vision' | 'bifocal' | 'reading' | 'glasses_only' | 'no_lenses'
   lensIndex?: number
   lensTypeId?: number
   progressiveOption?: string // For progressive lens options (premium, standard, etc.) - stores slug or ID
@@ -918,7 +918,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         hasData: !!options && options.length > 0
       })
       
+      // Handle null response
+      if (options === null) {
+        console.warn('⚠️ [API] getLensOptions returned null - API might have errored')
+        setPhotochromicOptions([])
+        return
+      }
+      
       if (options && options.length > 0) {
+        console.log('✅ [API] Found', options.length, 'photochromic options from API')
+        
+        // Log all options to see what we got
+        options.forEach((opt, idx) => {
+          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+        })
+        
         // Check if colors are included in the list response
         const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
         
@@ -928,11 +943,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           const { getLensOptionById } = await import('../../services/lensOptionsService')
           const optionsWithColors = await Promise.all(
             options.map(async (option) => {
-              const fullOption = await getLensOptionById(option.id)
-              return fullOption || option
+              try {
+                const fullOption = await getLensOptionById(option.id)
+                if (fullOption) {
+                  console.log(`  ✅ Fetched full option for ${option.name}:`, fullOption.colors?.length || 0, 'colors')
+                  return fullOption
+                }
+              } catch (error) {
+                console.error(`  ❌ Error fetching option ${option.id}:`, error)
+              }
+              return option
             })
           )
-          options = optionsWithColors
+          options = optionsWithColors.filter(opt => opt !== null) as LensOption[]
           console.log('✅ [API] Fetched individual options with colors')
         }
         
@@ -944,7 +967,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           if (opt.colors && opt.colors.length > 0) {
             console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
           } else {
-            console.warn(`    ⚠️ No colors found for ${opt.name}`)
+            console.warn(`    ⚠️ No colors found for ${opt.name} - option will still be displayed but without color swatches`)
           }
         })
       } else {
@@ -996,7 +1019,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         hasData: !!options && options.length > 0
       })
       
+      // Handle null response
+      if (options === null) {
+        console.warn('⚠️ [API] getLensOptions returned null - API might have errored')
+        setPrescriptionSunOptions([])
+        return
+      }
+      
       if (options && options.length > 0) {
+        console.log('✅ [API] Found', options.length, 'prescription sun options from API')
+        
+        // Log all options to see what we got
+        options.forEach((opt, idx) => {
+          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+        })
+        
         // Check if colors are included in the list response
         const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
         
@@ -1006,11 +1044,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           const { getLensOptionById } = await import('../../services/lensOptionsService')
           const optionsWithColors = await Promise.all(
             options.map(async (option) => {
-              const fullOption = await getLensOptionById(option.id)
-              return fullOption || option
+              try {
+                const fullOption = await getLensOptionById(option.id)
+                if (fullOption) {
+                  console.log(`  ✅ Fetched full option for ${option.name}:`, fullOption.colors?.length || 0, 'colors')
+                  return fullOption
+                }
+              } catch (error) {
+                console.error(`  ❌ Error fetching option ${option.id}:`, error)
+              }
+              return option
             })
           )
-          options = optionsWithColors
+          options = optionsWithColors.filter(opt => opt !== null) as LensOption[]
           console.log('✅ [API] Fetched individual options with colors')
         }
         
@@ -1022,7 +1068,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           if (opt.colors && opt.colors.length > 0) {
             console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
           } else {
-            console.warn(`    ⚠️ No colors found for ${opt.name}`)
+            console.warn(`    ⚠️ No colors found for ${opt.name} - option will still be displayed but without color swatches`)
           }
         })
       } else {
@@ -1344,12 +1390,18 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     return Object.keys(newErrors).length === 0
   }
 
-  const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive') => {
+  const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses') => {
     setLensSelection(prev => ({ 
       ...prev, 
       type: type as LensSelection['type'], 
       progressiveOption: type !== 'progressive' ? undefined : prev.progressiveOption,
-      progressiveVariantId: type !== 'progressive' ? undefined : prev.progressiveVariantId 
+      progressiveVariantId: type !== 'progressive' ? undefined : prev.progressiveVariantId,
+      // Clear lens-related selections if glasses only
+      selectedLensTypeId: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedLensTypeId,
+      selectedColorId: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedColorId,
+      selectedColor: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedColor,
+      coatings: (type === 'glasses_only' || type === 'no_lenses') ? [] : prev.coatings,
+      treatments: (type === 'glasses_only' || type === 'no_lenses') ? [] : prev.treatments
     }))
   }
 
@@ -1459,8 +1511,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       removable: false
     })
 
-    // Add selected lens type from API
-    if (lensSelection.selectedLensTypeId) {
+    // Add selected lens type from API (skip if glasses only)
+    if (lensSelection.type !== 'glasses_only' && lensSelection.type !== 'no_lenses' && lensSelection.selectedLensTypeId) {
       const selectedLensType = apiLensTypes.find(lt => lt.id === lensSelection.selectedLensTypeId)
       if (selectedLensType) {
         const price = selectedLensType.price || 0
@@ -1472,6 +1524,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           removable: true
         })
       }
+    }
+    
+    // Add "Glasses Only" label if selected
+    if (lensSelection.type === 'glasses_only' || lensSelection.type === 'no_lenses') {
+      summary.push({
+        name: 'Glasses Only (No Lenses)',
+        price: 0,
+        type: 'lens_type',
+        id: 'glasses_only',
+        removable: false
+      })
     }
 
     // Add selected coatings
@@ -1705,7 +1768,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const handleNext = async () => {
     if (currentStep === 'lens_type') {
       // Navigate based on lens type selection
-      if (lensSelection.type === 'progressive') {
+      if (lensSelection.type === 'glasses_only' || lensSelection.type === 'no_lenses') {
+        // Skip to summary for glasses only
+        setCurrentStep('summary')
+      } else if (lensSelection.type === 'progressive') {
         setCurrentStep('progressive')
       } else {
         setCurrentStep('prescription')
@@ -2523,6 +2589,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 onNext={handleNext}
                 onNavigateToPrescription={() => setCurrentStep('prescription')}
                 onNavigateToProgressive={() => setCurrentStep('progressive')}
+                onSkipLenses={() => {
+                  // Skip lens customization steps and go directly to summary
+                  setLensSelection(prev => ({
+                    ...prev,
+                    type: 'glasses_only',
+                    coatings: [],
+                    treatments: [],
+                    selectedLensTypeId: undefined,
+                    selectedColorId: undefined,
+                    selectedColor: undefined
+                  }))
+                  setCurrentStep('summary')
+                }}
               />
             )}
 
@@ -2664,10 +2743,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 interface LensTypeSelectionStepProps {
   lensSelection: LensSelection
   prescriptionLensTypes?: PrescriptionLensType[]
-  onLensTypeChange: (type: 'distance_vision' | 'near_vision' | 'progressive') => void
+  onLensTypeChange: (type: 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses') => void
   onNext: () => void
   onNavigateToPrescription?: () => void
   onNavigateToProgressive?: () => void
+  onSkipLenses?: () => void
 }
 
 const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
@@ -2676,37 +2756,49 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   onLensTypeChange,
   onNext,
   onNavigateToPrescription,
-  onNavigateToProgressive
+  onNavigateToProgressive,
+  onSkipLenses
 }) => {
   // Use API data if available, otherwise fallback to defaults
-  const lensTypeOptions = prescriptionLensTypes.length > 0
+  const apiLensTypeOptions = prescriptionLensTypes.length > 0
     ? prescriptionLensTypes
         .map(type => {
           const typeId = type.type || (typeof type.id === 'string' ? type.id : String(type.id))
           return {
             id: typeId,
-          name: type.name || 'Unknown',
-          description: type.description || ''
+            name: type.name || 'Unknown',
+            description: type.description || ''
           }
         })
         .filter(option => option.id && ['distance_vision', 'near_vision', 'progressive'].includes(option.id)) // Filter out invalid options
-    : [
-        {
-          id: 'distance_vision',
-          name: 'Distance Vision',
-          description: 'For distance (Thin, anti-glare, blue-cut options)'
-        },
-        {
-          id: 'near_vision',
-          name: 'Near Vision',
-          description: 'For near vision (Thin, anti-glare, blue-cut options)'
-        },
-        {
-          id: 'progressive',
-          name: 'Progressive',
-          description: 'Progressives (For two powers in same lenses)'
-        }
-      ]
+    : []
+  
+  // Combine API options with default options and add "Glasses Only" option
+  const lensTypeOptions = [
+    {
+      id: 'glasses_only',
+      name: 'Glasses Only (No Lenses)',
+      description: 'Purchase frames only without prescription lenses'
+    },
+    ...apiLensTypeOptions,
+    ...(apiLensTypeOptions.length === 0 ? [
+      {
+        id: 'distance_vision',
+        name: 'Distance Vision',
+        description: 'For distance (Thin, anti-glare, blue-cut options)'
+      },
+      {
+        id: 'near_vision',
+        name: 'Near Vision',
+        description: 'For near vision (Thin, anti-glare, blue-cut options)'
+      },
+      {
+        id: 'progressive',
+        name: 'Progressive',
+        description: 'Progressives (For two powers in same lenses)'
+      }
+    ] : [])
+  ]
 
   const handleOptionClick = (optionId: string) => {
     if (!optionId) {
@@ -2714,24 +2806,32 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
       return
     }
     
-    const type = optionId as 'distance_vision' | 'near_vision' | 'progressive'
+    const type = optionId as 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses'
     
     // Validate the type
-    if (!['distance_vision', 'near_vision', 'progressive'].includes(type)) {
+    if (!['distance_vision', 'near_vision', 'progressive', 'glasses_only', 'no_lenses'].includes(type)) {
       console.error('Invalid lens type:', type)
       return
     }
     
     onLensTypeChange(type)
     
-    // Immediately navigate based on selection
-    if (type === 'progressive') {
+    // Handle "Glasses Only" option - skip to summary
+    if (type === 'glasses_only' || type === 'no_lenses') {
+      if (onSkipLenses) {
+        onSkipLenses()
+      } else {
+        onNext() // Fallback to onNext
+      }
+    } else if (type === 'progressive') {
+      // Navigate to progressive step
       if (onNavigateToProgressive) {
         onNavigateToProgressive()
       } else {
         onNext() // Fallback to onNext which handles progressive navigation
       }
     } else {
+      // Navigate to prescription step
       if (onNavigateToPrescription) {
         onNavigateToPrescription()
       } else {
@@ -3202,8 +3302,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
 
   // Map API photochromic options to UI format
   const mapPhotochromicOptions = () => {
+    console.log('🔍 [UI] mapPhotochromicOptions called with:', apiPhotochromicOptions?.length || 0, 'options')
     if (apiPhotochromicOptions && apiPhotochromicOptions.length > 0) {
       console.log('📥 [API] Mapping photochromic options from API:', apiPhotochromicOptions.length, 'options')
+      console.log('📥 [API] Raw options data:', JSON.stringify(apiPhotochromicOptions, null, 2))
       return apiPhotochromicOptions
         .filter(option => {
           // Support both camelCase and snake_case
@@ -3251,8 +3353,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     
     // Return empty array if no API data - don't use dummy data
     // Only log in dev mode to reduce console noise
-    if (import.meta.env.DEV && apiPhotochromicOptions.length === 0) {
-      // Silent - already logged in fetchPhotochromicOptions
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ [UI] No photochromic options to map. apiPhotochromicOptions:', apiPhotochromicOptions)
+      console.warn('   → Check if fetchPhotochromicOptions was called and returned data')
+      console.warn('   → Check browser console for API fetch logs')
     }
     return []
   }
@@ -3261,8 +3365,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   // The API returns lens options with type='prescription_sun' or similar
   // Each option can have colors, and we need to group them by main type (polarized, classic, blokz)
   const mapPrescriptionSunOptions = () => {
+    console.log('🔍 [UI] mapPrescriptionSunOptions called with:', apiPrescriptionSunOptions?.length || 0, 'options')
     if (apiPrescriptionSunOptions && apiPrescriptionSunOptions.length > 0) {
       console.log('📥 [API] Mapping prescription sun options from API:', apiPrescriptionSunOptions.length, 'options')
+      console.log('📥 [API] Raw options data:', JSON.stringify(apiPrescriptionSunOptions, null, 2))
       
       // Filter active options and sort
       const activeOptions = apiPrescriptionSunOptions
@@ -3418,8 +3524,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     
     // Return empty array if no API data - don't use dummy data
     // Only log in dev mode to reduce console noise
-    if (import.meta.env.DEV && apiPrescriptionSunOptions.length === 0) {
-      // Silent - already logged in fetchPrescriptionSunOptions
+    if (import.meta.env.DEV) {
+      console.warn('⚠️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
+      console.warn('   → Check if fetchPrescriptionSunOptions was called and returned data')
+      console.warn('   → Check browser console for API fetch logs')
     }
     return []
   }

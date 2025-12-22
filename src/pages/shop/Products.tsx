@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useSearchParams, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { useCart } from '../../context/CartContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
@@ -20,9 +19,8 @@ import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../se
 const Products: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
-    const { addToCart } = useCart()
     const { toggleWishlist, isInWishlist } = useWishlist()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [searchParams] = useSearchParams()
     const [products, setProducts] = useState<Product[]>([])
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [loading, setLoading] = useState(true)
@@ -327,29 +325,6 @@ const Products: React.FC = () => {
         }
     }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
 
-    const handleAddToCart = (product: Product) => {
-        try {
-            // Convert API product to cart-compatible format
-            const salePrice = product?.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product?.price ? Number(product.price) : 0
-            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
-            
-            const cartProduct = {
-                id: product?.id || 0,
-                name: product?.name || '',
-                brand: product?.brand || '',
-                category: product?.category?.slug || 'eyeglasses',
-                price: finalPrice,
-                image: getProductImageUrl(product), // Use the same image extraction logic as product card
-                description: product?.description || '',
-                inStock: product?.in_stock || false,
-                rating: product?.rating ? Number(product.rating) : undefined
-            }
-            addToCart(cartProduct)
-        } catch (error) {
-            console.error('Error adding to cart:', error)
-        }
-    }
 
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage)
