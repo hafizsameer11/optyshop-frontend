@@ -69,7 +69,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                     console.log('🔄 Fetching products for virtual try-on...')
                 }
                 
-                const result = await getProducts({ limit: 50 }) // Fetch up to 50 products
+                const result = await getProducts({ limit: 100 }) // Fetch more products to filter
                 
                 if (import.meta.env.DEV) {
                     console.log('📦 Products fetch result:', {
@@ -79,24 +79,85 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                     })
                 }
                 
+                // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
+                // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
+                // and image patterns (glasses images usually contain "frame" or "glasses" in URL)
+                const isGlassesProduct = (product: Product): boolean => {
+                    const categoryName = product.category?.name?.toLowerCase() || ''
+                    const categorySlug = product.category?.slug?.toLowerCase() || ''
+                    const productName = product.name?.toLowerCase() || ''
+                    const productImage = getProductImageUrl(product).toLowerCase()
+                    
+                    // Check if "glasses" appears anywhere in the name or category (includes sunglasses, optyglasses, kids glasses, etc.)
+                    const hasGlassesKeyword = categoryName.includes('glasses') || 
+                                              categorySlug.includes('glasses') ||
+                                              productName.includes('glasses') ||
+                                              categoryName.includes('occhiali') || 
+                                              categorySlug.includes('occhiali') ||
+                                              productName.includes('occhiali') ||
+                                              categoryName.includes('frame') || 
+                                              categorySlug.includes('frame') ||
+                                              productName.includes('frame') ||
+                                              categoryName.includes('eyewear') || 
+                                              categorySlug.includes('eyewear') ||
+                                              productName.includes('eyewear')
+                    
+                    // Check if product has color_images (glasses typically have multiple color options)
+                    const hasColorImages = Boolean(product.color_images && product.color_images.length > 0)
+                    
+                    // Check if image URL suggests glasses (contains "frame" or "glasses" in path)
+                    const imageSuggestsGlasses = productImage.includes('frame') || 
+                                                 productImage.includes('glasses') ||
+                                                 productImage.includes('occhiali')
+                    
+                    // If product has color images, it's likely glasses (glasses have color variations)
+                    // OR if it has glasses keywords in name/category
+                    // OR if image URL suggests glasses
+                    return hasGlassesKeyword || (hasColorImages && imageSuggestsGlasses) || (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
+                }
+                
                 if (result && result.products && result.products.length > 0) {
-                    // If we have a selected product, add it to the list and keep it selected
+                    // Filter to only glasses products
+                    const glassesProducts = result.products.filter(isGlassesProduct)
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('👓 Filtered glasses products:', {
+                            total: result.products.length,
+                            glasses: glassesProducts.length
+                        })
+                    }
+                    
+                    // If we have a selected product, check if it's glasses and add it
                     if (selectedProduct) {
-                        const productExists = result.products.some(p => p.id === selectedProduct.id)
-                        if (!productExists) {
-                            setProducts([selectedProduct, ...result.products])
+                        const isSelectedGlasses = isGlassesProduct(selectedProduct)
+                        if (isSelectedGlasses) {
+                            const productExists = glassesProducts.some(p => p.id === selectedProduct.id)
+                            if (!productExists) {
+                                setProducts([selectedProduct, ...glassesProducts])
+                            } else {
+                                setProducts(glassesProducts)
+                            }
+                            // Ensure selected product frame is set
+                            const productImageUrl = getProductImageUrl(selectedProduct)
+                            setSelectedFrame(productImageUrl)
                         } else {
-                            setProducts(result.products)
+                            // Selected product is not glasses, use filtered list
+                            setProducts(glassesProducts)
+                            if (glassesProducts.length > 0) {
+                                const firstProduct = glassesProducts[0]
+                                const firstImageUrl = getProductImageUrl(firstProduct)
+                                setSelectedFrame(firstImageUrl)
+                            }
                         }
-                        // Ensure selected product frame is set
-                        const productImageUrl = getProductImageUrl(selectedProduct)
-                        setSelectedFrame(productImageUrl)
                     } else {
-                        setProducts(result.products)
+                        // Only show glasses products
+                        setProducts(glassesProducts)
                         // Set first product as selected if no product prop provided
-                        const firstProduct = result.products[0]
-                        const firstImageUrl = getProductImageUrl(firstProduct)
-                        setSelectedFrame(firstImageUrl)
+                        if (glassesProducts.length > 0) {
+                            const firstProduct = glassesProducts[0]
+                            const firstImageUrl = getProductImageUrl(firstProduct)
+                            setSelectedFrame(firstImageUrl)
+                        }
                     }
                 } else {
                     // If no products from API but we have a selected product, use it

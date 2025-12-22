@@ -135,7 +135,16 @@ export const createOrder = async (
     // Log error for debugging
     if (import.meta.env.DEV) {
       console.error('Failed to create order:', response.message || response.error);
+      console.error('Response details:', response);
     }
+    
+    // Throw error with message so caller can handle it
+    if (response.error || response.message) {
+      const error = new Error(response.message || response.error || 'Failed to create order');
+      (error as any).response = response;
+      throw error;
+    }
+    
     return null;
   } catch (error) {
     console.error('Error creating order:', error);
@@ -216,7 +225,23 @@ export const createGuestOrder = async (
     // Log error for debugging
     if (import.meta.env.DEV) {
       console.error('Failed to create guest order:', response.message || response.error);
+      console.error('Response details:', response);
     }
+    
+    // If authorization error, throw with specific message
+    if (isAuthError) {
+      const error = new Error('Guest checkout requires authentication. Please login to complete your order.');
+      (error as any).response = response;
+      throw error;
+    }
+    
+    // Throw error with message so caller can handle it
+    if (response.error || response.message) {
+      const error = new Error(response.message || response.error || 'Failed to create guest order');
+      (error as any).response = response;
+      throw error;
+    }
+    
     return null;
   } catch (error) {
     console.error('Error creating guest order:', error);

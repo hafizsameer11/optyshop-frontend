@@ -57,7 +57,7 @@ const FloatingLanguageSwitcher: React.FC = () => {
               onClick={() => setIsOpen(false)}
             />
             <div 
-              className="absolute bottom-full right-0 mb-3 w-64 bg-white rounded-2xl shadow-2xl border-2 border-cyan-200/40 z-[110] py-2 overflow-hidden transition-all duration-300 transform"
+              className="absolute bottom-full right-0 mb-3 w-64 bg-white rounded-2xl border-2 border-cyan-200/40 z-[110] py-2 overflow-hidden transition-all duration-300 transform"
               style={{
                 animation: 'slideUp 0.3s ease-out',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'

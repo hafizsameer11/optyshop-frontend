@@ -61,6 +61,11 @@ export interface ProductOptionsResponse {
   data: ProductOptions;
 }
 
+export interface ColorImage {
+  color: string;
+  images: string[];
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -75,6 +80,8 @@ export interface Product {
   image?: string;
   image_url?: string;
   thumbnail?: string;
+  model_3d_url?: string | null; // URL to 3D model file (e.g., .glb, .gltf)
+  color_images?: ColorImage[]; // Array of color-specific images
   category?: Category;
   frame_shape?: string;
   frame_material?: string;
@@ -84,6 +91,26 @@ export interface Product {
   review_count?: number;
   created_at?: string;
   updated_at?: string;
+  
+  // Contact Lens specific fields
+  base_curve_options?: number[];
+  diameter_options?: number[];
+  powers_range?: string | object;
+  contact_lens_brand?: string;
+  contact_lens_material?: string;
+  contact_lens_color?: string;
+  contact_lens_type?: string;
+  replacement_frequency?: string;
+  water_content?: number;
+  can_sleep_with?: boolean;
+  is_medical_device?: boolean;
+  has_uv_filter?: boolean;
+  
+  // Frame specific fields
+  frameSizes?: FrameSize[];
+  lensTypes?: LensType[];
+  lensCoatings?: LensCoating[];
+  
   [key: string]: any; // Allow for additional product properties
 }
 
@@ -133,9 +160,11 @@ export interface ProductFilters {
   category?: string | number;
   subcategory?: string | number;
   gender?: string;
+  lensType?: string; // Filter by lens type
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
+  isFeatured?: boolean; // Filter featured products (true/false)
   [key: string]: any; // Allow for additional filter properties
 }
 
@@ -189,7 +218,18 @@ export const getFeaturedProducts = async (): Promise<Product[]> => {
 
 /**
  * Get products with filters
- * @param filters - Filter parameters (page, limit, frameShape, frameMaterial, minPrice, maxPrice, etc.)
+ * Matches Postman collection structure: GET /api/products
+ * Supports all filters from Postman collection:
+ * - page, limit, category, subCategory, frameShape, frameMaterial, lensType, gender
+ * - minPrice, maxPrice, search, sortBy, sortOrder, isFeatured
+ * 
+ * Response includes for each product:
+ * - images: Array of product image URLs
+ * - image: First image URL (for easy access)
+ * - model_3d_url: URL to 3D model file (null if not available)
+ * - color_images: Array of color-specific images
+ * 
+ * @param filters - Filter parameters matching Postman collection
  */
 export const getProducts = async (filters: ProductFilters = {}): Promise<{
   products: Product[];
@@ -201,11 +241,16 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
   };
 } | null> => {
   try {
-    // Map subcategory to subCategory (API expects capital C)
+    // Map subcategory to subCategory (API expects capital C as per Postman collection)
     const apiFilters: Record<string, any> = { ...filters };
     if (apiFilters.subcategory !== undefined) {
       apiFilters.subCategory = apiFilters.subcategory;
       delete apiFilters.subcategory;
+    }
+    
+    // Ensure boolean filters are properly formatted
+    if (apiFilters.isFeatured !== undefined) {
+      apiFilters.isFeatured = apiFilters.isFeatured === true || apiFilters.isFeatured === 'true';
     }
     
     const endpoint = buildQueryString(API_ROUTES.PRODUCTS.LIST, apiFilters);
@@ -225,7 +270,8 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
 
     if (response.success && response.data) {
       const data = response.data as any;
-      // Handle both possible response structures
+      // Handle Postman collection response structure:
+      // { success: true, data: { products: [...], pagination: {...} } }
       const products = data.products || (data.data && data.data.products) || [];
       const pagination = data.pagination || (data.data && data.data.pagination) || {
         total: 0,
@@ -250,6 +296,7 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
 
 /**
  * Get product by slug
+ * Matches Postman collection structure: GET /api/products/slug/:slug
  * @param slug - Product slug
  */
 export const getProductBySlug = async (slug: string): Promise<Product | null> => {
@@ -260,8 +307,12 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
     );
 
     if (response.success && response.data) {
-      // Handle nested structure: data.product or just data
+      // Handle Postman collection response structure:
+      // { success: true, data: { product: {...} } } or { success: true, data: {...} }
       const product = (response.data as any).product || response.data;
+      
+      // Ensure all Postman collection fields are preserved
+      // (model_3d_url, color_images, contact lens fields, etc.)
       return product as Product;
     }
 
@@ -275,17 +326,27 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
 
 /**
  * Get product by ID
+ * Matches Postman collection structure: GET /api/products/:id
+ * Returns full product details including:
+ * - Media fields: images, image, model_3d_url, color_images
+ * - Contact lens fields: base_curve_options, diameter_options, powers_range, etc.
+ * - Frame fields: frameSizes, lensTypes, lensCoatings
  * @param id - Product ID
  */
 export const getProductById = async (id: number | string): Promise<Product | null> => {
   try {
-    const response = await apiClient.get<Product>(
+    const response = await apiClient.get<any>(
       API_ROUTES.PRODUCTS.BY_ID(id),
       false // PUBLIC endpoint
     );
 
     if (response.success && response.data) {
-      return response.data;
+      // Handle Postman collection response structure:
+      // { success: true, data: { product: {...} } } or { success: true, data: {...} }
+      const product = (response.data as any).product || response.data;
+      
+      // Ensure all Postman collection fields are preserved
+      return product as Product;
     }
 
     console.error('Failed to fetch product by ID:', response.message);

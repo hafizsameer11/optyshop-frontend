@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
+import WishlistIcon from './WishlistIcon'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useCategories } from '../hooks/useCategories'
 import type { Category } from '../services/categoriesService'
@@ -147,11 +148,11 @@ const Navbar: React.FC = () => {
         >
             <div className="flex items-center w-full max-w-[1920px] mx-auto py-3 md:py-4 px-2 md:px-4 lg:px-6 gap-1.5 md:gap-2">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-1.5 md:space-x-2 flex-shrink-0 group">
-                    <div className="h-9 w-9 md:h-10 md:w-10 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
-                        <span className="text-white font-bold text-xs md:text-sm">OS</span>
+                <Link to="/" className="flex items-center space-x-1 flex-shrink-0 group">
+                    <div className="h-6 w-6 md:h-7 md:w-7 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
+                        <span className="text-white font-bold text-[9px] md:text-[10px]">OS</span>
                     </div>
-                    <span className="text-sm md:text-base font-bold tracking-[0.2em] md:tracking-[0.25em] uppercase text-white group-hover:text-cyan-200 transition-colors">
+                    <span className="text-[10px] md:text-xs font-bold tracking-[0.1em] md:tracking-[0.15em] uppercase text-white group-hover:text-cyan-200 transition-colors">
                         OPTISHOP
                     </span>
                 </Link>
@@ -423,10 +424,10 @@ const Navbar: React.FC = () => {
                     
                     <Link
                         to="/virtual-test"
-                        className="h-9 inline-flex items-center justify-center gap-1 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-2 md:px-2.5 py-1.5 text-[10px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0"
+                        className="h-6 md:h-7 inline-flex items-center justify-center gap-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-1 md:px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0"
                         title={t('navbar.virtualTryOn')}
                     >
-                        <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                         </svg>
                         <span className="hidden lg:inline">{t('navbar.virtualTryOn')}</span>
@@ -439,6 +440,11 @@ const Navbar: React.FC = () => {
                     {/* Language Switcher - Always visible */}
                     <div className="flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
+                    </div>
+                    
+                    {/* Wishlist Icon */}
+                    <div className="hidden md:flex items-center justify-center flex-shrink-0">
+                        <WishlistIcon />
                     </div>
                     
                     {/* Cart Icon */}
@@ -619,7 +625,8 @@ const Navbar: React.FC = () => {
                         >
                             {t('navbar.login')}
                         </Link>
-                        <div className="flex justify-center">
+                        <div className="flex justify-center gap-4">
+                            <WishlistIcon />
                             <CartIcon />
                         </div>
                     </div>

@@ -11,6 +11,8 @@ import {
   type Prescription 
 } from '../../services/prescriptionsService'
 import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '../../services/cartService'
+import { createOrder, createGuestOrder, type Address as OrderAddress } from '../../services/ordersService'
+import { createPaymentIntent, confirmPayment } from '../../services/paymentsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
 import { 
@@ -45,12 +47,21 @@ import {
   type LensOption
 } from '../../services/lensOptionsService'
 
+// Import test function in dev mode
+if (import.meta.env.DEV) {
+  import('../../utils/testLensOptionsAPI').then(module => {
+    if (typeof window !== 'undefined') {
+      (window as any).testLensOptionsAPI = module.testLensOptionsAPI;
+    }
+  });
+}
+
 interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
 }
 
-type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary'
+type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
 
 interface LensSelection {
   type: 'distance_vision' | 'near_vision' | 'progressive' | 'single_vision' | 'bifocal' | 'reading'
@@ -172,6 +183,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const [photochromicOptions, setPhotochromicOptions] = useState<LensOption[]>([])
   const [prescriptionSunOptions, setPrescriptionSunOptions] = useState<LensOption[]>([])
   const [lensOptionsLoading, setLensOptionsLoading] = useState(true)
+  
+  // Checkout flow states
+  const [checkoutMode, setCheckoutMode] = useState<'cart' | 'checkout'>('cart') // 'cart' = add to cart, 'checkout' = direct checkout
+  const [shippingAddress, setShippingAddress] = useState<OrderAddress & { state?: string }>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    zip_code: '',
+    country: '',
+    state: ''
+  })
+  const [paymentMethod, setPaymentMethod] = useState<string>('stripe')
+  const [isProcessingOrder, setIsProcessingOrder] = useState(false)
+  const [orderError, setOrderError] = useState<string | null>(null)
+  const [createdOrder, setCreatedOrder] = useState<any>(null)
 
   useEffect(() => {
     // PRIMARY API: GET /api/products/:id/configuration (from API guide)
@@ -871,16 +900,47 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   // GET /api/lens/options?type=photochromic
   const fetchPhotochromicOptions = async () => {
     try {
-      console.log('🔄 [API] Fetching photochromic options: GET /api/lens/options?type=photochromic')
-      const options = await getLensOptions({ type: 'photochromic', isActive: true })
+      console.log('🔄 [API] Fetching photochromic options: GET /api/lens/options?type=photochromic&isActive=true')
+      
+      // Try with isActive filter first
+      let options = await getLensOptions({ type: 'photochromic', isActive: true })
+      
+      // If no results, try without isActive filter (to see if data exists but is inactive)
+      if (!options || options.length === 0) {
+        console.log('🔄 [API] No active photochromic options found, trying without isActive filter...')
+        options = await getLensOptions({ type: 'photochromic' })
+      }
+      
+      // Log what we got
+      console.log('📊 [API] Photochromic API response:', {
+        options: options,
+        count: options?.length || 0,
+        hasData: !!options && options.length > 0
+      })
+      
       if (options && options.length > 0) {
         setPhotochromicOptions(options)
-        console.log('✅ [API] Photochromic options loaded:', options.length)
+        console.log('✅ [API] Photochromic options loaded:', options.length, 'options')
+        options.forEach((opt, idx) => {
+          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+          if (opt.colors && opt.colors.length > 0) {
+            console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
+          }
+        })
       } else {
-        console.warn('⚠️ [API] No photochromic options available')
+        // Only log warning in dev mode to reduce console noise
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] No photochromic options available from API')
+          console.warn('   → This is normal if you haven\'t created photochromic options yet')
+          console.warn('   → To fix: Create lens options via admin API (see STEP_BY_STEP_SETUP.md)')
+          console.warn('   → Required: type="photochromic", is_active=true')
+        }
+        setPhotochromicOptions([])
       }
     } catch (error) {
       console.error('❌ [API] Error fetching photochromic options:', error)
+      setPhotochromicOptions([])
     } finally {
       setLensOptionsLoading(false)
     }
@@ -890,23 +950,53 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   // GET /api/lens/options?type=prescription_sun
   const fetchPrescriptionSunOptions = async () => {
     try {
-      console.log('🔄 [API] Fetching prescription sun options: GET /api/lens/options?type=prescription_sun')
-      const options = await getLensOptions({ type: 'prescription_sun', isActive: true })
+      console.log('🔄 [API] Fetching prescription sun options: GET /api/lens/options?type=prescription_sun&isActive=true')
+      
+      // Try with underscore first
+      let options = await getLensOptions({ type: 'prescription_sun', isActive: true })
+      
+      // If no results, try with hyphen
+      if (!options || options.length === 0) {
+        console.log('🔄 [API] No results with prescription_sun, trying prescription-sun...')
+        options = await getLensOptions({ type: 'prescription-sun', isActive: true })
+      }
+      
+      // If still no results, try without isActive filter
+      if (!options || options.length === 0) {
+        console.log('🔄 [API] No active options found, trying without isActive filter...')
+        options = await getLensOptions({ type: 'prescription_sun' })
+        if (!options || options.length === 0) {
+          options = await getLensOptions({ type: 'prescription-sun' })
+        }
+      }
+      
+      // Log what we got
+      console.log('📊 [API] Prescription Sun API response:', {
+        options: options,
+        count: options?.length || 0,
+        hasData: !!options && options.length > 0
+      })
+      
       if (options && options.length > 0) {
         setPrescriptionSunOptions(options)
-        console.log('✅ [API] Prescription sun options loaded:', options.length)
+        console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
+        options.forEach((opt, idx) => {
+          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+        })
       } else {
-        // Also try alternative type names
-        const altOptions = await getLensOptions({ type: 'prescription-sun', isActive: true })
-        if (altOptions && altOptions.length > 0) {
-          setPrescriptionSunOptions(altOptions)
-          console.log('✅ [API] Prescription sun options loaded (alt type):', altOptions.length)
-        } else {
-          console.warn('⚠️ [API] No prescription sun options available')
+        // Only log warning in dev mode to reduce console noise
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] No prescription sun options available from API')
+          console.warn('   → This is normal if you haven\'t created prescription sun options yet')
+          console.warn('   → To fix: Create lens options via admin API (see STEP_BY_STEP_SETUP.md)')
+          console.warn('   → Required: type="prescription_sun" or "prescription-sun", is_active=true')
         }
+        setPrescriptionSunOptions([])
       }
     } catch (error) {
       console.error('❌ [API] Error fetching prescription sun options:', error)
+      setPrescriptionSunOptions([])
     }
   }
 
@@ -1222,32 +1312,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }))
   }
 
-  // Calculate recommended lens index based on SPH + CYL (absolute sum)
-  const calculateRecommendedLensIndex = (prescription: PrescriptionFormData): number => {
-    const odSph = Math.abs(parseFloat(prescription.od_sphere) || 0)
-    const odCyl = Math.abs(parseFloat(prescription.od_cylinder) || 0)
-    const osSph = Math.abs(parseFloat(prescription.os_sphere) || 0)
-    const osCyl = Math.abs(parseFloat(prescription.os_cylinder) || 0)
-    
-    // Use the higher total (worst eye) for recommendation
-    const odTotal = odSph + odCyl
-    const osTotal = osSph + osCyl
-    const total = Math.max(odTotal, osTotal)
-    
-    // Recommend index based on total
-    if (total <= 1.50) return 1.49
-    if (total <= 3.50) return 1.56
-    if (total <= 5.50) return 1.60
-    if (total <= 8.00) return 1.67
-    return 1.74 // For total > 8.00
-  }
 
   const handleLensThicknessChange = (thickness: 'plastic' | 'glass', materialId?: number) => {
-    setLensSelection(prev => ({ 
-      ...prev, 
-      lensThickness: thickness,
-      lensThicknessMaterialId: materialId
-    }))
+    setLensSelection(prev => {
+      // If materialId is undefined and we're clicking the same thickness, deselect it
+      if (materialId === undefined && prev.lensThickness === thickness) {
+        return {
+          ...prev,
+          lensThickness: undefined,
+          lensThicknessMaterialId: undefined
+        }
+      }
+      // Otherwise, select the new option
+      return {
+        ...prev,
+        lensThickness: thickness,
+        lensThicknessMaterialId: materialId
+      }
+    })
   }
 
   const handleLensThicknessOptionChange = (option: string) => {
@@ -1432,6 +1514,68 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
     })
 
+    // Add photochromic color selection
+    if (lensSelection.photochromicColor) {
+      // Find the photochromic option that contains this color
+      const photochromicOption = photochromicOptions.find(opt => 
+        opt.colors?.some(color => color.id.toString() === lensSelection.photochromicColor?.id)
+      )
+      if (photochromicOption) {
+        const selectedColor = photochromicOption.colors?.find(c => c.id.toString() === lensSelection.photochromicColor?.id);
+        // Support both camelCase and snake_case for priceAdjustment
+        const colorPrice = (selectedColor as any)?.priceAdjustment !== undefined 
+          ? (selectedColor as any).priceAdjustment 
+          : (selectedColor as any)?.price_adjustment || 0;
+        // The mapped photochromicOption has a 'price' property (base price)
+        const totalPrice = (photochromicOption as any).price + colorPrice;
+        if (totalPrice > 0) {
+          summary.push({
+            name: `Photochromic - ${lensSelection.photochromicColor.name}`,
+            price: totalPrice,
+            type: 'treatment',
+            id: `photochromic_${lensSelection.photochromicColor.id}`,
+            removable: true
+          })
+        }
+      }
+    }
+
+    // Add prescription sun color selection
+    if (lensSelection.prescriptionSunColor) {
+      // Find the prescription sun option that contains this color
+      // Note: prescriptionSunOptions are mapped to a different structure with subOptions
+      const prescriptionSunOption = (prescriptionSunOptions as any[]).find((opt: any) => {
+        if (opt.subOptions) {
+          return opt.subOptions.some((subOpt: any) => 
+            subOpt.colors?.some((color: any) => color.id.toString() === lensSelection.prescriptionSunColor?.id)
+          )
+        }
+        return false
+      })
+      if (prescriptionSunOption) {
+        // Find the sub-option and color
+        let colorPrice = 0
+        let basePrice = prescriptionSunOption.price || 0
+        for (const subOpt of prescriptionSunOption.subOptions || []) {
+          const color = subOpt.colors?.find((c: any) => c.id.toString() === lensSelection.prescriptionSunColor?.id)
+          if (color) {
+            colorPrice = subOpt.price || 0
+            break
+          }
+        }
+        const totalPrice = basePrice + colorPrice
+        if (totalPrice > 0) {
+          summary.push({
+            name: `Prescription Sun - ${lensSelection.prescriptionSunColor.name}`,
+            price: totalPrice,
+            type: 'treatment',
+            id: `prescription_sun_${lensSelection.prescriptionSunColor.id}`,
+            removable: true
+          })
+        }
+      }
+    }
+
     // Add selected shipping method
     if (selectedShippingMethod) {
       summary.push({
@@ -1444,14 +1588,15 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }
 
     setOrderSummary(summary)
-  }, [lensSelection, apiLensTypes, apiTreatments, configTreatments, coatingOptions, product, progressiveOptions, lensThicknessMaterials, selectedShippingMethod])
+  }, [lensSelection, apiLensTypes, apiTreatments, configTreatments, coatingOptions, product, progressiveOptions, lensThicknessMaterials, selectedShippingMethod, photochromicOptions, prescriptionSunOptions])
 
   const handleTreatmentToggle = (treatmentId: string) => {
     setLensSelection(prev => ({
       ...prev,
+      // Only one standard treatment can be selected at a time (photochromic and prescription sun are separate)
       treatments: prev.treatments.includes(treatmentId)
-        ? prev.treatments.filter(t => t !== treatmentId)
-        : [...prev.treatments, treatmentId]
+        ? [] // Deselect if clicking the same treatment
+        : [treatmentId] // Replace with new selection
     }))
   }
 
@@ -1505,6 +1650,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     }
   }
 
+  const handleCheckoutNow = () => {
+    setCheckoutMode('checkout')
+    // Navigate to summary first, then shipping
+    if (currentStep === 'treatment' || currentStep === 'summary') {
+      setCurrentStep('shipping')
+    } else {
+      // Continue through normal flow, then go to shipping
+      handleNext()
+    }
+  }
+
   const handleNext = async () => {
     if (currentStep === 'lens_type') {
       // Navigate based on lens type selection
@@ -1525,7 +1681,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     } else if (currentStep === 'lens_thickness') {
       setCurrentStep('treatment')
     } else if (currentStep === 'treatment') {
-      setCurrentStep('summary')
+      if (checkoutMode === 'checkout') {
+        setCurrentStep('shipping')
+      } else {
+        setCurrentStep('summary')
+      }
+    } else if (currentStep === 'summary') {
+      if (checkoutMode === 'checkout') {
+        setCurrentStep('shipping')
+      }
+    } else if (currentStep === 'shipping') {
+      setCurrentStep('payment')
     }
   }
 
@@ -1544,6 +1710,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       setCurrentStep('lens_thickness')
     } else if (currentStep === 'summary') {
       setCurrentStep('treatment')
+    } else if (currentStep === 'shipping') {
+      setCurrentStep('summary')
+    } else if (currentStep === 'payment') {
+      setCurrentStep('shipping')
     }
   }
 
@@ -1742,12 +1912,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           })
           .filter(id => !isNaN(id)) as number[]
 
-        // Get color IDs
+        // Get color IDs - use the ID directly from the selected color object
+        // The color ID comes from the lens options API response
         const photochromicColorId = lensSelection.photochromicColor 
-          ? (productConfig?.photochromicColors?.find(c => c.hexCode === lensSelection.photochromicColor?.color)?.id || null)
+          ? (parseInt(lensSelection.photochromicColor.id) || null)
           : null
         const prescriptionSunColorId = lensSelection.prescriptionSunColor
-          ? (productConfig?.prescriptionSunColors?.find(c => c.hexCode === lensSelection.prescriptionSunColor?.color)?.id || null)
+          ? (parseInt(lensSelection.prescriptionSunColor.id) || null)
           : null
 
         // Map lens type to valid API type
@@ -1847,6 +2018,211 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       alert('Failed to add product to cart. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Create order directly - matches Postman collection structure
+  const handleCreateOrder = async () => {
+    setIsProcessingOrder(true)
+    setOrderError(null)
+    
+    try {
+      // Validate shipping address
+      if (!shippingAddress.first_name || !shippingAddress.last_name || 
+          !shippingAddress.email || !shippingAddress.phone ||
+          !shippingAddress.address || !shippingAddress.city || 
+          !shippingAddress.zip_code || !shippingAddress.country) {
+        setOrderError('Please fill in all shipping address fields')
+        setIsProcessingOrder(false)
+        return
+      }
+
+      let finalPrescriptionId = prescriptionId
+
+      // If user is authenticated, save prescription (if not using saved one)
+      if (isAuthenticated && !selectedSavedPrescription) {
+        const prescriptionPayload: PrescriptionData = {
+          prescription_type: lensSelection.type,
+          od_sphere: parseFloat(prescriptionData.od_sphere),
+          od_cylinder: prescriptionData.od_cylinder ? parseFloat(prescriptionData.od_cylinder) : 0,
+          od_axis: prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : undefined,
+          os_sphere: parseFloat(prescriptionData.os_sphere),
+          os_cylinder: prescriptionData.os_cylinder ? parseFloat(prescriptionData.os_cylinder) : 0,
+          os_axis: prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : undefined,
+        }
+
+        // Add PD based on lens type
+        if (lensSelection.type === 'progressive') {
+          if (prescriptionData.pd_mm) {
+            prescriptionPayload.pd_binocular = parseFloat(prescriptionData.pd_mm)
+          }
+          if (prescriptionData.h) {
+            prescriptionPayload.ph_od = parseFloat(prescriptionData.h)
+            prescriptionPayload.ph_os = parseFloat(prescriptionData.h)
+          }
+          if (prescriptionData.select_option) {
+            prescriptionPayload.od_add = prescriptionData.select_option
+            prescriptionPayload.os_add = prescriptionData.select_option
+          }
+        } else {
+          if (prescriptionData.pd_binocular) {
+            prescriptionPayload.pd_binocular = parseFloat(prescriptionData.pd_binocular)
+          }
+        }
+
+        const result = await createPrescription(prescriptionPayload)
+        if (result.success && result.prescription) {
+          finalPrescriptionId = result.prescription.id
+          setPrescriptionId(result.prescription.id)
+        }
+      }
+
+      // Build order items matching Postman collection structure
+      const orderItems = [{
+        product_id: product.id,
+        quantity: 1,
+        lens_index: lensSelection.lensIndex || undefined,
+        lens_coatings: lensSelection.coatings.length > 0 ? lensSelection.coatings : undefined,
+        // Add treatment IDs if available
+        ...(lensSelection.treatments && lensSelection.treatments.length > 0 && {
+          treatment_ids: lensSelection.treatments.map(id => parseInt(id)).filter(id => !isNaN(id))
+        })
+      }]
+
+      // Build shipping address matching Postman collection structure
+      const shippingAddr = {
+        street: shippingAddress.address,
+        city: shippingAddress.city,
+        state: shippingAddress.state || shippingAddress.zip_code, // Use state if provided, fallback to zip_code
+        zip: shippingAddress.zip_code,
+        country: shippingAddress.country
+      }
+
+      // Build order payload matching Postman collection structure
+      const orderPayload = {
+        cart_items: orderItems.map(item => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+          lens_index: item.lens_index,
+          lens_coatings: item.lens_coatings,
+          prescription_id: finalPrescriptionId || null,
+          customization: {
+            lensType: lensSelection.type,
+            treatments: lensSelection.treatments,
+            lensThicknessMaterialId: lensSelection.lensThicknessMaterialId
+          }
+        })),
+        shipping_address: {
+          first_name: shippingAddress.first_name,
+          last_name: shippingAddress.last_name,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          zip_code: shippingAddress.zip_code,
+          country: shippingAddress.country
+        },
+        payment_method: paymentMethod.toUpperCase()
+      }
+
+      // Use appropriate order creation function based on authentication status
+      let order: any = null
+      let orderError: string | null = null
+      
+      if (isAuthenticated) {
+        // Authenticated user - use createOrder
+        order = await createOrder(orderPayload)
+        if (!order) {
+          orderError = 'Failed to create order. Please check your authentication and try again.'
+        }
+      } else {
+        // Guest user - use createGuestOrder with customer details
+        // Note: If backend doesn't support guest checkout, user will need to login
+        order = await createGuestOrder({
+          ...orderPayload,
+          first_name: shippingAddress.first_name,
+          last_name: shippingAddress.last_name,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          zip_code: shippingAddress.zip_code,
+          country: shippingAddress.country,
+          payment_info: {
+            payment_method: paymentMethod.toUpperCase()
+          }
+        })
+        
+        if (!order) {
+          // Check if it's an authorization error - prompt user to login
+          orderError = 'Please login to complete your order. Guest checkout may not be available.'
+        }
+      }
+
+      if (!order) {
+        setOrderError(orderError || 'Failed to create order. Please try again or contact support.')
+        setIsProcessingOrder(false)
+        return
+      }
+
+      setCreatedOrder(order)
+
+      // If payment method is Stripe, create payment intent
+      if (paymentMethod.toLowerCase() === 'stripe' && order.id) {
+        const paymentIntent = await createPaymentIntent({
+          order_id: order.id,
+          currency: 'USD'
+        })
+
+        if (paymentIntent && paymentIntent.client_secret) {
+          // Here you would integrate Stripe.js to handle the payment
+          // For now, we'll just show success
+          // In a real implementation, you'd use Stripe.js Elements here
+          alert('Order created successfully! Payment intent created. Please complete payment.')
+          
+          // Navigate to order confirmation or payment page
+          if (onClose) {
+            onClose()
+          }
+          navigate(`/orders/${order.id}`)
+        } else {
+          setOrderError('Order created but failed to initialize payment. Please contact support.')
+        }
+      } else {
+        // For other payment methods, just show success
+        alert('Order created successfully!')
+        if (onClose) {
+          onClose()
+        }
+        navigate(`/orders/${order.id}`)
+      }
+    } catch (error: any) {
+      console.error('Error creating order:', error)
+      
+      // Extract error message from API response if available
+      let errorMessage = 'Failed to create order. Please try again.'
+      
+      if (error.response) {
+        // If error has response object
+        errorMessage = error.response.message || error.response.error || errorMessage
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
+      // Check for authorization errors specifically
+      if (errorMessage.toLowerCase().includes('not authorized') || 
+          errorMessage.toLowerCase().includes('unauthorized') ||
+          errorMessage.toLowerCase().includes('401')) {
+        if (!isAuthenticated) {
+          errorMessage = 'Please login to complete your order. Guest checkout requires authentication.'
+        } else {
+          errorMessage = 'Your session has expired. Please login again and try completing your order.'
+        }
+      }
+      
+      setOrderError(errorMessage)
+    } finally {
+      setIsProcessingOrder(false)
     }
   }
 
@@ -2166,9 +2542,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 onTreatmentToggle={handleTreatmentToggle}
                 onColorSelect={(colorType, color) => {
                   if (colorType === 'photochromic') {
-                    setLensSelection(prev => ({ ...prev, photochromicColor: color, prescriptionSunColor: undefined }))
+                    setLensSelection(prev => ({ 
+                      ...prev, 
+                      photochromicColor: color, 
+                      prescriptionSunColor: undefined
+                      // Keep standard treatments - photochromic can be selected alongside them
+                    }))
                   } else if (colorType === 'prescription_sun') {
-                    setLensSelection(prev => ({ ...prev, prescriptionSunColor: color, photochromicColor: undefined }))
+                    setLensSelection(prev => ({ 
+                      ...prev, 
+                      prescriptionSunColor: color, 
+                      photochromicColor: undefined
+                      // Keep standard treatments - prescription sun can be selected alongside them
+                    }))
                   }
                 }}
                 onNext={handleNext}
@@ -2196,7 +2582,33 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 lensThicknessMaterials={lensThicknessMaterials}
                 onBack={handleBack}
                 onAddToCart={handleAddToCart}
+                onCheckoutNow={handleCheckoutNow}
                 loading={loading}
+                checkoutMode={checkoutMode}
+              />
+            )}
+
+            {currentStep === 'shipping' && (
+              <ShippingStep
+                shippingAddress={shippingAddress}
+                onAddressChange={(field, value) => setShippingAddress(prev => ({ ...prev, [field]: value }))}
+                onNext={handleNext}
+                onBack={handleBack}
+                errors={orderError ? { general: orderError } : {}}
+              />
+            )}
+
+            {currentStep === 'payment' && (
+              <PaymentStep
+                paymentMethod={paymentMethod}
+                onPaymentMethodChange={setPaymentMethod}
+                onBack={handleBack}
+                onCreateOrder={handleCreateOrder}
+                isProcessing={isProcessingOrder}
+                error={orderError}
+                order={createdOrder}
+                onLogin={() => navigate('/login')}
+                isAuthenticated={isAuthenticated}
               />
             )}
           </div>
@@ -2540,20 +2952,35 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
             lensThicknessMaterials.map((material) => {
               const isPlastic = material.slug === 'unbreakable-plastic' || material.name.toLowerCase().includes('plastic')
               const isGlass = material.slug === 'minerals-glass' || material.name.toLowerCase().includes('glass')
-              const isSelected = (isPlastic && lensSelection.lensThickness === 'plastic') ||
-                                (isGlass && lensSelection.lensThickness === 'glass')
+              // Check if this specific material is selected
+              // Priority: match by material ID if set, otherwise match by type
+              const isSelected = lensSelection.lensThicknessMaterialId !== undefined
+                ? lensSelection.lensThicknessMaterialId === material.id
+                : ((isPlastic && lensSelection.lensThickness === 'plastic') ||
+                   (isGlass && lensSelection.lensThickness === 'glass'))
               
               return (
                 <label
                   key={material.id}
-                  className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                    isSelected 
+                      ? 'border-blue-600 bg-blue-50' 
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                  }`}
                 >
                   <input
                     type="radio"
                     name="lensThickness"
                     checked={isSelected}
-                    onChange={() => onLensThicknessChange(isPlastic ? 'plastic' : 'glass', material.id)}
-                    className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                    onChange={() => {
+                      // Toggle: if already selected, deselect; otherwise select
+                      if (isSelected) {
+                        onLensThicknessChange(isPlastic ? 'plastic' : 'glass', undefined)
+                      } else {
+                        onLensThicknessChange(isPlastic ? 'plastic' : 'glass', material.id)
+                      }
+                    }}
+                    className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="flex-1 text-sm font-medium text-gray-900">{material.name}</span>
                   <span className="text-sm font-semibold text-gray-700">${material.price.toFixed(2)}</span>
@@ -2563,25 +2990,47 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
           ) : (
             // Fallback to default options if API data not available
             <>
-          <label className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+          <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+            lensSelection.lensThickness === 'plastic' 
+              ? 'border-blue-600 bg-blue-50' 
+              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+          }`}>
             <input
               type="radio"
               name="lensThickness"
               checked={lensSelection.lensThickness === 'plastic'}
-              onChange={() => onLensThicknessChange('plastic')}
-              className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              onChange={() => {
+                // Toggle: if already selected, deselect; otherwise select
+                if (lensSelection.lensThickness === 'plastic') {
+                  onLensThicknessChange('plastic', undefined)
+                } else {
+                  onLensThicknessChange('plastic')
+                }
+              }}
+              className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
             />
             <span className="flex-1 text-sm font-medium text-gray-900">Unbreakable (Plastic)</span>
             <span className="text-sm font-semibold text-gray-700">$30.00</span>
           </label>
 
-          <label className="flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+          <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+            lensSelection.lensThickness === 'glass' 
+              ? 'border-blue-600 bg-blue-50' 
+              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+          }`}>
             <input
               type="radio"
               name="lensThickness"
               checked={lensSelection.lensThickness === 'glass'}
-              onChange={() => onLensThicknessChange('glass')}
-              className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer"
+              onChange={() => {
+                // Toggle: if already selected, deselect; otherwise select
+                if (lensSelection.lensThickness === 'glass') {
+                  onLensThicknessChange('glass', undefined)
+                } else {
+                  onLensThicknessChange('glass')
+                }
+              }}
+              className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
             />
             <span className="flex-1 text-sm font-medium text-gray-900">Minerals (Glass)</span>
             <span className="text-sm font-semibold text-gray-700">$60.00</span>
@@ -2618,7 +3067,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
             <option value="">Please select</option>
             {lensThicknessOptions.length > 0 ? (
               lensThicknessOptions.map((option) => {
-                const isRecommended = recommendedIndex && option.thicknessValue === recommendedIndex.toString()
+                const isRecommended = recommendedIndex !== null && Number(option.thicknessValue) === recommendedIndex
                 return (
                   <option key={option.id} value={`option_${option.id}`}>
                     {option.name} {option.thicknessValue ? `(${option.thicknessValue})` : ''} {isRecommended ? '⭐ Recommended' : ''}
@@ -2715,27 +3164,55 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     if (apiPhotochromicOptions && apiPhotochromicOptions.length > 0) {
       console.log('📥 [API] Mapping photochromic options from API:', apiPhotochromicOptions.length, 'options')
       return apiPhotochromicOptions
-        .filter(option => option.is_active !== false)
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-        .map(option => ({
-          id: option.slug || option.id.toString(),
-          name: option.name,
-          description: option.description || '',
-          price: option.base_price || 0,
-          colors: (option.colors || [])
-            .filter(color => color.is_active !== false)
-            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-            .map(color => ({
-              id: color.id.toString(),
-              name: color.name,
-              color: color.hex_code || color.color_code || '#000000',
-              gradient: color.color_code?.toLowerCase().includes('gradient') || false
-            }))
-        }))
+        .filter(option => {
+          // Support both camelCase and snake_case
+          const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+          return isActive !== false;
+        })
+        .sort((a, b) => {
+          const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+          const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+          return sortA - sortB;
+        })
+        .map(option => {
+          const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
+          return {
+            id: option.slug || option.id.toString(),
+            name: option.name,
+            description: option.description || '',
+            price: basePrice,
+            colors: (option.colors || [])
+              .filter(color => {
+                // Support both camelCase and snake_case
+                const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+                return isActive !== false;
+              })
+              .sort((a, b) => {
+                const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+                const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+                return sortA - sortB;
+              })
+              .map(color => {
+                // Support both camelCase and snake_case
+                const hexCode = color.hexCode || color.hex_code || '#000000';
+                const colorCode = color.colorCode || color.color_code || '';
+                return {
+                  id: color.id.toString(),
+                  name: color.name,
+                  color: hexCode,
+                  gradient: colorCode.toLowerCase().includes('gradient') || false,
+                  priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+                };
+              })
+          };
+        })
     }
     
     // Return empty array if no API data - don't use dummy data
-    console.warn('⚠️ [API] No photochromic options available from API')
+    // Only log in dev mode to reduce console noise
+    if (import.meta.env.DEV && apiPhotochromicOptions.length === 0) {
+      // Silent - already logged in fetchPhotochromicOptions
+    }
     return []
   }
 
@@ -2748,8 +3225,16 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       
       // Filter active options and sort
       const activeOptions = apiPrescriptionSunOptions
-        .filter(option => option.is_active !== false)
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .filter(option => {
+          // Support both camelCase and snake_case
+          const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+          return isActive !== false;
+        })
+        .sort((a, b) => {
+          const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+          const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+          return sortA - sortB;
+        })
       
       // Group by main option type (polarized, classic, blokz, etc.)
       // The grouping is based on the option name or slug
@@ -2784,10 +3269,11 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                    !optName.includes('fashion')
           }) || option
           
+          const basePrice = baseOption.basePrice !== undefined ? baseOption.basePrice : baseOption.base_price || 0;
           grouped[mainType] = {
             id: baseOption.slug || baseOption.id.toString(),
             name: baseOption.name,
-            price: baseOption.base_price || 0,
+            price: basePrice,
             description: baseOption.description || '',
             subOptions: []
           }
@@ -2808,39 +3294,64 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
         // Check if sub-option already exists
         const existingSubOption = grouped[mainType].subOptions.find((sub: any) => sub.name.toLowerCase() === option.name.toLowerCase())
         
+        const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
         if (!existingSubOption && option.colors && option.colors.length > 0) {
           // Add as new sub-option with colors
           grouped[mainType].subOptions.push({
             id: `${mainType}_${subOptionType}_${option.id}`,
             name: option.name,
-            price: option.base_price || 0,
+            price: optionBasePrice,
             colors: option.colors
-              .filter(color => color.is_active !== false)
-              .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-              .map(color => ({
-                id: color.id.toString(),
-                name: color.name,
-                color: color.hex_code || color.color_code || '#000000',
-                gradient: color.color_code?.toLowerCase().includes('gradient') || false
-              }))
+              .filter(color => {
+                // Support both camelCase and snake_case
+                const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+                return isActive !== false;
+              })
+              .sort((a, b) => {
+                const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+                const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+                return sortA - sortB;
+              })
+              .map(color => {
+                // Support both camelCase and snake_case
+                const hexCode = color.hexCode || color.hex_code || '#000000';
+                const colorCode = color.colorCode || color.color_code || '';
+                return {
+                  id: color.id.toString(),
+                  name: color.name,
+                  color: hexCode,
+                  gradient: colorCode.toLowerCase().includes('gradient') || false,
+                  priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+                };
+              })
           })
         } else if (existingSubOption && option.colors && option.colors.length > 0) {
           // Merge colors into existing sub-option
           const newColors = option.colors
-            .filter(color => color.is_active !== false)
-            .map(color => ({
-              id: color.id.toString(),
-              name: color.name,
-              color: color.hex_code || color.color_code || '#000000',
-              gradient: color.color_code?.toLowerCase().includes('gradient') || false
-            }))
+            .filter(color => {
+              // Support both camelCase and snake_case
+              const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+              return isActive !== false;
+            })
+            .map(color => {
+              // Support both camelCase and snake_case
+              const hexCode = color.hexCode || color.hex_code || '#000000';
+              const colorCode = color.colorCode || color.color_code || '';
+              return {
+                id: color.id.toString(),
+                name: color.name,
+                color: hexCode,
+                gradient: colorCode.toLowerCase().includes('gradient') || false,
+                priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+              };
+            })
           existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
         } else if (!existingSubOption) {
           // Add sub-option without colors (e.g., Gradient option)
           grouped[mainType].subOptions.push({
             id: `${mainType}_${subOptionType}_${option.id}`,
             name: option.name,
-            price: option.base_price || 0,
+            price: optionBasePrice,
           colors: []
           })
         }
@@ -2865,7 +3376,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     }
     
     // Return empty array if no API data - don't use dummy data
-    console.warn('⚠️ [API] No prescription sun options available from API')
+    // Only log in dev mode to reduce console noise
+    if (import.meta.env.DEV && apiPrescriptionSunOptions.length === 0) {
+      // Silent - already logged in fetchPrescriptionSunOptions
+    }
     return []
   }
 
@@ -2885,7 +3399,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
 
   const handleColorSelect = (type: string, colorId: string, treatmentId: string, color: { id: string; name: string; color: string; gradient?: boolean }) => {
     setSelectedColor({ type, colorId })
-    onTreatmentToggle(treatmentId)
     
     // Determine if this is photochromic or prescription sun based on the option type
     // Check if it's from photochromic options
@@ -2899,15 +3412,18 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     )
     
     if (isPhotochromic) {
-      // Photochromic color
+      // Photochromic color - handled separately, don't add to treatments array
       if (onColorSelect) {
         onColorSelect('photochromic', color)
       }
     } else if (isPrescriptionSun) {
-      // Prescription sun color
+      // Prescription sun color - handled separately, don't add to treatments array
       if (onColorSelect) {
         onColorSelect('prescription_sun', color)
       }
+    } else {
+      // Standard treatment - add to treatments array
+      onTreatmentToggle(treatmentId)
     }
   }
 
@@ -2962,10 +3478,11 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   }`}
                 >
                   <input
-                      type="checkbox"
+                      type="radio"
+                      name="treatment"
                     checked={isSelected}
                     onChange={() => onTreatmentToggle(treatment.id)}
-                      className="w-5 h-5 text-blue-950 border-gray-300 focus:ring-blue-500 cursor-pointer rounded"
+                      className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{treatment.name}</div>
@@ -3004,37 +3521,67 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               
               {showPhotochromic && (
                 <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {photochromicOptions.length > 0 ? (
-                    photochromicOptions.map((option) => (
-                    <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                      <h4 className="font-semibold text-gray-900 mb-2">{option.name}</h4>
-                        {option.description && (
-                      <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                        )}
-                        {option.colors.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {option.colors.map((color) => (
-                            <button
-                              key={color.id}
-                              onClick={() => handleColorSelect(option.id, color.id, option.id, color)}
-                              className={`w-10 h-10 rounded-full border-2 transition-all ${
-                                (selectedColor?.type === option.id && selectedColor?.colorId === color.id) ||
-                                (lensSelection.photochromicColor?.id === color.id)
-                                  ? 'border-blue-600 ring-2 ring-blue-200'
-                                  : 'border-gray-300 hover:border-gray-400'
-                              }`}
-                              style={{
-                                background: color.gradient ? color.color : color.color
-                              }}
-                              title={color.name}
-                            />
-                          ))}
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-sm text-gray-600">{t('shop.loadingPhotochromic', 'Loading photochromic options...')}</span>
+                    </div>
+                  ) : photochromicOptions.length > 0 ? (
+                    photochromicOptions.map((option) => {
+                      // Support both camelCase and snake_case field names
+                      const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price;
+                      const colors = option.colors || [];
+                      // Filter active colors - support both camelCase and snake_case
+                      const activeColors = colors.filter((c: any) => {
+                        const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
+                        return isActive !== false;
+                      });
+                      
+                      return (
+                      <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">{option.name}</h4>
+                          {basePrice && basePrice > 0 && (
+                            <span className="text-sm font-normal text-gray-600">
+                              (+${basePrice.toFixed(2)})
+                            </span>
+                          )}
                         </div>
-                        ) : (
-                          <p className="text-sm text-gray-500 italic">No colors available for this option</p>
-                        )}
-                      </div>
-                    ))
+                          {option.description && (
+                        <p className="text-sm text-gray-600 mb-3">{option.description}</p>
+                          )}
+                          {activeColors.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {activeColors.map((color: any) => {
+                              // Support both camelCase and snake_case for color fields
+                              const hexCode = color.hexCode || color.hex_code;
+                              const colorCode = color.colorCode || color.color_code;
+                              const colorValue = hexCode || colorCode || '#000000';
+                              
+                              return (
+                              <button
+                                key={color.id}
+                                onClick={() => handleColorSelect(option.id, color.id, option.id, color)}
+                                className={`w-10 h-10 rounded-full border-2 transition-all ${
+                                  (selectedColor?.type === option.id && selectedColor?.colorId === color.id) ||
+                                  (lensSelection.photochromicColor?.id === color.id)
+                                    ? 'border-blue-600 ring-2 ring-blue-200'
+                                    : 'border-gray-300 hover:border-gray-400'
+                                }`}
+                                style={{
+                                  background: colorValue
+                                }}
+                                title={color.name}
+                              />
+                              );
+                            })}
+                          </div>
+                          ) : (
+                            <p className="text-sm text-gray-500 italic">{t('shop.noColorsAvailable', 'No colors available for this option')}</p>
+                          )}
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p className="text-sm">{t('shop.noPhotochromicOptions', 'No photochromic options available. Please configure them in the admin panel.')}</p>
@@ -3063,65 +3610,129 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               
               {showPrescriptionSun && (
                 <div className="border-t border-gray-200 p-4 space-y-4 bg-gray-50">
-                  {prescriptionSunOptions.length > 0 ? (
-                    prescriptionSunOptions.map((option) => (
-                    <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold text-gray-900">
-                          {option.name}
-                          {option.price > 0 && (
-                            <span className="ml-2 text-sm font-normal text-gray-600">
-                              (+${option.price.toFixed(2)})
-                            </span>
-                          )}
-                        </h4>
-                </div>
-                        {option.description && (
-                      <p className="text-sm text-gray-600 mb-3">{option.description}</p>
-                        )}
-                        {option.subOptions && option.subOptions.length > 0 ? (
-                          option.subOptions.map((subOption: any) => (
-                        <div key={subOption.id} className="mt-3">
-                          <div className="text-sm font-medium text-gray-700 mb-2">
-                            {subOption.name}
-                            {subOption.price > 0 && (
-                              <span className="ml-2 text-xs text-gray-500">
-                                (+${subOption.price.toFixed(2)})
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                      <span className="ml-3 text-sm text-gray-600">{t('shop.loadingPrescriptionSun', 'Loading prescription sun options...')}</span>
+                    </div>
+                  ) : prescriptionSunOptions.length > 0 ? (
+                    prescriptionSunOptions.map((option) => {
+                      // Support both camelCase and snake_case field names
+                      const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price;
+                      
+                      return (
+                      <div key={option.id} className="bg-white rounded-lg p-4 border border-gray-200">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-semibold text-gray-900">
+                            {option.name}
+                            {basePrice && basePrice > 0 && (
+                              <span className="ml-2 text-sm font-normal text-gray-600">
+                                (+${basePrice.toFixed(2)})
                               </span>
                             )}
-                            {subOption.price === 0 && subOption.name !== 'Classic' && (
-                              <span className="ml-2 text-xs text-green-600">Free</span>
-                            )}
-                          </div>
-                              {subOption.colors && subOption.colors.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                                  {subOption.colors.map((color: any) => (
-                                <button
-                                  key={color.id}
-                                  onClick={() => handleColorSelect(`${option.id}_${subOption.id}`, color.id, `${option.id}_${subOption.id}`, color)}
-                                  className={`w-10 h-10 rounded-full border-2 transition-all ${
-                                    (selectedColor?.type === `${option.id}_${subOption.id}` && selectedColor?.colorId === color.id) ||
-                                    (lensSelection.prescriptionSunColor?.id === color.id)
-                                      ? 'border-blue-600 ring-2 ring-blue-200'
-                                      : 'border-gray-300 hover:border-gray-400'
-                                  }`}
-                                  style={{
-                                    background: color.gradient ? color.color : color.color
-                                  }}
-                                  title={color.name}
-                                />
-                              ))}
-                            </div>
-                              ) : (
-                                <p className="text-xs text-gray-500 italic">No colors available for this option</p>
+                          </h4>
+                  </div>
+                          {option.description && (
+                        <p className="text-sm text-gray-600 mb-3">{option.description}</p>
                           )}
-                        </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-gray-500 italic">No sub-options available</p>
-                        )}
-                    </div>
-                    ))
+                          {option.subOptions && option.subOptions.length > 0 ? (
+                            option.subOptions.map((subOption: any) => {
+                              const subBasePrice = subOption.basePrice !== undefined ? subOption.basePrice : subOption.base_price;
+                              const subPrice = subOption.price !== undefined ? subOption.price : subBasePrice;
+                              const colors = subOption.colors || [];
+                              // Filter active colors - support both camelCase and snake_case
+                              const activeColors = colors.filter((c: any) => {
+                                const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
+                                return isActive !== false;
+                              });
+                              
+                              return (
+                            <div key={subOption.id} className="mt-3">
+                              <div className="text-sm font-medium text-gray-700 mb-2">
+                                {subOption.name}
+                                {subPrice && subPrice > 0 && (
+                                  <span className="ml-2 text-xs text-gray-500">
+                                    (+${subPrice.toFixed(2)})
+                                  </span>
+                                )}
+                                {(!subPrice || subPrice === 0) && subOption.name !== 'Classic' && (
+                                  <span className="ml-2 text-xs text-green-600">Free</span>
+                                )}
+                              </div>
+                                  {activeColors.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                      {activeColors.map((color: any) => {
+                                        // Support both camelCase and snake_case for color fields
+                                        const hexCode = color.hexCode || color.hex_code;
+                                        const colorCode = color.colorCode || color.color_code;
+                                        const colorValue = hexCode || colorCode || '#000000';
+                                        
+                                        return (
+                                      <button
+                                        key={color.id}
+                                        onClick={() => handleColorSelect(`${option.id}_${subOption.id}`, color.id, `${option.id}_${subOption.id}`, color)}
+                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                                          (selectedColor?.type === `${option.id}_${subOption.id}` && selectedColor?.colorId === color.id) ||
+                                          (lensSelection.prescriptionSunColor?.id === color.id)
+                                            ? 'border-blue-600 ring-2 ring-blue-200'
+                                            : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                        style={{
+                                          background: colorValue
+                                        }}
+                                        title={color.name}
+                                      />
+                                        );
+                                      })}
+                                </div>
+                                  ) : (
+                                    <p className="text-xs text-gray-500 italic">No colors available for this option</p>
+                              )}
+                            </div>
+                              );
+                            })
+                          ) : (
+                            // If no subOptions, check for direct colors on the option
+                            (() => {
+                              const colors = option.colors || [];
+                              const activeColors = colors.filter((c: any) => {
+                                const isActive = c.isActive !== undefined ? c.isActive : c.is_active;
+                                return isActive !== false;
+                              });
+                              
+                              return activeColors.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                  {activeColors.map((color: any) => {
+                                    const hexCode = color.hexCode || color.hex_code;
+                                    const colorCode = color.colorCode || color.color_code;
+                                    const colorValue = hexCode || colorCode || '#000000';
+                                    
+                                    return (
+                                      <button
+                                        key={color.id}
+                                        onClick={() => handleColorSelect(option.id, color.id, option.id, color)}
+                                        className={`w-10 h-10 rounded-full border-2 transition-all ${
+                                          (selectedColor?.type === option.id && selectedColor?.colorId === color.id) ||
+                                          (lensSelection.prescriptionSunColor?.id === color.id)
+                                            ? 'border-blue-600 ring-2 ring-blue-200'
+                                            : 'border-gray-300 hover:border-gray-400'
+                                        }`}
+                                        style={{
+                                          background: colorValue
+                                        }}
+                                        title={color.name}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 italic">No colors available</p>
+                              );
+                            })()
+                          )}
+                      </div>
+                      );
+                    })
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p className="text-sm">{t('shop.noPrescriptionSunOptions', 'No prescription sun options available. Please configure them in the admin panel.')}</p>
@@ -3617,7 +4228,9 @@ interface SummaryStepProps {
   lensThicknessMaterials: Array<{ id: number; name: string; slug: string; price: number }>
   onBack: () => void
   onAddToCart: () => void
+  onCheckoutNow?: () => void
   loading: boolean
+  checkoutMode?: 'cart' | 'checkout'
 }
 
 const SummaryStep: React.FC<SummaryStepProps> = ({
@@ -3631,7 +4244,9 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   lensThicknessMaterials,
   onBack,
   onAddToCart,
-  loading
+  onCheckoutNow,
+  loading,
+  checkoutMode = 'cart'
 }) => {
   const { t } = useTranslation()
   const basePrice = product.sale_price && Number(product.sale_price) < Number(product.price)
@@ -3776,13 +4391,313 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         </div>
       </div>
 
-      <button
-        onClick={onAddToCart}
-        disabled={loading}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {loading ? t('shop.addingToCart') : t('shop.addToCart')}
-      </button>
+      <div className="space-y-3">
+        {onCheckoutNow && (
+          <button
+            onClick={onCheckoutNow}
+            disabled={loading}
+            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {t('shop.checkoutNow', 'Checkout Now')}
+          </button>
+        )}
+        <button
+          onClick={onAddToCart}
+          disabled={loading}
+          className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? t('shop.addingToCart') : t('shop.addToCart')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Shipping Step Component
+interface ShippingStepProps {
+  shippingAddress: OrderAddress & { state?: string }
+  onAddressChange: (field: keyof (OrderAddress & { state?: string }), value: string) => void
+  onNext: () => void
+  onBack: () => void
+  errors: Record<string, string>
+}
+
+const ShippingStep: React.FC<ShippingStepProps> = ({
+  shippingAddress,
+  onAddressChange,
+  onNext,
+  onBack,
+  errors
+}) => {
+  const { t } = useTranslation()
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={onBack}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h3 className="text-xl font-bold text-gray-900">{t('shop.shippingAddress', 'Shipping Address')}</h3>
+      </div>
+
+      {errors.general && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {errors.general}
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('common.firstName', 'First Name')} *
+            </label>
+            <input
+              type="text"
+              value={shippingAddress.first_name}
+              onChange={(e) => onAddressChange('first_name', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('common.lastName', 'Last Name')} *
+            </label>
+            <input
+              type="text"
+              value={shippingAddress.last_name}
+              onChange={(e) => onAddressChange('last_name', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('common.email', 'Email')} *
+          </label>
+          <input
+            type="email"
+            value={shippingAddress.email}
+            onChange={(e) => onAddressChange('email', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('common.phone', 'Phone')} *
+          </label>
+          <input
+            type="tel"
+            value={shippingAddress.phone}
+            onChange={(e) => onAddressChange('phone', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('common.address', 'Address')} *
+          </label>
+          <input
+            type="text"
+            value={shippingAddress.address}
+            onChange={(e) => onAddressChange('address', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('common.city', 'City')} *
+            </label>
+            <input
+              type="text"
+              value={shippingAddress.city}
+              onChange={(e) => onAddressChange('city', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('common.state', 'State')}
+            </label>
+            <input
+              type="text"
+              value={shippingAddress.state || ''}
+              onChange={(e) => onAddressChange('state', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('common.zipCode', 'Zip Code')} *
+          </label>
+          <input
+            type="text"
+            value={shippingAddress.zip_code}
+            onChange={(e) => onAddressChange('zip_code', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('common.country', 'Country')} *
+          </label>
+          <input
+            type="text"
+            value={shippingAddress.country}
+            onChange={(e) => onAddressChange('country', e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            required
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={onBack}
+          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+        >
+          {t('common.back', 'Back')}
+        </button>
+        <button
+          onClick={onNext}
+          className="flex-1 bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors"
+        >
+          {t('common.continue', 'Continue')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Payment Step Component
+interface PaymentStepProps {
+  paymentMethod: string
+  onPaymentMethodChange: (method: string) => void
+  onBack: () => void
+  onCreateOrder: () => void
+  isProcessing: boolean
+  error: string | null
+  order: any
+  onLogin?: () => void
+  isAuthenticated?: boolean
+}
+
+const PaymentStep: React.FC<PaymentStepProps> = ({
+  paymentMethod,
+  onPaymentMethodChange,
+  onBack,
+  onCreateOrder,
+  isProcessing,
+  error,
+  order,
+  onLogin,
+  isAuthenticated
+}) => {
+  const { t } = useTranslation()
+  
+  // Check if error is login-related
+  const isLoginError = error && (
+    error.toLowerCase().includes('login') ||
+    error.toLowerCase().includes('authentication') ||
+    error.toLowerCase().includes('unauthorized') ||
+    error.toLowerCase().includes('session expired')
+  )
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={onBack}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h3 className="text-xl font-bold text-gray-900">{t('shop.payment', 'Payment')}</h3>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="text-red-700 text-sm mb-2">
+            {error}
+          </div>
+          {isLoginError && onLogin && !isAuthenticated && (
+            <button
+              onClick={onLogin}
+              className="mt-2 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
+            >
+              {t('auth.login', 'Login')}
+            </button>
+          )}
+        </div>
+      )}
+
+      {order && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+          {t('shop.orderCreated', 'Order created successfully!')} #{order.order_number || order.id}
+        </div>
+      )}
+
+      <div className="space-y-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('shop.paymentMethod', 'Payment Method')}
+          </label>
+          <select
+            value={paymentMethod}
+            onChange={(e) => onPaymentMethodChange(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="stripe">Stripe (Credit/Debit Card)</option>
+            <option value="paypal">PayPal</option>
+            <option value="bank_transfer">Bank Transfer</option>
+          </select>
+        </div>
+
+        {paymentMethod === 'stripe' && (
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+            {t('shop.stripeInfo', 'You will be redirected to Stripe to complete your payment securely.')}
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          disabled={isProcessing}
+          className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {t('common.back', 'Back')}
+        </button>
+        <button
+          onClick={onCreateOrder}
+          disabled={isProcessing}
+          className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isProcessing ? t('shop.processing', 'Processing...') : t('shop.completeOrder', 'Complete Order')}
+        </button>
+      </div>
     </div>
   )
 }

@@ -91,13 +91,13 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center gap-1.5 h-10 min-w-[80px] px-3 py-2 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-colors text-white whitespace-nowrap"
+        className="flex items-center justify-center gap-1 h-7 md:h-8 min-w-[60px] md:min-w-[70px] px-2 md:px-2.5 py-1 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-colors text-white whitespace-nowrap"
         aria-label="Change language"
       >
-        <span className="text-base leading-none">{currentLanguage.flag}</span>
-        <span className="text-xs font-semibold hidden sm:inline-block">{currentLanguage.countryCode} {currentLanguage.code.toUpperCase()}</span>
+        <span className="text-sm md:text-base leading-none">{currentLanguage.flag}</span>
+        <span className="text-[9px] md:text-[10px] font-semibold hidden sm:inline-block">{currentLanguage.code.toUpperCase()}</span>
         <svg
-          className={`w-3 h-3 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-2.5 h-2.5 md:w-3 md:h-3 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"

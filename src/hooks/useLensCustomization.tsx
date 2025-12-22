@@ -65,10 +65,14 @@ const transformTreatment = (treatment: LensTreatment): TreatmentOption => {
  * Transform API lens color to component format
  */
 const transformColor = (color: LensColor): ColorSwatch => {
+  // Support both camelCase and snake_case field names
+  const hexCode = color.hexCode || color.hex_code;
+  const colorCode = color.colorCode || color.color_code;
+  
   return {
     id: String(color.id),
     name: color.name,
-    color: color.hex_code || color.color_code || '#000000',
+    color: hexCode || colorCode || '#000000',
     gradient: false, // Can be enhanced to detect gradients
   }
 }
@@ -77,17 +81,25 @@ const transformColor = (color: LensColor): ColorSwatch => {
  * Transform API lens option to component format
  */
 const transformLensOption = (option: LensOption): LensTypeOption => {
+  // Support both camelCase and snake_case field names
+  const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price;
+  const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+  
+  // Filter colors - support both camelCase and snake_case
   const colors: ColorSwatch[] = (option.colors || [])
-    .filter(c => c.is_active)
+    .filter(c => {
+      const colorIsActive = c.isActive !== undefined ? c.isActive : c.is_active;
+      return colorIsActive !== false; // Include if active or undefined (default to active)
+    })
     .map(transformColor)
 
   return {
     id: String(option.id),
     name: option.name,
     description: option.description || '',
-    price: option.base_price,
-    priceLabel: option.base_price && option.base_price > 0 
-      ? `+$${option.base_price.toFixed(2)}` 
+    price: basePrice,
+    priceLabel: basePrice && basePrice > 0 
+      ? `+$${basePrice.toFixed(2)}` 
       : 'Free',
     colors,
   }
@@ -137,13 +149,25 @@ export const useLensCustomization = (): UseLensCustomizationReturn => {
 
       // Transform and set lens types
       if (lensOptionsData) {
-        // Fetch full details for each option to get colors
-        const optionsWithColors = await Promise.all(
-          lensOptionsData.map(async (option) => {
-            const fullOption = await getLensOptionById(option.id)
-            return fullOption || option
-          })
-        )
+        // Check if colors are already included in the list response
+        const hasColors = lensOptionsData.some(opt => opt.colors && opt.colors.length > 0)
+        
+        let optionsWithColors = lensOptionsData
+        
+        // Only fetch individual options if colors are not included
+        if (!hasColors && lensOptionsData.length > 0) {
+          console.log('🔄 [Hook] Colors not in list response, fetching individual options...')
+          // Fetch full details for each option to get colors
+          optionsWithColors = await Promise.all(
+            lensOptionsData.map(async (option) => {
+              const fullOption = await getLensOptionById(option.id)
+              return fullOption || option
+            })
+          )
+        } else {
+          console.log('✅ [Hook] Colors already included in list response')
+        }
+        
         setLensTypes(optionsWithColors.map(transformLensOption))
       }
 

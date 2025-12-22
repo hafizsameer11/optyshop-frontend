@@ -37,6 +37,7 @@ const ProductDetail: React.FC = () => {
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+    const [selectedColor, setSelectedColor] = useState<string | null>(null) // For color_images support
     const [quantity, setQuantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
@@ -902,19 +903,33 @@ const ProductDetail: React.FC = () => {
                                 /* Regular Product - Single Image Display */
                                 <>
                                     <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
-                                        <img
-                                            key={`product-${product.id}-img-${selectedImageIndex}`}
-                                            src={getProductImageUrl(product, selectedImageIndex)}
-                                            alt={product.name}
-                                            className="w-full h-full object-cover p-8"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement
-                                                if (import.meta.env.DEV) {
-                                                    console.warn('Image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                        {(() => {
+                                            // Use color_images if available and color is selected
+                                            let imageUrl = getProductImageUrl(product, selectedImageIndex)
+                                            
+                                            if (selectedColor && product.color_images) {
+                                                const colorImage = product.color_images.find(ci => ci.color === selectedColor)
+                                                if (colorImage && colorImage.images && colorImage.images[selectedImageIndex]) {
+                                                    imageUrl = colorImage.images[selectedImageIndex]
                                                 }
-                                                target.src = '/assets/images/frame1.png'
-                                            }}
-                                        />
+                                            }
+                                            
+                                            return (
+                                                <img
+                                                    key={`product-${product.id}-img-${selectedImageIndex}-${selectedColor || 'default'}`}
+                                                    src={imageUrl}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover p-8"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement
+                                                        if (import.meta.env.DEV) {
+                                                            console.warn('Image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                        }
+                                                        target.src = '/assets/images/frame1.png'
+                                                    }}
+                                                />
+                                            )
+                                        })()}
                                         {(() => {
                                             const p = product as any
                                             const stockStatus = p.stock_status
@@ -940,11 +955,49 @@ const ProductDetail: React.FC = () => {
                                         )}
                                     </div>
                                     
+                                    {/* Color Selection (if color_images available from Postman collection) */}
+                                    {product.color_images && product.color_images.length > 0 && (
+                                        <div className="mb-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                {t('shop.selectColor', 'Select Color')}
+                                            </label>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {product.color_images.map((colorImage, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => {
+                                                            setSelectedColor(colorImage.color)
+                                                            setSelectedImageIndex(0) // Reset to first image of selected color
+                                                        }}
+                                                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                                                            selectedColor === colorImage.color
+                                                                ? 'border-blue-950 bg-blue-50'
+                                                                : 'border-gray-200 hover:border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <span className="text-sm font-medium capitalize">
+                                                            {colorImage.color}
+                                                        </span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Thumbnail Images */}
                                     {(() => {
-                                        // Parse images if it's a JSON string
+                                        // Use color_images if available and color is selected, otherwise use regular images
                                         let imagesArray: string[] = []
-                                        if (product.images) {
+                                        
+                                        if (selectedColor && product.color_images) {
+                                            const colorImage = product.color_images.find(ci => ci.color === selectedColor)
+                                            if (colorImage && colorImage.images) {
+                                                imagesArray = colorImage.images
+                                            }
+                                        }
+                                        
+                                        // Fallback to regular images if no color_images or no color selected
+                                        if (imagesArray.length === 0 && product.images) {
                                             if (typeof product.images === 'string') {
                                                 try {
                                                     imagesArray = JSON.parse(product.images)
@@ -1057,6 +1110,20 @@ const ProductDetail: React.FC = () => {
                                         <div className="flex">
                                             <span className="font-semibold text-gray-700 w-32">SKU:</span>
                                             <span className="text-gray-600">{product.sku}</span>
+                                        </div>
+                                    )}
+                                    {/* 3D Model URL - from Postman collection */}
+                                    {product.model_3d_url && (
+                                        <div className="flex">
+                                            <span className="font-semibold text-gray-700 w-32">3D Model:</span>
+                                            <a
+                                                href={product.model_3d_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 underline"
+                                            >
+                                                {t('shop.view3DModel', 'View 3D Model')}
+                                            </a>
                                         </div>
                                     )}
                                 </div>
@@ -1431,6 +1498,20 @@ const ProductDetail: React.FC = () => {
                                         </button>
                                         
                                         <div className="flex gap-3">
+                                            {/* 3D Model Viewer Button - from Postman collection */}
+                                            {product.model_3d_url && (
+                                                <a
+                                                    href={product.model_3d_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-colors bg-purple-600 text-white hover:bg-purple-700 flex items-center justify-center gap-2"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                    </svg>
+                                                    {t('shop.view3DModel', 'View 3D Model')}
+                                                </a>
+                                            )}
                                             <button
                                                 onClick={() => setShowTryOn(true)}
                                                 disabled={(() => {
