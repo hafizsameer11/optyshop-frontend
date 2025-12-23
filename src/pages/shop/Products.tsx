@@ -374,13 +374,13 @@ const Products: React.FC = () => {
                         {categoryInfo.category && (
                             <>
                                 <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{categoryInfo.category.name}</span>
+                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.category)}</span>
                             </>
                         )}
                         {categoryInfo.subcategory && (
                             <>
                                 <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{categoryInfo.subcategory.name}</span>
+                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
                             </>
                         )}
                     </nav>
@@ -498,7 +498,7 @@ const Products: React.FC = () => {
                                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                     >
-                                        {category.name}
+                                        {translateCategory(category)}
                                     </button>
                                 ))}
                             </div>
@@ -520,7 +520,7 @@ const Products: React.FC = () => {
                                     <option value="all">All Categories</option>
                                     {productOptions?.categories?.map((category) => (
                                         <option key={category.id} value={category.id}>
-                                            {category.name}
+                                            {translateCategory(category)}
                                         </option>
                                     ))}
                                 </select>

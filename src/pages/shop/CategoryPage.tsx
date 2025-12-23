@@ -423,7 +423,7 @@ const CategoryPage: React.FC = () => {
                                         {subcategory.image ? (
                                             <img
                                                 src={subcategory.image}
-                                                alt={subcategory.name}
+                                                alt={translateCategory(subcategory)}
                                                 className="w-16 h-16 mx-auto object-contain rounded-lg"
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement
@@ -466,7 +466,7 @@ const CategoryPage: React.FC = () => {
                                         {subSubcategory.image ? (
                                             <img
                                                 src={subSubcategory.image}
-                                                alt={subSubcategory.name}
+                                                alt={translateCategory(subSubcategory)}
                                                 className="w-16 h-16 mx-auto object-contain rounded-lg"
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart } from '../../context/CartContext'
+import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getProductBySlug, 
     getRelatedProducts,
@@ -31,6 +32,7 @@ interface ContactLensFormData {
 
 const ProductDetail: React.FC = () => {
     const { t } = useTranslation()
+    const { translateCategory } = useCategoryTranslation()
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
     const { addToCart } = useCart()
@@ -1128,7 +1130,7 @@ const ProductDetail: React.FC = () => {
                                     {product.category && (
                                         <div className="flex">
                                             <span className="font-semibold text-gray-700 w-32">Category:</span>
-                                            <span className="text-gray-600">{product.category.name}</span>
+                                            <span className="text-gray-600">{translateCategory(product.category)}</span>
                                         </div>
                                     )}
                                     {product.sku && (
