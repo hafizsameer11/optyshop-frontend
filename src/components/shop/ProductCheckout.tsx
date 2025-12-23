@@ -4016,27 +4016,36 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   // Generate PD options (1-30)
   const pdOptions = Array.from({ length: 30 }, (_, i) => i + 1)
   
+  // Generate SPH and CYL options from -16.00 to +16.00 in steps of 0.25
+  const generateSphereCylinderOptions = () => {
+    const options: string[] = []
+    // Generate from -16.00 to +16.00 in steps of 0.25 (using integer steps to avoid floating point issues)
+    // -16.00 = -64 * 0.25, +16.00 = 64 * 0.25, so we need 129 values (from -64 to +64)
+    for (let i = -64; i <= 64; i++) {
+      const value = (i * 0.25).toFixed(2)
+      // Format with + sign for positive values, - for negative, and 0.00 for zero
+      if (i > 0) {
+        options.push(`+${value}`)
+      } else if (i < 0) {
+        options.push(value)
+      } else {
+        options.push('0.00')
+      }
+    }
+    return options
+  }
+  
+  const sphereCylinderOptions = generateSphereCylinderOptions()
+  
   // Generate SPH, CYL, AXIS options based on lens type
   const getSphereOptions = () => {
-    if (isProgressive) {
-      return ['+2.00', '+1.50', '+1.00', '0.00', '-1.00', '-2.00']
-    } else if (isDistanceVision) {
-      return ['+2.00', '+1.50', '+1.00', '0.00', '-1.00', '-2.00']
-    } else if (isNearVision) {
-      return ['+1.00', '+0.50', '0.00', '-0.50', '-1.00']
-    }
-    return []
+    // Return all options from -16.00 to +16.00 for all lens types
+    return sphereCylinderOptions
   }
 
   const getCylinderOptions = () => {
-    if (isProgressive) {
-      return ['0.00', '-0.25', '-0.50', '-1.00']
-    } else if (isDistanceVision) {
-      return ['0.00', '-0.25', '-0.50', '-1.00']
-    } else if (isNearVision) {
-      return ['0.00', '-0.25', '-0.50', '-0.75', '-1.00']
-    }
-    return []
+    // Return all options from -16.00 to +16.00 for all lens types
+    return sphereCylinderOptions
   }
 
   const getAxisOptions = () => {
@@ -4051,25 +4060,13 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   }
 
   const getOSSphereOptions = () => {
-    if (isProgressive) {
-      return ['+2.25', '+1.75', '+1.25', '0.00', '-1.25', '-2.25']
-    } else if (isDistanceVision) {
-      return ['+2.25', '+1.75', '+1.25', '0.00', '-1.25', '-2.25']
-    } else if (isNearVision) {
-      return ['+1.25', '+0.75', '0.00', '-0.75', '-1.25']
-    }
-    return []
+    // Return all options from -16.00 to +16.00 for all lens types
+    return sphereCylinderOptions
   }
 
   const getOSCylinderOptions = () => {
-    if (isProgressive) {
-      return ['0.00', '-0.25', '-0.75', '-1.25']
-    } else if (isDistanceVision) {
-      return ['0.00', '-0.25', '-0.75', '-1.25']
-    } else if (isNearVision) {
-      return ['0.00', '-0.25', '-0.50', '-0.75', '-1.25']
-    }
-    return []
+    // Return all options from -16.00 to +16.00 for all lens types
+    return sphereCylinderOptions
   }
 
   const getOSAxisOptions = () => {
