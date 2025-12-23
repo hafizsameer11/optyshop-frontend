@@ -101,6 +101,11 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   
   // Check if product belongs to astigmatism sub-subcategory
   const isAstigmatismSubSubcategory = (() => {
+    // First, check if we have sub-subcategory options with type field (most reliable)
+    if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
+      return true
+    }
+    
     // Check contact_lens_type field
     const lensType = (p.contact_lens_type || '').toLowerCase()
     if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
@@ -110,7 +115,9 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     // Check subcategory slug/name if available
     const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
     const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+    // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
     if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
+        subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
         subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
         subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
       return true

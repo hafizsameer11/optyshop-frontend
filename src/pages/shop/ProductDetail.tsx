@@ -360,25 +360,52 @@ const ProductDetail: React.FC = () => {
     // Helper function to check if product belongs to astigmatism sub-subcategory
     const isAstigmatismSubSubcategory = useMemo(() => {
         if (!product) return false
+        
+        // First, check if we have sub-subcategory options with type field (most reliable)
+        if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from sub-subcategory options type:', subSubcategoryOptions.type)
+            }
+            return true
+        }
+        
         const p = product as any
         
         // Check contact_lens_type field
         const lensType = (p.contact_lens_type || '').toLowerCase()
         if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from contact_lens_type:', lensType)
+            }
             return true
         }
         
         // Check subcategory slug/name if available
         const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
         const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+        // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
         if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
+            subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
             subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
             subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from subcategory name/slug:', { subcategoryName, subcategorySlug })
+            }
             return true
         }
         
+        if (import.meta.env.DEV) {
+            console.log('ℹ️ Product is NOT astigmatism:', {
+                hasSubSubcategoryOptions: !!subSubcategoryOptions,
+                subSubcategoryType: subSubcategoryOptions?.type,
+                contactLensType: lensType,
+                subcategoryName,
+                subcategorySlug
+            })
+        }
+        
         return false
-    }, [product])
+    }, [product, subSubcategoryOptions])
     
     // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
     // Use aggregated options from sub-subcategory if available
