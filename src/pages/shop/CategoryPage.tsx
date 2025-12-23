@@ -63,6 +63,13 @@ const CategoryPage: React.FC = () => {
         const productName = product.name?.toLowerCase() || ''
         const productImage = getProductImageUrl(product).toLowerCase()
         
+        // Check for Opty Kids category (kids glasses)
+        const isOptyKids = categoryName.includes('opty kids') || 
+                          categorySlug.includes('opty-kids') ||
+                          categorySlug.includes('optykids') ||
+                          categorySlug.includes('opty_kids') ||
+                          categoryName.includes('optykids')
+        
         // Check if "glasses" appears anywhere in the name or category (includes sunglasses, optyglasses, kids glasses, etc.)
         const hasGlassesKeyword = categoryName.includes('glasses') || 
                                   categorySlug.includes('glasses') ||
@@ -77,6 +84,10 @@ const CategoryPage: React.FC = () => {
                                   categorySlug.includes('eyewear') ||
                                   productName.includes('eyewear')
         
+        // Check for kids glasses (kids + glasses keywords)
+        const isKidsGlasses = (categoryName.includes('kids') || categorySlug.includes('kids') || productName.includes('kids')) &&
+                             (hasGlassesKeyword || categoryName.includes('occhiali') || categorySlug.includes('occhiali'))
+        
         // Check if product has color_images (glasses typically have multiple color options)
         const hasColorImages = Boolean(product.color_images && product.color_images.length > 0)
         
@@ -88,7 +99,12 @@ const CategoryPage: React.FC = () => {
         // If product has color images, it's likely glasses (glasses have color variations)
         // OR if it has glasses keywords in name/category
         // OR if image URL suggests glasses
-        return hasGlassesKeyword || (hasColorImages && imageSuggestsGlasses) || (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
+        // OR if it's Opty Kids or kids glasses
+        return hasGlassesKeyword || 
+               isOptyKids || 
+               isKidsGlasses ||
+               (hasColorImages && imageSuggestsGlasses) || 
+               (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
     }
 
     // Fetch category, subcategory, and sub-subcategory info
