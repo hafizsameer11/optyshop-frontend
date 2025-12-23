@@ -146,9 +146,9 @@ const Navbar: React.FC = () => {
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex items-center w-full max-w-[1920px] mx-auto py-2 md:py-2.5 px-1 md:px-2 lg:px-3 gap-0.5 md:gap-1">
+            <div className="flex items-center w-full max-w-[1920px] mx-auto py-1.5 md:py-2 px-0.5 md:px-1 lg:px-2 gap-0 md:gap-0.5">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-0.5 md:space-x-1 flex-shrink-0 group">
+                <Link to="/" className="flex items-center space-x-0.5 flex-shrink-0 group">
                     <div className="h-5 w-5 md:h-6 md:w-6 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
                         <span className="text-white font-bold text-[8px] md:text-[9px]">OS</span>
                     </div>
@@ -158,10 +158,10 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Desktop navigation */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-0.5 md:space-x-0.5 lg:space-x-1 mx-0.5 md:mx-0.5 lg:mx-1" ref={dropdownRef}>
+                <nav className="hidden md:flex items-center justify-center flex-1 space-x-0 md:space-x-0 lg:space-x-0.5 mx-0 md:mx-0.5 lg:mx-0.5" ref={dropdownRef}>
                     <Link
                         to="/"
-                        className={`h-9 md:h-10 px-1.5 md:px-2 py-1.5 md:py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap flex-shrink-0 ${
+                        className={`h-8 md:h-9 px-1 md:px-1.5 py-1 md:py-1.5 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap flex-shrink-0 ${
                             isActive('/') 
                                 ? 'bg-blue-800/50 text-blue-100' 
                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -199,7 +199,7 @@ const Navbar: React.FC = () => {
                             <div className="flex items-center">
                                 <Link
                                     to={`/category/${category.slug}`}
-                                    className={`h-9 md:h-10 px-1.5 md:px-2 lg:px-2.5 py-1.5 md:py-2 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-0.5 ${
+                                    className={`h-8 md:h-9 px-1 md:px-1.5 lg:px-2 py-1 md:py-1.5 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-0 ${
                                         isCategoryActive(category)
                                             ? 'bg-blue-800/50 text-blue-100 shadow-md' 
                                             : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
@@ -225,7 +225,7 @@ const Navbar: React.FC = () => {
                                                 setOpenSubDropdown(null)
                                             }
                                         }}
-                                        className={`h-9 md:h-10 px-1 flex items-center justify-center text-white transition-all duration-200 ${
+                                        className={`h-8 md:h-9 px-0.5 flex items-center justify-center text-white transition-all duration-200 ${
                                             openDropdown === category.id
                                                 ? 'text-cyan-200' 
                                                 : 'hover:text-cyan-200'
@@ -424,7 +424,7 @@ const Navbar: React.FC = () => {
                     
                     <Link
                         to="/virtual-test"
-                        className="h-6 md:h-7 inline-flex items-center justify-center gap-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-1 md:px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0 ml-0.5"
+                        className="h-6 md:h-7 inline-flex items-center justify-center gap-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-1 md:px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0 ml-0"
                         title={t('navbar.virtualTryOn')}
                     >
                         <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -436,7 +436,7 @@ const Navbar: React.FC = () => {
                 </nav>
                 
                 {/* Right side actions */}
-                <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0 ml-0.5 md:ml-1 pr-0.5 md:pr-1 lg:pr-2">
+                <div className="flex items-center gap-0 md:gap-0.5 flex-shrink-0 ml-0 md:ml-0.5 pr-0 md:pr-0.5 lg:pr-1">
                     {/* Language Switcher - Always visible */}
                     <div className="flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
@@ -454,7 +454,7 @@ const Navbar: React.FC = () => {
                     
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-9 w-9 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-8 w-8 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -476,7 +476,7 @@ const Navbar: React.FC = () => {
                     {/* Login Button */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-9 md:h-10 min-w-[50px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-2 md:px-2.5 py-1.5 md:py-2 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        className="hidden md:inline-flex items-center justify-center h-8 md:h-9 min-w-[45px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-1.5 md:px-2 py-1 md:py-1.5 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                     >
                         {t('navbar.login')}
                     </Link>
