@@ -1517,41 +1517,44 @@ const ProductDetail: React.FC = () => {
                                         
                                         const availableLensTypes = getAvailableLensTypes()
                                         
-                                        // Only show if there are available lens types
-                                        if (availableLensTypes.length === 0) return null
-                                        
                                         return (
                                             <div className="mb-6">
                                                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                                                     {t('shop.lensType', 'Lens Type')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
                                                 </label>
-                                                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
-                                                    {availableLensTypes.map((lensType) => {
-                                                        const isSelected = selectedLensType === lensType
-                                                        return (
-                                                            <label
-                                                                key={lensType}
-                                                                className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
-                                                                    isSelected
-                                                                        ? 'bg-blue-50 border-2 border-blue-500'
-                                                                        : 'bg-white border-2 border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name="lensType"
-                                                                    value={lensType}
-                                                                    checked={isSelected}
-                                                                    onChange={() => setSelectedLensType(lensType)}
-                                                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                                />
-                                                                <span className="text-sm font-medium text-gray-700 capitalize">
-                                                                    {lensType.replace('_', ' ')}
-                                                                </span>
-                                                            </label>
-                                                        )
-                                                    })}
-                                                </div>
+                                                {availableLensTypes.length > 0 ? (
+                                                    <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                        {availableLensTypes.map((lensType) => {
+                                                            const isSelected = selectedLensType === lensType
+                                                            return (
+                                                                <label
+                                                                    key={lensType}
+                                                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
+                                                                        isSelected
+                                                                            ? 'bg-blue-50 border-2 border-blue-500'
+                                                                            : 'bg-white border-2 border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="lensType"
+                                                                        value={lensType}
+                                                                        checked={isSelected}
+                                                                        onChange={() => setSelectedLensType(lensType)}
+                                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                                    />
+                                                                    <span className="text-sm font-medium text-gray-700 capitalize">
+                                                                        {lensType.replace('_', ' ')}
+                                                                    </span>
+                                                                </label>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                        <p className="text-sm text-gray-500">{t('shop.noLensTypesAvailable', 'No lens types available for this product')}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         )
                                     })()}
@@ -1597,46 +1600,81 @@ const ProductDetail: React.FC = () => {
                                         
                                         const availableMaterials = getAvailableFrameMaterials()
                                         
-                                        // Only show if there are available materials
-                                        if (availableMaterials.length === 0) return null
-                                        
                                         return (
                                             <div className="mb-6">
                                                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                                                     {t('shop.frameMaterial', 'Frame Material')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
                                                 </label>
-                                                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
-                                                    {availableMaterials.map((material) => {
-                                                        const isSelected = selectedFrameMaterial === material
-                                                        return (
-                                                            <label
-                                                                key={material}
-                                                                className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
-                                                                    isSelected
-                                                                        ? 'bg-blue-50 border-2 border-blue-500'
-                                                                        : 'bg-white border-2 border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name="frameMaterial"
-                                                                    value={material}
-                                                                    checked={isSelected}
-                                                                    onChange={() => setSelectedFrameMaterial(material)}
-                                                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                                />
-                                                                <span className="text-sm font-medium text-gray-700 capitalize">
-                                                                    {material.replace('_', ' ')}
-                                                                </span>
-                                                            </label>
-                                                        )
-                                                    })}
-                                                </div>
+                                                {availableMaterials.length > 0 ? (
+                                                    <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                        {availableMaterials.map((material) => {
+                                                            const isSelected = selectedFrameMaterial === material
+                                                            return (
+                                                                <label
+                                                                    key={material}
+                                                                    className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-colors ${
+                                                                        isSelected
+                                                                            ? 'bg-blue-50 border-2 border-blue-500'
+                                                                            : 'bg-white border-2 border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                                >
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="frameMaterial"
+                                                                        value={material}
+                                                                        checked={isSelected}
+                                                                        onChange={() => setSelectedFrameMaterial(material)}
+                                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                                    />
+                                                                    <span className="text-sm font-medium text-gray-700 capitalize">
+                                                                        {material.replace('_', ' ')}
+                                                                    </span>
+                                                                </label>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                                                        <p className="text-sm text-gray-500">{t('shop.noFrameMaterialsAvailable', 'No frame materials available for this product')}</p>
+                                                    </div>
+                                                )}
                                             </div>
                                         )
                                     })()}
                                     
                                     <div className="space-y-3">
+                                        <button
+                                            onClick={handleAddToCart}
+                                            disabled={(() => {
+                                                const p = product as any
+                                                const stockStatus = p.stock_status
+                                                const stockQty = product.stock_quantity
+                                                
+                                                return stockStatus === 'out_of_stock' ||
+                                                       (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                       (stockStatus === undefined && product.in_stock === false) ||
+                                                       (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                            })()}
+                                            className={`w-full px-6 py-3 rounded-lg font-semibold text-base transition-colors ${
+                                                (() => {
+                                                    const p = product as any
+                                                    const stockStatus = p.stock_status
+                                                    const stockQty = product.stock_quantity
+                                                    
+                                                    const isInStock = stockStatus === 'in_stock' ||
+                                                                      (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
+                                                                      (stockStatus === undefined && product.in_stock === true) ||
+                                                                      (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
+                                                    
+                                                    return isInStock
+                                                        ? 'bg-green-600 text-white hover:bg-green-700'
+                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                })()
+                                            }`}
+                                        >
+                                            Buy Glasses Only
+                                        </button>
+                                        
                                         <button
                                             onClick={() => setShowCheckout(true)}
                                             disabled={(() => {
