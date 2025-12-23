@@ -12,6 +12,11 @@ import {
     type Product,
     type ProductOptions
 } from '../../services/productsService'
+import {
+    getContactLensOptionsBySubSubcategoryId,
+    getContactLensOptionsBySubSubcategorySlug,
+    type ContactLensOptions
+} from '../../services/categoriesService'
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
@@ -52,6 +57,7 @@ const ProductDetail: React.FC = () => {
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<string>('') // Single selection
+    const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<ContactLensOptions | null>(null) // Aggregated options from sub-subcategory
     
     // Contact lens form state
     const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
@@ -137,6 +143,37 @@ const ProductDetail: React.FC = () => {
                     })
                 }
                 setProduct(productData)
+                
+                // Fetch contact lens options from sub-subcategory if product belongs to one
+                const p = productData as any
+                const productSubcategory = p.subcategory
+                if (productSubcategory && productSubcategory.parent_id) {
+                    // This is a sub-subcategory, fetch aggregated options
+                    try {
+                        const options = await getContactLensOptionsBySubSubcategoryId(productSubcategory.id)
+                        if (!isCancelled && options) {
+                            setSubSubcategoryOptions(options)
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Fetched contact lens options from sub-subcategory:', {
+                                    subSubcategoryId: productSubcategory.id,
+                                    subSubcategoryName: productSubcategory.name,
+                                    subSubcategorySlug: productSubcategory.slug,
+                                    type: options.type,
+                                    powerOptionsCount: options.powerOptions.length,
+                                    baseCurveOptionsCount: options.baseCurveOptions.length,
+                                    diameterOptionsCount: options.diameterOptions.length,
+                                    productCount: options.productCount
+                                })
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error fetching contact lens options from sub-subcategory:', error)
+                    }
+                } else {
+                    // Not a sub-subcategory, clear options
+                    setSubSubcategoryOptions(null)
+                }
+                
                 // Fetch related products
                 const related = await getRelatedProducts(productData.id, 4)
                 if (!isCancelled) {
@@ -189,8 +226,18 @@ const ProductDetail: React.FC = () => {
                Array.isArray(p.base_curve_options)
     }, [product])
     
-    // Get contact lens options from product (memoized)
+    // Get contact lens options from product or sub-subcategory (memoized)
+    // Priority: Use aggregated options from sub-subcategory if available, otherwise use product options
     const baseCurveOptions = useMemo(() => {
+        // If we have aggregated options from sub-subcategory, use those
+        if (subSubcategoryOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using base curve options from sub-subcategory:', subSubcategoryOptions.baseCurveOptions)
+            }
+            return subSubcategoryOptions.baseCurveOptions
+        }
+        
+        // Otherwise, use product-specific options
         if (!product) return []
         const p = product as any
         
@@ -232,9 +279,18 @@ const ProductDetail: React.FC = () => {
         }
         
         return options
-    }, [product, isContactLens])
+    }, [product, isContactLens, subSubcategoryOptions])
     
     const diameterOptions = useMemo(() => {
+        // If we have aggregated options from sub-subcategory, use those
+        if (subSubcategoryOptions && subSubcategoryOptions.diameterOptions.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using diameter options from sub-subcategory:', subSubcategoryOptions.diameterOptions)
+            }
+            return subSubcategoryOptions.diameterOptions
+        }
+        
+        // Otherwise, use product-specific options
         if (!product) return []
         const p = product as any
         
@@ -276,7 +332,7 @@ const ProductDetail: React.FC = () => {
         }
         
         return options
-    }, [product, isContactLens])
+    }, [product, isContactLens, subSubcategoryOptions])
     
     // Helper function to check if product belongs to spherical sub-subcategory
     const isSphericalSubSubcategory = useMemo(() => {
@@ -325,7 +381,21 @@ const ProductDetail: React.FC = () => {
     }, [product])
     
     // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
+    // Use aggregated options from sub-subcategory if available
     const cylinderOptions = useMemo(() => {
+        // If we have aggregated options from sub-subcategory, use those
+        if (subSubcategoryOptions && subSubcategoryOptions.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using cylinder options from sub-subcategory:', subSubcategoryOptions.cylinderOptions)
+            }
+            // Convert numbers to strings with proper formatting
+            return subSubcategoryOptions.cylinderOptions.map(cyl => {
+                const value = cyl.toFixed(2)
+                return cyl > 0 ? `+${value}` : value
+            })
+        }
+        
+        // Otherwise, generate standard options
         const options: string[] = []
         for (let i = -24; i <= 24; i++) {
             const value = (i * 0.25).toFixed(2)
@@ -338,21 +408,44 @@ const ProductDetail: React.FC = () => {
             }
         }
         return options
-    }, [])
+    }, [subSubcategoryOptions])
     
     // Generate axis options (0 to 180 in 1 degree steps)
+    // Use aggregated options from sub-subcategory if available
     const axisOptions = useMemo(() => {
+        // If we have aggregated options from sub-subcategory, use those
+        if (subSubcategoryOptions && subSubcategoryOptions.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using axis options from sub-subcategory:', subSubcategoryOptions.axisOptions)
+            }
+            return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
+        }
+        
+        // Otherwise, generate standard options
         const options: string[] = []
         for (let i = 0; i <= 180; i++) {
             options.push(i.toString())
         }
         return options
-    }, [])
+    }, [subSubcategoryOptions])
     
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
-    // For spherical sub-subcategories, uses standardized power range
+    // Priority: Use aggregated options from sub-subcategory if available
     const powerOptions = useMemo(() => {
+        // If we have aggregated options from sub-subcategory, use those
+        if (subSubcategoryOptions && subSubcategoryOptions.powerOptions.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using power options from sub-subcategory:', {
+                    count: subSubcategoryOptions.powerOptions.length,
+                    type: subSubcategoryOptions.type,
+                    options: subSubcategoryOptions.powerOptions.slice(0, 5) + '...'
+                })
+            }
+            return subSubcategoryOptions.powerOptions
+        }
+        
+        // Otherwise, use product-specific options or standardized range
         if (!product) return []
         const p = product as any
         

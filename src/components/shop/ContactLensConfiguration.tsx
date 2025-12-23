@@ -5,6 +5,10 @@ import { useAuth } from '../../context/AuthContext'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { type Product } from '../../services/productsService'
+import {
+    getContactLensOptionsBySubSubcategoryId,
+    type ContactLensOptions
+} from '../../services/categoriesService'
 
 interface ContactLensConfigurationProps {
   product: Product
@@ -32,11 +36,48 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const { isAuthenticated } = useAuth()
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<ContactLensOptions | null>(null)
   
-  // Get contact lens options from product
+  // Fetch contact lens options from sub-subcategory if product belongs to one
+  useEffect(() => {
+    const fetchSubSubcategoryOptions = async () => {
+      const p = product as any
+      const productSubcategory = p.subcategory
+      if (productSubcategory && productSubcategory.parent_id) {
+        // This is a sub-subcategory, fetch aggregated options
+        try {
+          const options = await getContactLensOptionsBySubSubcategoryId(productSubcategory.id)
+          if (options) {
+            setSubSubcategoryOptions(options)
+            if (import.meta.env.DEV) {
+              console.log('✅ Fetched contact lens options from sub-subcategory:', {
+                subSubcategoryId: productSubcategory.id,
+                subSubcategoryName: productSubcategory.name,
+                type: options.type,
+                productCount: options.productCount
+              })
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching contact lens options from sub-subcategory:', error)
+        }
+      } else {
+        setSubSubcategoryOptions(null)
+      }
+    }
+    
+    fetchSubSubcategoryOptions()
+  }, [product])
+  
+  // Get contact lens options from product or sub-subcategory
+  // Priority: Use aggregated options from sub-subcategory if available
   const p = product as any
-  const baseCurveOptions = p.base_curve_options || [8.70, 8.80, 8.90]
-  const diameterOptions = p.diameter_options || [14.00, 14.20]
+  const baseCurveOptions = subSubcategoryOptions?.baseCurveOptions.length > 0 
+    ? subSubcategoryOptions.baseCurveOptions 
+    : (p.base_curve_options || [8.70, 8.80, 8.90])
+  const diameterOptions = subSubcategoryOptions?.diameterOptions.length > 0
+    ? subSubcategoryOptions.diameterOptions
+    : (p.diameter_options || [14.00, 14.20])
   
   // Check if product belongs to spherical sub-subcategory
   const isSphericalSubSubcategory = (() => {
@@ -79,7 +120,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   })()
   
   // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
+  // Use aggregated options from sub-subcategory if available
   const cylinderOptions = (() => {
+    if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
+      return subSubcategoryOptions.cylinderOptions.map(cyl => {
+        const value = cyl.toFixed(2)
+        return cyl > 0 ? `+${value}` : value
+      })
+    }
+    
     const options: string[] = []
     for (let i = -24; i <= 24; i++) {
       const value = (i * 0.25).toFixed(2)
@@ -95,19 +144,18 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   })()
   
   // Generate axis options (0 to 180 in 1 degree steps)
+  // Use aggregated options from sub-subcategory if available
   const axisOptions = (() => {
+    if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
+      return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
+    }
+    
     const options: string[] = []
     for (let i = 0; i <= 180; i++) {
       options.push(i.toString())
     }
     return options
   })()
-  
-  // For spherical sub-subcategories, use standardized power range
-  // Otherwise use product's power range
-  const powersRange = isSphericalSubSubcategory 
-    ? '-0.50 to -6.00 in 0.25 steps'  // Standardized power range for all spherical lenses
-    : (p.powers_range || '-0.50 to -6.00 in 0.25 steps')
   
   // Parse power range to generate options
   const generatePowerOptions = (range: string): string[] => {
@@ -142,7 +190,21 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
   }
   
-  const powerOptions = generatePowerOptions(powersRange)
+  // For power options, use aggregated options from sub-subcategory if available
+  // Otherwise use standardized power range for spherical or product's power range
+  const powerOptions = (() => {
+    // If we have aggregated options from sub-subcategory, use those
+    if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+      return subSubcategoryOptions.powerOptions
+    }
+    
+    // Otherwise, generate from power range
+    const powersRange = isSphericalSubSubcategory 
+      ? '-0.50 to -6.00 in 0.25 steps'  // Standardized power range for all spherical lenses
+      : (p.powers_range || '-0.50 to -6.00 in 0.25 steps')
+    
+    return generatePowerOptions(powersRange)
+  })()
   
   const [formData, setFormData] = useState<ContactLensFormData>({
     right_qty: 1,

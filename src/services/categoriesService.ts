@@ -1132,6 +1132,76 @@ export const getRelatedCategories = async (
  * @param options.sortBy - Sort field: created_at, price, name, rating, updated_at (default: created_at)
  * @param options.sortOrder - Sort order: asc or desc (default: desc)
  */
+/**
+ * Get aggregated contact lens options for a sub-subcategory
+ * API endpoint: GET /api/subcategories/:id/contact-lens-options
+ * or GET /api/subcategories/slug/:slug/contact-lens-options
+ * Returns aggregated power, base curve, diameter options (and cylinder/axis for astigmatism)
+ * from all products in the sub-subcategory
+ */
+export interface ContactLensOptions {
+  subcategory: Category;
+  powerOptions: string[];
+  baseCurveOptions: number[];
+  diameterOptions: number[];
+  cylinderOptions?: number[]; // Only for astigmatism/toric
+  axisOptions?: number[]; // Only for astigmatism/toric
+  productCount: number;
+  type: 'spherical' | 'astigmatism';
+}
+
+export const getContactLensOptionsBySubSubcategoryId = async (
+  subSubcategoryId: number | string
+): Promise<ContactLensOptions | null> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.CONTACT_LENS_OPTIONS_BY_ID(subSubcategoryId);
+    const response = await apiClient.get<{
+      success: boolean;
+      message?: string;
+      data?: ContactLensOptions;
+    }>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    console.error('Failed to fetch contact lens options:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching contact lens options:', error);
+    return null;
+  }
+};
+
+export const getContactLensOptionsBySubSubcategorySlug = async (
+  subSubcategorySlug: string
+): Promise<ContactLensOptions | null> => {
+  try {
+    const endpoint = API_ROUTES.SUBCATEGORIES.CONTACT_LENS_OPTIONS_BY_SLUG(subSubcategorySlug);
+    const response = await apiClient.get<{
+      success: boolean;
+      message?: string;
+      data?: ContactLensOptions;
+    }>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    console.error('Failed to fetch contact lens options:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching contact lens options:', error);
+    return null;
+  }
+};
+
 export const getProductsBySubcategoryId = async (
   subcategoryId: number | string,
   options?: {

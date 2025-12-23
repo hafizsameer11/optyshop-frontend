@@ -95,6 +95,8 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/subcategories/${subcategoryId}/related-categories${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get related categories for a subcategory
+    CONTACT_LENS_OPTIONS_BY_ID: (id: number | string) => `/subcategories/${id}/contact-lens-options`, // PUBLIC - Get aggregated contact lens options by sub-subcategory ID
+    CONTACT_LENS_OPTIONS_BY_SLUG: (slug: string) => `/subcategories/slug/${slug}/contact-lens-options`, // PUBLIC - Get aggregated contact lens options by sub-subcategory slug
   },
 
   // ============================================
