@@ -84,15 +84,15 @@ export const useCategoryTranslation = () => {
     
     // Try normalized variations
     for (const normalizedSlug of normalizedSlugs) {
-      // First, check for subcategory/sub-subcategory translation (subcategories.{slug})
-      // This works for ALL subcategories and sub-subcategories
+      // Priority 1: Check for subcategory/sub-subcategory translation (subcategories.{slug})
+      // This works for ALL subcategories and sub-subcategories automatically
       const subcategoryKey = `subcategories.${normalizedSlug}`
       const subcategoryTranslation = t(subcategoryKey)
       if (subcategoryTranslation && subcategoryTranslation !== subcategoryKey) {
         return subcategoryTranslation
       }
       
-      // Check if there's a known subcategory slug mapping
+      // Priority 2: Check if there's a known subcategory slug mapping
       const knownSubcategoryKey = subcategorySlugToTranslationKey[normalizedSlug]
       if (knownSubcategoryKey) {
         const translated = t(knownSubcategoryKey)
@@ -101,7 +101,7 @@ export const useCategoryTranslation = () => {
         }
       }
       
-      // Check the main category mapping
+      // Priority 3: Check the main category mapping
       const translationKey = categorySlugToTranslationKey[normalizedSlug]
       if (translationKey) {
         const translated = t(translationKey)
@@ -109,21 +109,41 @@ export const useCategoryTranslation = () => {
           return translated
         }
       }
+      
+      // Priority 4: Try navbar category keys (for main categories)
+      const navbarKey = `navbar.${normalizedSlug}`
+      const navbarTranslation = t(navbarKey)
+      if (navbarTranslation && navbarTranslation !== navbarKey) {
+        return navbarTranslation
+      }
+      
+      // Priority 5: Try categories.{slug} pattern
+      const categoryKey = `categories.${normalizedSlug}`
+      const categoryTranslation = t(categoryKey)
+      if (categoryTranslation && categoryTranslation !== categoryKey) {
+        return categoryTranslation
+      }
     }
     
-    // Debug: Log untranslated categories in development
+    // Debug: Log untranslated categories in development with helpful message
     if (import.meta.env.DEV) {
-      const primarySlug = normalizeSlug(category.slug)[0]
-      console.log(`⚠️ [Translation] No translation found for: "${category.name}" (slug: "${category.slug}")`)
-      console.log(`   Tried ${normalizedSlugs.length} slug variations:`, normalizedSlugs.slice(0, 5))
-      console.log(`   Please add translation to "subcategories.${primarySlug}" in locale files`)
-      console.log(`   Add this to all locale files (en.json, it.json, es.json, fr.json, de.json, pt.json):`)
-      console.log(`   "subcategories": {`)
-      console.log(`     "${primarySlug}": "${category.name}" // TODO: Translate`)
-      console.log(`   }`)
+      const primarySlug = normalizedSlugs[0]
+      // Only log once per unique category to avoid spam
+      const logKey = `translation_warning_${category.slug}`
+      if (!(window as any)[logKey]) {
+        (window as any)[logKey] = true
+        console.log(`⚠️ [Translation] No translation found for: "${category.name}" (slug: "${category.slug}")`)
+        console.log(`   Tried ${normalizedSlugs.length} slug variations`)
+        console.log(`   💡 To add translation, add this to all locale files (en.json, it.json, es.json, fr.json, de.json, pt.json):`)
+        console.log(`   "subcategories": {`)
+        console.log(`     "${primarySlug}": "${category.name}" // TODO: Translate to target language`)
+        console.log(`   }`)
+        console.log(`   This will automatically work for all category levels (categories, subcategories, sub-subcategories)`)
+      }
     }
     
     // Fallback to original name if no translation mapping exists
+    // This ensures the UI always shows something, even if translation is missing
     return category.name
   }
 
@@ -145,15 +165,15 @@ export const translateCategoryName = (category: { name: string; slug: string } |
   
   // Try normalized variations
   for (const normalizedSlug of normalizedSlugs) {
-    // First, check for subcategory/sub-subcategory translation (subcategories.{slug})
-    // This works for ALL subcategories and sub-subcategories
+    // Priority 1: Check for subcategory/sub-subcategory translation (subcategories.{slug})
+    // This works for ALL subcategories and sub-subcategories automatically
     const subcategoryKey = `subcategories.${normalizedSlug}`
     const subcategoryTranslation = t(subcategoryKey)
     if (subcategoryTranslation && subcategoryTranslation !== subcategoryKey) {
       return subcategoryTranslation
     }
     
-    // Check if there's a known subcategory slug mapping
+    // Priority 2: Check if there's a known subcategory slug mapping
     const knownSubcategoryKey = subcategorySlugToTranslationKey[normalizedSlug]
     if (knownSubcategoryKey) {
       const translated = t(knownSubcategoryKey)
@@ -162,13 +182,27 @@ export const translateCategoryName = (category: { name: string; slug: string } |
       }
     }
     
-    // Check the main category mapping
+    // Priority 3: Check the main category mapping
     const translationKey = categorySlugToTranslationKey[normalizedSlug]
     if (translationKey) {
       const translated = t(translationKey)
       if (translated && translated !== translationKey) {
         return translated
       }
+    }
+    
+    // Priority 4: Try navbar category keys (for main categories)
+    const navbarKey = `navbar.${normalizedSlug}`
+    const navbarTranslation = t(navbarKey)
+    if (navbarTranslation && navbarTranslation !== navbarKey) {
+      return navbarTranslation
+    }
+    
+    // Priority 5: Try categories.{slug} pattern
+    const categoryKey = `categories.${normalizedSlug}`
+    const categoryTranslation = t(categoryKey)
+    if (categoryTranslation && categoryTranslation !== categoryKey) {
+      return categoryTranslation
     }
   }
   
