@@ -72,10 +72,14 @@ export interface AddToCartRequest {
   contact_lens_right_base_curve?: number;
   contact_lens_right_diameter?: number;
   contact_lens_right_power?: number;
+  contact_lens_right_cylinder?: number; // For astigmatism/toric lenses
+  contact_lens_right_axis?: number; // For astigmatism/toric lenses
   contact_lens_left_qty?: number;
   contact_lens_left_base_curve?: number;
   contact_lens_left_diameter?: number;
   contact_lens_left_power?: number;
+  contact_lens_left_cylinder?: number; // For astigmatism/toric lenses
+  contact_lens_left_axis?: number; // For astigmatism/toric lenses
   // Legacy fields for backward compatibility
   lens_index?: number | string;
   lens_coating?: string;
