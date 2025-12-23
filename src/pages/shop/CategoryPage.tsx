@@ -144,12 +144,35 @@ const CategoryPage: React.FC = () => {
                         // Get all nested subcategories (sub-subcategories) for this subcategory
                         const nestedSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
                         if (!isCancelled) {
-                            // Find the sub-subcategory by slug
-                            subSubcategory = nestedSubcategories.find(sub => sub.slug === subSubcategorySlug) || null
+                            // Find the sub-subcategory by slug (case-insensitive comparison)
+                            subSubcategory = nestedSubcategories.find(sub => 
+                                sub.slug.toLowerCase() === subSubcategorySlug.toLowerCase()
+                            ) || null
+                            
+                            if (import.meta.env.DEV) {
+                                console.log('🔍 Looking for sub-subcategory:', {
+                                    requestedSlug: subSubcategorySlug,
+                                    availableSubcategories: nestedSubcategories.map(s => ({
+                                        id: s.id,
+                                        name: s.name,
+                                        slug: s.slug
+                                    })),
+                                    found: !!subSubcategory
+                                })
+                            }
                             
                             if (!subSubcategory) {
+                                console.warn(`⚠️ Sub-subcategory "${subSubcategorySlug}" not found under subcategory "${subcategory.name}"`)
                                 navigate(`/category/${categorySlug}/${subcategorySlug}`)
                                 return
+                            }
+                            
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Sub-subcategory found:', {
+                                    id: subSubcategory.id,
+                                    name: subSubcategory.name,
+                                    slug: subSubcategory.slug
+                                })
                             }
                         }
                     }
@@ -157,6 +180,9 @@ const CategoryPage: React.FC = () => {
 
                 if (!isCancelled) {
                     setCategoryInfo({ category, subcategory, subSubcategory })
+                    
+                    // Reset to first page when category/subcategory/sub-subcategory changes
+                    setCurrentPage(1)
                     
                     // Fetch subcategories if viewing category (not subcategory or sub-subcategory)
                     if (category && !subcategory) {
