@@ -1457,18 +1457,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     return Object.keys(newErrors).length === 0
   }
 
-  const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses') => {
+  const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive') => {
     setLensSelection(prev => ({ 
       ...prev, 
       type: type as LensSelection['type'], 
       progressiveOption: type !== 'progressive' ? undefined : prev.progressiveOption,
-      progressiveVariantId: type !== 'progressive' ? undefined : prev.progressiveVariantId,
-      // Clear lens-related selections if glasses only
-      selectedLensTypeId: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedLensTypeId,
-      selectedColorId: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedColorId,
-      selectedColor: (type === 'glasses_only' || type === 'no_lenses') ? undefined : prev.selectedColor,
-      coatings: (type === 'glasses_only' || type === 'no_lenses') ? [] : prev.coatings,
-      treatments: (type === 'glasses_only' || type === 'no_lenses') ? [] : prev.treatments
+      progressiveVariantId: type !== 'progressive' ? undefined : prev.progressiveVariantId
     }))
   }
 
@@ -1578,8 +1572,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       removable: false
     })
 
-    // Add selected lens type from API (skip if glasses only)
-    if (lensSelection.type !== 'glasses_only' && lensSelection.type !== 'no_lenses' && lensSelection.selectedLensTypeId) {
+    // Add selected lens type from API
+    if (lensSelection.selectedLensTypeId) {
       const selectedLensType = apiLensTypes.find(lt => lt.id === lensSelection.selectedLensTypeId)
       if (selectedLensType) {
         const price = selectedLensType.price || 0
@@ -1593,16 +1587,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
     }
     
-    // Add "Glasses Only" label if selected
-    if (lensSelection.type === 'glasses_only' || lensSelection.type === 'no_lenses') {
-      summary.push({
-        name: 'Glasses Only (No Lenses)',
-        price: 0,
-        type: 'lens_type',
-        id: 'glasses_only',
-        removable: false
-      })
-    }
 
     // Add selected coatings
     lensSelection.coatings.forEach(coatingSlug => {
@@ -1835,10 +1819,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   const handleNext = async () => {
     if (currentStep === 'lens_type') {
       // Navigate based on lens type selection
-      if (lensSelection.type === 'glasses_only' || lensSelection.type === 'no_lenses') {
-        // Skip to summary for glasses only
-        setCurrentStep('summary')
-      } else if (lensSelection.type === 'progressive') {
+      if (lensSelection.type === 'progressive') {
         setCurrentStep('progressive')
       } else {
         setCurrentStep('prescription')
@@ -2701,19 +2682,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                 onNext={handleNext}
                 onNavigateToPrescription={() => setCurrentStep('prescription')}
                 onNavigateToProgressive={() => setCurrentStep('progressive')}
-                onSkipLenses={() => {
-                  // Skip lens customization steps and go directly to summary
-                  setLensSelection(prev => ({
-                    ...prev,
-                    type: 'glasses_only',
-                    coatings: [],
-                    treatments: [],
-                    selectedLensTypeId: undefined,
-                    selectedColorId: undefined,
-                    selectedColor: undefined
-                  }))
-                  setCurrentStep('summary')
-                }}
               />
             )}
 
@@ -2857,11 +2825,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 interface LensTypeSelectionStepProps {
   lensSelection: LensSelection
   prescriptionLensTypes?: PrescriptionLensType[]
-  onLensTypeChange: (type: 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses') => void
+  onLensTypeChange: (type: 'distance_vision' | 'near_vision' | 'progressive') => void
   onNext: () => void
   onNavigateToPrescription?: () => void
   onNavigateToProgressive?: () => void
-  onSkipLenses?: () => void
 }
 
 const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
@@ -2870,8 +2837,7 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   onLensTypeChange,
   onNext,
   onNavigateToPrescription,
-  onNavigateToProgressive,
-  onSkipLenses
+  onNavigateToProgressive
 }) => {
   // Use API data if available, otherwise fallback to defaults
   const apiLensTypeOptions = prescriptionLensTypes.length > 0
@@ -2887,13 +2853,8 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
         .filter(option => option.id && ['distance_vision', 'near_vision', 'progressive'].includes(option.id)) // Filter out invalid options
     : []
   
-  // Combine API options with default options and add "Glasses Only" option
+  // Combine API options with default options
   const lensTypeOptions = [
-    {
-      id: 'glasses_only',
-      name: 'Glasses Only (No Lenses)',
-      description: 'Purchase frames only without prescription lenses'
-    },
     ...apiLensTypeOptions,
     ...(apiLensTypeOptions.length === 0 ? [
       {
@@ -2920,24 +2881,18 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
       return
     }
     
-    const type = optionId as 'distance_vision' | 'near_vision' | 'progressive' | 'glasses_only' | 'no_lenses'
+    const type = optionId as 'distance_vision' | 'near_vision' | 'progressive'
     
     // Validate the type
-    if (!['distance_vision', 'near_vision', 'progressive', 'glasses_only', 'no_lenses'].includes(type)) {
+    if (!['distance_vision', 'near_vision', 'progressive'].includes(type)) {
       console.error('Invalid lens type:', type)
       return
     }
     
     onLensTypeChange(type)
     
-    // Handle "Glasses Only" option - skip to summary
-    if (type === 'glasses_only' || type === 'no_lenses') {
-      if (onSkipLenses) {
-        onSkipLenses()
-      } else {
-        onNext() // Fallback to onNext
-      }
-    } else if (type === 'progressive') {
+    // Handle lens type navigation
+    if (type === 'progressive') {
       // Navigate to progressive step
       if (onNavigateToProgressive) {
         onNavigateToProgressive()
