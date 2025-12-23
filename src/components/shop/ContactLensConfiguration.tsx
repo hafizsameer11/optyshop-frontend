@@ -16,10 +16,14 @@ interface ContactLensFormData {
   right_base_curve: string
   right_diameter: string
   right_power: string
+  right_cylinder?: string
+  right_axis?: string
   left_qty: number
   left_base_curve: string
   left_diameter: string
   left_power: string
+  left_cylinder?: string
+  left_axis?: string
 }
 
 const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ product, onClose }) => {
@@ -33,7 +37,77 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const p = product as any
   const baseCurveOptions = p.base_curve_options || [8.70, 8.80, 8.90]
   const diameterOptions = p.diameter_options || [14.00, 14.20]
-  const powersRange = p.powers_range || '-0.50 to -6.00 in 0.25 steps'
+  
+  // Check if product belongs to spherical sub-subcategory
+  const isSphericalSubSubcategory = (() => {
+    // Check contact_lens_type field
+    const lensType = (p.contact_lens_type || '').toLowerCase()
+    if (lensType.includes('spherical') || lensType.includes('sferiche') || lensType.includes('sferica')) {
+      return true
+    }
+    
+    // Check subcategory slug/name if available
+    const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+    const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+    if (subcategorySlug.includes('spherical') || subcategorySlug.includes('sferiche') || 
+        subcategoryName.includes('spherical') || subcategoryName.includes('sferiche') || 
+        subcategoryName.includes('sferica')) {
+      return true
+    }
+    
+    return false
+  })()
+  
+  // Check if product belongs to astigmatism sub-subcategory
+  const isAstigmatismSubSubcategory = (() => {
+    // Check contact_lens_type field
+    const lensType = (p.contact_lens_type || '').toLowerCase()
+    if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
+      return true
+    }
+    
+    // Check subcategory slug/name if available
+    const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+    const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+    if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
+        subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
+        subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+      return true
+    }
+    
+    return false
+  })()
+  
+  // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
+  const cylinderOptions = (() => {
+    const options: string[] = []
+    for (let i = -24; i <= 24; i++) {
+      const value = (i * 0.25).toFixed(2)
+      if (i > 0) {
+        options.push(`+${value}`)
+      } else if (i < 0) {
+        options.push(value)
+      } else {
+        options.push('0.00')
+      }
+    }
+    return options
+  })()
+  
+  // Generate axis options (0 to 180 in 1 degree steps)
+  const axisOptions = (() => {
+    const options: string[] = []
+    for (let i = 0; i <= 180; i++) {
+      options.push(i.toString())
+    }
+    return options
+  })()
+  
+  // For spherical sub-subcategories, use standardized power range
+  // Otherwise use product's power range
+  const powersRange = isSphericalSubSubcategory 
+    ? '-0.50 to -6.00 in 0.25 steps'  // Standardized power range for all spherical lenses
+    : (p.powers_range || '-0.50 to -6.00 in 0.25 steps')
   
   // Parse power range to generate options
   const generatePowerOptions = (range: string): string[] => {
@@ -75,10 +149,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     right_base_curve: baseCurveOptions[0]?.toString() || '8.70',
     right_diameter: diameterOptions[0]?.toString() || '14.00',
     right_power: '',
+    right_cylinder: '',
+    right_axis: '',
     left_qty: 1,
     left_base_curve: baseCurveOptions[0]?.toString() || '8.70',
     left_diameter: diameterOptions[0]?.toString() || '14.00',
-    left_power: ''
+    left_power: '',
+    left_cylinder: '',
+    left_axis: ''
   })
   
   const validateForm = (): boolean => {
@@ -90,6 +168,22 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     
     if (!formData.left_power) {
       newErrors.left_power = 'Power is required for left eye'
+    }
+    
+    // For astigmatism lenses, cylinder and axis are required
+    if (isAstigmatismSubSubcategory) {
+      if (!formData.right_cylinder) {
+        newErrors.right_cylinder = 'Cylinder is required for right eye'
+      }
+      if (!formData.right_axis) {
+        newErrors.right_axis = 'Axis is required for right eye'
+      }
+      if (!formData.left_cylinder) {
+        newErrors.left_cylinder = 'Cylinder is required for left eye'
+      }
+      if (!formData.left_axis) {
+        newErrors.left_axis = 'Axis is required for left eye'
+      }
     }
     
     if (formData.right_qty < 1) {
@@ -151,7 +245,13 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
           contact_lens_left_qty: formData.left_qty,
           contact_lens_left_base_curve: parseFloat(formData.left_base_curve),
           contact_lens_left_diameter: parseFloat(formData.left_diameter),
-          contact_lens_left_power: parseFloat(formData.left_power)
+          contact_lens_left_power: parseFloat(formData.left_power),
+          ...(isAstigmatismSubSubcategory && {
+            contact_lens_right_cylinder: formData.right_cylinder ? parseFloat(formData.right_cylinder) : undefined,
+            contact_lens_right_axis: formData.right_axis ? parseInt(formData.right_axis) : undefined,
+            contact_lens_left_cylinder: formData.left_cylinder ? parseFloat(formData.left_cylinder) : undefined,
+            contact_lens_left_axis: formData.left_axis ? parseInt(formData.left_axis) : undefined
+          })
         }
         
         const result = await addItemToCart(cartRequest)
@@ -196,13 +296,21 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                 qty: formData.right_qty,
                 baseCurve: parseFloat(formData.right_base_curve),
                 diameter: parseFloat(formData.right_diameter),
-                power: parseFloat(formData.right_power)
+                power: parseFloat(formData.right_power),
+                ...(isAstigmatismSubSubcategory && {
+                  cylinder: formData.right_cylinder ? parseFloat(formData.right_cylinder) : undefined,
+                  axis: formData.right_axis ? parseInt(formData.right_axis) : undefined
+                })
               },
               left: {
                 qty: formData.left_qty,
                 baseCurve: parseFloat(formData.left_base_curve),
                 diameter: parseFloat(formData.left_diameter),
-                power: parseFloat(formData.left_power)
+                power: parseFloat(formData.left_power),
+                ...(isAstigmatismSubSubcategory && {
+                  cylinder: formData.left_cylinder ? parseFloat(formData.left_cylinder) : undefined,
+                  axis: formData.left_axis ? parseInt(formData.left_axis) : undefined
+                })
               }
             }
           }
@@ -339,6 +447,58 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       <p className="text-sm text-red-500 mt-1">{errors.right_power}</p>
                     )}
                   </div>
+                  
+                  {/* Cylinder (CYL) - Only for Astigmatism */}
+                  {isAstigmatismSubSubcategory && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cilindro (CYL) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.right_cylinder || ''}
+                        onChange={(e) => handleFieldChange('right_cylinder', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.right_cylinder ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">-</option>
+                        {cylinderOptions.map((cyl) => (
+                          <option key={cyl} value={cyl}>
+                            {cyl}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.right_cylinder && (
+                        <p className="text-sm text-red-500 mt-1">{errors.right_cylinder}</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Axis (AX) - Only for Astigmatism */}
+                  {isAstigmatismSubSubcategory && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Asse (AX) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.right_axis || ''}
+                        onChange={(e) => handleFieldChange('right_axis', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.right_axis ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">-</option>
+                        {axisOptions.map((axis) => (
+                          <option key={axis} value={axis}>
+                            {axis}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.right_axis && (
+                        <p className="text-sm text-red-500 mt-1">{errors.right_axis}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -419,6 +579,58 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       <p className="text-sm text-red-500 mt-1">{errors.left_power}</p>
                     )}
                   </div>
+                  
+                  {/* Cylinder (CYL) - Only for Astigmatism */}
+                  {isAstigmatismSubSubcategory && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cilindro (CYL) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.left_cylinder || ''}
+                        onChange={(e) => handleFieldChange('left_cylinder', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.left_cylinder ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">-</option>
+                        {cylinderOptions.map((cyl) => (
+                          <option key={cyl} value={cyl}>
+                            {cyl}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.left_cylinder && (
+                        <p className="text-sm text-red-500 mt-1">{errors.left_cylinder}</p>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Axis (AX) - Only for Astigmatism */}
+                  {isAstigmatismSubSubcategory && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Asse (AX) <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={formData.left_axis || ''}
+                        onChange={(e) => handleFieldChange('left_axis', e.target.value)}
+                        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.left_axis ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      >
+                        <option value="">-</option>
+                        {axisOptions.map((axis) => (
+                          <option key={axis} value={axis}>
+                            {axis}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.left_axis && (
+                        <p className="text-sm text-red-500 mt-1">{errors.left_axis}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

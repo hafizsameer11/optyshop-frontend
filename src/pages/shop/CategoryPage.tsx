@@ -220,6 +220,7 @@ const CategoryPage: React.FC = () => {
                 // API expects slugs (strings) for category and subCategory parameters
                 if (categoryInfo.subSubcategory) {
                     // Filter ONLY by sub-subcategory - show only products linked to this sub-subcategory
+                    // Use sub-subcategory slug to filter products - API will return only products from this sub-subcategory
                     filters.subcategory = categoryInfo.subSubcategory.slug
                     // Explicitly exclude category filter to ensure only sub-subcategory products are shown
                     delete filters.category
@@ -229,11 +230,15 @@ const CategoryPage: React.FC = () => {
                             subSubcategoryId: categoryInfo.subSubcategory.id,
                             subSubcategoryName: categoryInfo.subSubcategory.name,
                             subSubcategorySlug: categoryInfo.subSubcategory.slug,
+                            parentSubcategoryId: categoryInfo.subcategory?.id,
+                            parentSubcategoryName: categoryInfo.subcategory?.name,
                             filters
                         })
                     }
                 } else if (categoryInfo.subcategory) {
-                    // Filter ONLY by subcategory - show only products linked to this subcategory
+                    // Filter ONLY by subcategory - show only products directly linked to this subcategory
+                    // Note: This will show products from the subcategory but NOT from its sub-subcategories
+                    // To see sub-subcategory products, user must navigate to that sub-subcategory page
                     filters.subcategory = categoryInfo.subcategory.slug
                     // Explicitly exclude category filter to ensure only subcategory products are shown
                     delete filters.category
@@ -268,8 +273,35 @@ const CategoryPage: React.FC = () => {
                     console.log('📦 Products received:', {
                         count: result.products?.length || 0,
                         total: result.pagination?.total || 0,
-                        products: result.products?.map(p => ({ id: p.id, name: p.name, category: p.category?.name, subcategory: (p as any).subcategory?.name }))
+                        products: result.products?.map(p => ({ 
+                            id: p.id, 
+                            name: p.name, 
+                            category: p.category?.name, 
+                            subcategory: (p as any).subcategory?.name,
+                            subcategorySlug: (p as any).subcategory?.slug,
+                            expectedSubSubcategorySlug: categoryInfo.subSubcategory?.slug
+                        }))
                     })
+                    
+                    // Verify that products match the selected sub-subcategory
+                    if (categoryInfo.subSubcategory && result.products) {
+                        const mismatchedProducts = result.products.filter(p => {
+                            const productSubcategorySlug = (p as any).subcategory?.slug
+                            return productSubcategorySlug !== categoryInfo.subSubcategory?.slug
+                        })
+                        if (mismatchedProducts.length > 0) {
+                            console.warn('⚠️ Some products do not match the selected sub-subcategory:', {
+                                expectedSlug: categoryInfo.subSubcategory.slug,
+                                mismatchedProducts: mismatchedProducts.map(p => ({
+                                    id: p.id,
+                                    name: p.name,
+                                    actualSubcategorySlug: (p as any).subcategory?.slug
+                                }))
+                            })
+                        } else {
+                            console.log('✅ All products match the selected sub-subcategory:', categoryInfo.subSubcategory.slug)
+                        }
+                    }
                 }
                 
                 if (isCancelled) return

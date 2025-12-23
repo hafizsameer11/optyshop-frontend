@@ -23,10 +23,14 @@ interface ContactLensFormData {
     right_base_curve: string
     right_diameter: string
     right_power: string
+    right_cylinder?: string
+    right_axis?: string
     left_qty: number
     left_base_curve: string
     left_diameter: string
     left_power: string
+    left_cylinder?: string
+    left_axis?: string
     unit: string // Unit selection: 'unit', 'box', 'pack'
 }
 
@@ -55,10 +59,14 @@ const ProductDetail: React.FC = () => {
         right_base_curve: '8.70',
         right_diameter: '14.00',
         right_power: '',
+        right_cylinder: '',
+        right_axis: '',
         left_qty: 1,
         left_base_curve: '8.70',
         left_diameter: '14.00',
         left_power: '',
+        left_cylinder: '',
+        left_axis: '',
         unit: 'unit' // Default unit
     })
     
@@ -270,17 +278,106 @@ const ProductDetail: React.FC = () => {
         return options
     }, [product, isContactLens])
     
+    // Helper function to check if product belongs to spherical sub-subcategory
+    const isSphericalSubSubcategory = useMemo(() => {
+        if (!product) return false
+        const p = product as any
+        
+        // Check contact_lens_type field
+        const lensType = (p.contact_lens_type || '').toLowerCase()
+        if (lensType.includes('spherical') || lensType.includes('sferiche') || lensType.includes('sferica')) {
+            return true
+        }
+        
+        // Check subcategory slug/name if available
+        const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+        const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+        if (subcategorySlug.includes('spherical') || subcategorySlug.includes('sferiche') || 
+            subcategoryName.includes('spherical') || subcategoryName.includes('sferiche') || 
+            subcategoryName.includes('sferica')) {
+            return true
+        }
+        
+        return false
+    }, [product])
+    
+    // Helper function to check if product belongs to astigmatism sub-subcategory
+    const isAstigmatismSubSubcategory = useMemo(() => {
+        if (!product) return false
+        const p = product as any
+        
+        // Check contact_lens_type field
+        const lensType = (p.contact_lens_type || '').toLowerCase()
+        if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
+            return true
+        }
+        
+        // Check subcategory slug/name if available
+        const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+        const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+        if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
+            subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
+            subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+            return true
+        }
+        
+        return false
+    }, [product])
+    
+    // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
+    const cylinderOptions = useMemo(() => {
+        const options: string[] = []
+        for (let i = -24; i <= 24; i++) {
+            const value = (i * 0.25).toFixed(2)
+            if (i > 0) {
+                options.push(`+${value}`)
+            } else if (i < 0) {
+                options.push(value)
+            } else {
+                options.push('0.00')
+            }
+        }
+        return options
+    }, [])
+    
+    // Generate axis options (0 to 180 in 1 degree steps)
+    const axisOptions = useMemo(() => {
+        const options: string[] = []
+        for (let i = 0; i <= 180; i++) {
+            options.push(i.toString())
+        }
+        return options
+    }, [])
+    
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
+    // For spherical sub-subcategories, uses standardized power range
     const powerOptions = useMemo(() => {
         if (!product) return []
         const p = product as any
-        const range = p.powers_range || '-0.50 to -6.00 in 0.25 steps'
+        
+        // For spherical sub-subcategories, use standardized power range
+        let range: string
+        if (isSphericalSubSubcategory) {
+            // Standardized power range for all spherical lenses
+            range = '-0.50 to -6.00 in 0.25 steps'
+            if (import.meta.env.DEV) {
+                console.log('🔍 Using standardized power range for spherical sub-subcategory:', {
+                    productId: product.id,
+                    productName: product.name,
+                    standardizedRange: range
+                })
+            }
+        } else {
+            range = p.powers_range || '-0.50 to -6.00 in 0.25 steps'
+        }
         
         // Debug: Log power range in development
         if (import.meta.env.DEV && isContactLens) {
             console.log('🔍 Contact Lens API Data - Power Range:', {
                 powers_range: p.powers_range,
+                isSpherical: isSphericalSubSubcategory,
+                usedRange: range,
                 type: typeof p.powers_range,
                 productId: product.id,
                 productName: product.name
@@ -356,7 +453,7 @@ const ProductDetail: React.FC = () => {
         
         // Default fallback options
         return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
-    }, [product])
+    }, [product, isSphericalSubSubcategory])
     
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -686,6 +783,22 @@ const ProductDetail: React.FC = () => {
             newErrors.left_power = 'Power is required for left eye'
         }
         
+        // For astigmatism lenses, cylinder and axis are required
+        if (isAstigmatismSubSubcategory) {
+            if (!contactLensFormData.right_cylinder) {
+                newErrors.right_cylinder = 'Cylinder is required for right eye'
+            }
+            if (!contactLensFormData.right_axis) {
+                newErrors.right_axis = 'Axis is required for right eye'
+            }
+            if (!contactLensFormData.left_cylinder) {
+                newErrors.left_cylinder = 'Cylinder is required for left eye'
+            }
+            if (!contactLensFormData.left_axis) {
+                newErrors.left_axis = 'Axis is required for left eye'
+            }
+        }
+        
         if (contactLensFormData.right_qty < 1) {
             newErrors.right_qty = 'Quantity must be at least 1'
         }
@@ -716,7 +829,13 @@ const ProductDetail: React.FC = () => {
                     contact_lens_left_qty: contactLensFormData.left_qty,
                     contact_lens_left_base_curve: parseFloat(contactLensFormData.left_base_curve),
                     contact_lens_left_diameter: parseFloat(contactLensFormData.left_diameter),
-                    contact_lens_left_power: parseFloat(contactLensFormData.left_power)
+                    contact_lens_left_power: parseFloat(contactLensFormData.left_power),
+                    ...(isAstigmatismSubSubcategory && {
+                        contact_lens_right_cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
+                        contact_lens_right_axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined,
+                        contact_lens_left_cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
+                        contact_lens_left_axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
+                    })
                 }
                 
                 const result = await addItemToCart(cartRequest)
@@ -758,13 +877,21 @@ const ProductDetail: React.FC = () => {
                                 qty: contactLensFormData.right_qty,
                                 baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                 diameter: parseFloat(contactLensFormData.right_diameter),
-                                power: parseFloat(contactLensFormData.right_power)
+                                power: parseFloat(contactLensFormData.right_power),
+                                ...(isAstigmatismSubSubcategory && {
+                                    cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
+                                    axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
+                                })
                             },
                             left: {
                                 qty: contactLensFormData.left_qty,
                                 baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                 diameter: parseFloat(contactLensFormData.left_diameter),
-                                power: parseFloat(contactLensFormData.left_power)
+                                power: parseFloat(contactLensFormData.left_power),
+                                ...(isAstigmatismSubSubcategory && {
+                                    cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
+                                    axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
+                                })
                             }
                         }
                     }
@@ -1298,6 +1425,60 @@ const ProductDetail: React.FC = () => {
                                                                 <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_power}</p>
                                                             )}
                                                         </div>
+                                                        
+                                                        {/* Cylinder (CYL) - Only for Astigmatism */}
+                                                        {isAstigmatismSubSubcategory && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Cilindro (CYL) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.right_cylinder || ''}
+                                                                    onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
+                                                                    disabled={isProductOutOfStock}
+                                                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                        contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <option value="">-</option>
+                                                                    {cylinderOptions.map((cyl) => (
+                                                                        <option key={cyl} value={cyl}>
+                                                                            {cyl}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.right_cylinder && (
+                                                                    <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_cylinder}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Axis (AX) - Only for Astigmatism */}
+                                                        {isAstigmatismSubSubcategory && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Asse (AX) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.right_axis || ''}
+                                                                    onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
+                                                                    disabled={isProductOutOfStock}
+                                                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                        contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <option value="">-</option>
+                                                                    {axisOptions.map((axis) => (
+                                                                        <option key={axis} value={axis}>
+                                                                            {axis}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.right_axis && (
+                                                                    <p className="text-sm text-red-500 mt-1">{contactLensErrors.right_axis}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 
@@ -1396,6 +1577,60 @@ const ProductDetail: React.FC = () => {
                                                                 <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_power}</p>
                                                             )}
                                                         </div>
+                                                        
+                                                        {/* Cylinder (CYL) - Only for Astigmatism */}
+                                                        {isAstigmatismSubSubcategory && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Cilindro (CYL) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.left_cylinder || ''}
+                                                                    onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
+                                                                    disabled={isProductOutOfStock}
+                                                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                        contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <option value="">-</option>
+                                                                    {cylinderOptions.map((cyl) => (
+                                                                        <option key={cyl} value={cyl}>
+                                                                            {cyl}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.left_cylinder && (
+                                                                    <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_cylinder}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        {/* Axis (AX) - Only for Astigmatism */}
+                                                        {isAstigmatismSubSubcategory && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Asse (AX) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.left_axis || ''}
+                                                                    onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
+                                                                    disabled={isProductOutOfStock}
+                                                                    className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                        contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${isProductOutOfStock ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <option value="">-</option>
+                                                                    {axisOptions.map((axis) => (
+                                                                        <option key={axis} value={axis}>
+                                                                            {axis}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.left_axis && (
+                                                                    <p className="text-sm text-red-500 mt-1">{contactLensErrors.left_axis}</p>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
