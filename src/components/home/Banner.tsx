@@ -79,9 +79,9 @@ const BannerComponent: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="relative min-h-screen text-white">
+            <div className="relative text-white" style={{ height: '469px' }}>
                 <Navbar />
-                <div className="w-full h-screen bg-gray-200 animate-pulse flex items-center justify-center">
+                <div className="w-full bg-gray-200 animate-pulse flex items-center justify-center" style={{ height: '469px' }}>
                 <div className="text-gray-400">{t('home.banner.loading')}</div>
                 </div>
             </div>
@@ -231,13 +231,13 @@ const BannerComponent: React.FC = () => {
     }
 
     return (
-        <div className="relative min-h-screen text-white">
+        <div className="relative text-white w-full" style={{ height: '469px', maxWidth: '1300px', margin: '0 auto' }}>
             {/* Content */}
-            <div className="relative z-10 flex flex-col min-h-screen">
+            <div className="relative z-10 flex flex-col w-full" style={{ height: '469px' }}>
                 <Navbar />
 
                 {/* Banner Slider Container */}
-                <div className="relative flex-1 overflow-hidden min-h-screen">
+                <div className="relative flex-1 overflow-hidden w-full" style={{ height: '469px' }}>
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"
@@ -265,9 +265,10 @@ const BannerComponent: React.FC = () => {
                                 }
                             }}
                             style={{
-                                height: '100%',
-                                minHeight: '100vh',
+                                height: '469px',
                                 width: '100%',
+                                maxWidth: '1300px',
+                                margin: '0 auto',
                             }}
                         >
                             {/* Background Image - Primary method */}
@@ -301,7 +302,7 @@ const BannerComponent: React.FC = () => {
                                     <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 z-10" />
 
                             {/* Banner Content */}
-                                    <main className="relative z-20 flex-1 flex items-center justify-center px-6 lg:px-20 pb-16 h-full min-h-screen">
+                                    <main className="relative z-20 flex-1 flex items-center justify-center px-6 lg:px-20 h-full" style={{ height: '469px' }}>
                                         <div className="max-w-3xl text-center">
                             {banner.title && (
                                                 <h1 className="text-3xl sm:text-4xl lg:text-6xl font-semibold leading-tight">
