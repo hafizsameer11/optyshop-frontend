@@ -48,6 +48,10 @@ import {
   getPrescriptionSunColors,
   type LensOption,
   type LensColor
+  getPhotochromicLenses,
+  getPrescriptionSunLenses,
+  type PhotochromicLens,
+  type PrescriptionSunLens
 } from '../../services/lensOptionsService'
 
 // Import test function in dev mode
@@ -918,88 +922,65 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   // GET /api/lens/options?type=photochromic
   const fetchPhotochromicOptions = async () => {
     try {
-      console.log('🔄 [API] Fetching photochromic options: GET /api/lens/options?type=photochromic&isActive=true')
+      console.log('🔄 [API] Fetching photochromic lenses: GET /api/photochromic-lenses')
       
-      // Try with isActive filter first
-      let options = await getLensOptions({ type: 'photochromic', isActive: true })
-      
-      // If no results, try without isActive filter (to see if data exists but is inactive)
-      if (!options || options.length === 0) {
-        console.log('🔄 [API] No active photochromic options found, trying without isActive filter...')
-        options = await getLensOptions({ type: 'photochromic' })
-      }
+      // Use dedicated endpoint from Postman collection
+      const lenses = await getPhotochromicLenses()
       
       // Log what we got
       console.log('📊 [API] Photochromic API response:', {
-        options: options,
-        count: options?.length || 0,
-        hasData: !!options && options.length > 0
+        lenses: lenses,
+        count: lenses?.length || 0,
+        hasData: !!lenses && lenses.length > 0
       })
       
       // Handle null response
-      if (options === null) {
-        console.warn('⚠️ [API] getLensOptions returned null - API might have errored')
+      if (lenses === null) {
+        console.warn('⚠️ [API] getPhotochromicLenses returned null - API might have errored')
         setPhotochromicOptions([])
         return
       }
       
-      if (options && options.length > 0) {
-        console.log('✅ [API] Found', options.length, 'photochromic options from API')
+      if (lenses && lenses.length > 0) {
+        console.log('✅ [API] Found', lenses.length, 'photochromic lenses from dedicated endpoint')
         
-        // Log all options to see what we got
+        // Convert PhotochromicLens to LensOption format for compatibility
+        const options: LensOption[] = lenses.map(lens => ({
+          id: lens.id,
+          name: lens.name,
+          slug: lens.slug,
+          type: 'photochromic',
+          description: lens.description,
+          basePrice: lens.basePrice || lens.base_price,
+          base_price: lens.base_price || lens.basePrice,
+          isActive: true,
+          is_active: true,
+          colors: lens.colors || [],
+          sortOrder: 0,
+          sort_order: 0
+        }))
+        
+        // Log all options
         options.forEach((opt, idx) => {
-          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
-          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
-        })
-        
-        // Check if colors are included in the list response
-        const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
-        
-        // If colors are missing, fetch each option individually to get colors
-        if (!hasColors) {
-          console.log('🔄 [API] Colors not in list response, fetching individual options...')
-          const { getLensOptionById } = await import('../../services/lensOptionsService')
-          const optionsWithColors = await Promise.all(
-            options.map(async (option) => {
-              try {
-                const fullOption = await getLensOptionById(option.id)
-                if (fullOption) {
-                  console.log(`  ✅ Fetched full option for ${option.name}:`, fullOption.colors?.length || 0, 'colors')
-                  return fullOption
-                }
-              } catch (error) {
-                console.error(`  ❌ Error fetching option ${option.id}:`, error)
-              }
-              return option
-            })
-          )
-          options = optionsWithColors.filter(opt => opt !== null) as LensOption[]
-          console.log('✅ [API] Fetched individual options with colors')
-        }
-        
-        setPhotochromicOptions(options)
-        console.log('✅ [API] Photochromic options loaded:', options.length, 'options')
-        options.forEach((opt, idx) => {
-          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
-          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, colors: ${opt.colors?.length || 0})`)
           if (opt.colors && opt.colors.length > 0) {
             console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
           } else {
-            console.warn(`    ⚠️ No colors found for ${opt.name} - option will still be displayed but without color swatches`)
+            console.warn(`    ⚠️ No colors found for ${opt.name}`)
           }
         })
+        
+        setPhotochromicOptions(options)
+        console.log('✅ [API] Photochromic options loaded:', options.length, 'options')
       } else {
-        // Only log warning in dev mode to reduce console noise
         if (import.meta.env.DEV) {
-          console.warn('⚠️ [API] No photochromic options available from API')
-          console.warn('   → This is normal if you haven\'t created photochromic options yet')
-          console.warn('   → To fix: Create lens options via admin API (see STEP_BY_STEP_SETUP.md)')
-          console.warn('   → Required: type="photochromic", is_active=true')
+          console.warn('⚠️ [API] No photochromic lenses available from API')
+          console.warn('   → This is normal if you haven\'t created photochromic lenses yet')
         }
         setPhotochromicOptions([])
       }
     } catch (error) {
-      console.error('❌ [API] Error fetching photochromic options:', error)
+      console.error('❌ [API] Error fetching photochromic lenses:', error)
       setPhotochromicOptions([])
     } finally {
       setLensOptionsLoading(false)
@@ -1007,95 +988,84 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   }
 
   // Fetch prescription sun lens options from API
-  // GET /api/lens/options?type=prescription_sun
+  // GET /api/prescription-sun-lenses
   const fetchPrescriptionSunOptions = async () => {
     try {
-      console.log('🔄 [API] Fetching prescription sun options: GET /api/lens/options?type=prescription_sun&isActive=true')
+      console.log('🔄 [API] Fetching prescription sun lenses: GET /api/prescription-sun-lenses')
       
-      // Try with underscore first
-      let options = await getLensOptions({ type: 'prescription_sun', isActive: true })
-      
-      // If no results, try with hyphen
-      if (!options || options.length === 0) {
-        console.log('🔄 [API] No results with prescription_sun, trying prescription-sun...')
-        options = await getLensOptions({ type: 'prescription-sun', isActive: true })
-      }
-      
-      // If still no results, try without isActive filter
-      if (!options || options.length === 0) {
-        console.log('🔄 [API] No active options found, trying without isActive filter...')
-        options = await getLensOptions({ type: 'prescription_sun' })
-        if (!options || options.length === 0) {
-          options = await getLensOptions({ type: 'prescription-sun' })
-        }
-      }
+      // Use dedicated endpoint from Postman collection
+      const lenses = await getPrescriptionSunLenses()
       
       // Log what we got
       console.log('📊 [API] Prescription Sun API response:', {
-        options: options,
-        count: options?.length || 0,
-        hasData: !!options && options.length > 0
+        lenses: lenses,
+        count: lenses?.length || 0,
+        hasData: !!lenses && lenses.length > 0
       })
       
       // Handle null response
-      if (options === null) {
-        console.warn('⚠️ [API] getLensOptions returned null - API might have errored')
+      if (lenses === null) {
+        console.warn('⚠️ [API] getPrescriptionSunLenses returned null - API might have errored')
         setPrescriptionSunOptions([])
         return
       }
       
-      if (options && options.length > 0) {
-        console.log('✅ [API] Found', options.length, 'prescription sun options from API')
+      if (lenses && lenses.length > 0) {
+        console.log('✅ [API] Found', lenses.length, 'prescription sun lenses from dedicated endpoint')
         
-        // Log all options to see what we got
-        options.forEach((opt, idx) => {
-          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
-          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+        // Convert PrescriptionSunLens to LensOption format for compatibility
+        // Handle structured data with finishes
+        const options: LensOption[] = lenses.flatMap(lens => {
+          // If lens has finishes, create options for each finish
+          if (lens.finishes && lens.finishes.length > 0) {
+            return lens.finishes.map(finish => ({
+              id: finish.id,
+              name: `${lens.name} - ${finish.name}`,
+              slug: finish.slug,
+              type: 'prescription_sun',
+              description: lens.description,
+              basePrice: (lens.basePrice || lens.base_price || 0) + (finish.price || 0),
+              base_price: (lens.base_price || lens.basePrice || 0) + (finish.price || 0),
+              isActive: true,
+              is_active: true,
+              colors: finish.colors || [],
+              sortOrder: 0,
+              sort_order: 0
+            }))
+          }
+          // Otherwise, use lens directly
+          return [{
+            id: lens.id,
+            name: lens.name,
+            slug: lens.slug,
+            type: 'prescription_sun',
+            description: lens.description,
+            basePrice: lens.basePrice || lens.base_price,
+            base_price: lens.base_price || lens.basePrice,
+            isActive: true,
+            is_active: true,
+            colors: lens.colors || [],
+            sortOrder: 0,
+            sort_order: 0
+          }]
         })
         
-        // Check if colors are included in the list response
-        const hasColors = options.some(opt => opt.colors && opt.colors.length > 0)
-        
-        // If colors are missing, fetch each option individually to get colors
-        if (!hasColors) {
-          console.log('🔄 [API] Colors not in list response, fetching individual options...')
-          const { getLensOptionById } = await import('../../services/lensOptionsService')
-          const optionsWithColors = await Promise.all(
-            options.map(async (option) => {
-              try {
-                const fullOption = await getLensOptionById(option.id)
-                if (fullOption) {
-                  console.log(`  ✅ Fetched full option for ${option.name}:`, fullOption.colors?.length || 0, 'colors')
-                  return fullOption
-                }
-              } catch (error) {
-                console.error(`  ❌ Error fetching option ${option.id}:`, error)
-              }
-              return option
-            })
-          )
-          options = optionsWithColors.filter(opt => opt !== null) as LensOption[]
-          console.log('✅ [API] Fetched individual options with colors')
-        }
-        
-        setPrescriptionSunOptions(options)
-        console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
+        // Log all options
         options.forEach((opt, idx) => {
-          const isActive = opt.isActive !== undefined ? opt.isActive : opt.is_active;
-          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, type: ${opt.type}, active: ${isActive}, colors: ${opt.colors?.length || 0})`)
+          console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, colors: ${opt.colors?.length || 0})`)
           if (opt.colors && opt.colors.length > 0) {
             console.log(`    Colors:`, opt.colors.map(c => `${c.name} (${c.hexCode || c.hex_code || 'no hex'})`).join(', '))
           } else {
-            console.warn(`    ⚠️ No colors found for ${opt.name} - option will still be displayed but without color swatches`)
+            console.warn(`    ⚠️ No colors found for ${opt.name}`)
           }
         })
+        
+        setPrescriptionSunOptions(options)
+        console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
       } else {
-        // Only log warning in dev mode to reduce console noise
         if (import.meta.env.DEV) {
-          console.warn('⚠️ [API] No prescription sun options available from API')
-          console.warn('   → This is normal if you haven\'t created prescription sun options yet')
-          console.warn('   → To fix: Create lens options via admin API (see STEP_BY_STEP_SETUP.md)')
-          console.warn('   → Required: type="prescription_sun" or "prescription-sun", is_active=true')
+          console.warn('⚠️ [API] No prescription sun lenses available from API')
+          console.warn('   → This is normal if you haven\'t created prescription sun lenses yet')
         }
         setPrescriptionSunOptions([])
       }

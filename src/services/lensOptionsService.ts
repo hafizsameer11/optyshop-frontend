@@ -369,10 +369,217 @@ export const getPrescriptionSunColors = async (): Promise<LensColor[]> => {
   }
 };
 
+// ============================================
+// Prescription Sun Lenses Types
+// ============================================
+
+export interface PrescriptionSunLens {
+  id: number;
+  name: string;
+  slug?: string;
+  description?: string;
+  basePrice?: number;
+  base_price?: number;
+  finishes?: {
+    id: number;
+    name: string;
+    slug?: string;
+    price?: number;
+    colors?: LensColor[];
+  }[];
+  colors?: LensColor[];
+}
+
+export interface PrescriptionSunLensesResponse {
+  success: boolean;
+  message?: string;
+  data?: PrescriptionSunLens[] | {
+    lenses?: PrescriptionSunLens[];
+    categories?: {
+      name: string;
+      lenses: PrescriptionSunLens[];
+    }[];
+  };
+}
+
+// ============================================
+// Photochromic Lenses Types
+// ============================================
+
+export interface PhotochromicLens {
+  id: number;
+  name: string;
+  slug?: string;
+  description?: string;
+  basePrice?: number;
+  base_price?: number;
+  colors?: LensColor[];
+}
+
+export interface PhotochromicLensesResponse {
+  success: boolean;
+  message?: string;
+  data?: PhotochromicLens[] | {
+    lenses?: PhotochromicLens[];
+    types?: {
+      name: string;
+      lenses: PhotochromicLens[];
+    }[];
+  };
+}
+
+// ============================================
+// API Functions
+// ============================================
+
+/**
+ * Get all prescription sun lenses organized by category
+ * GET /api/prescription-sun-lenses
+ */
+export const getPrescriptionSunLenses = async (): Promise<PrescriptionSunLens[] | null> => {
+  try {
+    console.log('🌐 [API] Fetching prescription sun lenses: GET', API_ROUTES.LENS.PRESCRIPTION_SUN_LENSES.LIST);
+    
+    const response = await apiClient.get<PrescriptionSunLensesResponse>(
+      API_ROUTES.LENS.PRESCRIPTION_SUN_LENSES.LIST,
+      false // PUBLIC endpoint
+    );
+
+    console.log('📥 [API] Prescription Sun Lenses API response:', {
+      success: response.success,
+      message: response.message,
+      hasData: !!response.data
+    });
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let lenses: PrescriptionSunLens[] = [];
+      
+      if (Array.isArray(response.data)) {
+        lenses = response.data;
+      } else if (response.data.lenses && Array.isArray(response.data.lenses)) {
+        lenses = response.data.lenses;
+      } else if (response.data.categories && Array.isArray(response.data.categories)) {
+        // Flatten categories into a single array
+        lenses = response.data.categories.flatMap(cat => cat.lenses || []);
+      }
+      
+      console.log(`✅ [API] Found ${lenses.length} prescription sun lenses`);
+      return lenses;
+    }
+
+    if (response.message) {
+      console.warn('⚠️ [API] API returned:', response.message);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('❌ [API] Error fetching prescription sun lenses:', error);
+    return null;
+  }
+};
+
+/**
+ * Get prescription sun lens by ID
+ * GET /api/prescription-sun-lenses/:id
+ */
+export const getPrescriptionSunLensById = async (id: number | string): Promise<PrescriptionSunLens | null> => {
+  try {
+    const response = await apiClient.get<{ success: boolean; data?: PrescriptionSunLens; message?: string }>(
+      API_ROUTES.LENS.PRESCRIPTION_SUN_LENSES.BY_ID(id),
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    console.error('Failed to fetch prescription sun lens:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching prescription sun lens:', error);
+    return null;
+  }
+};
+
+/**
+ * Get all photochromic lenses organized by type
+ * GET /api/photochromic-lenses
+ */
+export const getPhotochromicLenses = async (): Promise<PhotochromicLens[] | null> => {
+  try {
+    console.log('🌐 [API] Fetching photochromic lenses: GET', API_ROUTES.LENS.PHOTOCHROMIC_LENSES.LIST);
+    
+    const response = await apiClient.get<PhotochromicLensesResponse>(
+      API_ROUTES.LENS.PHOTOCHROMIC_LENSES.LIST,
+      false // PUBLIC endpoint
+    );
+
+    console.log('📥 [API] Photochromic Lenses API response:', {
+      success: response.success,
+      message: response.message,
+      hasData: !!response.data
+    });
+
+    if (response.success && response.data) {
+      // Handle different response structures
+      let lenses: PhotochromicLens[] = [];
+      
+      if (Array.isArray(response.data)) {
+        lenses = response.data;
+      } else if (response.data.lenses && Array.isArray(response.data.lenses)) {
+        lenses = response.data.lenses;
+      } else if (response.data.types && Array.isArray(response.data.types)) {
+        // Flatten types into a single array
+        lenses = response.data.types.flatMap(type => type.lenses || []);
+      }
+      
+      console.log(`✅ [API] Found ${lenses.length} photochromic lenses`);
+      return lenses;
+    }
+
+    if (response.message) {
+      console.warn('⚠️ [API] API returned:', response.message);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('❌ [API] Error fetching photochromic lenses:', error);
+    return null;
+  }
+};
+
+/**
+ * Get photochromic lens by ID
+ * GET /api/photochromic-lenses/:id
+ */
+export const getPhotochromicLensById = async (id: number | string): Promise<PhotochromicLens | null> => {
+  try {
+    const response = await apiClient.get<{ success: boolean; data?: PhotochromicLens; message?: string }>(
+      API_ROUTES.LENS.PHOTOCHROMIC_LENSES.BY_ID(id),
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return response.data;
+    }
+
+    console.error('Failed to fetch photochromic lens:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching photochromic lens:', error);
+    return null;
+  }
+};
+
 export default {
   getLensOptions,
   getLensOptionById,
   getLensColors,
   getPrescriptionSunColors,
+  getPrescriptionSunLenses,
+  getPrescriptionSunLensById,
+  getPhotochromicLenses,
+  getPhotochromicLensById,
 };
 

@@ -281,6 +281,14 @@ export const API_ROUTES = {
     },
     COLORS: `/lens/colors`,                             // PUBLIC - Get all lens colors
     PRESCRIPTION_SUN_COLORS: `/lens/prescription-sun-colors`, // PUBLIC - Get prescription sun colors
+    PRESCRIPTION_SUN_LENSES: {
+      LIST: `/prescription-sun-lenses`,                 // PUBLIC - Get all prescription sun lenses organized by category
+      BY_ID: (id: number | string) => `/prescription-sun-lenses/${id}`, // PUBLIC - Get prescription sun lens by ID
+    },
+    PHOTOCHROMIC_LENSES: {
+      LIST: `/photochromic-lenses`,                     // PUBLIC - Get all photochromic lenses organized by type
+      BY_ID: (id: number | string) => `/photochromic-lenses/${id}`, // PUBLIC - Get photochromic lens by ID
+    },
   },
 
   // ============================================
