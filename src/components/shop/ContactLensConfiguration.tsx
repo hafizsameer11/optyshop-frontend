@@ -147,17 +147,32 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const extractOptionsFromConfigs = (field: 'right_base_curve' | 'right_diameter' | 'right_power' | 'right_cylinder' | 'right_axis' | 'left_base_curve' | 'left_diameter' | 'left_power' | 'left_cylinder' | 'left_axis'): (number | string)[] => {
     const allValues: Set<number | string> = new Set()
     
-    contactLensConfigs.forEach(config => {
+    if (import.meta.env.DEV) {
+      console.log(`🔍 Extracting ${field} from ${contactLensConfigs.length} configurations`)
+    }
+    
+    contactLensConfigs.forEach((config, index) => {
       const value = config[field]
+      
+      if (import.meta.env.DEV) {
+        console.log(`  Config ${index + 1}: ${field} =`, value, `(type: ${typeof value}, isArray: ${Array.isArray(value)})`)
+      }
+      
       if (Array.isArray(value)) {
-        value.forEach(v => {
+        value.forEach((v, arrIndex) => {
           if (v !== null && v !== undefined && v !== '') {
             // Convert to number if it's a valid number, otherwise keep as string
             const numValue = typeof v === 'number' ? v : parseFloat(String(v))
             if (!isNaN(numValue)) {
               allValues.add(numValue)
+              if (import.meta.env.DEV) {
+                console.log(`    Added value[${arrIndex}]: ${numValue} (as number)`)
+              }
             } else {
               allValues.add(String(v))
+              if (import.meta.env.DEV) {
+                console.log(`    Added value[${arrIndex}]: ${String(v)} (as string)`)
+              }
             }
           }
         })
@@ -166,8 +181,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
         const numValue = typeof value === 'number' ? value : parseFloat(String(value))
         if (!isNaN(numValue)) {
           allValues.add(numValue)
+          if (import.meta.env.DEV) {
+            console.log(`    Added single value: ${numValue} (as number)`)
+          }
         } else {
           allValues.add(String(value))
+          if (import.meta.env.DEV) {
+            console.log(`    Added single value: ${String(value)} (as string)`)
+          }
         }
       }
     })
@@ -188,7 +209,9 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     
     if (import.meta.env.DEV) {
       if (sorted.length > 0) {
-        console.log(`📋 Extracted ${field} options from configurations:`, sorted)
+        console.log(`✅ Extracted ${field} options from configurations:`, sorted, `(total: ${sorted.length})`)
+      } else {
+        console.warn(`⚠️ No ${field} options extracted from configurations`)
       }
     }
     
@@ -204,9 +227,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
     if (configBaseCurves.length > 0) {
       // Use values directly from API - trust admin panel data
+      // Format numbers to 2 decimal places for display
       const options = configBaseCurves.map(v => {
         const num = typeof v === 'number' ? v : parseFloat(String(v))
-        return isNaN(num) ? String(v) : num
+        if (!isNaN(num)) {
+          // Format to 2 decimal places (e.g., 7 -> 7.00, 8.7 -> 8.70)
+          return parseFloat(num.toFixed(2))
+        }
+        return String(v)
       })
       if (options.length > 0) {
         if (import.meta.env.DEV) {
@@ -235,9 +263,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     const configDiameters = extractOptionsFromConfigs('right_diameter')
     if (configDiameters.length > 0) {
       // Use values directly from API - trust admin panel data
+      // Format numbers to 2 decimal places for display
       const options = configDiameters.map(v => {
         const num = typeof v === 'number' ? v : parseFloat(String(v))
-        return isNaN(num) ? String(v) : num
+        if (!isNaN(num)) {
+          // Format to 2 decimal places (e.g., 8 -> 8.00, 14 -> 14.00)
+          return parseFloat(num.toFixed(2))
+        }
+        return String(v)
       })
       if (options.length > 0) {
         if (import.meta.env.DEV) {
@@ -1000,11 +1033,20 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       onChange={(e) => handleFieldChange('right_base_curve', e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {baseCurveOptions.map((option) => (
-                        <option key={option} value={option.toString()}>
-                          {option}
-                        </option>
-                      ))}
+                      {baseCurveOptions.length > 0 ? (
+                        baseCurveOptions.map((option) => {
+                          const num = typeof option === 'number' ? option : parseFloat(String(option))
+                          const displayValue = !isNaN(num) ? num.toFixed(2) : String(option)
+                          const optionValue = !isNaN(num) ? num.toString() : String(option)
+                          return (
+                            <option key={optionValue} value={optionValue}>
+                              {displayValue}
+                            </option>
+                          )
+                        })
+                      ) : (
+                        <option value="">Loading...</option>
+                      )}
                     </select>
                   </div>
                   
@@ -1016,11 +1058,20 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       onChange={(e) => handleFieldChange('right_diameter', e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {diameterOptions.map((option) => (
-                        <option key={option} value={option.toString()}>
-                          {option}
-                        </option>
-                      ))}
+                      {diameterOptions.length > 0 ? (
+                        diameterOptions.map((option) => {
+                          const num = typeof option === 'number' ? option : parseFloat(String(option))
+                          const displayValue = !isNaN(num) ? num.toFixed(2) : String(option)
+                          const optionValue = !isNaN(num) ? num.toString() : String(option)
+                          return (
+                            <option key={optionValue} value={optionValue}>
+                              {displayValue}
+                            </option>
+                          )
+                        })
+                      ) : (
+                        <option value="">Loading...</option>
+                      )}
                     </select>
                   </div>
                   
@@ -1037,11 +1088,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       }`}
                     >
                       <option value="">Select power</option>
-                      {powerOptions.map((power) => (
-                        <option key={power} value={power}>
-                          {power}
-                        </option>
-                      ))}
+                      {powerOptions.length > 0 ? (
+                        powerOptions.map((power) => (
+                          <option key={power} value={power}>
+                            {power}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>Loading options...</option>
+                      )}
                     </select>
                     {errors.right_power && (
                       <p className="text-sm text-red-500 mt-1">{errors.right_power}</p>
@@ -1132,11 +1187,20 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       onChange={(e) => handleFieldChange('left_base_curve', e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {baseCurveOptions.map((option) => (
-                        <option key={option} value={option.toString()}>
-                          {option}
-                        </option>
-                      ))}
+                      {baseCurveOptions.length > 0 ? (
+                        baseCurveOptions.map((option) => {
+                          const num = typeof option === 'number' ? option : parseFloat(String(option))
+                          const displayValue = !isNaN(num) ? num.toFixed(2) : String(option)
+                          const optionValue = !isNaN(num) ? num.toString() : String(option)
+                          return (
+                            <option key={optionValue} value={optionValue}>
+                              {displayValue}
+                            </option>
+                          )
+                        })
+                      ) : (
+                        <option value="">Loading...</option>
+                      )}
                     </select>
                   </div>
                   
@@ -1148,11 +1212,20 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       onChange={(e) => handleFieldChange('left_diameter', e.target.value)}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {diameterOptions.map((option) => (
-                        <option key={option} value={option.toString()}>
-                          {option}
-                        </option>
-                      ))}
+                      {diameterOptions.length > 0 ? (
+                        diameterOptions.map((option) => {
+                          const num = typeof option === 'number' ? option : parseFloat(String(option))
+                          const displayValue = !isNaN(num) ? num.toFixed(2) : String(option)
+                          const optionValue = !isNaN(num) ? num.toString() : String(option)
+                          return (
+                            <option key={optionValue} value={optionValue}>
+                              {displayValue}
+                            </option>
+                          )
+                        })
+                      ) : (
+                        <option value="">Loading...</option>
+                      )}
                     </select>
                   </div>
                   
@@ -1169,11 +1242,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                       }`}
                     >
                       <option value="">Select power</option>
-                      {powerOptions.map((power) => (
-                        <option key={power} value={power}>
-                          {power}
-                        </option>
-                      ))}
+                      {powerOptions.length > 0 ? (
+                        powerOptions.map((power) => (
+                          <option key={power} value={power}>
+                            {power}
+                          </option>
+                        ))
+                      ) : (
+                        <option value="" disabled>Loading options...</option>
+                      )}
                     </select>
                     {errors.left_power && (
                       <p className="text-sm text-red-500 mt-1">{errors.left_power}</p>
