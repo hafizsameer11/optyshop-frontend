@@ -3,7 +3,7 @@
  * Handles API calls for lens options and colors
  */
 
-import apiClient from '../utils/api';
+import { apiClient } from '../utils/api';
 import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
 
 // ============================================

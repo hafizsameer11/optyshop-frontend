@@ -46,12 +46,12 @@ import {
   getLensOptions,
   getLensColors,
   getPrescriptionSunColors,
-  type LensOption,
-  type LensColor
   getPhotochromicLenses,
   getPrescriptionSunLenses,
+  type LensOption,
+  type LensColor,
   type PhotochromicLens,
-  type PrescriptionSunLens
+  type PrescriptionSunLens,
 } from '../../services/lensOptionsService'
 
 // Import test function in dev mode
@@ -988,12 +988,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
   }
 
   // Fetch prescription sun lens options from API
-  // GET /api/prescription-sun-lenses
+  // Primary: GET /api/prescription-sun-lenses
+  // Fallback: GET /api/lens/options?type=prescription_sun (from Postman collection)
   const fetchPrescriptionSunOptions = async () => {
     try {
       console.log('🔄 [API] Fetching prescription sun lenses: GET /api/prescription-sun-lenses')
       
-      // Use dedicated endpoint from Postman collection
+      // Try primary endpoint from Postman collection
       const lenses = await getPrescriptionSunLenses()
       
       // Log what we got
@@ -1003,19 +1004,34 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         hasData: !!lenses && lenses.length > 0
       })
       
-      // Handle null response
-      if (lenses === null) {
-        console.warn('⚠️ [API] getPrescriptionSunLenses returned null - API might have errored')
-        setPrescriptionSunOptions([])
-        return
-      }
+      let options: LensOption[] = []
       
-      if (lenses && lenses.length > 0) {
+      // Handle null response - try fallback endpoint
+      if (lenses === null || (lenses && lenses.length === 0)) {
+        console.log('🔄 [API] Primary endpoint returned no data, trying fallback: GET /api/lens/options?type=prescription_sun')
+        
+        // Try alternative endpoint from Postman collection
+        const fallbackOptions = await getLensOptions({ type: 'prescription_sun', isActive: true })
+        
+        if (fallbackOptions && fallbackOptions.length > 0) {
+          console.log('✅ [API] Found', fallbackOptions.length, 'prescription sun options from fallback endpoint')
+          options = fallbackOptions
+        } else {
+          console.warn('⚠️ [API] Both endpoints returned no data')
+          if (import.meta.env.DEV) {
+            console.warn('   → This is normal if you haven\'t created prescription sun lenses yet')
+            console.warn('   → The API endpoints returned empty arrays')
+            console.warn('   → To fix: Create prescription sun lenses via admin panel or API')
+          }
+          setPrescriptionSunOptions([])
+          return
+        }
+      } else if (lenses && lenses.length > 0) {
         console.log('✅ [API] Found', lenses.length, 'prescription sun lenses from dedicated endpoint')
         
         // Convert PrescriptionSunLens to LensOption format for compatibility
         // Handle structured data with finishes
-        const options: LensOption[] = lenses.flatMap(lens => {
+        options = lenses.flatMap(lens => {
           // If lens has finishes, create options for each finish
           if (lens.finishes && lens.finishes.length > 0) {
             return lens.finishes.map(finish => ({
@@ -1049,8 +1065,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
             sort_order: 0
           }]
         })
-        
-        // Log all options
+      }
+      
+      // Log all options
+      if (options.length > 0) {
         options.forEach((opt, idx) => {
           console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, colors: ${opt.colors?.length || 0})`)
           if (opt.colors && opt.colors.length > 0) {
@@ -1063,15 +1081,26 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         setPrescriptionSunOptions(options)
         console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
       } else {
-        if (import.meta.env.DEV) {
-          console.warn('⚠️ [API] No prescription sun lenses available from API')
-          console.warn('   → This is normal if you haven\'t created prescription sun lenses yet')
-        }
         setPrescriptionSunOptions([])
       }
     } catch (error) {
       console.error('❌ [API] Error fetching prescription sun options:', error)
-      setPrescriptionSunOptions([])
+      
+      // Try fallback endpoint on error
+      try {
+        console.log('🔄 [API] Error occurred, trying fallback endpoint: GET /api/lens/options?type=prescription_sun')
+        const fallbackOptions = await getLensOptions({ type: 'prescription_sun', isActive: true })
+        
+        if (fallbackOptions && fallbackOptions.length > 0) {
+          console.log('✅ [API] Found', fallbackOptions.length, 'prescription sun options from fallback endpoint')
+          setPrescriptionSunOptions(fallbackOptions)
+        } else {
+          setPrescriptionSunOptions([])
+        }
+      } catch (fallbackError) {
+        console.error('❌ [API] Fallback endpoint also failed:', fallbackError)
+        setPrescriptionSunOptions([])
+      }
     }
   }
 
@@ -3613,11 +3642,123 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       return mapOptionsToUI(apiPrescriptionSunOptions, allColors)
     }
     
-    // Return empty array if no API data
+    // Fallback: Create sample data for development/testing when API returns no data
+    // This matches the structure described in the Postman collection
+    if (import.meta.env.DEV && (!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0)) {
+      console.info('ℹ️ [UI] No prescription sun options from API, using sample data for development')
+      console.info('   → This is sample data for UI testing')
+      console.info('   → Create prescription sun lenses via admin panel to use real data')
+      
+      // Create sample options matching Postman collection structure
+      const sampleOptions: any[] = [
+        {
+          id: 'polarized',
+          name: 'Polarized',
+          price: 76.95,
+          description: 'Reduce glare and see clearly for outdoor activities and driving.',
+          subOptions: [
+            {
+              id: 'polarized_classic',
+              name: 'Classic',
+              price: 0,
+              colors: [
+                { id: '1', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
+                { id: '2', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 },
+                { id: '3', name: 'Green', color: '#228B22', gradient: false, priceAdjustment: 0 }
+              ]
+            },
+            {
+              id: 'polarized_mirror',
+              name: 'Mirror',
+              price: 27.95,
+              colors: [
+                { id: '4', name: 'Blue Mirror', color: '#4169E1', gradient: true, priceAdjustment: 0 },
+                { id: '5', name: 'Silver Mirror', color: '#C0C0C0', gradient: true, priceAdjustment: 0 }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'classic',
+          name: 'Classic',
+          price: 60.90,
+          description: 'Classic prescription sun lenses with various finishes.',
+          subOptions: [
+            {
+              id: 'classic_fashion',
+              name: 'Fashion',
+              price: 0,
+              colors: [
+                { id: '6', name: 'Rose', color: '#FFB6C1', gradient: false, priceAdjustment: 0 },
+                { id: '7', name: 'Amber', color: '#FFBF00', gradient: false, priceAdjustment: 0 }
+              ]
+            },
+            {
+              id: 'classic_mirror',
+              name: 'Mirror',
+              price: 20.00,
+              colors: [
+                { id: '8', name: 'Gold Mirror', color: '#FFD700', gradient: true, priceAdjustment: 0 },
+                { id: '9', name: 'Blue Mirror', color: '#1E90FF', gradient: true, priceAdjustment: 0 }
+              ]
+            },
+            {
+              id: 'classic_gradient',
+              name: 'Gradient',
+              price: 4.00,
+              colors: [
+                { id: '10', name: 'Gray Gradient', color: '#808080', gradient: true, priceAdjustment: 0 },
+                { id: '11', name: 'Brown Gradient', color: '#8B4513', gradient: true, priceAdjustment: 0 }
+              ]
+            },
+            {
+              id: 'classic_classic',
+              name: 'Classic',
+              price: 0,
+              colors: [
+                { id: '12', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
+                { id: '13', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 }
+              ]
+            }
+          ]
+        },
+        {
+          id: 'blokz',
+          name: 'Blokz® Sunglasses',
+          price: 95.90,
+          description: 'Advanced blue light blocking with UV protection.',
+          subOptions: [
+            {
+              id: 'blokz_mirror',
+              name: 'Mirror',
+              price: 20.00,
+              colors: [
+                { id: '14', name: 'Blue Mirror', color: '#4169E1', gradient: true, priceAdjustment: 0 },
+                { id: '15', name: 'Green Mirror', color: '#32CD32', gradient: true, priceAdjustment: 0 }
+              ]
+            },
+            {
+              id: 'blokz_classic',
+              name: 'Classic',
+              price: 0,
+              colors: [
+                { id: '16', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
+                { id: '17', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 }
+              ]
+            }
+          ]
+        }
+      ]
+      
+      return sampleOptions
+    }
+    
+    // Return empty array if no API data and not in dev mode
     if (import.meta.env.DEV) {
-      console.warn('⚠️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
-      console.warn('   → Check if fetchPrescriptionSunOptions was called and returned data')
-      console.warn('   → Check browser console for API fetch logs')
+      console.info('ℹ️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
+      console.info('   → This is normal if prescription sun lenses haven\'t been created yet')
+      console.info('   → Check browser console for API fetch logs to see if the API was called')
+      console.info('   → The API endpoint /api/prescription-sun-lenses should return structured data')
     }
     return []
   }
@@ -3902,6 +4043,269 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       {!loading && (
         <>
           <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-3">
+            {/* Photochromic Section */}
+            {photochromicOptions.length > 0 && (
+              <div className="mb-4">
+                <button
+                  onClick={handlePhotochromicClick}
+                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                    showPhotochromic || lensSelection.photochromicColor
+                      ? 'border-black bg-blue-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span className="text-lg font-semibold text-gray-900">Photochromic</span>
+                    {lensSelection.photochromicColor && (
+                      <span className="text-sm text-blue-600 font-medium">Selected</span>
+                    )}
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${showPhotochromic ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showPhotochromic && (
+                  <div className="mt-3 space-y-4">
+                    {photochromicOptions.map((option) => (
+                      <div key={option.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                        <div>
+                          <div className="font-semibold text-gray-900 text-base">{option.name}</div>
+                          {option.description && (
+                            <div className="text-sm text-gray-600 mt-1">{option.description}</div>
+                          )}
+                        </div>
+                        {option.colors && option.colors.length > 0 ? (
+                          <div className="flex flex-wrap gap-3">
+                            {option.colors.map((color: any) => {
+                              const isSelected = lensSelection.photochromicColor?.id === color.id
+                              return (
+                                <button
+                                  key={color.id}
+                                  onClick={() => {
+                                    if (onColorSelect) {
+                                      onColorSelect('photochromic', {
+                                        id: color.id.toString(),
+                                        name: color.name,
+                                        color: color.hexCode || color.hex_code || color.color || '#000000',
+                                        gradient: color.gradient || false
+                                      })
+                                    }
+                                  }}
+                                  className="relative flex flex-col items-center gap-1 group"
+                                  title={color.name}
+                                >
+                                  <div
+                                    className={`w-14 h-14 rounded-full border-2 transition-all ${
+                                      isSelected
+                                        ? 'border-blue-600 ring-2 ring-blue-200'
+                                        : 'border-gray-300 group-hover:border-gray-400'
+                                    }`}
+                                    style={{
+                                      background: color.gradient
+                                        ? `linear-gradient(135deg, ${color.hexCode || color.hex_code || color.color || '#000000'} 0%, ${color.hexCode2 || color.hex_code2 || color.color || '#000000'} 100%)`
+                                        : color.hexCode || color.hex_code || color.color || '#000000'
+                                    }}
+                                  />
+                                  {isSelected && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  <span className="text-xs text-gray-600 text-center max-w-[60px]">{color.name}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">No colors available</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Prescription Sun Lenses Section */}
+            {prescriptionSunOptions.length > 0 && (
+              <div className="mb-4">
+                <button
+                  onClick={handlePrescriptionSunClick}
+                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
+                    showPrescriptionSun || lensSelection.prescriptionSunColor
+                      ? 'border-black bg-blue-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <span className="text-lg font-semibold text-gray-900">Prescription Sun Lenses</span>
+                    {lensSelection.prescriptionSunColor && (
+                      <span className="text-sm text-blue-600 font-medium">Selected</span>
+                    )}
+                  </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-500 transition-transform ${showPrescriptionSun ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showPrescriptionSun && (
+                  <div className="mt-3 space-y-4">
+                    {prescriptionSunOptions.map((mainOption: any) => (
+                      <div key={mainOption.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-4">
+                        <div>
+                          <div className="font-semibold text-gray-900 text-base flex items-center gap-2">
+                            {mainOption.name}
+                            {mainOption.price > 0 && (
+                              <span className="text-sm font-medium text-blue-600">
+                                (+${mainOption.price.toFixed(2)})
+                              </span>
+                            )}
+                          </div>
+                          {mainOption.description && (
+                            <div className="text-sm text-gray-600 mt-1">{mainOption.description}</div>
+                          )}
+                        </div>
+
+                        {mainOption.subOptions && mainOption.subOptions.length > 0 ? (
+                          <div className="space-y-4">
+                            {mainOption.subOptions.map((subOption: any) => (
+                              <div key={subOption.id} className="space-y-2">
+                                <div className="font-medium text-gray-700 flex items-center gap-2">
+                                  {subOption.name}
+                                  {subOption.price > 0 && (
+                                    <span className="text-sm font-medium text-blue-600">
+                                      (+${subOption.price.toFixed(2)})
+                                    </span>
+                                  )}
+                                  {subOption.price === 0 && subOption.name.toLowerCase().includes('free') && (
+                                    <span className="text-sm font-medium text-green-600">(Free)</span>
+                                  )}
+                                </div>
+                                {subOption.colors && subOption.colors.length > 0 ? (
+                                  <div className="flex flex-wrap gap-3">
+                                    {subOption.colors.map((color: any) => {
+                                      const isSelected = lensSelection.prescriptionSunColor?.id === color.id
+                                      const totalPrice = (mainOption.price || 0) + (subOption.price || 0) + (color.priceAdjustment || 0)
+                                      return (
+                                        <button
+                                          key={color.id}
+                                          onClick={() => {
+                                            if (onColorSelect) {
+                                              onColorSelect('prescription_sun', {
+                                                id: color.id.toString(),
+                                                name: color.name,
+                                                color: color.color || '#000000',
+                                                gradient: color.gradient || false
+                                              })
+                                            }
+                                          }}
+                                          className="relative flex flex-col items-center gap-1 group"
+                                          title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
+                                        >
+                                          <div
+                                            className={`w-14 h-14 rounded-full border-2 transition-all ${
+                                              isSelected
+                                                ? 'border-blue-600 ring-2 ring-blue-200'
+                                                : 'border-gray-300 group-hover:border-gray-400'
+                                            }`}
+                                            style={{
+                                              background: color.gradient
+                                                ? `linear-gradient(to bottom, ${color.color || '#000000'} 0%, ${color.color2 || color.color || '#000000'} 100%)`
+                                                : color.color || '#000000'
+                                            }}
+                                          />
+                                          {isSelected && (
+                                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                              </svg>
+                                            </div>
+                                          )}
+                                          <span className="text-xs text-gray-600 text-center max-w-[60px]">{color.name}</span>
+                                        </button>
+                                      )
+                                    })}
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-gray-500">No colors available for this option</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : mainOption.colors && mainOption.colors.length > 0 ? (
+                          <div className="flex flex-wrap gap-3">
+                            {mainOption.colors.map((color: any) => {
+                              const isSelected = lensSelection.prescriptionSunColor?.id === color.id
+                              const totalPrice = (mainOption.price || 0) + (color.priceAdjustment || 0)
+                              return (
+                                <button
+                                  key={color.id}
+                                  onClick={() => {
+                                    if (onColorSelect) {
+                                      onColorSelect('prescription_sun', {
+                                        id: color.id.toString(),
+                                        name: color.name,
+                                        color: color.color || '#000000',
+                                        gradient: color.gradient || false
+                                      })
+                                    }
+                                  }}
+                                  className="relative flex flex-col items-center gap-1 group"
+                                  title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
+                                >
+                                  <div
+                                    className={`w-14 h-14 rounded-full border-2 transition-all ${
+                                      isSelected
+                                        ? 'border-blue-600 ring-2 ring-blue-200'
+                                        : 'border-gray-300 group-hover:border-gray-400'
+                                    }`}
+                                    style={{
+                                      background: color.gradient
+                                        ? `linear-gradient(to bottom, ${color.color || '#000000'} 0%, ${color.color2 || color.color || '#000000'} 100%)`
+                                        : color.color || '#000000'
+                                    }}
+                                  />
+                                  {isSelected && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  <span className="text-xs text-gray-600 text-center max-w-[60px]">{color.name}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">No colors available</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Standard Treatments from API */}
             {standardTreatments.length > 0 ? (
               standardTreatments.map((treatment) => {
@@ -3915,19 +4319,18 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   }`}
                 >
                   <input
-                      type="radio"
-                      name="treatment"
+                    type="checkbox"
                     checked={isSelected}
                     onChange={() => onTreatmentToggle(treatment.id)}
-                      className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                   />
                   <div className="flex-1">
                     <div className="font-semibold text-gray-900">{treatment.name}</div>
-                      {treatment.description && (
-                        <div className="text-sm text-gray-600 mt-1">{treatment.description}</div>
-                      )}
+                    {treatment.description && (
+                      <div className="text-sm text-gray-500 mt-1">{treatment.description}</div>
+                    )}
                   </div>
-                  <span className="text-sm font-semibold text-gray-700">${treatment.price.toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">${treatment.price.toFixed(2)}</span>
                 </label>
               )
               })

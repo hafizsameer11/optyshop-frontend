@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ContactLensConfiguration } from '../../services/contactLensConfigService';
+import { type ContactLensConfiguration } from '../../services/contactLensConfigService';
 
 interface ContactLensConfigurationDropdownProps {
   configurations: ContactLensConfiguration[];
