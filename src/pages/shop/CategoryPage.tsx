@@ -9,6 +9,10 @@ import {
     type Product,
     type ProductFilters
 } from '../../services/productsService'
+import {
+    getContactLensConfigs,
+    type ContactLensConfiguration
+} from '../../services/contactLensConfigService'
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
@@ -245,6 +249,106 @@ const CategoryPage: React.FC = () => {
                 // Priority: sub-subcategory > subcategory > category
                 // API expects slugs (strings) for category and subCategory parameters
                 if (categoryInfo.subSubcategory) {
+                    // For contact lens sub-subcategories, check if we should fetch configurations instead
+                    const isContactLensCategory = categoryInfo.category?.slug === 'contact-lenses' || 
+                                                  categoryInfo.category?.slug === 'eye-hygiene'
+                    
+                    if (isContactLensCategory) {
+                        // Fetch contact lens configurations for this sub-subcategory
+                        // Configurations act as products for contact lens sub-subcategories
+                        try {
+                            const configs = await getContactLensConfigs({
+                                sub_category_id: categoryInfo.subSubcategory.id
+                            })
+                            
+                            if (isCancelled) return
+                            
+                            if (configs && configs.length > 0) {
+                                // Convert configurations to products for display
+                                const configProducts: Product[] = configs.map((config: ContactLensConfiguration) => {
+                                    // Parse images from string if needed
+                                    let images: string[] = []
+                                    if (config.images) {
+                                        if (typeof config.images === 'string') {
+                                            try {
+                                                images = JSON.parse(config.images)
+                                            } catch {
+                                                images = [config.images]
+                                            }
+                                        } else if (Array.isArray(config.images)) {
+                                            images = config.images
+                                        }
+                                    }
+                                    
+                                    return {
+                                        id: config.id,
+                                        name: config.display_name || config.name,
+                                        slug: config.slug || `config-${config.id}`,
+                                        sku: config.sku || undefined,
+                                        description: config.description || undefined,
+                                        short_description: config.short_description || undefined,
+                                        price: typeof config.price === 'string' ? parseFloat(config.price) : config.price,
+                                        sale_price: config.compare_at_price ? 
+                                            (typeof config.compare_at_price === 'string' ? 
+                                                parseFloat(config.compare_at_price) : 
+                                                config.compare_at_price) : 
+                                            undefined,
+                                        stock_quantity: config.stock_quantity,
+                                        in_stock: config.stock_status === 'in_stock',
+                                        images: images,
+                                        image: images.length > 0 ? images[0] : undefined,
+                                        category: config.category ? {
+                                            id: config.category.id,
+                                            name: config.category.name,
+                                            slug: config.category.slug || config.category.name.toLowerCase().replace(/\s+/g, '-')
+                                        } : categoryInfo.category ? {
+                                            id: categoryInfo.category.id,
+                                            name: categoryInfo.category.name,
+                                            slug: categoryInfo.category.slug || categoryInfo.category.name.toLowerCase().replace(/\s+/g, '-')
+                                        } : undefined,
+                                        brand: undefined,
+                                        rating: undefined,
+                                        // Mark as contact lens configuration
+                                        isContactLensConfig: true,
+                                        configurationType: config.configuration_type
+                                    } as Product & { isContactLensConfig?: boolean; configurationType?: string }
+                                })
+                                
+                                setProducts(configProducts)
+                                setPagination({
+                                    total: configs.length,
+                                    page: 1,
+                                    limit: configs.length,
+                                    pages: 1
+                                })
+                                
+                                if (import.meta.env.DEV) {
+                                    console.log('✅ Fetched contact lens configurations as products:', {
+                                        subSubcategoryId: categoryInfo.subSubcategory.id,
+                                        subSubcategoryName: categoryInfo.subSubcategory.name,
+                                        configCount: configs.length,
+                                        products: configProducts.map(p => ({
+                                            id: p.id,
+                                            name: p.name,
+                                            price: p.price
+                                        }))
+                                    })
+                                }
+                                
+                                setLoading(false)
+                                return
+                            } else {
+                                // No configurations found, fall through to regular product fetch
+                                if (import.meta.env.DEV) {
+                                    console.log('⚠️ No contact lens configurations found, falling back to regular products')
+                                }
+                            }
+                        } catch (configError) {
+                            console.error('Error fetching contact lens configurations:', configError)
+                            // Fall through to regular product fetch
+                        }
+                    }
+                    
                     // Filter ONLY by sub-subcategory - show only products linked to this sub-subcategory
                     // Use sub-subcategory slug to filter products - API will return only products from this sub-subcategory
                     filters.subcategory = categoryInfo.subSubcategory.slug
