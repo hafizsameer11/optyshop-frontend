@@ -115,14 +115,16 @@ const ProductDetail: React.FC = () => {
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
                 
+                // Check if product is a contact lens (needed for configuration fetching)
+                const p = productData as any
+                const isContactLensProduct = productData.category?.slug === 'contact-lenses' || 
+                                            productData.category?.slug === 'eye-hygiene' ||
+                                            p.product_type === 'contact_lens' ||
+                                            Array.isArray(p.base_curve_options)
+                
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
                     const imageUrl = getProductImageUrl(productData, 0)
-                    const p = productData as any
-                    const isContactLensProduct = productData.category?.slug === 'contact-lenses' || 
-                                                productData.category?.slug === 'eye-hygiene' ||
-                                                p.product_type === 'contact_lens' ||
-                                                Array.isArray(p.base_curve_options)
                     
                     console.log('🔍 Product Detail Data:', {
                         id: productData.id,
@@ -155,6 +157,7 @@ const ProductDetail: React.FC = () => {
                 setProduct(productData)
                 
                 // Fetch contact lens configurations for this product
+                // Use the local variable isContactLensProduct
                 if (isContactLensProduct) {
                     try {
                         setConfigsLoading(true)
@@ -190,7 +193,6 @@ const ProductDetail: React.FC = () => {
                 }
                 
                 // Fetch contact lens options from sub-subcategory if product belongs to one
-                const p = productData as any
                 const productSubcategory = p.subcategory
                 if (productSubcategory && productSubcategory.parent_id) {
                     // This is a sub-subcategory, fetch aggregated options
@@ -713,13 +715,9 @@ const ProductDetail: React.FC = () => {
         if (formInitializedRef.current === currentProductId) return
         
         // Check if it's a contact lens or eye hygiene
-        const p = product as any
-        const isContactLensProduct = product.category?.slug === 'contact-lenses' || 
-                                    product.category?.slug === 'eye-hygiene' ||
-                                    p.product_type === 'contact_lens' ||
-                                    Array.isArray(p.base_curve_options)
-        
-        if (isContactLensProduct) {
+        // Use the memoized isContactLens value instead of redefining
+        if (isContactLens) {
+            const p = product as any
             // Get base curve options (handle different formats)
             let baseCurves: (number | string)[] = []
             if (Array.isArray(p.base_curve_options)) {
