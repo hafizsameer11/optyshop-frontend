@@ -257,11 +257,27 @@ const CategoryPage: React.FC = () => {
                         // Fetch contact lens configurations for this sub-subcategory
                         // Configurations act as products for contact lens sub-subcategories
                         try {
+                            if (import.meta.env.DEV) {
+                                console.log('🔍 Fetching contact lens configurations for sub-subcategory:', {
+                                    subSubcategoryId: categoryInfo.subSubcategory.id,
+                                    subSubcategoryName: categoryInfo.subSubcategory.name,
+                                    subSubcategorySlug: categoryInfo.subSubcategory.slug
+                                })
+                            }
+                            
                             const configs = await getContactLensConfigs({
                                 sub_category_id: categoryInfo.subSubcategory.id
                             })
                             
                             if (isCancelled) return
+                            
+                            if (import.meta.env.DEV) {
+                                console.log('📦 Contact lens configurations response:', {
+                                    configs: configs,
+                                    count: configs?.length || 0,
+                                    subSubcategoryId: categoryInfo.subSubcategory.id
+                                })
+                            }
                             
                             if (configs && configs.length > 0) {
                                 // Convert configurations to products for display
@@ -283,7 +299,8 @@ const CategoryPage: React.FC = () => {
                                     return {
                                         id: config.id,
                                         name: config.display_name || config.name,
-                                        slug: config.slug || `config-${config.id}`,
+                                        // Always use config- prefix to identify configuration products
+                                        slug: `config-${config.id}`,
                                         sku: config.sku || undefined,
                                         description: config.description || undefined,
                                         short_description: config.short_description || undefined,
@@ -344,7 +361,12 @@ const CategoryPage: React.FC = () => {
                                 }
                             }
                         } catch (configError) {
-                            console.error('Error fetching contact lens configurations:', configError)
+                            console.error('❌ Error fetching contact lens configurations:', {
+                                error: configError,
+                                subSubcategoryId: categoryInfo.subSubcategory.id,
+                                subSubcategoryName: categoryInfo.subSubcategory.name,
+                                errorMessage: configError instanceof Error ? configError.message : String(configError)
+                            })
                             // Fall through to regular product fetch
                         }
                     }

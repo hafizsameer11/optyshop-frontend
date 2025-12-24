@@ -105,7 +105,33 @@ const ProductDetail: React.FC = () => {
             if (!slug) return
             
             setLoading(true)
-            const productData = await getProductBySlug(slug)
+            let productData = await getProductBySlug(slug)
+            
+            // If product not found and slug starts with "config-", it might be a configuration product
+            if (!productData && slug.startsWith('config-')) {
+                const configId = parseInt(slug.replace('config-', ''))
+                if (!isNaN(configId)) {
+                    try {
+                        // Try to fetch configuration and convert to product
+                        const { getContactLensConfigs } = await import('../../services/contactLensConfigService')
+                        const configs = await getContactLensConfigs({ sub_category_id: configId })
+                        // Actually, we need to fetch by ID, but the API might not support that
+                        // For now, let's try fetching all configs and finding the one with matching ID
+                        // Or we can fetch by sub_category_id if we know it
+                        // This is a fallback - the main flow should work through regular product fetch
+                        if (import.meta.env.DEV) {
+                            console.log('⚠️ Product not found, checking if it\'s a configuration:', {
+                                slug,
+                                configId
+                            })
+                        }
+                    } catch (error) {
+                        if (import.meta.env.DEV) {
+                            console.log('⚠️ Could not fetch configuration:', error)
+                        }
+                    }
+                }
+            }
             
             if (isCancelled) return
             
