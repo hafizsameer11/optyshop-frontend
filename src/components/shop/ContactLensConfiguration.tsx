@@ -321,19 +321,52 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Check if product belongs to astigmatism sub-subcategory
-  // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
+  // Priority: Configuration type > Product/Subcategory name (immediate) > Sub-subcategory type > product field
   const isAstigmatismSubSubcategory = useMemo(() => {
-    // First, check configurations from admin panel (most reliable)
+    // First, check product/subcategory name immediately (available before API loads)
+    // This ensures the form shows correctly even while configurations are loading
+    const productName = (p.name || '').toLowerCase()
+    const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+    const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+    
+    // Check for astigmatism in product/subcategory names (fast, immediate check)
+    if (productName.includes('astigmatism') || productName.includes('astigmatismo') || productName.includes('toric') ||
+        subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
+        subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
+        subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
+        subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected astigmatism sub-subcategory from product/subcategory name (immediate):', { 
+          productName, 
+          subcategoryName, 
+          subcategorySlug 
+        })
+      }
+      return true
+    }
+    
+    // Then check configurations from admin panel (most reliable when loaded)
     if (contactLensConfigs.length > 0) {
       // Check if ALL configurations are astigmatism (more reliable than "some")
-      const allAstigmatism = contactLensConfigs.every(c => c.configuration_type === 'astigmatism')
-      const hasAstigmatism = contactLensConfigs.some(c => c.configuration_type === 'astigmatism')
-      const hasSpherical = contactLensConfigs.some(c => c.configuration_type === 'spherical')
+      const allAstigmatism = contactLensConfigs.every(c => {
+        const configType = String(c.configuration_type || '').toLowerCase().trim()
+        return configType === 'astigmatism'
+      })
+      const hasAstigmatism = contactLensConfigs.some(c => {
+        const configType = String(c.configuration_type || '').toLowerCase().trim()
+        return configType === 'astigmatism'
+      })
+      const hasSpherical = contactLensConfigs.some(c => {
+        const configType = String(c.configuration_type || '').toLowerCase().trim()
+        return configType === 'spherical'
+      })
       
       // If all are astigmatism, definitely astigmatism
       if (allAstigmatism) {
         if (import.meta.env.DEV) {
-          console.log('✅ Detected astigmatism sub-subcategory from configurations (all astigmatism)')
+          console.log('✅ Detected astigmatism sub-subcategory from configurations (all astigmatism)', {
+            configs: contactLensConfigs.map(c => ({ id: c.id, type: c.configuration_type }))
+          })
         }
         return true
       }
@@ -341,9 +374,35 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       // If there's any astigmatism and no spherical, it's astigmatism
       if (hasAstigmatism && !hasSpherical) {
         if (import.meta.env.DEV) {
-          console.log('✅ Detected astigmatism sub-subcategory from configurations (has astigmatism, no spherical)')
+          console.log('✅ Detected astigmatism sub-subcategory from configurations (has astigmatism, no spherical)', {
+            configs: contactLensConfigs.map(c => ({ id: c.id, type: c.configuration_type }))
+          })
         }
         return true
+      }
+      
+      // If there's astigmatism but also spherical, prioritize astigmatism if it's the majority
+      if (hasAstigmatism && hasSpherical) {
+        const astigmatismCount = contactLensConfigs.filter(c => {
+          const configType = String(c.configuration_type || '').toLowerCase().trim()
+          return configType === 'astigmatism'
+        }).length
+        const sphericalCount = contactLensConfigs.filter(c => {
+          const configType = String(c.configuration_type || '').toLowerCase().trim()
+          return configType === 'spherical'
+        }).length
+        
+        // If astigmatism is the majority or equal, treat as astigmatism
+        if (astigmatismCount >= sphericalCount) {
+          if (import.meta.env.DEV) {
+            console.log('✅ Detected astigmatism sub-subcategory from configurations (majority astigmatism)', {
+              astigmatismCount,
+              sphericalCount,
+              configs: contactLensConfigs.map(c => ({ id: c.id, type: c.configuration_type }))
+            })
+          }
+          return true
+        }
       }
     }
     
@@ -364,18 +423,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       return true
     }
     
-    // Check subcategory slug/name if available
-    const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
-    const subcategoryName = (p.subcategory?.name || '').toLowerCase()
-    // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
-    if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') || 
-        subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
-        subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
-        subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
-      if (import.meta.env.DEV) {
-        console.log('✅ Detected astigmatism sub-subcategory from subcategory name/slug:', { subcategorySlug, subcategoryName })
-      }
-      return true
+    if (import.meta.env.DEV) {
+      console.log('❌ Could not detect astigmatism sub-subcategory', {
+        configsCount: contactLensConfigs.length,
+        configTypes: contactLensConfigs.map(c => c.configuration_type),
+        subSubcategoryType: subSubcategoryOptions?.type,
+        subcategoryName: p.subcategory?.name,
+        subcategorySlug: p.subcategory?.slug,
+        productName: p.name
+      })
     }
     
     return false
@@ -586,7 +642,7 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   
   // Log configuration type detection for debugging
   useEffect(() => {
-    if (import.meta.env.DEV && contactLensConfigs.length > 0) {
+    if (import.meta.env.DEV) {
       console.log('🔍 Configuration Type Detection:', {
         configCount: contactLensConfigs.length,
         configTypes: contactLensConfigs.map(c => ({
@@ -594,11 +650,16 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
           name: c.name,
           type: c.configuration_type
         })),
+        subSubcategoryType: subSubcategoryOptions?.type,
+        subcategoryName: (product as any).subcategory?.name,
+        subcategorySlug: (product as any).subcategory?.slug,
+        productName: product.name,
         isSpherical: isSphericalSubSubcategory,
-        isAstigmatism: isAstigmatismSubSubcategory
+        isAstigmatism: isAstigmatismSubSubcategory,
+        willShowCylinderAxis: isAstigmatismSubSubcategory
       })
     }
-  }, [contactLensConfigs, isSphericalSubSubcategory, isAstigmatismSubSubcategory])
+  }, [contactLensConfigs, subSubcategoryOptions, isSphericalSubSubcategory, isAstigmatismSubSubcategory, product])
 
   // Clear astigmatism fields when switching to spherical sub-subcategory
   useEffect(() => {
