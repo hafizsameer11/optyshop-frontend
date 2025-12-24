@@ -91,17 +91,6 @@ export interface Product {
   review_count?: number;
   created_at?: string;
   updated_at?: string;
-  
-  // Contact Lens specific fields
-  base_curve_options?: number[];
-  diameter_options?: number[];
-  powers_range?: string | object;
-  contact_lens_brand?: string;
-  contact_lens_material?: string;
-  contact_lens_color?: string;
-  contact_lens_type?: string;
-  replacement_frequency?: string;
-  water_content?: number;
   can_sleep_with?: boolean;
   is_medical_device?: boolean;
   has_uv_filter?: boolean;

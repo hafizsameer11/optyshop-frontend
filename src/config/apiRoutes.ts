@@ -39,15 +39,6 @@ export const API_ROUTES = {
     RELATED: (id: number | string) => `/products/${id}/related`,  // PUBLIC
     CONFIGURATION: (id: number | string) => `/products/${id}/configuration`, // PUBLIC - Get product configuration
     CONFIGURATION_LENS_TYPES: `/products/configuration/lens-types`, // PUBLIC - Get all prescription lens types with variants and colors
-    CONTACT_LENS_CONFIGS: (params?: { product_id?: number; category_id?: number; sub_category_id?: number; configuration_type?: 'spherical' | 'astigmatism' }) => {
-      const queryParams = new URLSearchParams();
-      if (params?.product_id) queryParams.append('product_id', String(params.product_id));
-      if (params?.category_id) queryParams.append('category_id', String(params.category_id));
-      if (params?.sub_category_id) queryParams.append('sub_category_id', String(params.sub_category_id));
-      if (params?.configuration_type) queryParams.append('configuration_type', params.configuration_type);
-      const queryString = queryParams.toString();
-      return `/products/contact-lens-configs${queryString ? `?${queryString}` : ''}`;
-    }, // PUBLIC - Get contact lens configurations for frontend
   },
 
   // ============================================
@@ -104,8 +95,6 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/subcategories/${subcategoryId}/related-categories${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get related categories for a subcategory
-    CONTACT_LENS_OPTIONS_BY_ID: (id: number | string) => `/subcategories/${id}/contact-lens-options`, // PUBLIC - Get aggregated contact lens options by sub-subcategory ID
-    CONTACT_LENS_OPTIONS_BY_SLUG: (slug: string) => `/subcategories/slug/${slug}/contact-lens-options`, // PUBLIC - Get aggregated contact lens options by sub-subcategory slug
   },
 
   // ============================================
