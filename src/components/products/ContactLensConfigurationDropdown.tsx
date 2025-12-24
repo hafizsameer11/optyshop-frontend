@@ -67,9 +67,30 @@ const ContactLensConfigurationDropdown: React.FC<ContactLensConfigurationDropdow
             {sphericalConfigs.map((config) => {
               const price = typeof config.price === 'string' ? parseFloat(config.price) : config.price
               const priceStr = isNaN(price) ? '' : ` - $${price.toFixed(2)}`
+              
+              // Build additional info string
+              const infoParts: string[] = []
+              
+              // Add subcategory info if available
+              if (config.subCategory?.name) {
+                infoParts.push(config.subCategory.name)
+              }
+              
+              // Add power range if available
+              if (config.right_power && Array.isArray(config.right_power) && config.right_power.length > 0) {
+                const powers = config.right_power.map(p => String(p))
+                if (powers.length <= 3) {
+                  infoParts.push(`Power: ${powers.join(', ')}`)
+                } else {
+                  infoParts.push(`Power: ${powers[0]} to ${powers[powers.length - 1]}`)
+                }
+              }
+              
+              const infoStr = infoParts.length > 0 ? ` (${infoParts.join(' | ')})` : ''
+              
               return (
                 <option key={config.id} value={config.id}>
-                  {config.display_name || config.name}{priceStr}
+                  {config.display_name || config.name}{priceStr}{infoStr}
                 </option>
               )
             })}
@@ -81,9 +102,38 @@ const ContactLensConfigurationDropdown: React.FC<ContactLensConfigurationDropdow
             {astigmatismConfigs.map((config) => {
               const price = typeof config.price === 'string' ? parseFloat(config.price) : config.price
               const priceStr = isNaN(price) ? '' : ` - $${price.toFixed(2)}`
+              
+              // Build additional info string
+              const infoParts: string[] = []
+              
+              // Add subcategory info if available
+              if (config.subCategory?.name) {
+                infoParts.push(config.subCategory.name)
+              }
+              
+              // Add power range if available
+              if (config.right_power && Array.isArray(config.right_power) && config.right_power.length > 0) {
+                const powers = config.right_power.map(p => String(p))
+                if (powers.length <= 3) {
+                  infoParts.push(`Power: ${powers.join(', ')}`)
+                } else {
+                  infoParts.push(`Power: ${powers[0]} to ${powers[powers.length - 1]}`)
+                }
+              }
+              
+              // Add cylinder info for astigmatism
+              if (config.right_cylinder && Array.isArray(config.right_cylinder) && config.right_cylinder.length > 0) {
+                const cylinders = config.right_cylinder.map(c => String(c))
+                if (cylinders.length <= 3) {
+                  infoParts.push(`Cyl: ${cylinders.join(', ')}`)
+                }
+              }
+              
+              const infoStr = infoParts.length > 0 ? ` (${infoParts.join(' | ')})` : ''
+              
               return (
                 <option key={config.id} value={config.id}>
-                  {config.display_name || config.name}{priceStr}
+                  {config.display_name || config.name}{priceStr}{infoStr}
                 </option>
               )
             })}

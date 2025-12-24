@@ -908,6 +908,130 @@ const ProductDetail: React.FC = () => {
         }
     }
     
+    // Handle configuration selection
+    const handleConfigSelect = (config: ContactLensConfiguration | null) => {
+        setSelectedConfig(config)
+        
+        if (config) {
+            // Pre-fill form with configuration data (all fields are arrays from API)
+            const newFormData: Partial<ContactLensFormData> = {}
+            
+            // Right eye - use arrays from configuration
+            if (config.right_qty) {
+                const qtyArray = Array.isArray(config.right_qty) ? config.right_qty : [config.right_qty]
+                if (qtyArray.length > 0) {
+                    newFormData.right_qty = typeof qtyArray[0] === 'number' ? qtyArray[0] : parseInt(String(qtyArray[0])) || 1
+                }
+            }
+            if (config.right_base_curve) {
+                const bcOptions = Array.isArray(config.right_base_curve) ? config.right_base_curve : [config.right_base_curve]
+                if (bcOptions.length > 0) {
+                    newFormData.right_base_curve = String(bcOptions[0])
+                }
+            }
+            if (config.right_diameter) {
+                const diaOptions = Array.isArray(config.right_diameter) ? config.right_diameter : [config.right_diameter]
+                if (diaOptions.length > 0) {
+                    newFormData.right_diameter = String(diaOptions[0])
+                }
+            }
+            if (config.right_power) {
+                const powerOptions = Array.isArray(config.right_power) ? config.right_power : [config.right_power]
+                if (powerOptions.length > 0) {
+                    // Format power value properly
+                    const powerValue = powerOptions[0]
+                    newFormData.right_power = typeof powerValue === 'number' ? powerValue.toFixed(2) : String(powerValue)
+                }
+            }
+            if (config.configuration_type === 'astigmatism') {
+                if (config.right_cylinder) {
+                    const cylOptions = Array.isArray(config.right_cylinder) ? config.right_cylinder : [config.right_cylinder]
+                    if (cylOptions.length > 0) {
+                        const cylValue = cylOptions[0]
+                        newFormData.right_cylinder = typeof cylValue === 'number' ? (cylValue > 0 ? `+${cylValue.toFixed(2)}` : cylValue.toFixed(2)) : String(cylValue)
+                    }
+                }
+                if (config.right_axis) {
+                    const axisOptions = Array.isArray(config.right_axis) ? config.right_axis : [config.right_axis]
+                    if (axisOptions.length > 0) {
+                        newFormData.right_axis = String(axisOptions[0])
+                    }
+                }
+            }
+            
+            // Left eye - use arrays from configuration
+            if (config.left_qty) {
+                const qtyArray = Array.isArray(config.left_qty) ? config.left_qty : [config.left_qty]
+                if (qtyArray.length > 0) {
+                    newFormData.left_qty = typeof qtyArray[0] === 'number' ? qtyArray[0] : parseInt(String(qtyArray[0])) || 1
+                }
+            }
+            if (config.left_base_curve) {
+                const bcOptions = Array.isArray(config.left_base_curve) ? config.left_base_curve : [config.left_base_curve]
+                if (bcOptions.length > 0) {
+                    newFormData.left_base_curve = String(bcOptions[0])
+                }
+            }
+            if (config.left_diameter) {
+                const diaOptions = Array.isArray(config.left_diameter) ? config.left_diameter : [config.left_diameter]
+                if (diaOptions.length > 0) {
+                    newFormData.left_diameter = String(diaOptions[0])
+                }
+            }
+            if (config.left_power) {
+                const powerOptions = Array.isArray(config.left_power) ? config.left_power : [config.left_power]
+                if (powerOptions.length > 0) {
+                    // Format power value properly
+                    const powerValue = powerOptions[0]
+                    newFormData.left_power = typeof powerValue === 'number' ? powerValue.toFixed(2) : String(powerValue)
+                }
+            }
+            if (config.configuration_type === 'astigmatism') {
+                if (config.left_cylinder) {
+                    const cylOptions = Array.isArray(config.left_cylinder) ? config.left_cylinder : [config.left_cylinder]
+                    if (cylOptions.length > 0) {
+                        const cylValue = cylOptions[0]
+                        newFormData.left_cylinder = typeof cylValue === 'number' ? (cylValue > 0 ? `+${cylValue.toFixed(2)}` : cylValue.toFixed(2)) : String(cylValue)
+                    }
+                }
+                if (config.left_axis) {
+                    const axisOptions = Array.isArray(config.left_axis) ? config.left_axis : [config.left_axis]
+                    if (axisOptions.length > 0) {
+                        newFormData.left_axis = String(axisOptions[0])
+                    }
+                }
+            }
+            
+            setContactLensFormData(prev => ({ ...prev, ...newFormData }))
+            
+            if (import.meta.env.DEV) {
+                console.log('✅ Configuration selected, form pre-filled:', {
+                    configId: config.id,
+                    configName: config.display_name,
+                    configType: config.configuration_type,
+                    formData: newFormData
+                })
+            }
+        } else {
+            // Reset form when configuration is deselected
+            setContactLensFormData({
+                right_qty: 1,
+                right_base_curve: '8.70',
+                right_diameter: '14.00',
+                right_power: '',
+                right_cylinder: '',
+                right_axis: '',
+                left_qty: 1,
+                left_base_curve: '8.70',
+                left_diameter: '14.00',
+                left_power: '',
+                left_cylinder: '',
+                left_axis: '',
+                unit: 'unit'
+            })
+        }
+    }
+    
     const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
         setContactLensFormData(prev => ({ ...prev, [field]: value }))
         
