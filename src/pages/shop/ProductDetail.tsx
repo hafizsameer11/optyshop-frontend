@@ -17,6 +17,11 @@ import {
     getContactLensOptionsBySubSubcategorySlug,
     type ContactLensOptions
 } from '../../services/categoriesService'
+import {
+    getContactLensConfigsByProduct,
+    type ContactLensConfiguration
+} from '../../services/contactLensConfigService'
+import ContactLensConfigurationDropdown from '../../components/products/ContactLensConfigurationDropdown'
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
@@ -58,6 +63,11 @@ const ProductDetail: React.FC = () => {
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<string>('') // Single selection
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<ContactLensOptions | null>(null) // Aggregated options from sub-subcategory
+    
+    // Contact lens configuration state
+    const [contactLensConfigs, setContactLensConfigs] = useState<ContactLensConfiguration[]>([])
+    const [selectedConfig, setSelectedConfig] = useState<ContactLensConfiguration | null>(null)
+    const [configsLoading, setConfigsLoading] = useState(false)
     
     // Contact lens form state
     const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
@@ -144,6 +154,41 @@ const ProductDetail: React.FC = () => {
                 }
                 setProduct(productData)
                 
+                // Fetch contact lens configurations for this product
+                if (isContactLensProduct) {
+                    try {
+                        setConfigsLoading(true)
+                        const configs = await getContactLensConfigsByProduct(productData.id)
+                        if (!isCancelled && configs && configs.length > 0) {
+                            setContactLensConfigs(configs)
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Fetched contact lens configurations:', {
+                                    productId: productData.id,
+                                    count: configs.length,
+                                    configs: configs.map(c => ({
+                                        id: c.id,
+                                        display_name: c.display_name,
+                                        type: c.configuration_type,
+                                        price: c.price
+                                    }))
+                                })
+                            }
+                        } else {
+                            setContactLensConfigs([])
+                        }
+                    } catch (error) {
+                        console.error('Error fetching contact lens configurations:', error)
+                        setContactLensConfigs([])
+                    } finally {
+                        if (!isCancelled) {
+                            setConfigsLoading(false)
+                        }
+                    }
+                } else {
+                    setContactLensConfigs([])
+                    setSelectedConfig(null)
+                }
+                
                 // Fetch contact lens options from sub-subcategory if product belongs to one
                 const p = productData as any
                 const productSubcategory = p.subcategory
@@ -226,10 +271,23 @@ const ProductDetail: React.FC = () => {
                Array.isArray(p.base_curve_options)
     }, [product])
     
-    // Get contact lens options from product or sub-subcategory (memoized)
-    // Priority: Use aggregated options from sub-subcategory if available, otherwise use product options
+    // Get contact lens options from configuration, sub-subcategory, or product (memoized)
+    // Priority: Configuration > Sub-subcategory > Product
     const baseCurveOptions = useMemo(() => {
-        // If we have aggregated options from sub-subcategory, use those
+        // Priority 1: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_base_curve) {
+            const configOptions = Array.isArray(selectedConfig.right_base_curve) 
+                ? selectedConfig.right_base_curve 
+                : [selectedConfig.right_base_curve]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using base curve options from configuration:', configOptions)
+                }
+                return configOptions.map(v => typeof v === 'string' ? parseFloat(v) : v).filter(v => !isNaN(v))
+            }
+        }
+        
+        // Priority 2: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using base curve options from sub-subcategory:', subSubcategoryOptions.baseCurveOptions)
@@ -237,7 +295,7 @@ const ProductDetail: React.FC = () => {
             return subSubcategoryOptions.baseCurveOptions
         }
         
-        // Otherwise, use product-specific options
+        // Priority 3: Use product-specific options
         if (!product) return []
         const p = product as any
         
@@ -279,10 +337,23 @@ const ProductDetail: React.FC = () => {
         }
         
         return options
-    }, [product, isContactLens, subSubcategoryOptions])
+    }, [product, isContactLens, subSubcategoryOptions, selectedConfig])
     
     const diameterOptions = useMemo(() => {
-        // If we have aggregated options from sub-subcategory, use those
+        // Priority 1: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_diameter) {
+            const configOptions = Array.isArray(selectedConfig.right_diameter) 
+                ? selectedConfig.right_diameter 
+                : [selectedConfig.right_diameter]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using diameter options from configuration:', configOptions)
+                }
+                return configOptions.map(v => typeof v === 'string' ? parseFloat(v) : v).filter(v => !isNaN(v))
+            }
+        }
+        
+        // Priority 2: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.diameterOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using diameter options from sub-subcategory:', subSubcategoryOptions.diameterOptions)
@@ -290,7 +361,7 @@ const ProductDetail: React.FC = () => {
             return subSubcategoryOptions.diameterOptions
         }
         
-        // Otherwise, use product-specific options
+        // Priority 3: Use product-specific options
         if (!product) return []
         const p = product as any
         
@@ -332,7 +403,7 @@ const ProductDetail: React.FC = () => {
         }
         
         return options
-    }, [product, isContactLens, subSubcategoryOptions])
+    }, [product, isContactLens, subSubcategoryOptions, selectedConfig])
     
     // Helper function to check if product belongs to spherical sub-subcategory
     const isSphericalSubSubcategory = useMemo(() => {
@@ -358,10 +429,19 @@ const ProductDetail: React.FC = () => {
     }, [product])
     
     // Helper function to check if product belongs to astigmatism sub-subcategory
+    // Priority: Configuration type > Sub-subcategory options > Product data
     const isAstigmatismSubSubcategory = useMemo(() => {
         if (!product) return false
         
-        // First, check if we have sub-subcategory options with type field (most reliable)
+        // Priority 1: Check selected configuration type (most reliable)
+        if (selectedConfig && selectedConfig.configuration_type === 'astigmatism') {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from configuration type:', selectedConfig.configuration_type)
+            }
+            return true
+        }
+        
+        // Priority 2: Check if we have sub-subcategory options with type field
         if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
             if (import.meta.env.DEV) {
                 console.log('✅ Detected astigmatism from sub-subcategory options type:', subSubcategoryOptions.type)
@@ -371,7 +451,7 @@ const ProductDetail: React.FC = () => {
         
         const p = product as any
         
-        // Check contact_lens_type field
+        // Priority 3: Check contact_lens_type field
         const lensType = (p.contact_lens_type || '').toLowerCase()
         if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
             if (import.meta.env.DEV) {
@@ -380,7 +460,7 @@ const ProductDetail: React.FC = () => {
             return true
         }
         
-        // Check subcategory slug/name if available
+        // Priority 4: Check subcategory slug/name if available
         const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
         const subcategoryName = (p.subcategory?.name || '').toLowerCase()
         // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
@@ -396,6 +476,8 @@ const ProductDetail: React.FC = () => {
         
         if (import.meta.env.DEV) {
             console.log('ℹ️ Product is NOT astigmatism:', {
+                hasSelectedConfig: !!selectedConfig,
+                configType: selectedConfig?.configuration_type,
                 hasSubSubcategoryOptions: !!subSubcategoryOptions,
                 subSubcategoryType: subSubcategoryOptions?.type,
                 contactLensType: lensType,
@@ -405,12 +487,29 @@ const ProductDetail: React.FC = () => {
         }
         
         return false
-    }, [product, subSubcategoryOptions])
+    }, [product, subSubcategoryOptions, selectedConfig])
     
     // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
-    // Use aggregated options from sub-subcategory if available
+    // Priority: Configuration > Sub-subcategory > Standard
     const cylinderOptions = useMemo(() => {
-        // If we have aggregated options from sub-subcategory, use those
+        // Priority 1: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_cylinder) {
+            const configOptions = Array.isArray(selectedConfig.right_cylinder) 
+                ? selectedConfig.right_cylinder 
+                : [selectedConfig.right_cylinder]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using cylinder options from configuration:', configOptions)
+                }
+                return configOptions.map(cyl => {
+                    const num = typeof cyl === 'string' ? parseFloat(cyl) : cyl
+                    const value = num.toFixed(2)
+                    return num > 0 ? `+${value}` : value
+                })
+            }
+        }
+        
+        // Priority 2: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using cylinder options from sub-subcategory:', subSubcategoryOptions.cylinderOptions)
@@ -422,7 +521,7 @@ const ProductDetail: React.FC = () => {
             })
         }
         
-        // Otherwise, generate standard options
+        // Priority 3: Generate standard options
         const options: string[] = []
         for (let i = -24; i <= 24; i++) {
             const value = (i * 0.25).toFixed(2)
@@ -435,12 +534,25 @@ const ProductDetail: React.FC = () => {
             }
         }
         return options
-    }, [subSubcategoryOptions])
+    }, [subSubcategoryOptions, selectedConfig])
     
     // Generate axis options (0 to 180 in 1 degree steps)
-    // Use aggregated options from sub-subcategory if available
+    // Priority: Configuration > Sub-subcategory > Standard
     const axisOptions = useMemo(() => {
-        // If we have aggregated options from sub-subcategory, use those
+        // Priority 1: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_axis) {
+            const configOptions = Array.isArray(selectedConfig.right_axis) 
+                ? selectedConfig.right_axis 
+                : [selectedConfig.right_axis]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using axis options from configuration:', configOptions)
+                }
+                return configOptions.map(axis => String(axis))
+            }
+        }
+        
+        // Priority 2: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using axis options from sub-subcategory:', subSubcategoryOptions.axisOptions)
@@ -448,19 +560,35 @@ const ProductDetail: React.FC = () => {
             return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
         }
         
-        // Otherwise, generate standard options
+        // Priority 3: Generate standard options
         const options: string[] = []
         for (let i = 0; i <= 180; i++) {
             options.push(i.toString())
         }
         return options
-    }, [subSubcategoryOptions])
+    }, [subSubcategoryOptions, selectedConfig])
     
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
-    // Priority: Use aggregated options from sub-subcategory if available
+    // Priority: Configuration > Sub-subcategory > Product
     const powerOptions = useMemo(() => {
-        // If we have aggregated options from sub-subcategory, use those
+        // Priority 1: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_power) {
+            const configOptions = Array.isArray(selectedConfig.right_power) 
+                ? selectedConfig.right_power 
+                : [selectedConfig.right_power]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using power options from configuration:', {
+                        count: configOptions.length,
+                        options: configOptions.slice(0, 5)
+                    })
+                }
+                return configOptions.map(v => typeof v === 'number' ? v.toFixed(2) : String(v))
+            }
+        }
+        
+        // Priority 2: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.powerOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using power options from sub-subcategory:', {
@@ -1405,6 +1533,22 @@ const ProductDetail: React.FC = () => {
                                 {/* Contact Lens Configuration */}
                                 {isContactLens ? (
                                     <div className="mb-6">
+                                        {/* Configuration Dropdown */}
+                                        {contactLensConfigs.length > 0 && (
+                                            <div className="mb-6">
+                                                <ContactLensConfigurationDropdown
+                                                    configurations={contactLensConfigs}
+                                                    selectedConfigId={selectedConfig?.id || null}
+                                                    onSelect={handleConfigSelect}
+                                                    disabled={isProductOutOfStock || configsLoading}
+                                                    className="mb-4"
+                                                />
+                                                {configsLoading && (
+                                                    <p className="text-sm text-gray-500">Loading configurations...</p>
+                                                )}
+                                            </div>
+                                        )}
+                                        
                                         {/* Unit Selector */}
                                         <div className="mb-6">
                                             <label className="block text-base font-semibold text-gray-900 mb-3">{t('shop.unit')}</label>
