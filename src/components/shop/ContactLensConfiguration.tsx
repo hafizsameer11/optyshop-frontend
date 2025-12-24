@@ -43,6 +43,8 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     const fetchSubSubcategoryOptions = async () => {
       const p = product as any
       const productSubcategory = p.subcategory
+      
+      // Check if product has a subcategory with parent_id (sub-subcategory)
       if (productSubcategory && productSubcategory.parent_id) {
         // This is a sub-subcategory, fetch aggregated options
         try {
@@ -54,7 +56,12 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
                 subSubcategoryId: productSubcategory.id,
                 subSubcategoryName: productSubcategory.name,
                 type: options.type,
-                productCount: options.productCount
+                productCount: options.productCount,
+                powerOptions: options.powerOptions?.length || 0,
+                baseCurveOptions: options.baseCurveOptions?.length || 0,
+                diameterOptions: options.diameterOptions?.length || 0,
+                cylinderOptions: options.cylinderOptions?.length || 0,
+                axisOptions: options.axisOptions?.length || 0
               })
             }
           }
@@ -70,17 +77,23 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   }, [product])
   
   // Get contact lens options from product or sub-subcategory
-  // Priority: Use aggregated options from sub-subcategory if available
+  // Priority: Use aggregated options from sub-subcategory if available (from API)
   const p = product as any
-  const baseCurveOptions = subSubcategoryOptions?.baseCurveOptions.length > 0 
+  const baseCurveOptions = subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0 
     ? subSubcategoryOptions.baseCurveOptions 
     : (p.base_curve_options || [8.70, 8.80, 8.90])
-  const diameterOptions = subSubcategoryOptions?.diameterOptions.length > 0
+  const diameterOptions = subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0
     ? subSubcategoryOptions.diameterOptions
     : (p.diameter_options || [14.00, 14.20])
   
   // Check if product belongs to spherical sub-subcategory
+  // Priority: Use type from API response > subcategory name/slug > product field
   const isSphericalSubSubcategory = (() => {
+    // First, check if we have sub-subcategory options with type field (most reliable - from API)
+    if (subSubcategoryOptions && subSubcategoryOptions.type === 'spherical') {
+      return true
+    }
+    
     // Check contact_lens_type field
     const lensType = (p.contact_lens_type || '').toLowerCase()
     if (lensType.includes('spherical') || lensType.includes('sferiche') || lensType.includes('sferica')) {
@@ -100,8 +113,9 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   })()
   
   // Check if product belongs to astigmatism sub-subcategory
+  // Priority: Use type from API response > subcategory name/slug > product field
   const isAstigmatismSubSubcategory = (() => {
-    // First, check if we have sub-subcategory options with type field (most reliable)
+    // First, check if we have sub-subcategory options with type field (most reliable - from API)
     if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
       return true
     }
@@ -197,10 +211,10 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
   }
   
-  // For power options, use aggregated options from sub-subcategory if available
+  // For power options, use aggregated options from sub-subcategory API if available
   // Otherwise use standardized power range for spherical or product's power range
   const powerOptions = (() => {
-    // If we have aggregated options from sub-subcategory, use those
+    // Priority: Use aggregated options from sub-subcategory API (from admin panel)
     if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
       return subSubcategoryOptions.powerOptions
     }
@@ -213,20 +227,59 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return generatePowerOptions(powersRange)
   })()
   
+  // Initialize form data with default values
+  // Will be updated when API data loads
   const [formData, setFormData] = useState<ContactLensFormData>({
     right_qty: 1,
-    right_base_curve: baseCurveOptions[0]?.toString() || '8.70',
-    right_diameter: diameterOptions[0]?.toString() || '14.00',
+    right_base_curve: '8.70',
+    right_diameter: '14.00',
     right_power: '',
     right_cylinder: '',
     right_axis: '',
     left_qty: 1,
-    left_base_curve: baseCurveOptions[0]?.toString() || '8.70',
-    left_diameter: diameterOptions[0]?.toString() || '14.00',
+    left_base_curve: '8.70',
+    left_diameter: '14.00',
     left_power: '',
     left_cylinder: '',
     left_axis: ''
   })
+  
+  // Update form data when API options are loaded
+  useEffect(() => {
+    if (subSubcategoryOptions) {
+      if (subSubcategoryOptions.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          right_base_curve: subSubcategoryOptions.baseCurveOptions[0].toString(),
+          left_base_curve: subSubcategoryOptions.baseCurveOptions[0].toString()
+        }))
+      }
+      if (subSubcategoryOptions.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          right_diameter: subSubcategoryOptions.diameterOptions[0].toString(),
+          left_diameter: subSubcategoryOptions.diameterOptions[0].toString()
+        }))
+      }
+    } else {
+      // Fallback to product defaults if no API data
+      const p = product as any
+      const defaultBaseCurve = (p.base_curve_options && p.base_curve_options.length > 0) 
+        ? p.base_curve_options[0].toString() 
+        : '8.70'
+      const defaultDiameter = (p.diameter_options && p.diameter_options.length > 0)
+        ? p.diameter_options[0].toString()
+        : '14.00'
+      
+      setFormData(prev => ({
+        ...prev,
+        right_base_curve: prev.right_base_curve || defaultBaseCurve,
+        left_base_curve: prev.left_base_curve || defaultBaseCurve,
+        right_diameter: prev.right_diameter || defaultDiameter,
+        left_diameter: prev.left_diameter || defaultDiameter
+      }))
+    }
+  }, [subSubcategoryOptions, product])
   
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}

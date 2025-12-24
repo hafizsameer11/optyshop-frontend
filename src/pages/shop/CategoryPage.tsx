@@ -15,6 +15,7 @@ import {
 } from '../../services/contactLensConfigService'
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
+import ContactLensConfiguration from '../../components/shop/ContactLensConfiguration'
 import { useWishlist } from '../../context/WishlistContext'
 import { 
     getCategoryBySlug, 
@@ -56,7 +57,37 @@ const CategoryPage: React.FC = () => {
     const [subSubcategories, setSubSubcategories] = useState<Category[]>([])
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
+    const [selectedProductForConfig, setSelectedProductForConfig] = useState<Product | null>(null)
+    const [showConfigModal, setShowConfigModal] = useState(false)
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
+
+    // Helper function to check if we're on a contact lens sub-subcategory page (Spherical or Astigmatism)
+    const isContactLensSubSubcategory = (): boolean => {
+        if (!categoryInfo.subSubcategory) return false
+        
+        const subSubcategoryName = categoryInfo.subSubcategory.name.toLowerCase()
+        const subSubcategorySlug = categoryInfo.subSubcategory.slug.toLowerCase()
+        
+        // Check for Spherical
+        const isSpherical = subSubcategoryName.includes('spherical') || 
+                          subSubcategoryName.includes('sferiche') || 
+                          subSubcategoryName.includes('sferica') ||
+                          subSubcategorySlug.includes('spherical') ||
+                          subSubcategorySlug.includes('sferiche') ||
+                          subSubcategorySlug.includes('sferica')
+        
+        // Check for Astigmatism
+        const isAstigmatism = subSubcategoryName.includes('astigmatism') || 
+                             subSubcategoryName.includes('astigmatismo') || 
+                             subSubcategoryName.includes('toric') ||
+                             subSubcategoryName.includes('torica') ||
+                             subSubcategorySlug.includes('astigmatism') ||
+                             subSubcategorySlug.includes('astigmatismo') ||
+                             subSubcategorySlug.includes('toric') ||
+                             subSubcategorySlug.includes('torica')
+        
+        return isSpherical || isAstigmatism
+    }
 
     // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
     // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
@@ -820,6 +851,18 @@ const CategoryPage: React.FC = () => {
                                         })()
                                         : getProductImageUrl(product)
                                     
+                                    // Check if we should open configuration modal instead of navigating
+                                    const shouldOpenConfigModal = isContactLensSubSubcategory()
+                                    
+                                    const handleProductClick = (e: React.MouseEvent) => {
+                                        if (shouldOpenConfigModal) {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            setSelectedProductForConfig(product)
+                                            setShowConfigModal(true)
+                                        }
+                                    }
+                                    
                                     return (
                                     <div
                                         key={product.id}
@@ -827,19 +870,38 @@ const CategoryPage: React.FC = () => {
                                     >
                                         {/* Product Image */}
                                         <div className="relative h-64 md:h-72 bg-white overflow-hidden">
-                                            <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                                            <img
-                                                    src={productImageUrl}
-                                                alt={product.name}
-                                                    key={`${product.id}-${selectedColor || 'default'}`}
-                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                                    style={{ transition: 'opacity 0.3s ease-in-out' }}
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement
-                                                    target.src = '/assets/images/frame1.png'
-                                                }}
-                                            />
-                                            </Link>
+                                            {shouldOpenConfigModal ? (
+                                                <button
+                                                    onClick={handleProductClick}
+                                                    className="block h-full w-full cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={productImageUrl}
+                                                        alt={product.name}
+                                                        key={`${product.id}-${selectedColor || 'default'}`}
+                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                        style={{ transition: 'opacity 0.3s ease-in-out' }}
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            target.src = '/assets/images/frame1.png'
+                                                        }}
+                                                    />
+                                                </button>
+                                            ) : (
+                                                <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
+                                                    <img
+                                                        src={productImageUrl}
+                                                        alt={product.name}
+                                                        key={`${product.id}-${selectedColor || 'default'}`}
+                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                        style={{ transition: 'opacity 0.3s ease-in-out' }}
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            target.src = '/assets/images/frame1.png'
+                                                        }}
+                                                    />
+                                                </Link>
+                                            )}
                                             
                                             {/* Favorite/Wishlist Icon - Always Visible */}
                                             <button
@@ -1133,6 +1195,17 @@ const CategoryPage: React.FC = () => {
                 onClose={() => setShowTryOnModal(false)}
                 selectedProduct={selectedProductForTryOn}
             />
+            
+            {/* Contact Lens Configuration Modal */}
+            {showConfigModal && selectedProductForConfig && (
+                <ContactLensConfiguration
+                    product={selectedProductForConfig}
+                    onClose={() => {
+                        setShowConfigModal(false)
+                        setSelectedProductForConfig(null)
+                    }}
+                />
+            )}
         </div>
     )
 }
