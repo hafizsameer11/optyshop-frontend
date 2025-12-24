@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -141,27 +141,47 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       return numA - numB
     })
     
+    if (import.meta.env.DEV && sorted.length > 0) {
+      console.log(`📋 Extracted ${field} options from configurations:`, sorted)
+    }
+    
     return sorted
   }
   
   // Get contact lens options with priority: Configurations > Sub-subcategory > Product defaults
   const p = product as any
   
-  // Base Curve Options
-  const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
-  const baseCurveOptions = configBaseCurves.length > 0
-    ? configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
-    : (subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0
-      ? subSubcategoryOptions.baseCurveOptions
-      : (p.base_curve_options || [8.70, 8.80, 8.90]))
+  // Base Curve Options - useMemo to recalculate when configs change
+  const baseCurveOptions = useMemo(() => {
+    const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
+    if (configBaseCurves.length > 0) {
+      const options = configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
+      if (import.meta.env.DEV) {
+        console.log('✅ Using base curve options from configurations:', options)
+      }
+      return options
+    }
+    if (subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
+      return subSubcategoryOptions.baseCurveOptions
+    }
+    return (p.base_curve_options || [8.70, 8.80, 8.90])
+  }, [contactLensConfigs, subSubcategoryOptions, p])
   
-  // Diameter Options
-  const configDiameters = extractOptionsFromConfigs('right_diameter')
-  const diameterOptions = configDiameters.length > 0
-    ? configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
-    : (subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0
-      ? subSubcategoryOptions.diameterOptions
-      : (p.diameter_options || [14.00, 14.20]))
+  // Diameter Options - useMemo to recalculate when configs change
+  const diameterOptions = useMemo(() => {
+    const configDiameters = extractOptionsFromConfigs('right_diameter')
+    if (configDiameters.length > 0) {
+      const options = configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
+      if (import.meta.env.DEV) {
+        console.log('✅ Using diameter options from configurations:', options)
+      }
+      return options
+    }
+    if (subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0) {
+      return subSubcategoryOptions.diameterOptions
+    }
+    return (p.diameter_options || [14.00, 14.20])
+  }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Check if product belongs to spherical sub-subcategory
   // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
@@ -229,18 +249,22 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return false
   })()
   
-  // Generate cylinder options
+  // Generate cylinder options - useMemo to recalculate when configs change
   // Priority: Configurations from admin panel > Sub-subcategory options > Default range
-  const cylinderOptions = (() => {
+  const cylinderOptions = useMemo(() => {
     // Extract from configurations first
     const configCylinders = extractOptionsFromConfigs('right_cylinder')
     if (configCylinders.length > 0) {
-      return configCylinders.map(cyl => {
+      const options = configCylinders.map(cyl => {
         const num = typeof cyl === 'number' ? cyl : parseFloat(String(cyl))
         if (isNaN(num)) return ''
         const value = Math.abs(num).toFixed(2)
         return num > 0 ? `+${value}` : `-${value}`
       }).filter(v => v !== '')
+      if (import.meta.env.DEV) {
+        console.log('✅ Using cylinder options from configurations:', options)
+      }
+      return options
     }
     
     // Fallback to sub-subcategory options
@@ -264,18 +288,22 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       }
     }
     return options
-  })()
+  }, [contactLensConfigs, subSubcategoryOptions])
   
-  // Generate axis options
+  // Generate axis options - useMemo to recalculate when configs change
   // Priority: Configurations from admin panel > Sub-subcategory options > Default range
-  const axisOptions = (() => {
+  const axisOptions = useMemo(() => {
     // Extract from configurations first
     const configAxes = extractOptionsFromConfigs('right_axis')
     if (configAxes.length > 0) {
-      return configAxes.map(axis => {
+      const options = configAxes.map(axis => {
         const num = typeof axis === 'number' ? axis : parseFloat(String(axis))
         return isNaN(num) ? '' : num.toString()
       }).filter(v => v !== '').sort((a, b) => parseInt(a) - parseInt(b))
+      if (import.meta.env.DEV) {
+        console.log('✅ Using axis options from configurations:', options)
+      }
+      return options
     }
     
     // Fallback to sub-subcategory options
@@ -289,7 +317,7 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       options.push(i.toString())
     }
     return options
-  })()
+  }, [contactLensConfigs, subSubcategoryOptions])
   
   // Parse power range to generate options
   const generatePowerOptions = (range: string): string[] => {
@@ -324,13 +352,13 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
   }
   
-  // For power options
+  // For power options - useMemo to recalculate when configs change
   // Priority: Configurations from admin panel > Sub-subcategory options > Generated range
-  const powerOptions = (() => {
+  const powerOptions = useMemo(() => {
     // Extract from configurations first (from admin panel)
     const configPowers = extractOptionsFromConfigs('right_power')
     if (configPowers.length > 0) {
-      return configPowers.map(power => {
+      const options = configPowers.map(power => {
         const num = typeof power === 'number' ? power : parseFloat(String(power))
         if (isNaN(num)) return ''
         const value = Math.abs(num).toFixed(2)
@@ -340,6 +368,10 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
         const numB = parseFloat(b)
         return numA - numB
       })
+      if (import.meta.env.DEV) {
+        console.log('✅ Using power options from configurations:', options)
+      }
+      return options
     }
     
     // Fallback to sub-subcategory options
@@ -353,7 +385,7 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       : (p.powers_range || '-0.50 to -6.00 in 0.25 steps')
     
     return generatePowerOptions(powersRange)
-  })()
+  }, [contactLensConfigs, subSubcategoryOptions, isSphericalSubSubcategory, p])
   
   // Initialize form data with default values
   // Will be updated when API data loads
