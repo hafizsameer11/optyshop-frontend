@@ -117,14 +117,20 @@ const ProductDetail: React.FC = () => {
                 
                 // Check if product is a contact lens (needed for configuration fetching)
                 const p = productData as any
-                const isContactLensProduct = productData.category?.slug === 'contact-lenses' || 
-                                            productData.category?.slug === 'eye-hygiene' ||
-                                            p.product_type === 'contact_lens' ||
-                                            Array.isArray(p.base_curve_options)
+                const categorySlug = productData.category?.slug
+                // Helper function to check if product is contact lens (avoid closure issues)
+                const checkIsContactLens = () => {
+                    return categorySlug === 'contact-lenses' || 
+                           categorySlug === 'eye-hygiene' ||
+                           p.product_type === 'contact_lens' ||
+                           Array.isArray(p.base_curve_options)
+                }
+                const isContactLensProduct = checkIsContactLens()
                 
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
                     const imageUrl = getProductImageUrl(productData, 0)
+                    const isContactLens = checkIsContactLens() // Recalculate for console.log
                     
                     console.log('🔍 Product Detail Data:', {
                         id: productData.id,
@@ -140,10 +146,10 @@ const ProductDetail: React.FC = () => {
                         stock_status: p.stock_status,
                         stock_quantity: productData.stock_quantity,
                         in_stock: productData.in_stock,
-                        category: productData.category?.slug,
-                        isContactLens: isContactLensProduct,
+                        category: categorySlug,
+                        isContactLens: isContactLens,
                         // Contact Lens specific fields
-                        ...(isContactLensProduct && {
+                        ...(isContactLens && {
                             base_curve_options: p.base_curve_options,
                             diameter_options: p.diameter_options,
                             powers_range: p.powers_range,
@@ -157,8 +163,8 @@ const ProductDetail: React.FC = () => {
                 setProduct(productData)
                 
                 // Fetch contact lens configurations for this product
-                // Use the local variable isContactLensProduct
-                if (isContactLensProduct) {
+                // Recalculate to ensure we have the correct value
+                if (checkIsContactLens()) {
                     try {
                         setConfigsLoading(true)
                         const configs = await getContactLensConfigsByProduct(productData.id)
