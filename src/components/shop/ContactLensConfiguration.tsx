@@ -143,7 +143,7 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
 
   // Extract options from contact lens configurations (admin panel)
   // Priority: Configurations from admin panel > Sub-subcategory aggregated options > Product defaults
-  // Validates that extracted values are actual values, not IDs
+  // Uses values directly from API as they come from admin panel
   const extractOptionsFromConfigs = (field: 'right_base_curve' | 'right_diameter' | 'right_power' | 'right_cylinder' | 'right_axis' | 'left_base_curve' | 'left_diameter' | 'left_power' | 'left_cylinder' | 'left_axis'): (number | string)[] => {
     const allValues: Set<number | string> = new Set()
     
@@ -152,55 +152,48 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       if (Array.isArray(value)) {
         value.forEach(v => {
           if (v !== null && v !== undefined && v !== '') {
-            allValues.add(v)
+            // Convert to number if it's a valid number, otherwise keep as string
+            const numValue = typeof v === 'number' ? v : parseFloat(String(v))
+            if (!isNaN(numValue)) {
+              allValues.add(numValue)
+            } else {
+              allValues.add(String(v))
+            }
           }
         })
       } else if (value !== null && value !== undefined && value !== '') {
-        allValues.add(value)
+        // Convert to number if it's a valid number, otherwise keep as string
+        const numValue = typeof value === 'number' ? value : parseFloat(String(value))
+        if (!isNaN(numValue)) {
+          allValues.add(numValue)
+        } else {
+          allValues.add(String(value))
+        }
       }
     })
     
-    // Convert to array and sort
+    // Convert to array and sort (treat as numbers when possible)
     const sorted = Array.from(allValues).sort((a, b) => {
       const numA = typeof a === 'number' ? a : parseFloat(String(a))
       const numB = typeof b === 'number' ? b : parseFloat(String(b))
-      if (isNaN(numA) || isNaN(numB)) return 0
+      if (isNaN(numA) || isNaN(numB)) {
+        // If both are strings, compare as strings
+        if (typeof a === 'string' && typeof b === 'string') {
+          return a.localeCompare(b)
+        }
+        return 0
+      }
       return numA - numB
     })
     
-    // Validate that values are reasonable (not IDs)
-    // If values don't pass validation, return empty array to trigger fallback
-    const validated = sorted.filter(v => {
-      const num = typeof v === 'number' ? v : parseFloat(String(v))
-      if (isNaN(num)) return false
-      
-      // Check based on field type
-      if (field.includes('base_curve')) {
-        return isValidBaseCurve(num)
-      } else if (field.includes('diameter')) {
-        return isValidDiameter(num)
-      } else if (field.includes('power')) {
-        return isValidPower(num)
-      } else if (field.includes('cylinder')) {
-        return isValidCylinder(num)
-      } else if (field.includes('axis')) {
-        return isValidAxis(num)
-      }
-      return true // For qty, always valid
-    })
-    
     if (import.meta.env.DEV) {
-      if (sorted.length > 0 && validated.length === 0) {
-        console.warn(`⚠️ Extracted ${field} values appear to be IDs, not actual values. Using fallback options.`, {
-          extracted: sorted,
-          field
-        })
-      } else if (validated.length > 0) {
-        console.log(`📋 Extracted ${field} options from configurations:`, validated)
+      if (sorted.length > 0) {
+        console.log(`📋 Extracted ${field} options from configurations:`, sorted)
       }
     }
     
-    return validated
+    // Return all values from API - trust admin panel data
+    return sorted
   }
   
   // Get contact lens options with priority: Configurations > Sub-subcategory > Product defaults
@@ -210,7 +203,11 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const baseCurveOptions = useMemo(() => {
     const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
     if (configBaseCurves.length > 0) {
-      const options = configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v) && isValidBaseCurve(v))
+      // Use values directly from API - trust admin panel data
+      const options = configBaseCurves.map(v => {
+        const num = typeof v === 'number' ? v : parseFloat(String(v))
+        return isNaN(num) ? String(v) : num
+      })
       if (options.length > 0) {
         if (import.meta.env.DEV) {
           console.log('✅ Using base curve options from configurations:', options)
@@ -237,7 +234,11 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const diameterOptions = useMemo(() => {
     const configDiameters = extractOptionsFromConfigs('right_diameter')
     if (configDiameters.length > 0) {
-      const options = configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v) && isValidDiameter(v))
+      // Use values directly from API - trust admin panel data
+      const options = configDiameters.map(v => {
+        const num = typeof v === 'number' ? v : parseFloat(String(v))
+        return isNaN(num) ? String(v) : num
+      })
       if (options.length > 0) {
         if (import.meta.env.DEV) {
           console.log('✅ Using diameter options from configurations:', options)
@@ -386,11 +387,16 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     // Extract from configurations first
     const configCylinders = extractOptionsFromConfigs('right_cylinder')
     if (configCylinders.length > 0) {
+      // Use values directly from API - trust admin panel data
       const options = configCylinders.map(cyl => {
         const num = typeof cyl === 'number' ? cyl : parseFloat(String(cyl))
-        if (isNaN(num) || !isValidCylinder(num)) return ''
+        if (isNaN(num)) {
+          // If not a number, return as string
+          return String(cyl)
+        }
+        // Format as cylinder value with +/- sign
         const value = Math.abs(num).toFixed(2)
-        return num > 0 ? `+${value}` : `-${value}`
+        return num > 0 ? `+${value}` : num < 0 ? `-${value}` : '0.00'
       }).filter(v => v !== '')
       if (options.length > 0) {
         if (import.meta.env.DEV) {
@@ -435,11 +441,20 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     // Extract from configurations first
     const configAxes = extractOptionsFromConfigs('right_axis')
     if (configAxes.length > 0) {
+      // Use values directly from API - trust admin panel data
       const options = configAxes.map(axis => {
         const num = typeof axis === 'number' ? axis : parseFloat(String(axis))
-        if (isNaN(num) || !isValidAxis(num)) return ''
+        if (isNaN(num)) {
+          // If not a number, return as string
+          return String(axis)
+        }
         return num.toString()
-      }).filter(v => v !== '').sort((a, b) => parseInt(a) - parseInt(b))
+      }).filter(v => v !== '').sort((a, b) => {
+        const numA = parseFloat(a)
+        const numB = parseFloat(b)
+        if (isNaN(numA) || isNaN(numB)) return 0
+        return numA - numB
+      })
       if (options.length > 0) {
         if (import.meta.env.DEV) {
           console.log('✅ Using axis options from configurations:', options)
@@ -506,17 +521,23 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     // Extract from configurations first (from admin panel)
     const configPowers = extractOptionsFromConfigs('right_power')
     if (configPowers.length > 0) {
+      // Use values directly from API - trust admin panel data
       const options = configPowers.map(power => {
         const num = typeof power === 'number' ? power : parseFloat(String(power))
-        if (isNaN(num) || !isValidPower(num)) return ''
+        if (isNaN(num)) {
+          // If not a number, return as string
+          return String(power)
+        }
+        // Format as power value with +/- sign
         const value = Math.abs(num).toFixed(2)
-        return num > 0 ? `+${value}` : `-${value}`
+        return num > 0 ? `+${value}` : num < 0 ? `-${value}` : '0.00'
       }).filter(v => v !== '')
       
       if (options.length > 0) {
         const sorted = options.sort((a, b) => {
           const numA = parseFloat(a)
           const numB = parseFloat(b)
+          if (isNaN(numA) || isNaN(numB)) return 0
           return numA - numB
         })
         if (import.meta.env.DEV) {
@@ -563,6 +584,22 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     left_axis: ''
   })
   
+  // Log configuration type detection for debugging
+  useEffect(() => {
+    if (import.meta.env.DEV && contactLensConfigs.length > 0) {
+      console.log('🔍 Configuration Type Detection:', {
+        configCount: contactLensConfigs.length,
+        configTypes: contactLensConfigs.map(c => ({
+          id: c.id,
+          name: c.name,
+          type: c.configuration_type
+        })),
+        isSpherical: isSphericalSubSubcategory,
+        isAstigmatism: isAstigmatismSubSubcategory
+      })
+    }
+  }, [contactLensConfigs, isSphericalSubSubcategory, isAstigmatismSubSubcategory])
+
   // Clear astigmatism fields when switching to spherical sub-subcategory
   useEffect(() => {
     if (isSphericalSubSubcategory && !isAstigmatismSubSubcategory) {
@@ -596,52 +633,31 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     // Priority: Configurations from admin panel > Sub-subcategory options > Product defaults
     if (contactLensConfigs.length > 0) {
       // Extract first available values from configurations
-      const extractValues = (field: 'right_base_curve' | 'right_diameter'): (number | string)[] => {
-        const allValues: Set<number | string> = new Set()
-        contactLensConfigs.forEach(config => {
+      const extractFirstValue = (field: 'right_base_curve' | 'right_diameter' | 'left_base_curve' | 'left_diameter'): string | null => {
+        for (const config of contactLensConfigs) {
           const value = config[field]
-          if (Array.isArray(value)) {
-            value.forEach(v => {
-              if (v !== null && v !== undefined && v !== '') {
-                allValues.add(v)
-              }
-            })
+          if (Array.isArray(value) && value.length > 0) {
+            const firstVal = value[0]
+            if (firstVal !== null && firstVal !== undefined && firstVal !== '') {
+              return typeof firstVal === 'number' ? firstVal.toString() : String(firstVal)
+            }
           } else if (value !== null && value !== undefined && value !== '') {
-            allValues.add(value)
+            return typeof value === 'number' ? value.toString() : String(value)
           }
-        })
-        return Array.from(allValues).sort((a, b) => {
-          const numA = typeof a === 'number' ? a : parseFloat(String(a))
-          const numB = typeof b === 'number' ? b : parseFloat(String(b))
-          if (isNaN(numA) || isNaN(numB)) return 0
-          return numA - numB
-        })
+        }
+        return null
       }
       
-      const configBaseCurves = extractValues('right_base_curve')
-      const configDiameters = extractValues('right_diameter')
+      const configBaseCurve = extractFirstValue('right_base_curve')
+      const configDiameter = extractFirstValue('right_diameter')
       
-      if (configBaseCurves.length > 0) {
-        const firstBaseCurve = typeof configBaseCurves[0] === 'number' 
-          ? configBaseCurves[0].toString() 
-          : String(configBaseCurves[0])
-        setFormData(prev => ({
-          ...prev,
-          right_base_curve: prev.right_base_curve || firstBaseCurve,
-          left_base_curve: prev.left_base_curve || firstBaseCurve
-        }))
-      }
-      
-      if (configDiameters.length > 0) {
-        const firstDiameter = typeof configDiameters[0] === 'number'
-          ? configDiameters[0].toString()
-          : String(configDiameters[0])
-        setFormData(prev => ({
-          ...prev,
-          right_diameter: prev.right_diameter || firstDiameter,
-          left_diameter: prev.left_diameter || firstDiameter
-        }))
-      }
+      setFormData(prev => ({
+        ...prev,
+        right_base_curve: prev.right_base_curve || configBaseCurve || '8.70',
+        left_base_curve: prev.left_base_curve || configBaseCurve || '8.70',
+        right_diameter: prev.right_diameter || configDiameter || '14.00',
+        left_diameter: prev.left_diameter || configDiameter || '14.00'
+      }))
     } else if (subSubcategoryOptions) {
       // Fallback to sub-subcategory options
       if (subSubcategoryOptions.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
