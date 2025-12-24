@@ -9,6 +9,10 @@ import {
     getContactLensOptionsBySubSubcategoryId,
     type ContactLensOptions
 } from '../../services/categoriesService'
+import {
+    getContactLensConfigsBySubCategory,
+    type ContactLensConfiguration as ConfigType
+} from '../../services/contactLensConfigService'
 
 interface ContactLensConfigurationProps {
   product: Product
@@ -37,8 +41,48 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<ContactLensOptions | null>(null)
+  const [contactLensConfigs, setContactLensConfigs] = useState<ConfigType[]>([])
   
-  // Fetch contact lens options from sub-subcategory if product belongs to one
+  // Fetch contact lens configurations from admin panel (primary source)
+  // These configurations contain the actual options set in the admin panel
+  useEffect(() => {
+    const fetchConfigurations = async () => {
+      const p = product as any
+      const productSubcategory = p.subcategory
+      
+      // Check if product has a subcategory with parent_id (sub-subcategory)
+      if (productSubcategory && productSubcategory.parent_id) {
+        // This is a sub-subcategory, fetch configurations from admin panel
+        try {
+          const configs = await getContactLensConfigsBySubCategory(productSubcategory.id)
+          if (configs && configs.length > 0) {
+            setContactLensConfigs(configs)
+            if (import.meta.env.DEV) {
+              console.log('✅ Fetched contact lens configurations from admin panel:', {
+                subSubcategoryId: productSubcategory.id,
+                subSubcategoryName: productSubcategory.name,
+                configCount: configs.length,
+                configs: configs.map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  type: c.configuration_type,
+                  right_power: c.right_power,
+                  right_base_curve: c.right_base_curve,
+                  right_diameter: c.right_diameter
+                }))
+              })
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching contact lens configurations:', error)
+        }
+      }
+    }
+    
+    fetchConfigurations()
+  }, [product])
+  
+  // Also fetch aggregated options from sub-subcategory as fallback
   useEffect(() => {
     const fetchSubSubcategoryOptions = async () => {
       const p = product as any
@@ -46,22 +90,17 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       
       // Check if product has a subcategory with parent_id (sub-subcategory)
       if (productSubcategory && productSubcategory.parent_id) {
-        // This is a sub-subcategory, fetch aggregated options
+        // This is a sub-subcategory, fetch aggregated options as fallback
         try {
           const options = await getContactLensOptionsBySubSubcategoryId(productSubcategory.id)
           if (options) {
             setSubSubcategoryOptions(options)
             if (import.meta.env.DEV) {
-              console.log('✅ Fetched contact lens options from sub-subcategory:', {
+              console.log('✅ Fetched contact lens options from sub-subcategory (fallback):', {
                 subSubcategoryId: productSubcategory.id,
                 subSubcategoryName: productSubcategory.name,
                 type: options.type,
-                productCount: options.productCount,
-                powerOptions: options.powerOptions?.length || 0,
-                baseCurveOptions: options.baseCurveOptions?.length || 0,
-                diameterOptions: options.diameterOptions?.length || 0,
-                cylinderOptions: options.cylinderOptions?.length || 0,
-                axisOptions: options.axisOptions?.length || 0
+                productCount: options.productCount
               })
             }
           }
@@ -76,20 +115,64 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     fetchSubSubcategoryOptions()
   }, [product])
   
-  // Get contact lens options from product or sub-subcategory
-  // Priority: Use aggregated options from sub-subcategory if available (from API)
+  // Extract options from contact lens configurations (admin panel)
+  // Priority: Configurations from admin panel > Sub-subcategory aggregated options > Product defaults
+  const extractOptionsFromConfigs = (field: 'right_base_curve' | 'right_diameter' | 'right_power' | 'right_cylinder' | 'right_axis' | 'left_base_curve' | 'left_diameter' | 'left_power' | 'left_cylinder' | 'left_axis'): (number | string)[] => {
+    const allValues: Set<number | string> = new Set()
+    
+    contactLensConfigs.forEach(config => {
+      const value = config[field]
+      if (Array.isArray(value)) {
+        value.forEach(v => {
+          if (v !== null && v !== undefined && v !== '') {
+            allValues.add(v)
+          }
+        })
+      } else if (value !== null && value !== undefined && value !== '') {
+        allValues.add(value)
+      }
+    })
+    
+    // Convert to array and sort
+    const sorted = Array.from(allValues).sort((a, b) => {
+      const numA = typeof a === 'number' ? a : parseFloat(String(a))
+      const numB = typeof b === 'number' ? b : parseFloat(String(b))
+      if (isNaN(numA) || isNaN(numB)) return 0
+      return numA - numB
+    })
+    
+    return sorted
+  }
+  
+  // Get contact lens options with priority: Configurations > Sub-subcategory > Product defaults
   const p = product as any
-  const baseCurveOptions = subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0 
-    ? subSubcategoryOptions.baseCurveOptions 
-    : (p.base_curve_options || [8.70, 8.80, 8.90])
-  const diameterOptions = subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0
-    ? subSubcategoryOptions.diameterOptions
-    : (p.diameter_options || [14.00, 14.20])
+  
+  // Base Curve Options
+  const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
+  const baseCurveOptions = configBaseCurves.length > 0
+    ? configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
+    : (subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0
+      ? subSubcategoryOptions.baseCurveOptions
+      : (p.base_curve_options || [8.70, 8.80, 8.90]))
+  
+  // Diameter Options
+  const configDiameters = extractOptionsFromConfigs('right_diameter')
+  const diameterOptions = configDiameters.length > 0
+    ? configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
+    : (subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0
+      ? subSubcategoryOptions.diameterOptions
+      : (p.diameter_options || [14.00, 14.20]))
   
   // Check if product belongs to spherical sub-subcategory
-  // Priority: Use type from API response > subcategory name/slug > product field
+  // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
   const isSphericalSubSubcategory = (() => {
-    // First, check if we have sub-subcategory options with type field (most reliable - from API)
+    // First, check configurations from admin panel (most reliable)
+    if (contactLensConfigs.length > 0) {
+      const hasSpherical = contactLensConfigs.some(c => c.configuration_type === 'spherical')
+      if (hasSpherical) return true
+    }
+    
+    // Check sub-subcategory options with type field
     if (subSubcategoryOptions && subSubcategoryOptions.type === 'spherical') {
       return true
     }
@@ -113,9 +196,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   })()
   
   // Check if product belongs to astigmatism sub-subcategory
-  // Priority: Use type from API response > subcategory name/slug > product field
+  // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
   const isAstigmatismSubSubcategory = (() => {
-    // First, check if we have sub-subcategory options with type field (most reliable - from API)
+    // First, check configurations from admin panel (most reliable)
+    if (contactLensConfigs.length > 0) {
+      const hasAstigmatism = contactLensConfigs.some(c => c.configuration_type === 'astigmatism')
+      if (hasAstigmatism) return true
+    }
+    
+    // Check sub-subcategory options with type field
     if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
       return true
     }
@@ -140,16 +229,29 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return false
   })()
   
-  // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
-  // Use aggregated options from sub-subcategory if available
+  // Generate cylinder options
+  // Priority: Configurations from admin panel > Sub-subcategory options > Default range
   const cylinderOptions = (() => {
+    // Extract from configurations first
+    const configCylinders = extractOptionsFromConfigs('right_cylinder')
+    if (configCylinders.length > 0) {
+      return configCylinders.map(cyl => {
+        const num = typeof cyl === 'number' ? cyl : parseFloat(String(cyl))
+        if (isNaN(num)) return ''
+        const value = Math.abs(num).toFixed(2)
+        return num > 0 ? `+${value}` : `-${value}`
+      }).filter(v => v !== '')
+    }
+    
+    // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
       return subSubcategoryOptions.cylinderOptions.map(cyl => {
-        const value = cyl.toFixed(2)
-        return cyl > 0 ? `+${value}` : value
+        const value = Math.abs(cyl).toFixed(2)
+        return cyl > 0 ? `+${value}` : `-${value}`
       })
     }
     
+    // Default range
     const options: string[] = []
     for (let i = -24; i <= 24; i++) {
       const value = (i * 0.25).toFixed(2)
@@ -164,13 +266,24 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return options
   })()
   
-  // Generate axis options (0 to 180 in 1 degree steps)
-  // Use aggregated options from sub-subcategory if available
+  // Generate axis options
+  // Priority: Configurations from admin panel > Sub-subcategory options > Default range
   const axisOptions = (() => {
+    // Extract from configurations first
+    const configAxes = extractOptionsFromConfigs('right_axis')
+    if (configAxes.length > 0) {
+      return configAxes.map(axis => {
+        const num = typeof axis === 'number' ? axis : parseFloat(String(axis))
+        return isNaN(num) ? '' : num.toString()
+      }).filter(v => v !== '').sort((a, b) => parseInt(a) - parseInt(b))
+    }
+    
+    // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
       return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
     }
     
+    // Default range
     const options: string[] = []
     for (let i = 0; i <= 180; i++) {
       options.push(i.toString())
@@ -211,10 +324,25 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
   }
   
-  // For power options, use aggregated options from sub-subcategory API if available
-  // Otherwise use standardized power range for spherical or product's power range
+  // For power options
+  // Priority: Configurations from admin panel > Sub-subcategory options > Generated range
   const powerOptions = (() => {
-    // Priority: Use aggregated options from sub-subcategory API (from admin panel)
+    // Extract from configurations first (from admin panel)
+    const configPowers = extractOptionsFromConfigs('right_power')
+    if (configPowers.length > 0) {
+      return configPowers.map(power => {
+        const num = typeof power === 'number' ? power : parseFloat(String(power))
+        if (isNaN(num)) return ''
+        const value = Math.abs(num).toFixed(2)
+        return num > 0 ? `+${value}` : `-${value}`
+      }).filter(v => v !== '').sort((a, b) => {
+        const numA = parseFloat(a)
+        const numB = parseFloat(b)
+        return numA - numB
+      })
+    }
+    
+    // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
       return subSubcategoryOptions.powerOptions
     }
@@ -244,25 +372,75 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     left_axis: ''
   })
   
-  // Update form data when API options are loaded
+  // Update form data when configurations or API options are loaded
   useEffect(() => {
-    if (subSubcategoryOptions) {
+    // Priority: Configurations from admin panel > Sub-subcategory options > Product defaults
+    if (contactLensConfigs.length > 0) {
+      // Extract first available values from configurations
+      const extractValues = (field: 'right_base_curve' | 'right_diameter'): (number | string)[] => {
+        const allValues: Set<number | string> = new Set()
+        contactLensConfigs.forEach(config => {
+          const value = config[field]
+          if (Array.isArray(value)) {
+            value.forEach(v => {
+              if (v !== null && v !== undefined && v !== '') {
+                allValues.add(v)
+              }
+            })
+          } else if (value !== null && value !== undefined && value !== '') {
+            allValues.add(value)
+          }
+        })
+        return Array.from(allValues).sort((a, b) => {
+          const numA = typeof a === 'number' ? a : parseFloat(String(a))
+          const numB = typeof b === 'number' ? b : parseFloat(String(b))
+          if (isNaN(numA) || isNaN(numB)) return 0
+          return numA - numB
+        })
+      }
+      
+      const configBaseCurves = extractValues('right_base_curve')
+      const configDiameters = extractValues('right_diameter')
+      
+      if (configBaseCurves.length > 0) {
+        const firstBaseCurve = typeof configBaseCurves[0] === 'number' 
+          ? configBaseCurves[0].toString() 
+          : String(configBaseCurves[0])
+        setFormData(prev => ({
+          ...prev,
+          right_base_curve: prev.right_base_curve || firstBaseCurve,
+          left_base_curve: prev.left_base_curve || firstBaseCurve
+        }))
+      }
+      
+      if (configDiameters.length > 0) {
+        const firstDiameter = typeof configDiameters[0] === 'number'
+          ? configDiameters[0].toString()
+          : String(configDiameters[0])
+        setFormData(prev => ({
+          ...prev,
+          right_diameter: prev.right_diameter || firstDiameter,
+          left_diameter: prev.left_diameter || firstDiameter
+        }))
+      }
+    } else if (subSubcategoryOptions) {
+      // Fallback to sub-subcategory options
       if (subSubcategoryOptions.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
         setFormData(prev => ({
           ...prev,
-          right_base_curve: subSubcategoryOptions.baseCurveOptions[0].toString(),
-          left_base_curve: subSubcategoryOptions.baseCurveOptions[0].toString()
+          right_base_curve: prev.right_base_curve || subSubcategoryOptions.baseCurveOptions[0].toString(),
+          left_base_curve: prev.left_base_curve || subSubcategoryOptions.baseCurveOptions[0].toString()
         }))
       }
       if (subSubcategoryOptions.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0) {
         setFormData(prev => ({
           ...prev,
-          right_diameter: subSubcategoryOptions.diameterOptions[0].toString(),
-          left_diameter: subSubcategoryOptions.diameterOptions[0].toString()
+          right_diameter: prev.right_diameter || subSubcategoryOptions.diameterOptions[0].toString(),
+          left_diameter: prev.left_diameter || subSubcategoryOptions.diameterOptions[0].toString()
         }))
       }
     } else {
-      // Fallback to product defaults if no API data
+      // Fallback to product defaults
       const p = product as any
       const defaultBaseCurve = (p.base_curve_options && p.base_curve_options.length > 0) 
         ? p.base_curve_options[0].toString() 
@@ -279,7 +457,7 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
         left_diameter: prev.left_diameter || defaultDiameter
       }))
     }
-  }, [subSubcategoryOptions, product])
+  }, [contactLensConfigs, subSubcategoryOptions, product])
   
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
