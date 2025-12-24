@@ -262,21 +262,45 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   
   // Check if product belongs to spherical sub-subcategory
   // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
-  const isSphericalSubSubcategory = (() => {
+  const isSphericalSubSubcategory = useMemo(() => {
     // First, check configurations from admin panel (most reliable)
     if (contactLensConfigs.length > 0) {
+      // Check if ALL configurations are spherical (more reliable than "some")
+      const allSpherical = contactLensConfigs.every(c => c.configuration_type === 'spherical')
       const hasSpherical = contactLensConfigs.some(c => c.configuration_type === 'spherical')
-      if (hasSpherical) return true
+      const hasAstigmatism = contactLensConfigs.some(c => c.configuration_type === 'astigmatism')
+      
+      // If all are spherical, definitely spherical
+      if (allSpherical) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Detected spherical sub-subcategory from configurations (all spherical)')
+        }
+        return true
+      }
+      
+      // If there's any spherical and no astigmatism, it's spherical
+      if (hasSpherical && !hasAstigmatism) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Detected spherical sub-subcategory from configurations (has spherical, no astigmatism)')
+        }
+        return true
+      }
     }
     
     // Check sub-subcategory options with type field
     if (subSubcategoryOptions && subSubcategoryOptions.type === 'spherical') {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected spherical sub-subcategory from subSubcategoryOptions')
+      }
       return true
     }
     
     // Check contact_lens_type field
     const lensType = (p.contact_lens_type || '').toLowerCase()
     if (lensType.includes('spherical') || lensType.includes('sferiche') || lensType.includes('sferica')) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected spherical sub-subcategory from contact_lens_type:', lensType)
+      }
       return true
     }
     
@@ -286,29 +310,56 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     if (subcategorySlug.includes('spherical') || subcategorySlug.includes('sferiche') || 
         subcategoryName.includes('spherical') || subcategoryName.includes('sferiche') || 
         subcategoryName.includes('sferica')) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected spherical sub-subcategory from subcategory name/slug:', { subcategorySlug, subcategoryName })
+      }
       return true
     }
     
     return false
-  })()
+  }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Check if product belongs to astigmatism sub-subcategory
   // Priority: Configuration type > Sub-subcategory type > subcategory name/slug > product field
-  const isAstigmatismSubSubcategory = (() => {
+  const isAstigmatismSubSubcategory = useMemo(() => {
     // First, check configurations from admin panel (most reliable)
     if (contactLensConfigs.length > 0) {
+      // Check if ALL configurations are astigmatism (more reliable than "some")
+      const allAstigmatism = contactLensConfigs.every(c => c.configuration_type === 'astigmatism')
       const hasAstigmatism = contactLensConfigs.some(c => c.configuration_type === 'astigmatism')
-      if (hasAstigmatism) return true
+      const hasSpherical = contactLensConfigs.some(c => c.configuration_type === 'spherical')
+      
+      // If all are astigmatism, definitely astigmatism
+      if (allAstigmatism) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Detected astigmatism sub-subcategory from configurations (all astigmatism)')
+        }
+        return true
+      }
+      
+      // If there's any astigmatism and no spherical, it's astigmatism
+      if (hasAstigmatism && !hasSpherical) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Detected astigmatism sub-subcategory from configurations (has astigmatism, no spherical)')
+        }
+        return true
+      }
     }
     
     // Check sub-subcategory options with type field
     if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected astigmatism sub-subcategory from subSubcategoryOptions')
+      }
       return true
     }
     
     // Check contact_lens_type field
     const lensType = (p.contact_lens_type || '').toLowerCase()
     if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected astigmatism sub-subcategory from contact_lens_type:', lensType)
+      }
       return true
     }
     
@@ -320,11 +371,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
         subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
         subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
         subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Detected astigmatism sub-subcategory from subcategory name/slug:', { subcategorySlug, subcategoryName })
+      }
       return true
     }
     
     return false
-  })()
+  }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Generate cylinder options - useMemo to recalculate when configs change
   // Priority: Configurations from admin panel > Sub-subcategory options > Default range
@@ -509,6 +563,34 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     left_axis: ''
   })
   
+  // Clear astigmatism fields when switching to spherical sub-subcategory
+  useEffect(() => {
+    if (isSphericalSubSubcategory && !isAstigmatismSubSubcategory) {
+      // Clear cylinder and axis fields for spherical lenses
+      setFormData(prev => ({
+        ...prev,
+        right_cylinder: '',
+        right_axis: '',
+        left_cylinder: '',
+        left_axis: ''
+      }))
+      
+      // Clear errors for these fields
+      setErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors.right_cylinder
+        delete newErrors.right_axis
+        delete newErrors.left_cylinder
+        delete newErrors.left_axis
+        return newErrors
+      })
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ Cleared astigmatism fields (cylinder/axis) for spherical sub-subcategory')
+      }
+    }
+  }, [isSphericalSubSubcategory, isAstigmatismSubSubcategory])
+
   // Update form data when configurations or API options are loaded
   useEffect(() => {
     // Priority: Configurations from admin panel > Sub-subcategory options > Product defaults
@@ -806,6 +888,10 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
           <div className="bg-white border border-gray-300 rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Select the parameters</h3>
             
+            {/* Form fields are conditionally displayed based on sub-subcategory type:
+                - Spherical: Qty, Radius (B.C), Diameter, Power
+                - Astigmatism: Qty, Radius (B.C), Diameter, Power, Cylinder (CYL), Axis (AX)
+            */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Right Eye */}
               <div>
