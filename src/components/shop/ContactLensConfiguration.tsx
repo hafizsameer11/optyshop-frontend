@@ -115,8 +115,35 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     fetchSubSubcategoryOptions()
   }, [product])
   
+  // Validation functions to check if values are reasonable (not IDs)
+  const isValidBaseCurve = (value: number): boolean => {
+    // Base curves are typically between 7.0 and 10.0
+    return value >= 7.0 && value <= 10.0
+  }
+  
+  const isValidDiameter = (value: number): boolean => {
+    // Diameters are typically between 13.0 and 15.0
+    return value >= 13.0 && value <= 15.0
+  }
+  
+  const isValidPower = (value: number): boolean => {
+    // Powers are typically between -20.0 and +20.0
+    return value >= -20.0 && value <= 20.0
+  }
+  
+  const isValidCylinder = (value: number): boolean => {
+    // Cylinders are typically between -6.0 and +6.0
+    return value >= -6.0 && value <= 6.0
+  }
+  
+  const isValidAxis = (value: number): boolean => {
+    // Axis values are between 0 and 180
+    return value >= 0 && value <= 180
+  }
+
   // Extract options from contact lens configurations (admin panel)
   // Priority: Configurations from admin panel > Sub-subcategory aggregated options > Product defaults
+  // Validates that extracted values are actual values, not IDs
   const extractOptionsFromConfigs = (field: 'right_base_curve' | 'right_diameter' | 'right_power' | 'right_cylinder' | 'right_axis' | 'left_base_curve' | 'left_diameter' | 'left_power' | 'left_cylinder' | 'left_axis'): (number | string)[] => {
     const allValues: Set<number | string> = new Set()
     
@@ -141,11 +168,39 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       return numA - numB
     })
     
-    if (import.meta.env.DEV && sorted.length > 0) {
-      console.log(`📋 Extracted ${field} options from configurations:`, sorted)
+    // Validate that values are reasonable (not IDs)
+    // If values don't pass validation, return empty array to trigger fallback
+    const validated = sorted.filter(v => {
+      const num = typeof v === 'number' ? v : parseFloat(String(v))
+      if (isNaN(num)) return false
+      
+      // Check based on field type
+      if (field.includes('base_curve')) {
+        return isValidBaseCurve(num)
+      } else if (field.includes('diameter')) {
+        return isValidDiameter(num)
+      } else if (field.includes('power')) {
+        return isValidPower(num)
+      } else if (field.includes('cylinder')) {
+        return isValidCylinder(num)
+      } else if (field.includes('axis')) {
+        return isValidAxis(num)
+      }
+      return true // For qty, always valid
+    })
+    
+    if (import.meta.env.DEV) {
+      if (sorted.length > 0 && validated.length === 0) {
+        console.warn(`⚠️ Extracted ${field} values appear to be IDs, not actual values. Using fallback options.`, {
+          extracted: sorted,
+          field
+        })
+      } else if (validated.length > 0) {
+        console.log(`📋 Extracted ${field} options from configurations:`, validated)
+      }
     }
     
-    return sorted
+    return validated
   }
   
   // Get contact lens options with priority: Configurations > Sub-subcategory > Product defaults
@@ -155,32 +210,54 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const baseCurveOptions = useMemo(() => {
     const configBaseCurves = extractOptionsFromConfigs('right_base_curve')
     if (configBaseCurves.length > 0) {
-      const options = configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
-      if (import.meta.env.DEV) {
-        console.log('✅ Using base curve options from configurations:', options)
+      const options = configBaseCurves.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v) && isValidBaseCurve(v))
+      if (options.length > 0) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Using base curve options from configurations:', options)
+        }
+        return options
       }
-      return options
     }
+    // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.baseCurveOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Using base curve options from sub-subcategory (fallback):', subSubcategoryOptions.baseCurveOptions)
+      }
       return subSubcategoryOptions.baseCurveOptions
     }
-    return (p.base_curve_options || [8.70, 8.80, 8.90])
+    // Final fallback to product defaults
+    const defaults = p.base_curve_options || [8.70, 8.80, 8.90]
+    if (import.meta.env.DEV) {
+      console.log('✅ Using base curve options from product defaults (fallback):', defaults)
+    }
+    return Array.isArray(defaults) ? defaults : [8.70, 8.80, 8.90]
   }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Diameter Options - useMemo to recalculate when configs change
   const diameterOptions = useMemo(() => {
     const configDiameters = extractOptionsFromConfigs('right_diameter')
     if (configDiameters.length > 0) {
-      const options = configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v))
-      if (import.meta.env.DEV) {
-        console.log('✅ Using diameter options from configurations:', options)
+      const options = configDiameters.map(v => typeof v === 'number' ? v : parseFloat(String(v))).filter(v => !isNaN(v) && isValidDiameter(v))
+      if (options.length > 0) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Using diameter options from configurations:', options)
+        }
+        return options
       }
-      return options
     }
+    // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.diameterOptions && subSubcategoryOptions.diameterOptions.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Using diameter options from sub-subcategory (fallback):', subSubcategoryOptions.diameterOptions)
+      }
       return subSubcategoryOptions.diameterOptions
     }
-    return (p.diameter_options || [14.00, 14.20])
+    // Final fallback to product defaults
+    const defaults = p.diameter_options || [14.00, 14.20]
+    if (import.meta.env.DEV) {
+      console.log('✅ Using diameter options from product defaults (fallback):', defaults)
+    }
+    return Array.isArray(defaults) ? defaults : [14.00, 14.20]
   }, [contactLensConfigs, subSubcategoryOptions, p])
   
   // Check if product belongs to spherical sub-subcategory
@@ -257,18 +334,23 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     if (configCylinders.length > 0) {
       const options = configCylinders.map(cyl => {
         const num = typeof cyl === 'number' ? cyl : parseFloat(String(cyl))
-        if (isNaN(num)) return ''
+        if (isNaN(num) || !isValidCylinder(num)) return ''
         const value = Math.abs(num).toFixed(2)
         return num > 0 ? `+${value}` : `-${value}`
       }).filter(v => v !== '')
-      if (import.meta.env.DEV) {
-        console.log('✅ Using cylinder options from configurations:', options)
+      if (options.length > 0) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Using cylinder options from configurations:', options)
+        }
+        return options
       }
-      return options
     }
     
     // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Using cylinder options from sub-subcategory (fallback):', subSubcategoryOptions.cylinderOptions)
+      }
       return subSubcategoryOptions.cylinderOptions.map(cyl => {
         const value = Math.abs(cyl).toFixed(2)
         return cyl > 0 ? `+${value}` : `-${value}`
@@ -287,6 +369,9 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
         options.push('0.00')
       }
     }
+    if (import.meta.env.DEV) {
+      console.log('✅ Using default cylinder options (fallback):', options)
+    }
     return options
   }, [contactLensConfigs, subSubcategoryOptions])
   
@@ -298,16 +383,22 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     if (configAxes.length > 0) {
       const options = configAxes.map(axis => {
         const num = typeof axis === 'number' ? axis : parseFloat(String(axis))
-        return isNaN(num) ? '' : num.toString()
+        if (isNaN(num) || !isValidAxis(num)) return ''
+        return num.toString()
       }).filter(v => v !== '').sort((a, b) => parseInt(a) - parseInt(b))
-      if (import.meta.env.DEV) {
-        console.log('✅ Using axis options from configurations:', options)
+      if (options.length > 0) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Using axis options from configurations:', options)
+        }
+        return options
       }
-      return options
     }
     
     // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Using axis options from sub-subcategory (fallback):', subSubcategoryOptions.axisOptions)
+      }
       return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
     }
     
@@ -315,6 +406,9 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     const options: string[] = []
     for (let i = 0; i <= 180; i++) {
       options.push(i.toString())
+    }
+    if (import.meta.env.DEV) {
+      console.log('✅ Using default axis options (fallback):', options)
     }
     return options
   }, [contactLensConfigs, subSubcategoryOptions])
@@ -360,22 +454,29 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     if (configPowers.length > 0) {
       const options = configPowers.map(power => {
         const num = typeof power === 'number' ? power : parseFloat(String(power))
-        if (isNaN(num)) return ''
+        if (isNaN(num) || !isValidPower(num)) return ''
         const value = Math.abs(num).toFixed(2)
         return num > 0 ? `+${value}` : `-${value}`
-      }).filter(v => v !== '').sort((a, b) => {
-        const numA = parseFloat(a)
-        const numB = parseFloat(b)
-        return numA - numB
-      })
-      if (import.meta.env.DEV) {
-        console.log('✅ Using power options from configurations:', options)
+      }).filter(v => v !== '')
+      
+      if (options.length > 0) {
+        const sorted = options.sort((a, b) => {
+          const numA = parseFloat(a)
+          const numB = parseFloat(b)
+          return numA - numB
+        })
+        if (import.meta.env.DEV) {
+          console.log('✅ Using power options from configurations:', sorted)
+        }
+        return sorted
       }
-      return options
     }
     
     // Fallback to sub-subcategory options
     if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+      if (import.meta.env.DEV) {
+        console.log('✅ Using power options from sub-subcategory (fallback):', subSubcategoryOptions.powerOptions)
+      }
       return subSubcategoryOptions.powerOptions
     }
     
@@ -384,7 +485,11 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
       ? '-0.50 to -6.00 in 0.25 steps'  // Standardized power range for all spherical lenses
       : (p.powers_range || '-0.50 to -6.00 in 0.25 steps')
     
-    return generatePowerOptions(powersRange)
+    const generated = generatePowerOptions(powersRange)
+    if (import.meta.env.DEV) {
+      console.log('✅ Using generated power options (fallback):', generated)
+    }
+    return generated
   }, [contactLensConfigs, subSubcategoryOptions, isSphericalSubSubcategory, p])
   
   // Initialize form data with default values
