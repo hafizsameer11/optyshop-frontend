@@ -43,6 +43,45 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
   const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<ContactLensOptions | null>(null)
   const [contactLensConfigs, setContactLensConfigs] = useState<ConfigType[]>([])
   
+  // Safety check: if product is missing, show error and close
+  if (!product) {
+    console.error('ContactLensConfiguration: Product is missing', {
+      product,
+      onClose: !!onClose
+    })
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg max-w-md w-full p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+          <p className="text-gray-600 mb-6">The product information is missing. Please try again.</p>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Close
+            </button>
+          )}
+        </div>
+      </div>
+    )
+  }
+  
+  // Additional check: ensure product has required subcategory information
+  const p = product as any
+  const productSubcategory = p.subcategory
+  if (!productSubcategory || !productSubcategory.parent_id) {
+    if (import.meta.env.DEV) {
+      console.warn('ContactLensConfiguration: Product missing subcategory with parent_id', {
+        productId: product.id,
+        productName: product.name,
+        subcategory: productSubcategory,
+        hasSubcategory: !!productSubcategory,
+        hasParentId: productSubcategory?.parent_id
+      })
+    }
+  }
+  
   // Fetch contact lens configurations from admin panel (primary source)
   // These configurations contain the actual options set in the admin panel
   useEffect(() => {
