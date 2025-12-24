@@ -902,9 +902,68 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
     setLoading(true)
     try {
       if (isAuthenticated) {
+        // Determine the correct product_id to use
+        // If this is a configuration product, we need to find the actual product_id
+        const p = product as any
+        let actualProductId = product.id
+        
+        // Check if this is a contact lens configuration
+        if (p.isContactLensConfig) {
+          // Try to find a configuration that has a product_id
+          if (contactLensConfigs.length > 0) {
+            const configWithProductId = contactLensConfigs.find(c => c.product_id)
+            if (configWithProductId && configWithProductId.product_id) {
+              actualProductId = configWithProductId.product_id
+              if (import.meta.env.DEV) {
+                console.log('✅ Using product_id from configuration:', {
+                  configId: product.id,
+                  productId: actualProductId
+                })
+              }
+            } else if (productSubcategory && productSubcategory.id) {
+              // No product_id in configuration, try to find a product from the subcategory
+              try {
+                const { getProductsBySubcategoryId } = await import('../../services/categoriesService')
+                const subcategoryData = await getProductsBySubcategoryId(productSubcategory.id, { limit: 1 })
+                
+                if (subcategoryData.products && subcategoryData.products.length > 0) {
+                  actualProductId = subcategoryData.products[0].id
+                  if (import.meta.env.DEV) {
+                    console.log('✅ Using product_id from subcategory products:', {
+                      configId: product.id,
+                      productId: actualProductId,
+                      subcategoryId: productSubcategory.id
+                    })
+                  }
+                } else {
+                  console.error('⚠️ No products found in subcategory. Cannot add to cart via API.')
+                  alert('No product found for this configuration. Please contact support.')
+                  setLoading(false)
+                  return
+                }
+              } catch (error) {
+                console.error('⚠️ Error fetching products from subcategory:', error)
+                alert('Unable to find product for this configuration. Please try again or contact support.')
+                setLoading(false)
+                return
+              }
+            } else {
+              console.error('⚠️ Configuration has no product_id and no subcategory. Cannot add to cart via API.')
+              alert('This configuration is not properly linked. Please contact support.')
+              setLoading(false)
+              return
+            }
+          } else {
+            console.error('⚠️ No configurations found. Cannot determine product_id.')
+            alert('Product information is incomplete. Please try again.')
+            setLoading(false)
+            return
+          }
+        }
+        
         // Add to cart via API
         const cartRequest: AddToCartRequest = {
-          product_id: product.id,
+          product_id: actualProductId,
           quantity: 1,
           contact_lens_right_qty: formData.right_qty,
           contact_lens_right_base_curve: parseFloat(formData.right_base_curve),
@@ -919,6 +978,14 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
             contact_lens_right_axis: formData.right_axis ? parseInt(formData.right_axis) : undefined,
             contact_lens_left_cylinder: formData.left_cylinder ? parseFloat(formData.left_cylinder) : undefined,
             contact_lens_left_axis: formData.left_axis ? parseInt(formData.left_axis) : undefined
+          })
+        }
+        
+        if (import.meta.env.DEV) {
+          console.log('📦 Adding to cart:', {
+            product_id: actualProductId,
+            isConfig: p.isContactLensConfig,
+            request: cartRequest
           })
         }
         
@@ -944,7 +1011,15 @@ const ContactLensConfiguration: React.FC<ContactLensConfigurationProps> = ({ pro
             navigate('/cart')
           }
         } else {
-          alert(result.message || 'Failed to add to cart')
+          // Show detailed error message
+          const errorMessage = result.message || 'Failed to add to cart'
+          console.error('❌ Failed to add to cart:', {
+            error: errorMessage,
+            product_id: actualProductId,
+            isConfig: p.isContactLensConfig,
+            request: cartRequest
+          })
+          alert(errorMessage)
         }
       } else {
         // For guest users, add to local cart

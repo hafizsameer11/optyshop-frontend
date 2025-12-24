@@ -1028,6 +1028,26 @@ const ProductDetail: React.FC = () => {
                (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
     }, [product])
 
+    // Helper function to get the color-specific image URL
+    const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
+        // If color is selected and product has color_images, use color-specific image
+        if (selectedColor && product.color_images) {
+            const colorImage = product.color_images.find(ci => 
+                ci.color.toLowerCase() === selectedColor.toLowerCase()
+            )
+            if (colorImage && colorImage.images) {
+                if (colorImage.images[imageIndex]) {
+                    return colorImage.images[imageIndex]
+                } else if (colorImage.images[0]) {
+                    // Fallback to first image of selected color if selected index doesn't exist
+                    return colorImage.images[0]
+                }
+            }
+        }
+        // Fallback to regular product image
+        return getProductImageUrl(product, imageIndex)
+    }
+
     const handleAddToCart = () => {
         if (!product) return
         
@@ -1043,13 +1063,14 @@ const ProductDetail: React.FC = () => {
                 brand: product.brand || '',
                 category: product.category?.slug || 'eyeglasses',
                 price: finalPrice,
-                image: getProductImageUrl(product, selectedImageIndex), // Use the same image extraction logic, with selected image index
+                image: getColorSpecificImageUrl(product, selectedImageIndex), // Use the color-specific image if color is selected
                 description: product.description || '',
                 inStock: product.in_stock || false,
                 rating: product.rating ? Number(product.rating) : undefined,
                 quantity: quantity, // Include quantity
                 frame_material: selectedFrameMaterial || undefined, // Include selected frame material (single)
-                lens_type: selectedLensType || undefined // Include selected lens type (single)
+                lens_type: selectedLensType || undefined, // Include selected lens type (single)
+                selectedColor: selectedColor || undefined // Store selected color for reference
             }
             
             // Add quantity copies
@@ -1374,7 +1395,7 @@ const ProductDetail: React.FC = () => {
                         brand: product.brand || '',
                         category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
                         price: calculateContactLensTotal, // Total price (right + left eye totals)
-                        image: getProductImageUrl(product, selectedImageIndex),
+                        image: getColorSpecificImageUrl(product, selectedImageIndex),
                         description: product.description || '',
                         inStock: product.in_stock || false,
                         unit: contactLensFormData.unit, // Include unit selection
@@ -1392,7 +1413,7 @@ const ProductDetail: React.FC = () => {
                     brand: product.brand || '',
                     category: product.category?.slug || 'contact-lenses',
                     price: calculateContactLensTotal, // Total price (right + left eye totals)
-                    image: getProductImageUrl(product, selectedImageIndex),
+                    image: getColorSpecificImageUrl(product, selectedImageIndex),
                     description: product.description || '',
                     inStock: product.in_stock || false,
                     unit: contactLensFormData.unit, // Include unit selection
@@ -1585,15 +1606,8 @@ const ProductDetail: React.FC = () => {
                                 <>
                                     <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
                                         {(() => {
-                                            // Use color_images if available and color is selected
-                                            let imageUrl = getProductImageUrl(product, selectedImageIndex)
-                                            
-                                            if (selectedColor && product.color_images) {
-                                                const colorImage = product.color_images.find(ci => ci.color === selectedColor)
-                                                if (colorImage && colorImage.images && colorImage.images[selectedImageIndex]) {
-                                                    imageUrl = colorImage.images[selectedImageIndex]
-                                                }
-                                            }
+                                            // Use color-specific image if color is selected
+                                            const imageUrl = getColorSpecificImageUrl(product, selectedImageIndex)
                                             
                                             return (
                                                 <img
@@ -1671,7 +1685,9 @@ const ProductDetail: React.FC = () => {
                                         let imagesArray: string[] = []
                                         
                                         if (selectedColor && product.color_images) {
-                                            const colorImage = product.color_images.find(ci => ci.color === selectedColor)
+                                            const colorImage = product.color_images.find(ci => 
+                                                ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                            )
                                             if (colorImage && colorImage.images) {
                                                 imagesArray = colorImage.images
                                             }
