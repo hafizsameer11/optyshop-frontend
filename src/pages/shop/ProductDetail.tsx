@@ -19,6 +19,7 @@ import {
 } from '../../services/categoriesService'
 import {
     getContactLensConfigsByProduct,
+    getContactLensConfigsBySubCategory,
     type ContactLensConfiguration
 } from '../../services/contactLensConfigService'
 import ContactLensConfigurationDropdown from '../../components/products/ContactLensConfigurationDropdown'
@@ -162,12 +163,41 @@ const ProductDetail: React.FC = () => {
                 }
                 setProduct(productData)
                 
+                // Get product subcategory info for configuration fetching
+                const productSubcategory = p.subcategory
+                
                 // Fetch contact lens configurations for this product
                 // Recalculate to ensure we have the correct value
                 if (checkIsContactLens()) {
                     try {
                         setConfigsLoading(true)
-                        const configs = await getContactLensConfigsByProduct(productData.id)
+                        let configs: ContactLensConfiguration[] | null = null
+                        
+                        // First, try to fetch by product_id
+                        configs = await getContactLensConfigsByProduct(productData.id)
+                        
+                        // If no configurations found by product_id, try by sub_category_id
+                        // (configurations can have product_id: null but be linked to sub-subcategory)
+                        if ((!configs || configs.length === 0) && productSubcategory && productSubcategory.parent_id) {
+                            // Product belongs to a sub-subcategory, fetch configurations by sub_category_id
+                            if (import.meta.env.DEV) {
+                                console.log('⚠️ No configurations found by product_id, trying sub_category_id:', {
+                                    productId: productData.id,
+                                    subCategoryId: productSubcategory.id,
+                                    subCategoryName: productSubcategory.name
+                                })
+                            }
+                            
+                            configs = await getContactLensConfigsBySubCategory(productSubcategory.id)
+                            
+                            if (import.meta.env.DEV && configs && configs.length > 0) {
+                                console.log('✅ Fetched configurations by sub_category_id:', {
+                                    subCategoryId: productSubcategory.id,
+                                    count: configs.length
+                                })
+                            }
+                        }
+                        
                         if (!isCancelled && configs && configs.length > 0) {
                             setContactLensConfigs(configs)
                             if (import.meta.env.DEV) {
@@ -178,12 +208,21 @@ const ProductDetail: React.FC = () => {
                                         id: c.id,
                                         display_name: c.display_name,
                                         type: c.configuration_type,
-                                        price: c.price
+                                        price: c.price,
+                                        product_id: c.product_id,
+                                        sub_category_id: c.sub_category_id
                                     }))
                                 })
                             }
                         } else {
                             setContactLensConfigs([])
+                            if (import.meta.env.DEV) {
+                                console.log('⚠️ No contact lens configurations found for product:', {
+                                    productId: productData.id,
+                                    productName: productData.name,
+                                    subCategoryId: productSubcategory?.id
+                                })
+                            }
                         }
                     } catch (error) {
                         console.error('Error fetching contact lens configurations:', error)
@@ -199,7 +238,6 @@ const ProductDetail: React.FC = () => {
                 }
                 
                 // Fetch contact lens options from sub-subcategory if product belongs to one
-                const productSubcategory = p.subcategory
                 if (productSubcategory && productSubcategory.parent_id) {
                     // This is a sub-subcategory, fetch aggregated options
                     try {
