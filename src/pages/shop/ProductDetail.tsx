@@ -107,28 +107,115 @@ const ProductDetail: React.FC = () => {
             setLoading(true)
             let productData = await getProductBySlug(slug)
             
-            // If product not found and slug starts with "config-", it might be a configuration product
+            // If product not found and slug starts with "config-", it's a configuration product
             if (!productData && slug.startsWith('config-')) {
                 const configId = parseInt(slug.replace('config-', ''))
                 if (!isNaN(configId)) {
                     try {
-                        // Try to fetch configuration and convert to product
-                        const { getContactLensConfigs } = await import('../../services/contactLensConfigService')
-                        const configs = await getContactLensConfigs({ sub_category_id: configId })
-                        // Actually, we need to fetch by ID, but the API might not support that
-                        // For now, let's try fetching all configs and finding the one with matching ID
-                        // Or we can fetch by sub_category_id if we know it
-                        // This is a fallback - the main flow should work through regular product fetch
                         if (import.meta.env.DEV) {
-                            console.log('⚠️ Product not found, checking if it\'s a configuration:', {
+                            console.log('🔍 Product not found, fetching configuration:', {
                                 slug,
                                 configId
                             })
                         }
-                    } catch (error) {
-                        if (import.meta.env.DEV) {
-                            console.log('⚠️ Could not fetch configuration:', error)
+                        
+                        const { getContactLensConfigsBySubCategory } = await import('../../services/contactLensConfigService')
+                        
+                        // Try to get sub_category_id from URL params or try common sub-subcategories
+                        // First, try fetching by category_id for contact-lenses (ID 24)
+                        // Then filter by ID
+                        const { getContactLensConfigs } = await import('../../services/contactLensConfigService')
+                        
+                        // Fetch by category_id to narrow down the search
+                        let configs = await getContactLensConfigs({ category_id: 24 })
+                        
+                        // If not found, try without filters
+                        if (!configs || configs.length === 0) {
+                            configs = await getContactLensConfigs()
                         }
+                        
+                        if (configs && configs.length > 0) {
+                            // Find the configuration with matching ID
+                            const config = configs.find(c => c.id === configId)
+                            
+                            if (config) {
+                                if (import.meta.env.DEV) {
+                                    console.log('✅ Found configuration, converting to product:', {
+                                        configId: config.id,
+                                        displayName: config.display_name,
+                                        subCategoryId: config.sub_category_id
+                                    })
+                                }
+                                
+                                // Parse images from string if needed
+                                let images: string[] = []
+                                if (config.images) {
+                                    if (typeof config.images === 'string') {
+                                        try {
+                                            images = JSON.parse(config.images)
+                                        } catch {
+                                            images = [config.images]
+                                        }
+                                    } else if (Array.isArray(config.images)) {
+                                        images = config.images
+                                    }
+                                }
+                                
+                                // Convert configuration to product format
+                                productData = {
+                                    id: config.id,
+                                    name: config.display_name || config.name,
+                                    slug: slug,
+                                    sku: config.sku || undefined,
+                                    description: config.description || undefined,
+                                    short_description: config.short_description || undefined,
+                                    price: typeof config.price === 'string' ? parseFloat(config.price) : config.price,
+                                    sale_price: config.compare_at_price ? 
+                                        (typeof config.compare_at_price === 'string' ? 
+                                            parseFloat(config.compare_at_price) : 
+                                            config.compare_at_price) : 
+                                        undefined,
+                                    stock_quantity: config.stock_quantity,
+                                    in_stock: config.stock_status === 'in_stock',
+                                    images: images,
+                                    image: images.length > 0 ? images[0] : undefined,
+                                    category: config.category ? {
+                                        id: config.category.id,
+                                        name: config.category.name,
+                                        slug: config.category.slug || config.category.name.toLowerCase().replace(/\s+/g, '-')
+                                    } : undefined,
+                                    brand: undefined,
+                                    rating: undefined,
+                                    // Store subcategory info for configuration fetching
+                                    subcategory: config.subCategory ? {
+                                        id: config.subCategory.id,
+                                        name: config.subCategory.name,
+                                        slug: config.subCategory.slug,
+                                        parent_id: config.subCategory.parent?.id
+                                    } : undefined,
+                                    // Mark as contact lens configuration
+                                    isContactLensConfig: true,
+                                    configurationType: config.configuration_type,
+                                    // Store sub_category_id for reference
+                                    configSubCategoryId: config.sub_category_id
+                                } as Product & { 
+                                    isContactLensConfig?: boolean
+                                    configurationType?: string
+                                    configSubCategoryId?: number
+                                    subcategory?: any
+                                }
+                                
+                                // Also set the configuration as selected config and in configs array
+                                setContactLensConfigs([config])
+                                setSelectedConfig(config)
+                            } else {
+                                if (import.meta.env.DEV) {
+                                    console.warn('⚠️ Configuration not found with ID:', configId)
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Error fetching configuration:', error)
                     }
                 }
             }

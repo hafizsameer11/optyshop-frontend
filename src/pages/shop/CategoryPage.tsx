@@ -325,10 +325,24 @@ const CategoryPage: React.FC = () => {
                                         } : undefined,
                                         brand: undefined,
                                         rating: undefined,
+                                        // Store subcategory info for efficient configuration fetching
+                                        subcategory: config.subCategory ? {
+                                            id: config.subCategory.id,
+                                            name: config.subCategory.name,
+                                            slug: config.subCategory.slug,
+                                            parent_id: config.subCategory.parent?.id
+                                        } : undefined,
                                         // Mark as contact lens configuration
                                         isContactLensConfig: true,
-                                        configurationType: config.configuration_type
-                                    } as Product & { isContactLensConfig?: boolean; configurationType?: string }
+                                        configurationType: config.configuration_type,
+                                        // Store sub_category_id for efficient fetching
+                                        configSubCategoryId: config.sub_category_id
+                                    } as Product & { 
+                                        isContactLensConfig?: boolean
+                                        configurationType?: string
+                                        configSubCategoryId?: number
+                                        subcategory?: any
+                                    }
                                 })
                                 
                                 setProducts(configProducts)
