@@ -17,7 +17,7 @@ import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { useAuth } from '../../context/AuthContext'
 import {
     getContactLensFormConfig,
-    getAstigmatismDropdownValues,
+    getAstigmatismConfigs,
     getSphericalConfigs,
     addContactLensToCart,
     getContactLensOptions,
@@ -734,6 +734,146 @@ const ProductDetail: React.FC = () => {
 
         fetchContactLensOptions()
     }, [product?.id, isContactLens])
+
+    // Fetch Astigmatism Configurations and Extract Dropdown Values (for astigmatism forms)
+    useEffect(() => {
+        const fetchAstigmatismConfigs = async () => {
+            // Only fetch if form type is astigmatism
+            const formType = contactLensFormConfig?.formType || 
+                (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+            
+            if (formType === 'astigmatism' && isContactLens && product) {
+                try {
+                    const p = product as any
+                    
+                    // Get sub-sub-category ID (same logic as fetchFormConfig)
+                    let subCategoryId: number | string | undefined = undefined
+                    
+                    if (p.subcategory?.parent_id) {
+                        subCategoryId = p.subcategory.id
+                    } else if (p.sub_category_id) {
+                        subCategoryId = p.sub_category_id
+                    } else if (p.subcategory_id) {
+                        subCategoryId = p.subcategory_id
+                    } else if (p.sub_category?.id) {
+                        subCategoryId = p.sub_category.id
+                    } else if (p.subcategory?.id) {
+                        subCategoryId = p.subcategory.id
+                    }
+                    
+                    if (!subCategoryId) {
+                        if (import.meta.env.DEV) {
+                            console.warn('⚠️ No sub-sub-category ID found for fetching astigmatism configs')
+                        }
+                        return
+                    }
+                    
+                    const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
+                    if (isNaN(numericId) || numericId <= 0) {
+                        return
+                    }
+                    
+                    // Fetch astigmatism configurations
+                    const configs = await getAstigmatismConfigs(numericId)
+                    
+                    if (configs && configs.length > 0) {
+                        // Extract unique dropdown values from all configurations
+                        const allPowerValues = new Set<string>()
+                        const allCylinderValues = new Set<string>()
+                        const allAxisValues = new Set<string>()
+                        
+                        configs.forEach(config => {
+                            // Extract power values
+                            if (config.right_power && Array.isArray(config.right_power)) {
+                                config.right_power.forEach(v => {
+                                    if (v != null && v !== '') allPowerValues.add(String(v))
+                                })
+                            }
+                            if (config.left_power && Array.isArray(config.left_power)) {
+                                config.left_power.forEach(v => {
+                                    if (v != null && v !== '') allPowerValues.add(String(v))
+                                })
+                            }
+                            
+                            // Extract cylinder values
+                            if (config.right_cylinder && Array.isArray(config.right_cylinder)) {
+                                config.right_cylinder.forEach(v => {
+                                    if (v != null && v !== '') allCylinderValues.add(String(v))
+                                })
+                            }
+                            if (config.left_cylinder && Array.isArray(config.left_cylinder)) {
+                                config.left_cylinder.forEach(v => {
+                                    if (v != null && v !== '') allCylinderValues.add(String(v))
+                                })
+                            }
+                            
+                            // Extract axis values
+                            if (config.right_axis && Array.isArray(config.right_axis)) {
+                                config.right_axis.forEach(v => {
+                                    if (v != null && v !== '') allAxisValues.add(String(v))
+                                })
+                            }
+                            if (config.left_axis && Array.isArray(config.left_axis)) {
+                                config.left_axis.forEach(v => {
+                                    if (v != null && v !== '') allAxisValues.add(String(v))
+                                })
+                            }
+                        })
+                        
+                        // Convert to DropdownValue format and sort
+                        const formatValues = (values: Set<string>, fieldType: string) => {
+                            return Array.from(values)
+                                .map((value, index) => ({
+                                    id: index,
+                                    field_type: fieldType as any,
+                                    value: value,
+                                    label: value,
+                                    eye_type: 'both' as const,
+                                    is_active: true,
+                                    sort_order: index
+                                }))
+                                .sort((a, b) => {
+                                    const numA = parseFloat(a.value)
+                                    const numB = parseFloat(b.value)
+                                    if (!isNaN(numA) && !isNaN(numB)) {
+                                        return numA - numB
+                                    }
+                                    return a.value.localeCompare(b.value)
+                                })
+                        }
+                        
+                        const powerValues = formatValues(allPowerValues, 'power')
+                        const cylinderValues = formatValues(allCylinderValues, 'cylinder')
+                        const axisValues = formatValues(allAxisValues, 'axis')
+                        
+                        // Update state with extracted values
+                        setAstigmatismDropdownValues({
+                            power: powerValues,
+                            cylinder: cylinderValues,
+                            axis: axisValues
+                        })
+
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Astigmatism dropdown values extracted from configurations:', {
+                                configsCount: configs.length,
+                                power: powerValues.length,
+                                cylinder: cylinderValues.length,
+                                axis: axisValues.length,
+                                powerValues: Array.from(allPowerValues),
+                                cylinderValues: Array.from(allCylinderValues),
+                                axisValues: Array.from(allAxisValues)
+                            })
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching astigmatism configurations:', error)
+                    // Don't throw - use values from config as fallback
+                }
+            }
+        }
+
+        fetchAstigmatismConfigs()
+    }, [contactLensFormConfig?.formType, isAstigmatismSubSubcategory, isContactLens, product])
 
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
