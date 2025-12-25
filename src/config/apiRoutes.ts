@@ -281,6 +281,10 @@ export const API_ROUTES = {
     },
     COLORS: `/lens/colors`,                             // PUBLIC - Get all lens colors
     PRESCRIPTION_SUN_COLORS: `/lens/prescription-sun-colors`, // PUBLIC - Get prescription sun colors
+    FINISHES: {
+      LIST: `/lens/finishes`,                          // PUBLIC - Get all lens finishes
+      BY_ID: (id: number | string) => `/lens/finishes/${id}`, // PUBLIC - Get lens finish by ID
+    },
     PRESCRIPTION_SUN_LENSES: {
       LIST: `/prescription-sun-lenses`,                 // PUBLIC - Get all prescription sun lenses organized by category
       BY_ID: (id: number | string) => `/prescription-sun-lenses/${id}`, // PUBLIC - Get prescription sun lens by ID
@@ -338,6 +342,12 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/contact-lens-forms/spherical${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get spherical configurations
+    GET_ASTIGMATISM_CONFIGS: (subCategoryId?: number | string) => {
+      const params = new URLSearchParams();
+      if (subCategoryId) params.append('sub_category_id', String(subCategoryId));
+      const queryString = params.toString();
+      return `/contact-lens-forms/astigmatism${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get astigmatism configurations
     
     // User endpoints (requires authentication)
     CHECKOUT: `/contact-lens-forms/checkout`, // USER - Add contact lens to cart

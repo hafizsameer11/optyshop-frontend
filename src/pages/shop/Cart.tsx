@@ -75,7 +75,8 @@ const Cart: React.FC = () => {
             setShippingLoading(true)
             try {
                 console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
-                const methods = await getShippingMethods({ isActive: true })
+                // Public endpoint returns active methods by default, no need for isActive parameter
+                const methods = await getShippingMethods()
                 if (methods && methods.length > 0) {
                     setShippingMethods(methods)
                     // Auto-select free shipping if available, otherwise first method
@@ -84,9 +85,20 @@ const Cart: React.FC = () => {
                     console.log('✅ [API] Shipping methods loaded:', methods.length)
                 } else {
                     console.warn('⚠️ [API] No shipping methods available')
+                    // Set default free shipping if API returns empty or null
+                    setShippingMethods([])
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('❌ [API] Error fetching shipping methods:', error)
+                // If endpoint doesn't exist (404), set empty array and continue
+                // This allows the cart to function without shipping methods
+                if (error?.response?.status === 404 || error?.message?.includes('404') || error?.message?.includes('Route not found')) {
+                    console.warn('⚠️ [API] Shipping methods endpoint not found (404). Continuing without shipping methods.')
+                    setShippingMethods([])
+                } else {
+                    // For other errors, still set empty array to prevent breaking
+                    setShippingMethods([])
+                }
             } finally {
                 setShippingLoading(false)
             }
@@ -99,6 +111,7 @@ const Cart: React.FC = () => {
         if (selectedShippingMethod) {
             return Number(selectedShippingMethod.price || 0)
         }
+        // If no shipping method is selected (e.g., endpoint unavailable), default to 0
         return 0
     }
 
@@ -244,7 +257,9 @@ const Cart: React.FC = () => {
                                                         }
                                                         
                                                         // For contact lenses, price is already the total
-                                                        if (item.category === 'contact-lenses' || (item as any).isContactLens || (item as any).customization?.contactLens) {
+                                                        // This total accounts for unit/box/pack pricing:
+                                                        // price = unit_price * (right_qty + left_qty) for selected unit type
+                                                        if (item.category === 'contact-lenses' || (item as any).isContactLens || (item as any).customization?.contactLens || (item as any).contact_lens_details) {
                                                             return price.toFixed(2)
                                                         }
                                                         
@@ -257,6 +272,18 @@ const Cart: React.FC = () => {
                                                         return price.toFixed(2)
                                                     })()}
                                                 </p>
+                                                {/* Show unit type for contact lenses */}
+                                                {(item.category === 'contact-lenses' || (item as any).isContactLens || (item as any).customization?.contactLens || (item as any).contact_lens_details) && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        {(() => {
+                                                            const unit = (item as any).contact_lens_details?.unit || 
+                                                                        (item as any).customization?.contactLens?.unit || 
+                                                                        (item as any).unit || 
+                                                                        'unit'
+                                                            return `Per ${unit}`
+                                                        })()}
+                                                    </p>
+                                                )}
                                                 {/* Show item total if quantity > 1 for regular products */}
                                                 {item.quantity > 1 && item.category !== 'contact-lenses' && !(item as any).isContactLens && !(item as any).customization?.contactLens && (
                                                     <p className="text-sm text-gray-500">

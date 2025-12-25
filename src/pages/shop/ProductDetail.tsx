@@ -1411,12 +1411,17 @@ const ProductDetail: React.FC = () => {
                         ? parseFloat(apiItem.unit_price) 
                         : Number(apiItem.unit_price) || 0
                     
-                    // Total price = unit_price * (right_qty + left_qty)
-                    // This matches our local calculation: unitPrice * right_qty + unitPrice * left_qty
+                    // For contact lenses, calculate total based on unit_price and quantities
+                    // The API's unit_price is the price per unit/box/pack (based on product pricing)
+                    // Total = unit_price * (right_qty + left_qty)
+                    // This correctly accounts for the selected purchase type (unit/box/pack)
+                    // Example: If unit='box' and right_qty=1, left_qty=1, then total = box_price * 2
                     const apiTotalPrice = apiUnitPrice * (apiItem.contact_lens_right_qty + apiItem.contact_lens_left_qty)
                     
-                    // Use API price if available and valid, otherwise use calculated price
-                    const finalPrice = apiTotalPrice > 0 ? apiTotalPrice : calculateContactLensTotal
+                    // Use our calculated price which properly accounts for unit/box/pack selection
+                    // The API might not know about the unit type, so we use our local calculation
+                    // which uses getUnitPrice() to get the correct price for unit/box/pack
+                    const finalPrice = calculateContactLensTotal > 0 ? calculateContactLensTotal : apiTotalPrice
                     
                     // Also add to local cart for UI consistency
                     const cartProduct = {

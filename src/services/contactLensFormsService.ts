@@ -74,6 +74,59 @@ export interface SphericalConfig {
   updated_at?: string
 }
 
+export interface AstigmatismConfig {
+  id: number
+  name: string
+  slug?: string | null
+  sku?: string | null
+  description?: string | null
+  short_description?: string | null
+  price: string | number
+  compare_at_price?: string | number | null
+  cost_price?: string | number | null
+  stock_quantity?: number
+  stock_status?: string
+  images?: string | string[] | null
+  color_images?: string | null
+  frame_shape?: string | null
+  frame_material?: string | null
+  frame_color?: string | null
+  gender?: string
+  lens_type?: string | null
+  category_id?: number
+  sub_category_id?: number
+  product_id?: number | null
+  configuration_type: 'astigmatism'
+  spherical_lens_type?: string | null
+  right_qty: number[] | string[]
+  right_base_curve: number[] | string[]
+  right_diameter: number[] | string[]
+  right_power: number[] | string[]
+  right_cylinder: number[] | string[]
+  right_axis: number[] | string[]
+  left_qty: number[] | string[]
+  left_base_curve: number[] | string[]
+  left_diameter: number[] | string[]
+  left_power: number[] | string[]
+  left_cylinder: number[] | string[]
+  left_axis: number[] | string[]
+  display_name?: string
+  is_active?: boolean
+  sort_order?: number
+  created_at?: string
+  updated_at?: string
+  subCategory?: {
+    id: number
+    name: string
+    slug: string
+  }
+  category?: {
+    id: number
+    name: string
+    slug: string
+  }
+}
+
 export interface ContactLensCheckoutRequest {
   product_id: number
   form_type: 'spherical' | 'astigmatism'
@@ -275,6 +328,12 @@ export const getSphericalConfigs = async (
       message: string
       data: {
         configs?: SphericalConfig[]
+        pagination?: {
+          total: number
+          page: number
+          limit: number
+          pages: number
+        }
       }
     }>(
       API_ROUTES.CONTACT_LENS_FORMS.GET_SPHERICAL_CONFIGS(subCategoryId),
@@ -300,6 +359,54 @@ export const getSphericalConfigs = async (
     return []
   } catch (error) {
     console.error('Error fetching spherical configs:', error)
+    return []
+  }
+}
+
+/**
+ * Get astigmatism configurations
+ * @param subCategoryId - Optional filter by sub-sub-category ID
+ */
+export const getAstigmatismConfigs = async (
+  subCategoryId?: number | string
+): Promise<AstigmatismConfig[]> => {
+  try {
+    const response = await apiClient.get<{ 
+      success: boolean
+      message: string
+      data: {
+        configs?: AstigmatismConfig[]
+        pagination?: {
+          total: number
+          page: number
+          limit: number
+          pages: number
+        }
+      }
+    }>(
+      API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId),
+      false // Public endpoint
+    )
+
+    if (response.success && response.data) {
+      // Handle response structure with data.configs
+      let configs: AstigmatismConfig[] = []
+      
+      if (response.data.configs && Array.isArray(response.data.configs)) {
+        configs = response.data.configs
+      } else if (Array.isArray(response.data)) {
+        // Fallback to old structure (direct array)
+        configs = response.data as any
+      }
+      
+      // Filter to only active configs (if is_active field exists)
+      return configs.filter((config: AstigmatismConfig) => config.is_active !== false)
+    }
+
+    console.error('Failed to fetch astigmatism configs:', response.message)
+    return []
+  } catch (error) {
+    console.error('Error fetching astigmatism configs:', error)
     return []
   }
 }

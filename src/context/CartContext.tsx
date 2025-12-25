@@ -132,9 +132,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                 price = Number(item.price) || 0
             }
             
-            // For contact lenses, price is already the total (right + left eye totals)
-            // So we don't multiply by quantity - quantity is just for display
+            // For contact lenses, price is already the total calculated based on unit/box/pack
+            // The price includes: unit_price * (right_qty + left_qty) for the selected unit type
+            // So we don't multiply by quantity - quantity is just for display/counting items
             if (item.category === 'contact-lenses' || item.isContactLens || item.customization?.contactLens) {
+                // Price is already the total for this contact lens item (accounts for unit/box/pack)
                 return total + price
             }
             

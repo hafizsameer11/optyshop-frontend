@@ -139,7 +139,8 @@ export const useLensCustomization = (): UseLensCustomizationReturn => {
       const [treatmentsData, lensOptionsData, shippingData] = await Promise.all([
         getLensTreatments({ isActive: true }),
         getLensOptions({ isActive: true }),
-        getShippingMethods({ isActive: true }),
+        // Public endpoint returns active methods by default
+        getShippingMethods(),
       ])
 
       // Transform and set treatments

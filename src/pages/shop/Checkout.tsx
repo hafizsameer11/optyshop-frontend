@@ -61,7 +61,8 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
             setShippingLoading(true)
             try {
                 console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
-                const methods = await getShippingMethods({ isActive: true })
+                // Public endpoint returns active methods by default
+                const methods = await getShippingMethods()
                 if (methods && methods.length > 0) {
                     setShippingMethods(methods)
                     // Auto-select free shipping if available, otherwise first method
@@ -274,7 +275,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                         zip_code: getFieldValue('zipCode'),
                         country: getFieldValue('country'),
                     },
-                    payment_method: paymentMethod.toUpperCase(), // Backend expects PaymentMethod enum (uppercase)
+                    payment_method: paymentMethod.toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
                     shipping_method_id: selectedShippingMethod?.id,
                     coupon_code: appliedCoupon ? couponCode : undefined,
                     // Include cart items - backend requires this

@@ -901,7 +901,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
     setShippingLoading(true)
     try {
       console.log('🔄 [API] Fetching shipping methods: GET /api/shipping-methods')
-      const methods = await getShippingMethods({ isActive: true })
+      // Public endpoint returns active methods by default
+      const methods = await getShippingMethods()
       if (methods && methods.length > 0) {
         setShippingMethods(methods)
         // Auto-select the first shipping method (or free shipping if available)
@@ -2276,7 +2277,18 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           zip_code: shippingAddress.zip_code,
           country: shippingAddress.country
         },
-        payment_method: paymentMethod.toUpperCase()
+        billing_address: {
+          first_name: shippingAddress.first_name,
+          last_name: shippingAddress.last_name,
+          email: shippingAddress.email,
+          phone: shippingAddress.phone,
+          address: shippingAddress.address,
+          city: shippingAddress.city,
+          zip_code: shippingAddress.zip_code,
+          country: shippingAddress.country
+        },
+        payment_method: paymentMethod.toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
+        shipping_method_id: selectedShippingMethod?.id // Include shipping method ID
       }
 
       // Use appropriate order creation function based on authentication status
@@ -2303,7 +2315,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           zip_code: shippingAddress.zip_code,
           country: shippingAddress.country,
           payment_info: {
-            payment_method: paymentMethod.toUpperCase()
+            payment_method: paymentMethod.toLowerCase() // Backend expects lowercase (stripe, paypal, cod)
           }
         })
         
@@ -5269,7 +5281,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           >
             <option value="stripe">Stripe (Credit/Debit Card)</option>
             <option value="paypal">PayPal</option>
-            <option value="bank_transfer">Bank Transfer</option>
+            <option value="cod">Cash on Delivery</option>
           </select>
         </div>
 

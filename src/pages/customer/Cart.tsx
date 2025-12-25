@@ -306,10 +306,46 @@ const Cart: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-900">
-                          ${(Number(item.unit_price || 0) * Number(item.quantity || 0)).toFixed(2)}
+                          ${(() => {
+                            // For contact lenses, calculate total based on unit_price and contact lens quantities
+                            if (item.contact_lens_details || item.contact_lens_right_qty || item.contact_lens_left_qty) {
+                              const unitPrice = Number(item.unit_price || 0)
+                              // Use contact_lens_details quantities if available, otherwise use legacy fields
+                              let rightQty = 0
+                              let leftQty = 0
+                              
+                              if (item.contact_lens_details) {
+                                rightQty = item.contact_lens_details.right_eye?.qty || 0
+                                leftQty = item.contact_lens_details.left_eye?.qty || 0
+                              } else {
+                                rightQty = Number(item.contact_lens_right_qty || 0)
+                                leftQty = Number(item.contact_lens_left_qty || 0)
+                              }
+                              
+                              // Total = unit_price * (right_qty + left_qty)
+                              // The unit_price from API is the price per unit/box/pack
+                              // The quantities are the number of units/boxes/packs for each eye
+                              // This correctly accounts for the selected purchase type (unit/box/pack)
+                              const total = unitPrice * (rightQty + leftQty)
+                              return total.toFixed(2)
+                            }
+                            
+                            // For regular products, multiply unit_price by quantity
+                            return (Number(item.unit_price || 0) * Number(item.quantity || 0)).toFixed(2)
+                          })()}
                         </p>
                         <p className="text-sm text-gray-500">
-                          ${Number(item.unit_price || 0).toFixed(2)} each
+                          {(() => {
+                            // For contact lenses, show unit type and per-unit price
+                            if (item.contact_lens_details || item.contact_lens_right_qty || item.contact_lens_left_qty) {
+                              const unit = item.contact_lens_details?.unit || 'unit'
+                              const unitPrice = Number(item.unit_price || 0)
+                              // Show price per unit/box/pack
+                              return `$${unitPrice.toFixed(2)} per ${unit}`
+                            }
+                            // For regular products
+                            return `$${Number(item.unit_price || 0).toFixed(2)} each`
+                          })()}
                         </p>
                       </div>
                       <button

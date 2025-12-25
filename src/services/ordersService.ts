@@ -21,6 +21,27 @@ export interface Address {
   country: string;
 }
 
+export interface ContactLensDetails {
+  form_type: 'spherical' | 'astigmatism';
+  unit: string;
+  right_eye: {
+    qty: number;
+    base_curve: number;
+    diameter: number;
+    power: number;
+    cylinder?: number;
+    axis?: number;
+  };
+  left_eye: {
+    qty: number;
+    base_curve: number;
+    diameter: number;
+    power: number;
+    cylinder?: number;
+    axis?: number;
+  };
+}
+
 export interface OrderCartItem {
   product_id: number;
   quantity: number;
@@ -30,6 +51,16 @@ export interface OrderCartItem {
   prescription_id?: number | null;
   frame_size_id?: number | null;
   customization?: any;
+  // Contact lens fields (for adding to cart/order)
+  contact_lens_right_qty?: number;
+  contact_lens_right_base_curve?: number;
+  contact_lens_right_diameter?: number;
+  contact_lens_right_power?: number | string;
+  contact_lens_left_qty?: number;
+  contact_lens_left_base_curve?: number;
+  contact_lens_left_diameter?: number;
+  contact_lens_left_power?: number | string;
+  contact_lens_details?: ContactLensDetails;
 }
 
 export interface PaymentInfo {
@@ -45,6 +76,7 @@ export interface CreateOrderRequest {
   shipping_address?: Address;
   billing_address?: Address;
   payment_method?: string;
+  shipping_method_id?: number; // Shipping method ID selected by user
   coupon_code?: string;
   cart_items?: OrderCartItem[]; // Required for both authenticated and guest users
   
@@ -58,6 +90,34 @@ export interface CreateOrderRequest {
   zip_code?: string;
   country?: string;
   payment_info?: PaymentInfo;
+}
+
+export interface OrderItem {
+  id: number;
+  product_id: number;
+  product_name?: string;
+  product_slug?: string;
+  quantity: number;
+  price: number;
+  unit_price?: number;
+  subtotal: number;
+  lens_index?: number | string;
+  lens_coating?: string;
+  lens_coatings?: string[];
+  prescription_id?: number | null;
+  frame_size_id?: number | null;
+  customization?: any;
+  // Contact lens fields (legacy - for backward compatibility)
+  contact_lens_right_qty?: number;
+  contact_lens_right_base_curve?: number;
+  contact_lens_right_diameter?: number;
+  contact_lens_right_power?: number | string;
+  contact_lens_left_qty?: number;
+  contact_lens_left_base_curve?: number;
+  contact_lens_left_diameter?: number;
+  contact_lens_left_power?: number | string;
+  // New formatted contact_lens_details field from API
+  contact_lens_details?: ContactLensDetails;
 }
 
 export interface Order {
@@ -75,6 +135,7 @@ export interface Order {
   coupon_code?: string | null;
   created_at: string;
   updated_at: string;
+  items?: OrderItem[]; // Order items with contact_lens_details
 }
 
 export interface CreateOrderResponse {
@@ -94,10 +155,17 @@ export const createOrder = async (
   try {
     // Ensure cart_items are included - backend requires this
     // If cart_items not provided, try to use items from the request
-    // Normalize payment_method to uppercase (backend expects PaymentMethod enum)
-    const normalizedPaymentMethod = orderData.payment_method 
-      ? orderData.payment_method.toUpperCase() 
-      : 'CARD';
+    // Payment method should be lowercase (stripe, paypal, cod) per Postman collection
+    const validPaymentMethods = ['stripe', 'paypal', 'cod'];
+    let normalizedPaymentMethod = orderData.payment_method 
+      ? orderData.payment_method.toLowerCase() 
+      : 'stripe';
+    
+    // Validate payment method
+    if (!validPaymentMethods.includes(normalizedPaymentMethod)) {
+      console.warn(`Invalid payment method: ${normalizedPaymentMethod}. Defaulting to 'stripe'.`);
+      normalizedPaymentMethod = 'stripe';
+    }
 
     // Backend expects shipping_address and billing_address as JSON strings, not objects
     const orderPayload: any = {
@@ -105,8 +173,10 @@ export const createOrder = async (
       // Backend might expect 'items' or 'cart_items' - include both for compatibility
       items: orderData.cart_items || [],
       cart_items: orderData.cart_items || [],
-      // Ensure payment_method is uppercase enum value
+      // Payment method should be lowercase (stripe, paypal, cod)
       payment_method: normalizedPaymentMethod,
+      // Include shipping_method_id if provided
+      shipping_method_id: orderData.shipping_method_id,
       // Convert address objects to JSON strings if they exist
       shipping_address: orderData.shipping_address 
         ? JSON.stringify(orderData.shipping_address)
@@ -169,7 +239,15 @@ export const createGuestOrder = async (
       return null;
     }
 
-    const guestOrderData = {
+    // Validate and normalize payment method
+    const validPaymentMethods = ['stripe', 'paypal', 'cod'];
+    let guestPaymentMethod = (orderData.payment_info?.payment_method || orderData.payment_method || 'stripe').toLowerCase();
+    if (!validPaymentMethods.includes(guestPaymentMethod)) {
+      console.warn(`Invalid payment method: ${guestPaymentMethod}. Defaulting to 'stripe'.`);
+      guestPaymentMethod = 'stripe';
+    }
+
+    const guestOrderData: any = {
       cart_items: orderData.cart_items,
       // Backend might expect 'items' as well - include both for compatibility
       items: orderData.cart_items,
@@ -182,15 +260,19 @@ export const createGuestOrder = async (
       zip_code: orderData.zip_code,
       country: orderData.country,
       coupon_code: orderData.coupon_code,
-      payment_info: orderData.payment_info || {
-        payment_method: orderData.payment_method || 'CARD', // Backend expects PaymentMethod enum (uppercase)
-        card_number: orderData.payment_info?.card_number,
-        cardholder_name: orderData.payment_info?.cardholder_name,
-        expiry_date: orderData.payment_info?.expiry_date,
-        cvv: orderData.payment_info?.cvv,
+      payment_info: orderData.payment_info ? {
+        payment_method: guestPaymentMethod,
+        card_number: orderData.payment_info.card_number,
+        cardholder_name: orderData.payment_info.cardholder_name,
+        expiry_date: orderData.payment_info.expiry_date,
+        cvv: orderData.payment_info.cvv,
+      } : {
+        payment_method: guestPaymentMethod,
       },
-      // Also include payment_method at top level for backend compatibility
-      payment_method: orderData.payment_info?.payment_method || orderData.payment_method || 'CARD',
+      // Also include payment_method at top level for backend compatibility (lowercase)
+      payment_method: guestPaymentMethod,
+      // Include shipping_method_id if provided
+      shipping_method_id: orderData.shipping_method_id,
     };
 
     // For guest checkout, try without authentication first
@@ -282,16 +364,22 @@ export const getOrders = async (): Promise<Order[]> => {
  * Get a specific order by ID
  * @param orderId - Order ID
  */
-export const getOrderById = async (orderId: number | string): Promise<any | null> => {
+export const getOrderById = async (orderId: number | string): Promise<Order & { items?: OrderItem[] } | null> => {
   try {
-    const response = await apiClient.get<any>(
+    const response = await apiClient.get<{ 
+      success: boolean;
+      message?: string;
+      data: { 
+        order: Order & { items?: OrderItem[] };
+      } | (Order & { items?: OrderItem[] });
+    }>(
       API_ROUTES.ORDERS.BY_ID(orderId),
       true // Requires authentication (USER endpoint)
     );
 
     if (response.success && response.data) {
-      // API returns { data: { order: {...} } }
-      const orderData = response.data.order || response.data;
+      // API returns { data: { order: {...} } } or { data: {...} }
+      const orderData = (response.data as any).order || response.data;
       
       // Parse JSON string addresses if they exist
       if (typeof orderData.shipping_address === 'string') {

@@ -61,17 +61,29 @@ export interface ShippingMethodResponse {
 
 /**
  * Get all active shipping methods with optional filtering
+ * According to Postman collection: 
+ * - Public endpoint: GET /api/shipping-methods
+ * - Supports 'type' query parameter only (standard, express, overnight, international, free)
+ * - Returns only active shipping methods by default (no isActive parameter needed)
  */
 export const getShippingMethods = async (params?: {
   type?: string;
-  isActive?: boolean;
+  isActive?: boolean; // Note: Public endpoint doesn't support this - it returns active methods by default
 }): Promise<ShippingMethod[] | null> => {
   try {
     const queryParams: Record<string, any> = {};
-    if (params?.type) queryParams.type = params.type;
-    if (params?.isActive !== undefined) queryParams.isActive = params.isActive;
+    // Public endpoint only supports 'type' parameter according to Postman collection
+    // The endpoint returns active methods by default, so we don't send isActive
+    if (params?.type) {
+      queryParams.type = params.type;
+    }
+    // Note: isActive parameter is not supported by the public endpoint
+    // The endpoint description says "Get all active shipping methods" - it returns active by default
 
     const url = buildQueryString(API_ROUTES.SHIPPING_METHODS.LIST, queryParams);
+    if (import.meta.env.DEV) {
+      console.log('🔄 [Shipping Methods] Fetching from:', url);
+    }
     const response = await apiClient.get<ShippingMethodsResponse>(url, false);
 
     if (response.success && response.data) {
@@ -97,10 +109,20 @@ export const getShippingMethods = async (params?: {
       return [];
     }
 
-    console.error('Failed to fetch shipping methods:', response.message);
+    console.error('Failed to fetch shipping methods:', response.message || 'Unknown error');
     return null;
-  } catch (error) {
-    console.error('Error fetching shipping methods:', error);
+  } catch (error: any) {
+    // Log detailed error information for debugging
+    if (import.meta.env.DEV) {
+      console.error('Error fetching shipping methods:', {
+        message: error?.message,
+        response: error?.response,
+        status: error?.response?.status,
+        url: error?.config?.url || url
+      });
+    } else {
+      console.error('Error fetching shipping methods:', error?.message || 'Unknown error');
+    }
     return null;
   }
 };

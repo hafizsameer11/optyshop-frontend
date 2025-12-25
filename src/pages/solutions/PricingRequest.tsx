@@ -2,10 +2,14 @@ import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import { apiClient } from '../../utils/api'
+import { API_ROUTES } from '../../config/apiRoutes'
 
 const PricingRequest: React.FC = () => {
     const [step, setStep] = useState(1)
     const [isSubmitted, setIsSubmitted] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState('')
     const [formData, setFormData] = useState({
         businessEmail: '',
         name: '',
@@ -50,12 +54,67 @@ const PricingRequest: React.FC = () => {
         setStep(2)
     }
 
-    const handleStep2Submit = (e: React.FormEvent) => {
+    const handleStep2Submit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // Handle final form submission here
-        console.log('Form submitted:', formData)
-        // You can add API call here
-        setIsSubmitted(true)
+        setSubmitError('')
+
+        // Basic validation
+        if (!formData.businessEmail || !formData.name || !formData.surname || !formData.village || !formData.companyName || !formData.numberOfFrames || !formData.numberOfProducts) {
+            setSubmitError('Please fill in all required fields')
+            return
+        }
+
+        setIsSubmitting(true)
+        try {
+            // Map form data to API payload
+            // The API expects: email, company, monthlyTraffic, skuCount, priority
+            // We'll map our fields appropriately
+            const payload: Record<string, any> = {
+                email: formData.businessEmail,
+                company: formData.companyName,
+                monthlyTraffic: formData.numberOfFrames, // Map frames to traffic
+                skuCount: formData.numberOfProducts, // Map products to SKU count
+                priority: 'medium', // Default priority
+            }
+
+            // Add optional fields if provided
+            if (formData.message) {
+                payload.message = formData.message
+            }
+            if (formData.brandCategories.length > 0) {
+                payload.brandCategories = formData.brandCategories
+            }
+            if (formData.hdPackshots) {
+                payload.hdPackshots = true
+            }
+
+            if (import.meta.env.DEV) {
+                console.log('[Pricing Form] Submitting payload:', payload)
+            }
+
+            const response = await apiClient.post(
+                API_ROUTES.FORMS.PRICING.SUBMIT,
+                payload,
+                false
+            )
+
+            if (response.success) {
+                setIsSubmitted(true)
+            } else {
+                const errorMsg = response.error || response.message || 'Failed to submit pricing request. Please try again.'
+                setSubmitError(errorMsg)
+                if (import.meta.env.DEV) {
+                    console.error('Pricing form submission error:', response)
+                }
+            }
+        } catch (error: any) {
+            setSubmitError(error.message || 'An error occurred. Please try again.')
+            if (import.meta.env.DEV) {
+                console.error('Pricing form submission exception:', error)
+            }
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const solutions = [
@@ -422,13 +481,21 @@ const PricingRequest: React.FC = () => {
                                     />
                                 </div>
 
+                                {/* Error Message */}
+                                {submitError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                                        {submitError}
+                                    </div>
+                                )}
+
                                 {/* Submit Button */}
                                 <div className="text-center pt-4">
                                     <button
                                         type="submit"
-                                        className="px-8 md:px-12 py-3 md:py-4 bg-blue-950 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors duration-300 shadow-md text-base md:text-lg"
+                                        disabled={isSubmitting}
+                                        className="px-8 md:px-12 py-3 md:py-4 bg-blue-950 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors duration-300 shadow-md text-base md:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Send my request
+                                        {isSubmitting ? 'Submitting...' : 'Send my request'}
                                     </button>
                                 </div>
                             </form>
