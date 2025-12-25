@@ -1977,8 +1977,8 @@ const ProductDetail: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Regular Product */}
-                                {(
+                                {/* Regular Product - Hide for Contact Lenses */}
+                                {!isContactLens && (
                                     /* Regular Product Quantity and Add to Cart */
                                 <div className="mb-6">
                                     <div className="flex items-center gap-4 mb-4">
