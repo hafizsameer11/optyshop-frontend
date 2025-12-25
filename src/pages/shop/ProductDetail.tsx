@@ -212,18 +212,38 @@ const ProductDetail: React.FC = () => {
             
             const p = product as any
             // Get sub-sub-category ID (must have parent_id)
-            const subCategoryId = p.subcategory?.id || p.sub_category_id
+            // Try multiple possible fields and ensure it's a number
+            let subCategoryId: number | string | undefined = 
+                p.subcategory?.id || 
+                p.sub_category_id || 
+                p.subcategory_id ||
+                p.category?.id
             
+            // Validate that we have a valid ID (must be a number, not a slug)
             if (!subCategoryId) {
                 if (import.meta.env.DEV) {
-                    console.warn('⚠️ No sub-category ID found for contact lens product:', product.id)
+                    console.warn('⚠️ No sub-category ID found for contact lens product:', product.id, {
+                        subcategory: p.subcategory,
+                        sub_category_id: p.sub_category_id,
+                        subcategory_id: p.subcategory_id,
+                        category: p.category
+                    })
+                }
+                return
+            }
+            
+            // Ensure it's a number (not a slug/string)
+            const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
+            if (isNaN(numericId) || numericId <= 0) {
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ Invalid sub-category ID (not a number):', subCategoryId, 'for product:', product.id)
                 }
                 return
             }
             
             setLoadingFormConfig(true)
             try {
-                const config = await getContactLensFormConfig(subCategoryId)
+                const config = await getContactLensFormConfig(numericId)
                 if (config) {
                     setContactLensFormConfig(config)
                     if (import.meta.env.DEV) {

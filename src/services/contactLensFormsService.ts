@@ -120,8 +120,16 @@ export const getContactLensFormConfig = async (
   subCategoryId: number | string
 ): Promise<ContactLensFormConfig | null> => {
   try {
+    // Ensure subCategoryId is a valid number (not a slug)
+    const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
+    
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Invalid sub-category ID provided:', subCategoryId, '- must be a positive number')
+      return null
+    }
+    
     const response = await apiClient.get<ContactLensFormConfig>(
-      API_ROUTES.CONTACT_LENS_FORMS.GET_CONFIG(subCategoryId),
+      API_ROUTES.CONTACT_LENS_FORMS.GET_CONFIG(numericId),
       false // Public endpoint
     )
 
@@ -129,10 +137,16 @@ export const getContactLensFormConfig = async (
       return response.data
     }
 
-    console.error('Failed to fetch contact lens form config:', response.message)
+    console.error('Failed to fetch contact lens form config:', response.message, {
+      subCategoryId: numericId,
+      error: response.error
+    })
     return null
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching contact lens form config:', error)
+    if (error?.message) {
+      console.error('Error details:', error.message)
+    }
     return null
   }
 }
