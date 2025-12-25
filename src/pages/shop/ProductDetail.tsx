@@ -732,25 +732,13 @@ const ProductDetail: React.FC = () => {
         }
 
         // Priority 2: Use configuration data if available
-        if (selectedConfig && selectedConfig.right_power) {
-            const configOptions = Array.isArray(selectedConfig.right_power)
-                ? selectedConfig.right_power
-                : [selectedConfig.right_power]
-            if (configOptions.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from configuration:', {
-                        count: configOptions.length,
-                        options: configOptions.slice(0, 5)
-                    })
-                }
-                return configOptions.map(v => typeof v === 'number' ? v.toFixed(2) : String(v))
-            }
-        }
+        // Note: SphericalConfig does not currently have specific power usage, it primarily defines base/dia/qty
+        // If we need specific power ranges per config, we should add power_min/max/step to SphericalConfig interface
 
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API
         return []
-    }, [astigmatismDropdownValues.power])
+    }, [astigmatismDropdownValues.power, selectedConfig])
 
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -892,6 +880,7 @@ const ProductDetail: React.FC = () => {
 
         try {
             // Convert API product to cart-compatible format
+
             const salePrice = product.sale_price ? Number(product.sale_price) : null
             const regularPrice = product.price ? Number(product.price) : 0
             const finalPrice = salePrice && regularPrice && salePrice < regularPrice ? salePrice : regularPrice
@@ -926,6 +915,7 @@ const ProductDetail: React.FC = () => {
     }
 
     // Handle configuration selection
+
     const handleConfigSelect = (config: SphericalConfig | null) => {
         setSelectedConfig(config)
 
@@ -1217,9 +1207,7 @@ const ProductDetail: React.FC = () => {
                                     baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                     diameter: parseFloat(contactLensFormData.right_diameter),
                                     // Power is required for BOTH Spherical and Astigmatism
-                                    ...(contactLensFormData.right_power && {
-                                        power: parseFloat(contactLensFormData.right_power)
-                                    }),
+                                    power: parseFloat(contactLensFormData.right_power) || 0,
                                     // Cylinder and Axis are ONLY for Astigmatism
                                     ...(formType === 'astigmatism' && {
                                         cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
@@ -1231,9 +1219,7 @@ const ProductDetail: React.FC = () => {
                                     baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                     diameter: parseFloat(contactLensFormData.left_diameter),
                                     // Power is required for BOTH Spherical and Astigmatism
-                                    ...(contactLensFormData.left_power && {
-                                        power: parseFloat(contactLensFormData.left_power)
-                                    }),
+                                    power: parseFloat(contactLensFormData.left_power) || 0,
                                     // Cylinder and Axis are ONLY for Astigmatism
                                     ...(formType === 'astigmatism' && {
                                         cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
@@ -1270,9 +1256,7 @@ const ProductDetail: React.FC = () => {
                                 baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                 diameter: parseFloat(contactLensFormData.right_diameter),
                                 // Power is required for BOTH Spherical and Astigmatism
-                                ...(contactLensFormData.right_power && {
-                                    power: parseFloat(contactLensFormData.right_power)
-                                }),
+                                power: parseFloat(contactLensFormData.right_power) || 0,
                                 // Cylinder and Axis are ONLY for Astigmatism
                                 ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
@@ -1284,9 +1268,7 @@ const ProductDetail: React.FC = () => {
                                 baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                 diameter: parseFloat(contactLensFormData.left_diameter),
                                 // Power is required for BOTH Spherical and Astigmatism
-                                ...(contactLensFormData.left_power && {
-                                    power: parseFloat(contactLensFormData.left_power)
-                                }),
+                                power: parseFloat(contactLensFormData.left_power) || 0,
                                 // Cylinder and Axis are ONLY for Astigmatism
                                 ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
@@ -1519,8 +1501,8 @@ const ProductDetail: React.FC = () => {
                                                                 setSelectedImageIndex(0) // Reset to first image of selected color
                                                             }}
                                                             className={`px-4 py-2 rounded-lg border-2 transition-colors ${selectedColor === colorImage.color
-                                                                    ? 'border-blue-950 bg-blue-50'
-                                                                    : 'border-gray-200 hover:border-gray-300'
+                                                                ? 'border-blue-950 bg-blue-50'
+                                                                : 'border-gray-200 hover:border-gray-300'
                                                                 }`}
                                                         >
                                                             <span className="text-sm font-medium capitalize">
@@ -1566,8 +1548,8 @@ const ProductDetail: React.FC = () => {
                                                             key={index}
                                                             onClick={() => setSelectedImageIndex(index)}
                                                             className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImageIndex === index
-                                                                    ? 'border-blue-950'
-                                                                    : 'border-gray-200'
+                                                                ? 'border-blue-950'
+                                                                : 'border-gray-200'
                                                                 }`}
                                                         >
                                                             <img
@@ -1616,8 +1598,8 @@ const ProductDetail: React.FC = () => {
                                                     type="button"
                                                     onClick={() => handleContactLensFieldChange('unit', 'unit')}
                                                     className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'unit'
-                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
                                                         }`}
                                                 >
                                                     Unit
@@ -1626,8 +1608,8 @@ const ProductDetail: React.FC = () => {
                                                     type="button"
                                                     onClick={() => handleContactLensFieldChange('unit', 'box')}
                                                     className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'box'
-                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
                                                         }`}
                                                 >
                                                     Box
@@ -1636,8 +1618,8 @@ const ProductDetail: React.FC = () => {
                                                     type="button"
                                                     onClick={() => handleContactLensFieldChange('unit', 'pack')}
                                                     className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'pack'
-                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
                                                         }`}
                                                 >
                                                     Pack
@@ -1667,7 +1649,7 @@ const ProductDetail: React.FC = () => {
                                                                 }`}
                                                         >
                                                             <option value="">Select Qty</option>
-                                                            {qtyOptions.map((option) => (
+                                                            {qtyOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
                                                                 </option>
@@ -1689,7 +1671,7 @@ const ProductDetail: React.FC = () => {
                                                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md"
                                                         >
                                                             <option value="">Select B.C</option>
-                                                            {baseCurveOptions.map((option) => (
+                                                            {baseCurveOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
                                                                 </option>
@@ -1708,7 +1690,7 @@ const ProductDetail: React.FC = () => {
                                                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md"
                                                         >
                                                             <option value="">Select DIA</option>
-                                                            {diameterOptions.map((option) => (
+                                                            {diameterOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
                                                                 </option>
@@ -1736,7 +1718,7 @@ const ProductDetail: React.FC = () => {
                                                                         }`}
                                                                 >
                                                                     <option value="">Select Power</option>
-                                                                    {powerOptions.map((option) => (
+                                                                    {powerOptions.map((option: string | number) => (
                                                                         <option key={option} value={option}>
                                                                             {option}
                                                                         </option>
@@ -1773,7 +1755,7 @@ const ProductDetail: React.FC = () => {
                                                                 }`}
                                                         >
                                                             <option value="">Select Qty</option>
-                                                            {qtyOptions.map((option) => (
+                                                            {qtyOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
                                                                 </option>
@@ -1814,7 +1796,7 @@ const ProductDetail: React.FC = () => {
                                                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md"
                                                         >
                                                             <option value="">Select DIA</option>
-                                                            {diameterOptions.map((option) => (
+                                                            {diameterOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
                                                                 </option>
@@ -1842,7 +1824,7 @@ const ProductDetail: React.FC = () => {
                                                                         }`}
                                                                 >
                                                                     <option value="">Select Power</option>
-                                                                    {powerOptions.map((option) => (
+                                                                    {powerOptions.map((option: string | number) => (
                                                                         <option key={option} value={option}>
                                                                             {option}
                                                                         </option>
@@ -1886,7 +1868,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select Power</option>
-                                                                            {powerOptions.map((option) => (
+                                                                            {powerOptions.map((option: string | number) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -1909,7 +1891,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select Power</option>
-                                                                            {powerOptions.map((option) => (
+                                                                            {powerOptions.map((option: string | number) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -1938,7 +1920,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select CYL</option>
-                                                                            {cylinderOptions.map((option) => (
+                                                                            {cylinderOptions.map((option: number | string) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -1961,7 +1943,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select CYL</option>
-                                                                            {cylinderOptions.map((option) => (
+                                                                            {cylinderOptions.map((option: number | string) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -1984,7 +1966,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select Axis</option>
-                                                                            {axisOptions.map((option) => (
+                                                                            {axisOptions.map((option: number | string) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -2007,7 +1989,7 @@ const ProductDetail: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <option value="">Select Axis</option>
-                                                                            {axisOptions.map((option) => (
+                                                                            {axisOptions.map((option: number | string) => (
                                                                                 <option key={option} value={option}>
                                                                                     {option}
                                                                                 </option>
@@ -2031,8 +2013,8 @@ const ProductDetail: React.FC = () => {
                                                 onClick={handleContactLensAddToCart}
                                                 disabled={contactLensLoading || isProductOutOfStock}
                                                 className={`w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg ${contactLensLoading || isProductOutOfStock
-                                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                        : 'bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white hover:from-green-700 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0'
+                                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                    : 'bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white hover:from-green-700 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0'
                                                     }`}
                                             >
                                                 {contactLensLoading ? (
