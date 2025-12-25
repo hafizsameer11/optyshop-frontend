@@ -282,14 +282,52 @@ const Cart: React.FC = () => {
                                                     </p>
                                                 )}
                                                 {(item.category === 'contact-lenses' || item.category === 'eye-hygiene' || (item as any).customization?.contactLens) && (
-                                                    <div className="text-xs text-gray-500 mt-1">
+                                                    <div className="text-xs text-gray-600 mt-2 space-y-1">
                                                         {(() => {
                                                             const custom = (item as any).customization?.contactLens
                                                             if (custom) {
-                                                                const rightQty = custom.right?.qty || 0
-                                                                const leftQty = custom.left?.qty || 0
                                                                 const unit = custom.unit || 'unit'
-                                                                return `Right: ${rightQty} ${unit} | Left: ${leftQty} ${unit}`
+                                                                const formType = custom.formType || 'spherical'
+                                                                const isAstigmatism = formType === 'astigmatism'
+                                                                
+                                                                // Right Eye Details
+                                                                const rightDetails = []
+                                                                if (custom.right) {
+                                                                    rightDetails.push(`Qty: ${custom.right.qty || 0} ${unit}`)
+                                                                    rightDetails.push(`B.C: ${custom.right.baseCurve || 'N/A'}`)
+                                                                    rightDetails.push(`DIA: ${custom.right.diameter || 'N/A'}`)
+                                                                    rightDetails.push(`PWR: ${custom.right.power || 'N/A'}`)
+                                                                    if (isAstigmatism && custom.right.cylinder) {
+                                                                        rightDetails.push(`CYL: ${custom.right.cylinder}`)
+                                                                    }
+                                                                    if (isAstigmatism && custom.right.axis) {
+                                                                        rightDetails.push(`AXI: ${custom.right.axis}°`)
+                                                                    }
+                                                                }
+                                                                
+                                                                // Left Eye Details
+                                                                const leftDetails = []
+                                                                if (custom.left) {
+                                                                    leftDetails.push(`Qty: ${custom.left.qty || 0} ${unit}`)
+                                                                    leftDetails.push(`B.C: ${custom.left.baseCurve || 'N/A'}`)
+                                                                    leftDetails.push(`DIA: ${custom.left.diameter || 'N/A'}`)
+                                                                    leftDetails.push(`PWR: ${custom.left.power || 'N/A'}`)
+                                                                    if (isAstigmatism && custom.left.cylinder) {
+                                                                        leftDetails.push(`CYL: ${custom.left.cylinder}`)
+                                                                    }
+                                                                    if (isAstigmatism && custom.left.axis) {
+                                                                        leftDetails.push(`AXI: ${custom.left.axis}°`)
+                                                                    }
+                                                                }
+                                                                
+                                                                return (
+                                                                    <div className="space-y-2">
+                                                                        <div className="font-semibold text-gray-700">Right Eye:</div>
+                                                                        <div className="text-gray-600 pl-2">{rightDetails.join(' | ')}</div>
+                                                                        <div className="font-semibold text-gray-700 mt-1">Left Eye:</div>
+                                                                        <div className="text-gray-600 pl-2">{leftDetails.join(' | ')}</div>
+                                                                    </div>
+                                                                )
                                                             }
                                                             return item.category === 'eye-hygiene' ? 'Eye Hygiene' : 'Contact Lens'
                                                         })()}

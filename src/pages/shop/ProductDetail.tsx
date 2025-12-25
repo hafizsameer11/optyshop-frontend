@@ -1408,6 +1408,7 @@ const ProductDetail: React.FC = () => {
                         customization: {
                             contactLens: {
                                 unit: contactLensFormData.unit,
+                                formType: formType, // Store form type (spherical or astigmatism)
                                 right: {
                                     qty: contactLensFormData.right_qty,
                                     baseCurve: parseFloat(contactLensFormData.right_base_curve),

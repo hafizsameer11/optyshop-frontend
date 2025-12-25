@@ -16,17 +16,22 @@ export interface CartProduct {
     customization?: {
         contactLens?: {
             unit?: string
+            formType?: 'spherical' | 'astigmatism' // Form type for contact lens
             right?: {
                 qty: number
                 baseCurve: number
                 diameter: number
                 power: number
+                cylinder?: number // For astigmatism only
+                axis?: number // For astigmatism only
             }
             left?: {
                 qty: number
                 baseCurve: number
                 diameter: number
                 power: number
+                cylinder?: number // For astigmatism only
+                axis?: number // For astigmatism only
             }
         }
     }

@@ -210,7 +210,107 @@ const OrderDetail: React.FC = () => {
                             <p>Lens Coatings: {Array.isArray(item.lens_coatings) ? item.lens_coatings.join(', ') : item.lens_coatings}</p>
                           )}
                           {item.frame_size_id && <p>Frame Size ID: {item.frame_size_id}</p>}
-                          {item.customization && (
+                          
+                          {/* Contact Lens Details */}
+                          {(item.contact_lens_right_qty || item.contact_lens_left_qty || item.customization?.contactLens) && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <p className="font-semibold text-gray-700 mb-2">Contact Lens Specifications:</p>
+                              {(() => {
+                                // Check if data comes from API response (contact_lens_* fields)
+                                if (item.contact_lens_right_qty || item.contact_lens_left_qty) {
+                                  const isAstigmatism = item.customization && typeof item.customization === 'object' && 
+                                    (item.customization.left_cylinder || item.customization.right_cylinder)
+                                  
+                                  return (
+                                    <div className="space-y-2 text-xs">
+                                      <div>
+                                        <span className="font-semibold text-blue-600">Right Eye:</span>
+                                        <span className="ml-2">
+                                          Qty: {item.contact_lens_right_qty || 0} | 
+                                          B.C: {item.contact_lens_right_base_curve || 'N/A'} | 
+                                          DIA: {item.contact_lens_right_diameter || 'N/A'} | 
+                                          PWR: {item.contact_lens_right_power || 'N/A'}
+                                          {isAstigmatism && item.customization?.right_cylinder && (
+                                            <> | CYL: {item.customization.right_cylinder}</>
+                                          )}
+                                          {isAstigmatism && item.customization?.right_axis && (
+                                            <> | AXI: {item.customization.right_axis}°</>
+                                          )}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold text-purple-600">Left Eye:</span>
+                                        <span className="ml-2">
+                                          Qty: {item.contact_lens_left_qty || 0} | 
+                                          B.C: {item.contact_lens_left_base_curve || 'N/A'} | 
+                                          DIA: {item.contact_lens_left_diameter || 'N/A'} | 
+                                          PWR: {item.contact_lens_left_power || 'N/A'}
+                                          {isAstigmatism && item.customization?.left_cylinder && (
+                                            <> | CYL: {item.customization.left_cylinder}</>
+                                          )}
+                                          {isAstigmatism && item.customization?.left_axis && (
+                                            <> | AXI: {item.customization.left_axis}°</>
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                }
+                                
+                                // Check if data comes from local cart (customization.contactLens)
+                                if (item.customization?.contactLens) {
+                                  const custom = item.customization.contactLens
+                                  const unit = custom.unit || 'unit'
+                                  const formType = custom.formType || 'spherical'
+                                  const isAstigmatism = formType === 'astigmatism'
+                                  
+                                  return (
+                                    <div className="space-y-2 text-xs">
+                                      {custom.right && (
+                                        <div>
+                                          <span className="font-semibold text-blue-600">Right Eye:</span>
+                                          <span className="ml-2">
+                                            Qty: {custom.right.qty || 0} {unit} | 
+                                            B.C: {custom.right.baseCurve || 'N/A'} | 
+                                            DIA: {custom.right.diameter || 'N/A'} | 
+                                            PWR: {custom.right.power || 'N/A'}
+                                            {isAstigmatism && custom.right.cylinder && (
+                                              <> | CYL: {custom.right.cylinder}</>
+                                            )}
+                                            {isAstigmatism && custom.right.axis && (
+                                              <> | AXI: {custom.right.axis}°</>
+                                            )}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {custom.left && (
+                                        <div>
+                                          <span className="font-semibold text-purple-600">Left Eye:</span>
+                                          <span className="ml-2">
+                                            Qty: {custom.left.qty || 0} {unit} | 
+                                            B.C: {custom.left.baseCurve || 'N/A'} | 
+                                            DIA: {custom.left.diameter || 'N/A'} | 
+                                            PWR: {custom.left.power || 'N/A'}
+                                            {isAstigmatism && custom.left.cylinder && (
+                                              <> | CYL: {custom.left.cylinder}</>
+                                            )}
+                                            {isAstigmatism && custom.left.axis && (
+                                              <> | AXI: {custom.left.axis}°</>
+                                            )}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                }
+                                
+                                return null
+                              })()}
+                            </div>
+                          )}
+                          
+                          {/* Other customizations */}
+                          {item.customization && !item.customization.contactLens && !item.contact_lens_right_qty && (
                             <p className="text-xs text-gray-500">Customization: {JSON.stringify(item.customization)}</p>
                           )}
                         </div>
