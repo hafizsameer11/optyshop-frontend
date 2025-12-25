@@ -2388,7 +2388,7 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-10">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Right Eye Section */}
                                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-100">
                                     <div className="flex items-center gap-3 mb-6">
@@ -2397,7 +2397,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         <h3 className="text-xl md:text-2xl font-bold text-gray-900">Right Eye</h3>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         {/* Qty Dropdown */}
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2469,7 +2469,7 @@ const ProductDetail: React.FC = () => {
                                         // Show Power dropdown for Spherical forms (for Astigmatism, it's shown separately below)
                                         if (formType === 'spherical') {
                                             return (
-                                                <div className="md:col-span-2 lg:col-span-4">
+                                                <div className="md:col-span-2">
                                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                         * Power <span className="text-gray-500 font-normal">(PWR)</span>
                                                     </label>
@@ -2505,7 +2505,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                         <h3 className="text-xl md:text-2xl font-bold text-gray-900">Left Eye</h3>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                                         {/* Qty Dropdown */}
                                         <div>
                                             <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -2577,7 +2577,7 @@ const ProductDetail: React.FC = () => {
                                         // Show Power dropdown for Spherical forms (for Astigmatism, it's shown separately below)
                                         if (formType === 'spherical') {
                                             return (
-                                                <div className="md:col-span-2 lg:col-span-4">
+                                                <div className="md:col-span-2">
                                                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                                                         * Power <span className="text-gray-500 font-normal">(PWR)</span>
                                                     </label>
