@@ -12,7 +12,7 @@ import {
 // Removed contact lens config service import - no longer needed
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
-import ContactLensConfiguration from '../../components/shop/ContactLensConfiguration'
+// ContactLensConfiguration component removed - contact lens forms are handled in ProductDetail page
 import { useWishlist } from '../../context/WishlistContext'
 import { 
     getCategoryBySlug, 
@@ -54,8 +54,7 @@ const CategoryPage: React.FC = () => {
     const [subSubcategories, setSubSubcategories] = useState<Category[]>([])
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
-    const [selectedProductForConfig, setSelectedProductForConfig] = useState<Product | null>(null)
-    const [showConfigModal, setShowConfigModal] = useState(false)
+    // Removed: Contact lens configuration modal - forms are handled in ProductDetail page
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
 
     // Helper function to check if we're on a contact lens sub-subcategory page (Spherical or Astigmatism)
@@ -712,17 +711,8 @@ const CategoryPage: React.FC = () => {
                                         })()
                                         : getProductImageUrl(product)
                                     
-                                    // Check if we should open configuration modal instead of navigating
-                                    const shouldOpenConfigModal = isContactLensSubSubcategory()
-                                    
-                                    const handleProductClick = (e: React.MouseEvent) => {
-                                        if (shouldOpenConfigModal) {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            setSelectedProductForConfig(product)
-                                            setShowConfigModal(true)
-                                        }
-                                    }
+                                    // All products (including contact lenses) navigate to ProductDetail page
+                                    // Contact lens forms are handled in ProductDetail page
                                     
                                     return (
                                     <div
@@ -731,38 +721,19 @@ const CategoryPage: React.FC = () => {
                                     >
                                         {/* Product Image */}
                                         <div className="relative h-64 md:h-72 bg-white overflow-hidden">
-                                            {shouldOpenConfigModal ? (
-                                                <button
-                                                    onClick={handleProductClick}
-                                                    className="block h-full w-full cursor-pointer"
-                                                >
-                                                    <img
-                                                        src={productImageUrl}
-                                                        alt={product.name}
-                                                        key={`${product.id}-${selectedColor || 'default'}`}
-                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                                        style={{ transition: 'opacity 0.3s ease-in-out' }}
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement
-                                                            target.src = '/assets/images/frame1.png'
-                                                        }}
-                                                    />
-                                                </button>
-                                            ) : (
-                                                <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                                                    <img
-                                                        src={productImageUrl}
-                                                        alt={product.name}
-                                                        key={`${product.id}-${selectedColor || 'default'}`}
-                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                                        style={{ transition: 'opacity 0.3s ease-in-out' }}
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement
-                                                            target.src = '/assets/images/frame1.png'
-                                                        }}
-                                                    />
-                                                </Link>
-                                            )}
+                                            <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
+                                                <img
+                                                    src={productImageUrl}
+                                                    alt={product.name}
+                                                    key={`${product.id}-${selectedColor || 'default'}`}
+                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                    style={{ transition: 'opacity 0.3s ease-in-out' }}
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement
+                                                        target.src = '/assets/images/frame1.png'
+                                                    }}
+                                                />
+                                            </Link>
                                             
                                             {/* Favorite/Wishlist Icon - Always Visible */}
                                             <button
@@ -1057,16 +1028,7 @@ const CategoryPage: React.FC = () => {
                 selectedProduct={selectedProductForTryOn}
             />
             
-            {/* Contact Lens Configuration Modal */}
-            {showConfigModal && selectedProductForConfig && (
-                <ContactLensConfiguration
-                    product={selectedProductForConfig}
-                    onClose={() => {
-                        setShowConfigModal(false)
-                        setSelectedProductForConfig(null)
-                    }}
-                />
-            )}
+            {/* Contact Lens Configuration Modal - Removed - Contact lens forms are handled in ProductDetail page */}
         </div>
     )
 }
