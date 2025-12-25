@@ -8,9 +8,7 @@ import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import {
     getProductBySlug,
     getRelatedProducts,
-    getProductOptions,
-    type Product,
-    type ProductOptions
+    type Product
 } from '../../services/productsService'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl } from '../../utils/productImage'
@@ -41,10 +39,8 @@ const ProductDetail: React.FC = () => {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [selectedColor, setSelectedColor] = useState<string | null>(null) // For color_images support
     const [quantity] = useState(1)
-    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [showCheckout, setShowCheckout] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
-    const [loadingFormConfig, setLoadingFormConfig] = useState(false)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<'distance_vision' | 'near_vision' | 'progressive' | ''>('') // Proper lens type enum
     const lastProductIdRef = useRef<number | null>(null)
@@ -57,6 +53,8 @@ const ProductDetail: React.FC = () => {
         cylinder: DropdownValue[]
         axis: DropdownValue[]
     }>({ power: [], cylinder: [], axis: [] })
+    // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
+    const [sphericalPowerValues, setSphericalPowerValues] = useState<string[]>([])
 
     // Contact Lens Form Data State (if not already defined elsewhere)
     interface ContactLensFormData {
@@ -193,20 +191,22 @@ const ProductDetail: React.FC = () => {
         }
     }, [slug, navigate])
 
-    // Fetch product options (frame materials, etc.)
-    useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                const options = await getProductOptions()
-                if (options) {
-                    setProductOptions(options)
-                }
-            } catch (error) {
-                console.error('Error fetching product options:', error)
-            }
-        }
-        fetchOptions()
-    }, [])
+    // Product options (frame materials, etc.) are not currently fetched or used
+    // If needed in the future, you'll need to:
+    // 1. Import getProductOptions from '../../services/productsService'
+    // 2. Create a state variable for productOptions
+    // 3. Uncomment and use the useEffect below:
+    // useEffect(() => {
+    //     const fetchOptions = async () => {
+    //         try {
+    //             const options = await getProductOptions()
+    //             // Store and use options here
+    //         } catch (error) {
+    //             console.error('Error fetching product options:', error)
+    //         }
+    //     }
+    //     fetchOptions()
+    // }, [])
 
     // Fetch Contact Lens Form Configuration from API
     useEffect(() => {
@@ -307,7 +307,7 @@ const ProductDetail: React.FC = () => {
                 })
             }
 
-            setLoadingFormConfig(true)
+            // Loading state for form config (currently not displayed in UI)
             try {
                 const config = await getContactLensFormConfig(numericId)
                 if (config) {
@@ -316,39 +316,59 @@ const ProductDetail: React.FC = () => {
                         console.log('✅ Contact Lens Form Config loaded:', config)
                     }
 
-                    // Fetch Power dropdown values for BOTH Spherical and Astigmatism forms
-                    // Power is used in both form types
-                    const powerValues = await getAstigmatismDropdownValues('power')
-
-                    // For Astigmatism, also fetch Cylinder and Axis
+                    // For Astigmatism, extract dropdown values from the configuration itself
+                    // The backend stores dropdown values directly in the config (right_power, right_cylinder, etc.)
                     if (config.formType === 'astigmatism') {
-                        const [cylinderValues, axisValues] = await Promise.all([
-                            getAstigmatismDropdownValues('cylinder'),
-                            getAstigmatismDropdownValues('axis')
-                        ])
+                        // Extract unique values from the configuration arrays
+                        const configData = config as any
+                        
+                        // Combine left and right values for each field type
+                        const powerValues = [
+                            ...(configData.left_power || []),
+                            ...(configData.right_power || [])
+                        ].filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
+                        
+                        const cylinderValues = [
+                            ...(configData.left_cylinder || []),
+                            ...(configData.right_cylinder || [])
+                        ].filter((v, i, arr) => arr.indexOf(v) === i)
+                        
+                        const axisValues = [
+                            ...(configData.left_axis || []),
+                            ...(configData.right_axis || [])
+                        ].filter((v, i, arr) => arr.indexOf(v) === i)
+
+                        // Convert to DropdownValue format for consistency
+                        const formatValues = (values: string[], fieldType: string) => {
+                            return values.map((value, index) => ({
+                                id: index,
+                                field_type: fieldType as any,
+                                value: value,
+                                label: value,
+                                eye_type: 'both' as const,
+                                is_active: true,
+                                sort_order: index
+                            }))
+                        }
 
                         setAstigmatismDropdownValues({
-                            power: powerValues,
-                            cylinder: cylinderValues,
-                            axis: axisValues
+                            power: formatValues(powerValues, 'power'),
+                            cylinder: formatValues(cylinderValues, 'cylinder'),
+                            axis: formatValues(axisValues, 'axis')
                         })
 
                         if (import.meta.env.DEV) {
-                            console.log('✅ Astigmatism dropdown values loaded:', {
+                            console.log('✅ Astigmatism dropdown values extracted from config:', {
                                 power: powerValues.length,
                                 cylinder: cylinderValues.length,
-                                axis: axisValues.length
+                                axis: axisValues.length,
+                                powerValues,
+                                cylinderValues,
+                                axisValues
                             })
                         }
                     } else {
-                        // For Spherical, only set Power values
-                        setAstigmatismDropdownValues({
-                            power: powerValues,
-                            cylinder: [],
-                            axis: []
-                        })
-
-                        // Fetch spherical configurations for this sub-category
+                        // For Spherical, fetch configurations which contain the dropdown values
                         const configs = await getSphericalConfigs(numericId)
                         if (configs && configs.length > 0) {
                             setSphericalConfigs(configs)
@@ -356,29 +376,213 @@ const ProductDetail: React.FC = () => {
                             if (configs.length > 0) {
                                 setSelectedConfig(configs[0])
                             }
+                            
+                            // Extract power values from all spherical configs (right_power and left_power arrays)
+                            // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
+                            const allPowerValues = new Set<string>()
+                            configs.forEach(config => {
+                                // Safely extract power values - handle null, undefined, and empty arrays
+                                const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
+                                const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
+                                
+                                // Add all power values to the set (handles both string and number arrays)
+                                // Filter out null, undefined, and empty string values
+                                rightPower.forEach(v => {
+                                    if (v != null && v !== '') {
+                                        allPowerValues.add(String(v))
+                                    }
+                                })
+                                leftPower.forEach(v => {
+                                    if (v != null && v !== '') {
+                                        allPowerValues.add(String(v))
+                                    }
+                                })
+                            })
+                            
+                            // Convert to sorted array of strings
+                            const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
+                                const numA = parseFloat(a)
+                                const numB = parseFloat(b)
+                                if (!isNaN(numA) && !isNaN(numB)) {
+                                    return numA - numB
+                                }
+                                return a.localeCompare(b)
+                            })
+                            
+                            // Store in spherical power values state (NOT in astigmatism dropdown values)
+                            setSphericalPowerValues(powerValuesArray)
+                            
+                            // Clear astigmatism dropdown values for spherical forms
+                            setAstigmatismDropdownValues({
+                                power: [],
+                                cylinder: [],
+                                axis: []
+                            })
+
                             if (import.meta.env.DEV) {
                                 console.log('✅ Spherical configurations loaded:', {
                                     count: configs.length,
+                                    powerValues: powerValuesArray.length,
+                                    powerValuesArray,
                                     configs: configs
                                 })
                             }
-                        }
-
-                        if (import.meta.env.DEV) {
-                            console.log('✅ Spherical Power dropdown values loaded:', {
-                                power: powerValues.length
+                        } else {
+                            // No configs found, set empty values
+                            setSphericalPowerValues([])
+                            setAstigmatismDropdownValues({
+                                power: [],
+                                cylinder: [],
+                                axis: []
                             })
                         }
                     }
                 } else {
+                    // Config endpoint failed (404 or other error) - try fallback: fetch spherical configs directly
                     if (import.meta.env.DEV) {
-                        console.warn('⚠️ Failed to load contact lens form config for sub-category:', subCategoryId)
+                        console.warn('⚠️ Failed to load contact lens form config for sub-category:', subCategoryId, '- trying fallback: fetching spherical configs directly')
+                    }
+                    
+                    // Fallback: Try to fetch spherical configs directly
+                    // If configs exist, assume it's a spherical form
+                    const configs = await getSphericalConfigs(numericId)
+                    if (configs && configs.length > 0) {
+                        // Create a minimal config object for spherical form
+                        setContactLensFormConfig({
+                            formType: 'spherical',
+                            subCategory: subCategoryData || {
+                                id: numericId,
+                                name: '',
+                                slug: ''
+                            },
+                            formFields: {
+                                rightEye: {},
+                                leftEye: {}
+                            }
+                        })
+                        
+                        setSphericalConfigs(configs)
+                        // Auto-select first config if available
+                        if (configs.length > 0) {
+                            setSelectedConfig(configs[0])
+                        }
+                        
+                        // Extract power values from all spherical configs
+                        // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
+                        const allPowerValues = new Set<string>()
+                        configs.forEach(config => {
+                            // Safely extract power values - handle null, undefined, and empty arrays
+                            const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
+                            const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
+                            
+                            // Filter out null, undefined, and empty string values
+                            rightPower.forEach(v => {
+                                if (v != null && v !== '') {
+                                    allPowerValues.add(String(v))
+                                }
+                            })
+                            leftPower.forEach(v => {
+                                if (v != null && v !== '') {
+                                    allPowerValues.add(String(v))
+                                }
+                            })
+                        })
+                        
+                        const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
+                            const numA = parseFloat(a)
+                            const numB = parseFloat(b)
+                            if (!isNaN(numA) && !isNaN(numB)) {
+                                return numA - numB
+                            }
+                            return a.localeCompare(b)
+                        })
+                        
+                        setSphericalPowerValues(powerValuesArray)
+                        setAstigmatismDropdownValues({
+                            power: [],
+                            cylinder: [],
+                            axis: []
+                        })
+
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Spherical configurations loaded (fallback):', {
+                                count: configs.length,
+                                powerValues: powerValuesArray.length,
+                                powerValuesArray,
+                                configs: configs
+                            })
+                        }
+                    } else {
+                        if (import.meta.env.DEV) {
+                            console.warn('⚠️ No spherical configs found either for sub-category:', subCategoryId)
+                        }
                     }
                 }
             } catch (error) {
                 console.error('Error fetching contact lens form config:', error)
+                // Try fallback on error as well
+                try {
+                    const configs = await getSphericalConfigs(numericId)
+                    if (configs && configs.length > 0) {
+                        setContactLensFormConfig({
+                            formType: 'spherical',
+                            subCategory: subCategoryData || {
+                                id: numericId,
+                                name: '',
+                                slug: ''
+                            },
+                            formFields: {
+                                rightEye: {},
+                                leftEye: {}
+                            }
+                        })
+                        setSphericalConfigs(configs)
+                        if (configs.length > 0) {
+                            setSelectedConfig(configs[0])
+                        }
+                        
+                        // Extract power values from all spherical configs
+                        // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
+                        const allPowerValues = new Set<string>()
+                        configs.forEach(config => {
+                            // Safely extract power values - handle null, undefined, and empty arrays
+                            const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
+                            const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
+                            
+                            // Filter out null, undefined, and empty string values
+                            rightPower.forEach(v => {
+                                if (v != null && v !== '') {
+                                    allPowerValues.add(String(v))
+                                }
+                            })
+                            leftPower.forEach(v => {
+                                if (v != null && v !== '') {
+                                    allPowerValues.add(String(v))
+                                }
+                            })
+                        })
+                        
+                        const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
+                            const numA = parseFloat(a)
+                            const numB = parseFloat(b)
+                            if (!isNaN(numA) && !isNaN(numB)) {
+                                return numA - numB
+                            }
+                            return a.localeCompare(b)
+                        })
+                        
+                        setSphericalPowerValues(powerValuesArray)
+                        setAstigmatismDropdownValues({
+                            power: [],
+                            cylinder: [],
+                            axis: []
+                        })
+                    }
+                } catch (fallbackError) {
+                    console.error('Error in fallback fetch:', fallbackError)
+                }
             } finally {
-                setLoadingFormConfig(false)
+                // Form config loading complete
             }
         }
 
@@ -396,40 +600,84 @@ const ProductDetail: React.FC = () => {
             const p = product as any
             // Get sub-sub-category ID using the same enhanced detection logic
             let subCategoryId: number | string | undefined = undefined
+            let subCategoryData: any = null
 
-            // Priority 1: Check direct subcategory field
+            // Priority 1: Check direct subcategory field (MUST have parent_id to be a sub-subcategory)
             if (p.subcategory?.parent_id) {
                 subCategoryId = p.subcategory.id
+                subCategoryData = p.subcategory
             }
 
-            // Priority 2: Check alternative field names
+            // Priority 2: Check alternative field names (but verify parent_id exists)
             if (!subCategoryId) {
-                subCategoryId = p.sub_category_id || p.subcategory_id || p.sub_category?.id || p.subcategory?.id
+                const possibleSubcategory = p.sub_category || p.subcategory
+                if (possibleSubcategory?.parent_id) {
+                    subCategoryId = possibleSubcategory.id
+                    subCategoryData = possibleSubcategory
+                }
             }
 
             // Priority 3: Check nested category structure
             if (!subCategoryId && p.category?.subcategories) {
                 for (const subcat of p.category.subcategories) {
                     if (subcat.children && subcat.children.length > 0) {
-                        subCategoryId = subcat.children[0]?.id
-                        if (subCategoryId) break
+                        // Use the first child that has a parent_id
+                        const child = subcat.children.find((c: any) => c.parent_id)
+                        if (child) {
+                            subCategoryId = child.id
+                            subCategoryData = child
+                            break
+                        }
                     }
                 }
             }
 
-            // Priority 4: Check if category has parent_id
-            if (!subCategoryId && p.category?.parent_id) {
-                subCategoryId = p.category.id
-            }
-
-            if (!subCategoryId) {
+            // Validate that we have a sub-subcategory (MUST have parent_id)
+            if (!subCategoryId || !subCategoryData?.parent_id) {
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ Cannot fetch contact lens options: Product does not have a valid sub-subcategory (parent_id is required)', {
+                        productId: product.id,
+                        productName: product.name,
+                        subcategory: p.subcategory,
+                        hasParentId: !!subCategoryData?.parent_id
+                    })
+                }
                 return
             }
 
             // Ensure it's a number (not a slug/string)
             const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
             if (isNaN(numericId) || numericId <= 0) {
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ Invalid sub-subcategory ID:', subCategoryId)
+                }
                 return
+            }
+
+            // Validate subcategory type (must be Spherical or Astigmatism/Toric)
+            const subcategoryName = (subCategoryData.name || '').toLowerCase()
+            const isSpherical = /spherical|sferiche|sferica/i.test(subcategoryName)
+            const isAstigmatism = /astigmatism|astigmatismo|toric|torica/i.test(subcategoryName)
+
+            if (!isSpherical && !isAstigmatism) {
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ Sub-subcategory is not Spherical or Astigmatism/Toric type:', {
+                        subcategoryId: numericId,
+                        subcategoryName: subCategoryData.name,
+                        productId: product.id
+                    })
+                }
+                return
+            }
+
+            if (import.meta.env.DEV) {
+                console.log('🔍 Fetching contact lens options for sub-subcategory:', {
+                    subcategoryId: numericId,
+                    subcategoryName: subCategoryData.name,
+                    parentId: subCategoryData.parent_id,
+                    type: isSpherical ? 'spherical' : 'astigmatism',
+                    productId: product.id
+                })
             }
 
             try {
@@ -457,8 +705,19 @@ const ProductDetail: React.FC = () => {
                         })
                     }
                 }
-            } catch (error) {
-                console.error('Error fetching contact lens options:', error)
+            } catch (error: any) {
+                // Only log error if it's not a validation error (400/404)
+                if (error?.response?.status === 404) {
+                    if (import.meta.env.DEV) {
+                        console.warn('⚠️ Sub-subcategory not found:', numericId)
+                    }
+                } else if (error?.response?.status === 400) {
+                    if (import.meta.env.DEV) {
+                        console.warn('⚠️ Invalid sub-subcategory:', error?.response?.data?.message || 'Validation failed')
+                    }
+                } else {
+                    console.error('Error fetching contact lens options:', error)
+                }
             }
         }
 
@@ -736,38 +995,65 @@ const ProductDetail: React.FC = () => {
     }, [astigmatismDropdownValues.axis, subSubcategoryOptions, selectedConfig])
 
     // Parse power range to generate options (memoized)
-    // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
-    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Product
+    // CRITICAL: Astigmatism dropdown values API should NEVER be used for Spherical forms
+    // - Spherical forms: MUST use power from spherical configs (right_power/left_power arrays) ONLY
+    // - Astigmatism forms: Use power from astigmatism dropdown values API
     const powerOptions = useMemo(() => {
-        // Priority 1: Use API dropdown values if available (from admin panel) - for BOTH Spherical and Astigmatism
-        if (astigmatismDropdownValues.power.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using power options from API:', astigmatismDropdownValues.power.length, 'values')
+        const formType = contactLensFormConfig?.formType
+
+        // For Spherical forms: Use power values from spherical configurations ONLY
+        // DO NOT use astigmatismDropdownValues.power for spherical forms
+        if (formType === 'spherical') {
+            // Priority 1: Use power values from spherical configs (right_power/left_power arrays)
+            // These come from the spherical configs API response, NOT from astigmatism dropdown API
+            if (sphericalPowerValues.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using power options from spherical configs:', sphericalPowerValues.length, 'values')
+                }
+                return sphericalPowerValues
             }
-            return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
+
+            // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
+            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
+                }
+                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
+                    return parseFloat(b) - parseFloat(a)
+                })
+            }
+
+            // No fallback - return empty array if no config data
+            return []
         }
 
-        // Priority 2: Use sub-subcategory options if available (aggregated from products)
-        if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using power options from sub-subcategory options:', subSubcategoryOptions.powerOptions.length, 'values')
+        // For Astigmatism forms: Use power values from astigmatism dropdown values API
+        if (formType === 'astigmatism') {
+            // Priority 1: Use astigmatism dropdown values API (from admin panel)
+            if (astigmatismDropdownValues.power.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using power options from astigmatism dropdown API:', astigmatismDropdownValues.power.length, 'values')
+                }
+                return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
             }
-            // Sort power options numerically descending (highest positive to lowest negative)
-            // Or ascending (lowest negative to highest positive) - standard is usually + to -
-            // But let's check the type - they might be strings
-            return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
-                return parseFloat(b) - parseFloat(a)
-            })
+
+            // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
+            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
+                }
+                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
+                    return parseFloat(b) - parseFloat(a)
+                })
+            }
+
+            // No fallback - return empty array if no API data
+            return []
         }
 
-        // Priority 3: Use configuration data if available
-        // Note: SphericalConfig does not currently have specific power usage, it primarily defines base/dia/qty
-        // If we need specific power ranges per config, we should add power_min/max/step to SphericalConfig interface
-
-        // No fallback - return empty array if no API data
-        // All dropdown values must come from admin-managed API
+        // If form type is not determined yet, return empty array
         return []
-    }, [astigmatismDropdownValues.power, subSubcategoryOptions, selectedConfig])
+    }, [contactLensFormConfig?.formType, sphericalPowerValues, astigmatismDropdownValues.power, subSubcategoryOptions])
 
     // Initialize contact lens form when product loads
     useEffect(() => {

@@ -59,12 +59,14 @@ export interface SphericalConfig {
     name: string
     slug: string
   }
-  right_qty: number[]
-  right_base_curve: number[]
-  right_diameter: number[]
-  left_qty: number[]
-  left_base_curve: number[]
-  left_diameter: number[]
+  right_qty: number[] | string[]
+  right_base_curve: number[] | string[]
+  right_diameter: number[] | string[]
+  right_power?: number[] | string[] | null
+  left_qty: number[] | string[]
+  left_base_curve: number[] | string[]
+  left_diameter: number[] | string[]
+  left_power?: number[] | string[] | null
   price?: number | string
   display_name?: string
   is_active?: boolean
