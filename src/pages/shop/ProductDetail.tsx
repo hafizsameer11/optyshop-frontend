@@ -1358,24 +1358,27 @@ const ProductDetail: React.FC = () => {
                 (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
 
             // Prepare checkout request for new API endpoint
+            // Note: API expects all values as strings (per Postman collection)
             const checkoutRequest: ContactLensCheckoutRequest = {
                 product_id: product!.id,
                 form_type: formType,
+                // Send as strings (API will convert internally if needed)
                 right_qty: contactLensFormData.right_qty,
-                right_base_curve: parseFloat(contactLensFormData.right_base_curve),
-                right_diameter: parseFloat(contactLensFormData.right_diameter),
+                right_base_curve: contactLensFormData.right_base_curve,
+                right_diameter: contactLensFormData.right_diameter,
                 left_qty: contactLensFormData.left_qty,
-                left_base_curve: parseFloat(contactLensFormData.left_base_curve),
-                left_diameter: parseFloat(contactLensFormData.left_diameter),
-                // Power is required for BOTH Spherical and Astigmatism forms
+                left_base_curve: contactLensFormData.left_base_curve,
+                left_diameter: contactLensFormData.left_diameter,
+                // Power is required for BOTH Spherical and Astigmatism forms (already strings)
                 right_power: contactLensFormData.right_power,
                 left_power: contactLensFormData.left_power,
                 // Cylinder and Axis are ONLY for Astigmatism forms
+                // Note: Per Postman collection, axis values should be strings (e.g., "180", "90")
                 ...(formType === 'astigmatism' && {
                     right_cylinder: contactLensFormData.right_cylinder,
-                    right_axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined,
+                    right_axis: contactLensFormData.right_axis || undefined, // Keep as string
                     left_cylinder: contactLensFormData.left_cylinder,
-                    left_axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
+                    left_axis: contactLensFormData.left_axis || undefined // Keep as string
                 })
             }
 
@@ -1383,7 +1386,13 @@ const ProductDetail: React.FC = () => {
             if (isAuthenticated) {
                 const result = await addContactLensToCart(checkoutRequest)
 
-                if (result && result.success) {
+                // The API returns { success, message, data: { item } }
+                // addContactLensToCart returns the full ContactLensCheckoutResponse
+                if (result && result.success && result.data && result.data.item) {
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Contact lens added to cart successfully:', result.data.item)
+                    }
+                    
                     // Also add to local cart for UI consistency
                     const cartProduct = {
                         id: product.id || 0,
@@ -1429,6 +1438,15 @@ const ProductDetail: React.FC = () => {
                     addToCart(cartProduct)
                     navigate('/cart')
                 } else {
+                    // Log detailed error for debugging
+                    if (import.meta.env.DEV) {
+                        console.error('❌ Failed to add contact lens to cart:', {
+                            result,
+                            hasSuccess: result?.success,
+                            hasData: !!result?.data,
+                            hasItem: !!result?.data?.item
+                        })
+                    }
                     alert(result?.message || 'Failed to add contact lens to cart. Please try again.')
                 }
             } else {

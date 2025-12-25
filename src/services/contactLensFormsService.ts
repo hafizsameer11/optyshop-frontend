@@ -77,19 +77,20 @@ export interface SphericalConfig {
 export interface ContactLensCheckoutRequest {
   product_id: number
   form_type: 'spherical' | 'astigmatism'
-  right_qty: number
-  right_base_curve: number
-  right_diameter: number
-  left_qty: number
-  left_base_curve: number
-  left_diameter: number
-  // Astigmatism fields (optional)
-  left_power?: string
-  right_power?: string
+  right_qty: string | number  // API expects string, but we accept both for flexibility
+  right_base_curve: string | number  // API expects string
+  right_diameter: string | number  // API expects string
+  left_qty: string | number  // API expects string
+  left_base_curve: string | number  // API expects string
+  left_diameter: string | number  // API expects string
+  // Power is required for both Spherical and Astigmatism
+  right_power: string
+  left_power: string
+  // Astigmatism fields (optional) - all as strings per Postman collection
   left_cylinder?: string
   right_cylinder?: string
-  left_axis?: number
-  right_axis?: number
+  left_axis?: string | number  // API expects string (e.g., "180", "90")
+  right_axis?: string | number  // API expects string (e.g., "180", "90")
 }
 
 export interface ContactLensCheckoutResponse {
@@ -98,22 +99,46 @@ export interface ContactLensCheckoutResponse {
   data: {
     item: {
       id: number
+      cart_id?: number
       product_id: number
       quantity: number
+      unit_price: string | number  // API returns as string (e.g., "77.96")
       contact_lens_right_qty: number
       contact_lens_right_base_curve: number
       contact_lens_right_diameter: number
+      contact_lens_right_power?: number | string
       contact_lens_left_qty: number
       contact_lens_left_base_curve: number
       contact_lens_left_diameter: number
-      contact_lens_left_power?: number
-      contact_lens_right_power?: number
+      contact_lens_left_power?: number | string
       customization?: {
         left_cylinder?: number
         right_cylinder?: number
         left_axis?: number
         right_axis?: number
+      } | null
+      product?: {
+        id: number
+        name: string
+        slug: string
+        price: string | number
+        images?: string[] | null
       }
+      // Additional fields that may be present
+      lens_index?: null
+      lens_coatings?: null
+      frame_size_id?: null
+      prescription_id?: null
+      lens_type?: null
+      prescription_data?: null
+      progressive_variant_id?: null
+      lens_thickness_material_id?: null
+      lens_thickness_option_id?: null
+      treatment_ids?: null
+      photochromic_color_id?: null
+      prescription_sun_color_id?: null
+      created_at?: string
+      updated_at?: string
     }
   }
 }
@@ -391,17 +416,82 @@ export const addContactLensToCart = async (
   request: ContactLensCheckoutRequest
 ): Promise<ContactLensCheckoutResponse | null> => {
   try {
-    const response = await apiClient.post<ContactLensCheckoutResponse>(
+    // Convert all numeric values to strings as API expects strings (per Postman collection)
+    // All values must be strings: qty, base_curve, diameter, power, cylinder, axis
+    const apiRequest: Record<string, string | number> = {
+      product_id: request.product_id,
+      form_type: request.form_type,
+      right_qty: String(request.right_qty),
+      right_base_curve: String(request.right_base_curve),
+      right_diameter: String(request.right_diameter),
+      right_power: request.right_power, // Already a string
+      left_qty: String(request.left_qty),
+      left_base_curve: String(request.left_base_curve),
+      left_diameter: String(request.left_diameter),
+      left_power: request.left_power // Already a string
+    }
+
+    // Add astigmatism fields if provided (all as strings per Postman collection)
+    if (request.right_cylinder) {
+      apiRequest.right_cylinder = request.right_cylinder
+    }
+    if (request.left_cylinder) {
+      apiRequest.left_cylinder = request.left_cylinder
+    }
+    if (request.right_axis !== undefined) {
+      apiRequest.right_axis = String(request.right_axis) // Convert to string
+    }
+    if (request.left_axis !== undefined) {
+      apiRequest.left_axis = String(request.left_axis) // Convert to string
+    }
+
+    if (import.meta.env.DEV) {
+      console.log('📤 Sending contact lens checkout request:', apiRequest)
+    }
+
+    const response = await apiClient.post<{
+      success: boolean
+      message: string
+      data: {
+        item: ContactLensCheckoutResponse['data']['item']
+      }
+    }>(
       API_ROUTES.CONTACT_LENS_FORMS.CHECKOUT,
-      request,
+      apiRequest,
       true // Requires authentication
     )
 
-    if (response.success && response.data) {
-      return response.data
+    if (import.meta.env.DEV) {
+      console.log('📥 Contact lens checkout response:', response)
     }
 
-    console.error('Failed to add contact lens to cart:', response.message)
+    // The API returns { success, message, data: { item } }
+    // apiClient.post returns { success, data, message } where data is the inner data object
+    // So response.data is { item: {...} }
+    if (response.success && response.data && response.data.item) {
+      // Return the full ContactLensCheckoutResponse structure
+      const result = {
+        success: true,
+        message: response.message || 'Contact lens added to cart successfully',
+        data: {
+          item: response.data.item
+        }
+      } as ContactLensCheckoutResponse
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ Contact lens checkout successful:', result)
+      }
+      
+      return result
+    }
+
+    console.error('❌ Failed to add contact lens to cart:', {
+      message: response.message,
+      success: response.success,
+      hasData: !!response.data,
+      hasItem: !!response.data?.item,
+      fullResponse: response
+    })
     return null
   } catch (error) {
     console.error('Error adding contact lens to cart:', error)
