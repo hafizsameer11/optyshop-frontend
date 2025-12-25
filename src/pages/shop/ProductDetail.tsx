@@ -17,6 +17,14 @@ import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { useAuth } from '../../context/AuthContext'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
+import {
+    getContactLensFormConfig,
+    getAstigmatismDropdownValues,
+    addContactLensToCart,
+    type ContactLensFormConfig,
+    type DropdownValue,
+    type ContactLensCheckoutRequest
+} from '../../services/contactLensFormsService'
 
 const ProductDetail: React.FC = () => {
     const { t } = useTranslation()
@@ -38,6 +46,82 @@ const ProductDetail: React.FC = () => {
     const [selectedLensType, setSelectedLensType] = useState<string>('') // Single selection
     const lastProductIdRef = useRef<number | null>(null)
     const formInitializedRef = useRef<number | null>(null)
+    
+    // Contact Lens Forms API Integration State
+    const [contactLensFormConfig, setContactLensFormConfig] = useState<ContactLensFormConfig | null>(null)
+    const [astigmatismDropdownValues, setAstigmatismDropdownValues] = useState<{
+        power: DropdownValue[]
+        cylinder: DropdownValue[]
+        axis: DropdownValue[]
+    }>({ power: [], cylinder: [], axis: [] })
+    const [loadingFormConfig, setLoadingFormConfig] = useState(false)
+    
+    // Contact Lens Form Data State (if not already defined elsewhere)
+    interface ContactLensFormData {
+        right_qty: number
+        right_base_curve: string
+        right_diameter: string
+        right_power: string
+        right_cylinder?: string
+        right_axis?: string
+        left_qty: number
+        left_base_curve: string
+        left_diameter: string
+        left_power: string
+        left_cylinder?: string
+        left_axis?: string
+        unit: string
+    }
+    
+    interface ContactLensConfiguration {
+        id: number
+        name: string
+        sub_category_id: number
+        configuration_type: 'spherical' | 'astigmatism'
+        right_qty?: number | number[]
+        right_base_curve?: number | number[]
+        right_diameter?: number | number[]
+        right_power?: number | number[]
+        right_cylinder?: number | number[]
+        right_axis?: number | number[]
+        left_qty?: number | number[]
+        left_base_curve?: number | number[]
+        left_diameter?: number | number[]
+        left_power?: number | number[]
+        left_cylinder?: number | number[]
+        left_axis?: number | number[]
+        price?: number
+        display_name?: string
+        is_active: boolean
+    }
+    
+    const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
+        right_qty: 1,
+        right_base_curve: '8.70',
+        right_diameter: '14.00',
+        right_power: '',
+        left_qty: 1,
+        left_base_curve: '8.70',
+        left_diameter: '14.00',
+        left_power: '',
+        unit: 'unit'
+    })
+    const [contactLensErrors, setContactLensErrors] = useState<Record<string, string>>({})
+    const [contactLensLoading, setContactLensLoading] = useState(false)
+    const [selectedConfig, setSelectedConfig] = useState<ContactLensConfiguration | null>(null)
+    const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
+    
+    // Check if product is a contact lens
+    const isContactLens = useMemo(() => {
+        if (!product) return false
+        const p = product as any
+        const categorySlug = product.category?.slug || ''
+        const categoryName = product.category?.name || ''
+        return categorySlug.toLowerCase().includes('contact') || 
+               categoryName.toLowerCase().includes('contact') ||
+               categorySlug.toLowerCase().includes('lens') ||
+               (p.contact_lens_type && p.contact_lens_type.length > 0)
+    }, [product])
 
     useEffect(() => {
         let isCancelled = false
@@ -117,6 +201,71 @@ const ProductDetail: React.FC = () => {
         }
         fetchOptions()
     }, [])
+    
+    // Fetch Contact Lens Form Configuration from API
+    useEffect(() => {
+        const fetchFormConfig = async () => {
+            if (!product || !isContactLens) {
+                setContactLensFormConfig(null)
+                return
+            }
+            
+            const p = product as any
+            // Get sub-sub-category ID (must have parent_id)
+            const subCategoryId = p.subcategory?.id || p.sub_category_id
+            
+            if (!subCategoryId) {
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ No sub-category ID found for contact lens product:', product.id)
+                }
+                return
+            }
+            
+            setLoadingFormConfig(true)
+            try {
+                const config = await getContactLensFormConfig(subCategoryId)
+                if (config) {
+                    setContactLensFormConfig(config)
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Contact Lens Form Config loaded:', config)
+                    }
+                    
+                    // If astigmatism, fetch dropdown values
+                    if (config.formType === 'astigmatism') {
+                        const [powerValues, cylinderValues, axisValues] = await Promise.all([
+                            getAstigmatismDropdownValues('power'),
+                            getAstigmatismDropdownValues('cylinder'),
+                            getAstigmatismDropdownValues('axis')
+                        ])
+                        
+                        setAstigmatismDropdownValues({
+                            power: powerValues,
+                            cylinder: cylinderValues,
+                            axis: axisValues
+                        })
+                        
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Astigmatism dropdown values loaded:', {
+                                power: powerValues.length,
+                                cylinder: cylinderValues.length,
+                                axis: axisValues.length
+                            })
+                        }
+                    }
+                } else {
+                    if (import.meta.env.DEV) {
+                        console.warn('⚠️ Failed to load contact lens form config for sub-category:', subCategoryId)
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching contact lens form config:', error)
+            } finally {
+                setLoadingFormConfig(false)
+            }
+        }
+        
+        fetchFormConfig()
+    }, [product?.id, isContactLens])
 
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
@@ -336,9 +485,17 @@ const ProductDetail: React.FC = () => {
     }, [product, subSubcategoryOptions, selectedConfig])
     
     // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
-    // Priority: Configuration > Sub-subcategory > Standard
+    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Standard
     const cylinderOptions = useMemo(() => {
-        // Priority 1: Use configuration data if available
+        // Priority 1: Use API dropdown values if available (from admin panel)
+        if (astigmatismDropdownValues.cylinder.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using cylinder options from API:', astigmatismDropdownValues.cylinder.length, 'values')
+            }
+            return astigmatismDropdownValues.cylinder.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 2: Use configuration data if available
         if (selectedConfig && selectedConfig.right_cylinder) {
             const configOptions = Array.isArray(selectedConfig.right_cylinder) 
                 ? selectedConfig.right_cylinder 
@@ -355,7 +512,7 @@ const ProductDetail: React.FC = () => {
             }
         }
         
-        // Priority 2: Use aggregated options from sub-subcategory if available
+        // Priority 3: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using cylinder options from sub-subcategory:', subSubcategoryOptions.cylinderOptions)
@@ -367,7 +524,7 @@ const ProductDetail: React.FC = () => {
             })
         }
         
-        // Priority 3: Generate standard options
+        // Priority 4: Generate standard options
         const options: string[] = []
         for (let i = -24; i <= 24; i++) {
             const value = (i * 0.25).toFixed(2)
@@ -380,12 +537,20 @@ const ProductDetail: React.FC = () => {
             }
         }
         return options
-    }, [subSubcategoryOptions, selectedConfig])
+    }, [astigmatismDropdownValues.cylinder, subSubcategoryOptions, selectedConfig])
     
     // Generate axis options (0 to 180 in 1 degree steps)
-    // Priority: Configuration > Sub-subcategory > Standard
+    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Standard
     const axisOptions = useMemo(() => {
-        // Priority 1: Use configuration data if available
+        // Priority 1: Use API dropdown values if available (from admin panel)
+        if (astigmatismDropdownValues.axis.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using axis options from API:', astigmatismDropdownValues.axis.length, 'values')
+            }
+            return astigmatismDropdownValues.axis.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 2: Use configuration data if available
         if (selectedConfig && selectedConfig.right_axis) {
             const configOptions = Array.isArray(selectedConfig.right_axis) 
                 ? selectedConfig.right_axis 
@@ -398,7 +563,7 @@ const ProductDetail: React.FC = () => {
             }
         }
         
-        // Priority 2: Use aggregated options from sub-subcategory if available
+        // Priority 3: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using axis options from sub-subcategory:', subSubcategoryOptions.axisOptions)
@@ -406,19 +571,27 @@ const ProductDetail: React.FC = () => {
             return subSubcategoryOptions.axisOptions.map(axis => axis.toString())
         }
         
-        // Priority 3: Generate standard options
+        // Priority 4: Generate standard options
         const options: string[] = []
         for (let i = 0; i <= 180; i++) {
             options.push(i.toString())
         }
         return options
-    }, [subSubcategoryOptions, selectedConfig])
+    }, [astigmatismDropdownValues.axis, subSubcategoryOptions, selectedConfig])
     
     // Parse power range to generate options (memoized)
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
-    // Priority: Configuration > Sub-subcategory > Product
+    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Product
     const powerOptions = useMemo(() => {
-        // Priority 1: Use configuration data if available
+        // Priority 1: Use API dropdown values if available (from admin panel) - for astigmatism
+        if (contactLensFormConfig?.formType === 'astigmatism' && astigmatismDropdownValues.power.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using power options from API:', astigmatismDropdownValues.power.length, 'values')
+            }
+            return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 2: Use configuration data if available
         if (selectedConfig && selectedConfig.right_power) {
             const configOptions = Array.isArray(selectedConfig.right_power) 
                 ? selectedConfig.right_power 
@@ -434,7 +607,7 @@ const ProductDetail: React.FC = () => {
             }
         }
         
-        // Priority 2: Use aggregated options from sub-subcategory if available
+        // Priority 3: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.powerOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using power options from sub-subcategory:', {
@@ -547,7 +720,7 @@ const ProductDetail: React.FC = () => {
         
         // Default fallback options
         return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
-    }, [product, isSphericalSubSubcategory])
+    }, [product, isSphericalSubSubcategory, contactLensFormConfig, astigmatismDropdownValues.power])
     
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -1053,67 +1226,103 @@ const ProductDetail: React.FC = () => {
         
         setContactLensLoading(true)
         try {
+            // Determine form type from config or subcategory
+            const formType = contactLensFormConfig?.formType || 
+                           (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+            
+            // Prepare checkout request for new API endpoint
+            const checkoutRequest: ContactLensCheckoutRequest = {
+                product_id: product!.id,
+                form_type: formType,
+                right_qty: contactLensFormData.right_qty,
+                right_base_curve: parseFloat(contactLensFormData.right_base_curve),
+                right_diameter: parseFloat(contactLensFormData.right_diameter),
+                left_qty: contactLensFormData.left_qty,
+                left_base_curve: parseFloat(contactLensFormData.left_base_curve),
+                left_diameter: parseFloat(contactLensFormData.left_diameter),
+                // Add power for both eyes (required)
+                right_power: contactLensFormData.right_power,
+                left_power: contactLensFormData.left_power,
+                // Add astigmatism fields if applicable
+                ...(formType === 'astigmatism' && {
+                    right_cylinder: contactLensFormData.right_cylinder,
+                    right_axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined,
+                    left_cylinder: contactLensFormData.left_cylinder,
+                    left_axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
+                })
+            }
+            
+            // Use new contact lens checkout API endpoint (requires authentication)
             if (isAuthenticated) {
-                const cartRequest: AddToCartRequest = {
-                    product_id: product.id,
-                    quantity: 1,
-                    contact_lens_right_qty: contactLensFormData.right_qty,
-                    contact_lens_right_base_curve: parseFloat(contactLensFormData.right_base_curve),
-                    contact_lens_right_diameter: parseFloat(contactLensFormData.right_diameter),
-                    contact_lens_right_power: parseFloat(contactLensFormData.right_power),
-                    contact_lens_left_qty: contactLensFormData.left_qty,
-                    contact_lens_left_base_curve: parseFloat(contactLensFormData.left_base_curve),
-                    contact_lens_left_diameter: parseFloat(contactLensFormData.left_diameter),
-                    contact_lens_left_power: parseFloat(contactLensFormData.left_power),
-                    ...(isAstigmatismSubSubcategory && {
-                        contact_lens_right_cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
-                        contact_lens_right_axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined,
-                        contact_lens_left_cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
-                        contact_lens_left_axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
-                    })
-                }
+                const result = await addContactLensToCart(checkoutRequest)
                 
-                const result = await addItemToCart(cartRequest)
-                
-                if (result.success) {
+                if (result && result.success) {
+                    // Also add to local cart for UI consistency
                     const cartProduct = {
                         id: product.id || 0,
                         name: product.name || '',
                         brand: product.brand || '',
                         category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
-                        price: calculateContactLensTotal, // Total price (right + left eye totals)
+                        price: calculateContactLensTotal,
                         image: getColorSpecificImageUrl(product, selectedImageIndex),
                         description: product.description || '',
                         inStock: product.in_stock || false,
-                        unit: contactLensFormData.unit, // Include unit selection
-                        isContactLens: true // Flag to identify as contact lens
+                        unit: contactLensFormData.unit,
+                        isContactLens: true,
+                        customization: {
+                            contactLens: {
+                                unit: contactLensFormData.unit,
+                                right: {
+                                    qty: contactLensFormData.right_qty,
+                                    baseCurve: parseFloat(contactLensFormData.right_base_curve),
+                                    diameter: parseFloat(contactLensFormData.right_diameter),
+                                    power: parseFloat(contactLensFormData.right_power),
+                                    ...(formType === 'astigmatism' && {
+                                        cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
+                                        axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
+                                    })
+                                },
+                                left: {
+                                    qty: contactLensFormData.left_qty,
+                                    baseCurve: parseFloat(contactLensFormData.left_base_curve),
+                                    diameter: parseFloat(contactLensFormData.left_diameter),
+                                    power: parseFloat(contactLensFormData.left_power),
+                                    ...(formType === 'astigmatism' && {
+                                        cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
+                                        axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
+                                    })
+                                }
+                            }
+                        }
                     }
                     addToCart(cartProduct)
                     navigate('/cart')
                 } else {
-                    alert(result.message || 'Failed to add to cart')
+                    alert(result?.message || 'Failed to add contact lens to cart. Please try again.')
                 }
             } else {
+                // For non-authenticated users, still add to local cart
+                // (but they'll need to login at checkout)
                 const cartProduct = {
                     id: product.id || 0,
                     name: product.name || '',
                     brand: product.brand || '',
                     category: product.category?.slug || 'contact-lenses',
-                    price: calculateContactLensTotal, // Total price (right + left eye totals)
+                    price: calculateContactLensTotal,
                     image: getColorSpecificImageUrl(product, selectedImageIndex),
                     description: product.description || '',
                     inStock: product.in_stock || false,
-                    unit: contactLensFormData.unit, // Include unit selection
-                    isContactLens: true, // Flag to identify as contact lens
+                    unit: contactLensFormData.unit,
+                    isContactLens: true,
                     customization: {
                         contactLens: {
-                            unit: contactLensFormData.unit, // Store unit in customization
+                            unit: contactLensFormData.unit,
                             right: {
                                 qty: contactLensFormData.right_qty,
                                 baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                 diameter: parseFloat(contactLensFormData.right_diameter),
                                 power: parseFloat(contactLensFormData.right_power),
-                                ...(isAstigmatismSubSubcategory && {
+                                ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
                                     axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
                                 })
@@ -1123,7 +1332,7 @@ const ProductDetail: React.FC = () => {
                                 baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                 diameter: parseFloat(contactLensFormData.left_diameter),
                                 power: parseFloat(contactLensFormData.left_power),
-                                ...(isAstigmatismSubSubcategory && {
+                                ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
                                     axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
                                 })
@@ -1135,7 +1344,7 @@ const ProductDetail: React.FC = () => {
                 navigate('/cart')
             }
         } catch (error) {
-            console.error('Error adding to cart:', error)
+            console.error('Error adding contact lens to cart:', error)
             alert('Failed to add to cart. Please try again.')
         } finally {
             setContactLensLoading(false)
@@ -1870,24 +2079,46 @@ const ProductDetail: React.FC = () => {
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Select the parameters</h2>
                             
                             {/* Unit Selection */}
-                            <div className="mb-6">
+                            <div className="mb-6 flex gap-3">
                                 <button
                                     type="button"
                                     onClick={() => handleContactLensFieldChange('unit', 'unit')}
-                                    className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+                                    className={`px-6 py-2 rounded-full text-sm font-medium transition-colors border ${
                                         contactLensFormData.unit === 'unit'
-                                            ? 'bg-blue-950 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            ? 'bg-blue-950 text-white border-blue-950'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
                                     }`}
                                 >
                                     unit
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleContactLensFieldChange('unit', 'box')}
+                                    className={`px-6 py-2 rounded-full text-sm font-medium transition-colors border ${
+                                        contactLensFormData.unit === 'box'
+                                            ? 'bg-blue-950 text-white border-blue-950'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
+                                    }`}
+                                >
+                                    box
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleContactLensFieldChange('unit', 'pack')}
+                                    className={`px-6 py-2 rounded-full text-sm font-medium transition-colors border ${
+                                        contactLensFormData.unit === 'pack'
+                                            ? 'bg-blue-950 text-white border-blue-950'
+                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border-gray-300'
+                                    }`}
+                                >
+                                    pack
                                 </button>
                             </div>
 
                             {/* Price Display */}
                             <div className="mb-8">
                                 <p className="text-3xl font-bold text-gray-900">
-                                    {calculateContactLensTotal > 0 ? `€${calculateContactLensTotal.toFixed(2)}` : '0 €'}
+                                    {calculateContactLensTotal > 0 ? `€${calculateContactLensTotal.toFixed(2)}` : '€0.00'}
                                 </p>
                             </div>
 

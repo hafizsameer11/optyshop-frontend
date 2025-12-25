@@ -318,6 +318,30 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // CONTACT LENS FORMS (PUBLIC & USER)
+  // ============================================
+  CONTACT_LENS_FORMS: {
+    // Public endpoints
+    GET_CONFIG: (subCategoryId: number | string) => `/contact-lens-forms/config/${subCategoryId}`, // PUBLIC - Get form configuration
+    GET_ASTIGMATISM_DROPDOWN_VALUES: (fieldType?: 'power' | 'cylinder' | 'axis', eyeType?: 'left' | 'right' | 'both') => {
+      const params = new URLSearchParams();
+      if (fieldType) params.append('field_type', fieldType);
+      if (eyeType) params.append('eye_type', eyeType);
+      const queryString = params.toString();
+      return `/contact-lens-forms/astigmatism/dropdown-values${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get astigmatism dropdown values
+    GET_SPHERICAL_CONFIGS: (subCategoryId?: number | string) => {
+      const params = new URLSearchParams();
+      if (subCategoryId) params.append('sub_category_id', String(subCategoryId));
+      const queryString = params.toString();
+      return `/contact-lens-forms/spherical${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get spherical configurations
+    
+    // User endpoints (requires authentication)
+    CHECKOUT: `/contact-lens-forms/checkout`, // USER - Add contact lens to cart
+  },
+
+  // ============================================
   // HEALTH & API INFO (PUBLIC)
   // ============================================
   HEALTH: {
