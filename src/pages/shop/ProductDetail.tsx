@@ -21,9 +21,11 @@ import {
     getContactLensFormConfig,
     getAstigmatismDropdownValues,
     addContactLensToCart,
+    getContactLensOptions,
     type ContactLensFormConfig,
     type DropdownValue,
-    type ContactLensCheckoutRequest
+    type ContactLensCheckoutRequest,
+    type ContactLensOptionsResponse
 } from '../../services/contactLensFormsService'
 
 const ProductDetail: React.FC = () => {
@@ -96,13 +98,13 @@ const ProductDetail: React.FC = () => {
     }
     
     const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
-        right_qty: 1,
-        right_base_curve: '8.70',
-        right_diameter: '14.00',
+        right_qty: 0,
+        right_base_curve: '',
+        right_diameter: '',
         right_power: '',
-        left_qty: 1,
-        left_base_curve: '8.70',
-        left_diameter: '14.00',
+        left_qty: 0,
+        left_base_curve: '',
+        left_diameter: '',
         left_power: '',
         unit: 'unit'
     })
@@ -211,22 +213,70 @@ const ProductDetail: React.FC = () => {
             }
             
             const p = product as any
-            // Get sub-sub-category ID (must have parent_id)
-            // Try multiple possible fields and ensure it's a number
-            let subCategoryId: number | string | undefined = 
-                p.subcategory?.id || 
-                p.sub_category_id || 
-                p.subcategory_id ||
-                p.category?.id
+            
+            // Enhanced sub-sub-category detection - try multiple possible structures
+            // A sub-sub-category must have a parent_id (it's a child of a subcategory)
+            let subCategoryId: number | string | undefined = undefined
+            let subCategoryData: any = null
+            
+            // Priority 1: Check direct subcategory field (most common)
+            if (p.subcategory) {
+                subCategoryData = p.subcategory
+                // Check if it has parent_id (indicates it's a sub-sub-category)
+                if (subCategoryData.parent_id) {
+                    subCategoryId = subCategoryData.id
+                }
+            }
+            
+            // Priority 2: Check alternative field names
+            if (!subCategoryId) {
+                const possibleFields = [
+                    p.sub_category_id,
+                    p.subcategory_id,
+                    p.sub_category?.id,
+                    p.subcategory?.id
+                ]
+                
+                for (const field of possibleFields) {
+                    if (field) {
+                        subCategoryId = field
+                        break
+                    }
+                }
+            }
+            
+            // Priority 3: Check nested category structure (category -> subcategories -> children)
+            if (!subCategoryId && p.category) {
+                const category = p.category
+                // Check if category has subcategories with children (sub-sub-categories)
+                if (category.subcategories && Array.isArray(category.subcategories)) {
+                    for (const subcat of category.subcategories) {
+                        if (subcat.children && Array.isArray(subcat.children) && subcat.children.length > 0) {
+                            // Use the first child sub-sub-category (or find the one matching product)
+                            // For now, use the first one - in future could match by product association
+                            subCategoryId = subcat.children[0]?.id
+                            if (subCategoryId) break
+                        }
+                    }
+                }
+            }
+            
+            // Priority 4: Check if category itself might be the sub-sub-category (if it has parent_id)
+            if (!subCategoryId && p.category?.parent_id) {
+                subCategoryId = p.category.id
+            }
             
             // Validate that we have a valid ID (must be a number, not a slug)
             if (!subCategoryId) {
                 if (import.meta.env.DEV) {
-                    console.warn('⚠️ No sub-category ID found for contact lens product:', product.id, {
+                    console.warn('⚠️ No sub-sub-category ID found for contact lens product:', product.id, {
+                        productName: product.name,
+                        productSlug: product.slug,
                         subcategory: p.subcategory,
                         sub_category_id: p.sub_category_id,
                         subcategory_id: p.subcategory_id,
-                        category: p.category
+                        category: p.category,
+                        fullProduct: p
                     })
                 }
                 return
@@ -236,9 +286,21 @@ const ProductDetail: React.FC = () => {
             const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
             if (isNaN(numericId) || numericId <= 0) {
                 if (import.meta.env.DEV) {
-                    console.warn('⚠️ Invalid sub-category ID (not a number):', subCategoryId, 'for product:', product.id)
+                    console.warn('⚠️ Invalid sub-sub-category ID (not a number):', subCategoryId, 'for product:', product.id, {
+                        productName: product.name,
+                        type: typeof subCategoryId
+                    })
                 }
                 return
+            }
+            
+            if (import.meta.env.DEV) {
+                console.log('🔍 Detected sub-sub-category ID for contact lens product:', {
+                    productId: product.id,
+                    productName: product.name,
+                    subCategoryId: numericId,
+                    subCategoryData: subCategoryData
+                })
             }
             
             setLoadingFormConfig(true)
@@ -250,10 +312,13 @@ const ProductDetail: React.FC = () => {
                         console.log('✅ Contact Lens Form Config loaded:', config)
                     }
                     
-                    // If astigmatism, fetch dropdown values
+                    // Fetch Power dropdown values for BOTH Spherical and Astigmatism forms
+                    // Power is used in both form types
+                    const powerValues = await getAstigmatismDropdownValues('power')
+                    
+                    // For Astigmatism, also fetch Cylinder and Axis
                     if (config.formType === 'astigmatism') {
-                        const [powerValues, cylinderValues, axisValues] = await Promise.all([
-                            getAstigmatismDropdownValues('power'),
+                        const [cylinderValues, axisValues] = await Promise.all([
                             getAstigmatismDropdownValues('cylinder'),
                             getAstigmatismDropdownValues('axis')
                         ])
@@ -271,6 +336,19 @@ const ProductDetail: React.FC = () => {
                                 axis: axisValues.length
                             })
                         }
+                    } else {
+                        // For Spherical, only set Power values
+                        setAstigmatismDropdownValues({
+                            power: powerValues,
+                            cylinder: [],
+                            axis: []
+                        })
+                        
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Spherical Power dropdown values loaded:', {
+                                power: powerValues.length
+                            })
+                        }
                     }
                 } else {
                     if (import.meta.env.DEV) {
@@ -286,10 +364,149 @@ const ProductDetail: React.FC = () => {
         
         fetchFormConfig()
     }, [product?.id, isContactLens])
+    
+    // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
+    useEffect(() => {
+        const fetchContactLensOptions = async () => {
+            if (!product || !isContactLens) {
+                setSubSubcategoryOptions(null)
+                return
+            }
+            
+            const p = product as any
+            // Get sub-sub-category ID using the same enhanced detection logic
+            let subCategoryId: number | string | undefined = undefined
+            
+            // Priority 1: Check direct subcategory field
+            if (p.subcategory?.parent_id) {
+                subCategoryId = p.subcategory.id
+            }
+            
+            // Priority 2: Check alternative field names
+            if (!subCategoryId) {
+                subCategoryId = p.sub_category_id || p.subcategory_id || p.sub_category?.id || p.subcategory?.id
+            }
+            
+            // Priority 3: Check nested category structure
+            if (!subCategoryId && p.category?.subcategories) {
+                for (const subcat of p.category.subcategories) {
+                    if (subcat.children && subcat.children.length > 0) {
+                        subCategoryId = subcat.children[0]?.id
+                        if (subCategoryId) break
+                    }
+                }
+            }
+            
+            // Priority 4: Check if category has parent_id
+            if (!subCategoryId && p.category?.parent_id) {
+                subCategoryId = p.category.id
+            }
+            
+            if (!subCategoryId) {
+                return
+            }
+            
+            // Ensure it's a number (not a slug/string)
+            const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
+            if (isNaN(numericId) || numericId <= 0) {
+                return
+            }
+            
+            try {
+                // Fetch aggregated options from all products in this sub-subcategory
+                const options = await getContactLensOptions(numericId)
+                if (options) {
+                    setSubSubcategoryOptions({
+                        type: options.type,
+                        powerOptions: options.powerOptions || [],
+                        baseCurveOptions: options.baseCurveOptions || [],
+                        diameterOptions: options.diameterOptions || [],
+                        cylinderOptions: options.cylinderOptions || [],
+                        axisOptions: options.axisOptions || []
+                    })
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Contact Lens Options loaded from sub-subcategory:', {
+                            type: options.type,
+                            powerCount: options.powerOptions?.length || 0,
+                            baseCurveCount: options.baseCurveOptions?.length || 0,
+                            diameterCount: options.diameterOptions?.length || 0,
+                            cylinderCount: options.cylinderOptions?.length || 0,
+                            axisCount: options.axisOptions?.length || 0,
+                            productCount: options.productCount
+                        })
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching contact lens options:', error)
+            }
+        }
+        
+        fetchContactLensOptions()
+    }, [product?.id, isContactLens])
 
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
-        // Priority 1: Use configuration data if available
+    
+    // Qty Options - from form config (admin-managed dropdowns)
+    const qtyOptions = useMemo(() => {
+        // Priority 1: Use formFields from API config (most reliable - admin-managed)
+        if (contactLensFormConfig?.formFields?.rightEye?.qty?.options) {
+            const options = contactLensFormConfig.formFields.rightEye.qty.options
+            if (options.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using qty options from formFields:', options)
+                }
+                return options.map(opt => opt.value)
+            }
+        }
+        
+        // Priority 2: Use dropdownValues from API config
+        if (contactLensFormConfig?.dropdownValues?.qty && contactLensFormConfig.dropdownValues.qty.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using qty options from dropdownValues:', contactLensFormConfig.dropdownValues.qty.length)
+            }
+            return contactLensFormConfig.dropdownValues.qty.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 3: Use configuration data if available
+        if (selectedConfig && selectedConfig.right_qty) {
+            const configOptions = Array.isArray(selectedConfig.right_qty) 
+                ? selectedConfig.right_qty 
+                : [selectedConfig.right_qty]
+            if (configOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using qty options from configuration:', configOptions)
+                }
+                return configOptions.map(v => String(v))
+            }
+        }
+        
+        // No fallback - return empty array if no API data
+        return []
+    }, [contactLensFormConfig, selectedConfig])
+    
+    const baseCurveOptions = useMemo(() => {
+        // Priority 1: Use formFields from API config (most reliable - admin-managed)
+        if (contactLensFormConfig?.formFields?.rightEye?.baseCurve?.options) {
+            const options = contactLensFormConfig.formFields.rightEye.baseCurve.options
+            if (options.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using base curve options from formFields:', options)
+                }
+                return options.map(opt => opt.value)
+            }
+        }
+        
+        // Priority 2: Use dropdownValues from API config
+        if (contactLensFormConfig?.dropdownValues?.base_curve && contactLensFormConfig.dropdownValues.base_curve.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using base curve options from dropdownValues:', contactLensFormConfig.dropdownValues.base_curve.length)
+            }
+            return contactLensFormConfig.dropdownValues.base_curve.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 3: Use configuration data if available
         if (selectedConfig && selectedConfig.right_base_curve) {
             const configOptions = Array.isArray(selectedConfig.right_base_curve) 
                 ? selectedConfig.right_base_curve 
@@ -298,16 +515,16 @@ const ProductDetail: React.FC = () => {
                 if (import.meta.env.DEV) {
                     console.log('✅ Using base curve options from configuration:', configOptions)
                 }
-                return configOptions.map(v => typeof v === 'string' ? parseFloat(v) : v).filter(v => !isNaN(v))
+                return configOptions.map(v => typeof v === 'string' ? v : String(v))
             }
         }
         
-        // Priority 2: Use aggregated options from sub-subcategory if available
+        // Priority 4: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.baseCurveOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using base curve options from sub-subcategory:', subSubcategoryOptions.baseCurveOptions)
             }
-            return subSubcategoryOptions.baseCurveOptions
+            return subSubcategoryOptions.baseCurveOptions.map(v => String(v))
         }
         
         // Priority 3: Use product-specific options
@@ -343,19 +560,31 @@ const ProductDetail: React.FC = () => {
             }
         }
         
-        // Fallback to default options if empty
-        if (options.length === 0) {
-            options = [8.70, 8.80, 8.90]
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No base_curve_options found in API, using defaults:', options)
+        // No fallback - return empty array if no API data
+        return options.map(v => String(v))
+    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig])
+    
+    const diameterOptions = useMemo(() => {
+        // Priority 1: Use formFields from API config (most reliable - admin-managed)
+        if (contactLensFormConfig?.formFields?.rightEye?.diameter?.options) {
+            const options = contactLensFormConfig.formFields.rightEye.diameter.options
+            if (options.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using diameter options from formFields:', options)
+                }
+                return options.map(opt => opt.value)
             }
         }
         
-        return options
-    }, [product, isContactLens, subSubcategoryOptions, selectedConfig])
-    
-    const diameterOptions = useMemo(() => {
-        // Priority 1: Use configuration data if available
+        // Priority 2: Use dropdownValues from API config
+        if (contactLensFormConfig?.dropdownValues?.diameter && contactLensFormConfig.dropdownValues.diameter.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using diameter options from dropdownValues:', contactLensFormConfig.dropdownValues.diameter.length)
+            }
+            return contactLensFormConfig.dropdownValues.diameter.map(dv => dv.value || dv.label)
+        }
+        
+        // Priority 3: Use configuration data if available
         if (selectedConfig && selectedConfig.right_diameter) {
             const configOptions = Array.isArray(selectedConfig.right_diameter) 
                 ? selectedConfig.right_diameter 
@@ -364,16 +593,16 @@ const ProductDetail: React.FC = () => {
                 if (import.meta.env.DEV) {
                     console.log('✅ Using diameter options from configuration:', configOptions)
                 }
-                return configOptions.map(v => typeof v === 'string' ? parseFloat(v) : v).filter(v => !isNaN(v))
+                return configOptions.map(v => typeof v === 'string' ? v : String(v))
             }
         }
         
-        // Priority 2: Use aggregated options from sub-subcategory if available
+        // Priority 4: Use aggregated options from sub-subcategory if available
         if (subSubcategoryOptions && subSubcategoryOptions.diameterOptions.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using diameter options from sub-subcategory:', subSubcategoryOptions.diameterOptions)
             }
-            return subSubcategoryOptions.diameterOptions
+            return subSubcategoryOptions.diameterOptions.map(v => String(v))
         }
         
         // Priority 3: Use product-specific options
@@ -409,16 +638,9 @@ const ProductDetail: React.FC = () => {
             }
         }
         
-        // Fallback to default options if empty
-        if (options.length === 0) {
-            options = [14.00, 14.20]
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No diameter_options found in API, using defaults:', options)
-            }
-        }
-        
-        return options
-    }, [product, isContactLens, subSubcategoryOptions, selectedConfig])
+        // No fallback - return empty array if no API data
+        return options.map(v => String(v))
+    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig])
     
     // Helper function to check if product belongs to spherical sub-subcategory
     const isSphericalSubSubcategory = useMemo(() => {
@@ -603,8 +825,8 @@ const ProductDetail: React.FC = () => {
     // Handles multiple ranges like "-0.50 to -6.00 in 0.25 steps" and "-6.50 to -15.00 in 0.50 steps"
     // Priority: API Dropdown Values > Configuration > Sub-subcategory > Product
     const powerOptions = useMemo(() => {
-        // Priority 1: Use API dropdown values if available (from admin panel) - for astigmatism
-        if (contactLensFormConfig?.formType === 'astigmatism' && astigmatismDropdownValues.power.length > 0) {
+        // Priority 1: Use API dropdown values if available (from admin panel) - for BOTH Spherical and Astigmatism
+        if (astigmatismDropdownValues.power.length > 0) {
             if (import.meta.env.DEV) {
                 console.log('✅ Using power options from API:', astigmatismDropdownValues.power.length, 'values')
             }
@@ -738,8 +960,8 @@ const ProductDetail: React.FC = () => {
             console.error('Error parsing power range:', error)
         }
         
-        // Default fallback options
-        return ['-0.50', '-0.75', '-1.00', '-1.25', '-1.50', '-1.75', '-2.00', '-2.25', '-2.50', '-2.75', '-3.00', '-3.25', '-3.50', '-3.75', '-4.00', '-4.25', '-4.50', '-4.75', '-5.00', '-5.25', '-5.50', '-5.75', '-6.00', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00']
+        // No fallback - return empty array if no API data
+        return []
     }, [product, isSphericalSubSubcategory, contactLensFormConfig, astigmatismDropdownValues.power])
     
     // Initialize contact lens form when product loads
@@ -769,10 +991,7 @@ const ProductDetail: React.FC = () => {
                     baseCurves = p.base_curve_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
                 }
             }
-            if (baseCurves.length === 0) {
-                baseCurves = [8.70, 8.80, 8.90]
-            }
-            
+            // No fallback - only initialize if API provides data
             // Get diameter options (handle different formats)
             let diameters: (number | string)[] = []
             if (Array.isArray(p.diameter_options)) {
@@ -786,9 +1005,6 @@ const ProductDetail: React.FC = () => {
                 } catch (e) {
                     diameters = p.diameter_options.split(',').map((v: string) => parseFloat(v.trim())).filter((v: number) => !isNaN(v))
                 }
-            }
-            if (diameters.length === 0) {
-                diameters = [14.00, 14.20]
             }
             
             // Debug: Log initialization in development
@@ -804,22 +1020,10 @@ const ProductDetail: React.FC = () => {
                 })
             }
             
-            if (baseCurves.length > 0 && diameters.length > 0) {
-                formInitializedRef.current = currentProductId
-                lastProductIdRef.current = currentProductId
-                
-                setContactLensFormData({
-                    right_qty: 1,
-                    right_base_curve: baseCurves[0]?.toString() || '8.70',
-                    right_diameter: diameters[0]?.toString() || '14.00',
-                    right_power: '',
-                    left_qty: 1,
-                    left_base_curve: baseCurves[0]?.toString() || '8.70',
-                    left_diameter: diameters[0]?.toString() || '14.00',
-                    left_power: '',
-                    unit: 'unit' // Default unit
-                })
-            }
+            // Only initialize form if API provides data (no dummy defaults)
+            // Form will be populated from API form config when available
+            formInitializedRef.current = currentProductId
+            lastProductIdRef.current = currentProductId
         } else {
             // Reset refs if not a contact lens
             if (formInitializedRef.current !== null) {
@@ -871,7 +1075,16 @@ const ProductDetail: React.FC = () => {
     // Memoize total calculation to prevent recalculation on every render
     // Now includes unit-based pricing
     const calculateContactLensTotal = useMemo(() => {
-        if (!contactLensFormData.right_power || !contactLensFormData.left_power || productBasePrice === 0) {
+        if (productBasePrice === 0) {
+            return 0
+        }
+        
+        // Determine form type
+        const formType = contactLensFormConfig?.formType || 
+                       (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
+        // Power is required for price calculation for BOTH Spherical and Astigmatism forms
+        if (!contactLensFormData.right_power || !contactLensFormData.left_power) {
             return 0
         }
         
@@ -892,7 +1105,9 @@ const ProductDetail: React.FC = () => {
         contactLensFormData.right_qty, 
         contactLensFormData.left_qty,
         contactLensFormData.unit,
-        getUnitPrice
+        getUnitPrice,
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory
     ])
 
     // Helper function to check if product is out of stock (MUST be before conditional returns)
@@ -1071,17 +1286,17 @@ const ProductDetail: React.FC = () => {
                 })
             }
         } else {
-            // Reset form when configuration is deselected
+            // Reset form when configuration is deselected (no dummy data)
             setContactLensFormData({
-                right_qty: 1,
-                right_base_curve: '8.70',
-                right_diameter: '14.00',
+                right_qty: 0,
+                right_base_curve: '',
+                right_diameter: '',
                 right_power: '',
                 right_cylinder: '',
                 right_axis: '',
-                left_qty: 1,
-                left_base_curve: '8.70',
-                left_diameter: '14.00',
+                left_qty: 0,
+                left_base_curve: '',
+                left_diameter: '',
                 left_power: '',
                 left_cylinder: '',
                 left_axis: '',
@@ -1201,8 +1416,13 @@ const ProductDetail: React.FC = () => {
             return false
         }
         
+        // Determine form type from config or subcategory
+        const formType = contactLensFormConfig?.formType || 
+                       (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
         const newErrors: Record<string, string> = {}
         
+        // Power is required for BOTH Spherical and Astigmatism forms
         if (!contactLensFormData.right_power) {
             newErrors.right_power = 'Power is required for right eye'
         }
@@ -1211,8 +1431,8 @@ const ProductDetail: React.FC = () => {
             newErrors.left_power = 'Power is required for left eye'
         }
         
-        // For astigmatism lenses, cylinder and axis are required
-        if (isAstigmatismSubSubcategory) {
+        // For Astigmatism forms, cylinder and axis are also required
+        if (formType === 'astigmatism') {
             if (!contactLensFormData.right_cylinder) {
                 newErrors.right_cylinder = 'Cylinder is required for right eye'
             }
@@ -1260,10 +1480,10 @@ const ProductDetail: React.FC = () => {
                 left_qty: contactLensFormData.left_qty,
                 left_base_curve: parseFloat(contactLensFormData.left_base_curve),
                 left_diameter: parseFloat(contactLensFormData.left_diameter),
-                // Add power for both eyes (required)
+                // Power is required for BOTH Spherical and Astigmatism forms
                 right_power: contactLensFormData.right_power,
                 left_power: contactLensFormData.left_power,
-                // Add astigmatism fields if applicable
+                // Cylinder and Axis are ONLY for Astigmatism forms
                 ...(formType === 'astigmatism' && {
                     right_cylinder: contactLensFormData.right_cylinder,
                     right_axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined,
@@ -1296,7 +1516,11 @@ const ProductDetail: React.FC = () => {
                                     qty: contactLensFormData.right_qty,
                                     baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                     diameter: parseFloat(contactLensFormData.right_diameter),
-                                    power: parseFloat(contactLensFormData.right_power),
+                                    // Power is required for BOTH Spherical and Astigmatism
+                                    ...(contactLensFormData.right_power && {
+                                        power: parseFloat(contactLensFormData.right_power)
+                                    }),
+                                    // Cylinder and Axis are ONLY for Astigmatism
                                     ...(formType === 'astigmatism' && {
                                         cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
                                         axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
@@ -1306,7 +1530,11 @@ const ProductDetail: React.FC = () => {
                                     qty: contactLensFormData.left_qty,
                                     baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                     diameter: parseFloat(contactLensFormData.left_diameter),
-                                    power: parseFloat(contactLensFormData.left_power),
+                                    // Power is required for BOTH Spherical and Astigmatism
+                                    ...(contactLensFormData.left_power && {
+                                        power: parseFloat(contactLensFormData.left_power)
+                                    }),
+                                    // Cylinder and Axis are ONLY for Astigmatism
                                     ...(formType === 'astigmatism' && {
                                         cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
                                         axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
@@ -1341,7 +1569,11 @@ const ProductDetail: React.FC = () => {
                                 qty: contactLensFormData.right_qty,
                                 baseCurve: parseFloat(contactLensFormData.right_base_curve),
                                 diameter: parseFloat(contactLensFormData.right_diameter),
-                                power: parseFloat(contactLensFormData.right_power),
+                                // Power is required for BOTH Spherical and Astigmatism
+                                ...(contactLensFormData.right_power && {
+                                    power: parseFloat(contactLensFormData.right_power)
+                                }),
+                                // Cylinder and Axis are ONLY for Astigmatism
                                 ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
                                     axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
@@ -1351,7 +1583,11 @@ const ProductDetail: React.FC = () => {
                                 qty: contactLensFormData.left_qty,
                                 baseCurve: parseFloat(contactLensFormData.left_base_curve),
                                 diameter: parseFloat(contactLensFormData.left_diameter),
-                                power: parseFloat(contactLensFormData.left_power),
+                                // Power is required for BOTH Spherical and Astigmatism
+                                ...(contactLensFormData.left_power && {
+                                    power: parseFloat(contactLensFormData.left_power)
+                                }),
+                                // Cylinder and Axis are ONLY for Astigmatism
                                 ...(formType === 'astigmatism' && {
                                     cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
                                     axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
@@ -2146,155 +2382,275 @@ const ProductDetail: React.FC = () => {
                                 {/* Right Eye Section */}
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">(Right eye)</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Qty */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                        {/* Qty Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Qty
                                             </label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={contactLensFormData.right_qty || 1}
+                                            <select
+                                                value={contactLensFormData.right_qty || ''}
                                                 onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                    contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                }`}
+                                            >
+                                                <option value="">-</option>
+                                                {qtyOptions.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
                                             {contactLensErrors.right_qty && (
                                                 <p className="mt-1 text-xs text-red-600">{contactLensErrors.right_qty}</p>
                                             )}
                                         </div>
 
-                                        {/* Raggio Base (B.C) */}
+                                        {/* Raggio Base (B.C) Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Raggio Base (B.C)
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 value={contactLensFormData.right_base_curve || ''}
                                                 onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
+                                            >
+                                                <option value="">-</option>
+                                                {baseCurveOptions.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
-                                        {/* Diametro (DIA) */}
+                                        {/* Diametro (DIA) Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Diametro (DIA)
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 value={contactLensFormData.right_diameter || ''}
                                                 onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
+                                            >
+                                                <option value="">-</option>
+                                                {diameterOptions.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
+                                    
+                                    {/* Power (PWR) Dropdown for Spherical - Right Eye */}
+                                    {(() => {
+                                        const formType = contactLensFormConfig?.formType || 
+                                                       (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+                                        
+                                        // Show Power dropdown for Spherical forms (for Astigmatism, it's shown separately below)
+                                        if (formType === 'spherical') {
+                                            return (
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        * Power (PWR)
+                                                    </label>
+                                                    <select
+                                                        value={contactLensFormData.right_power || ''}
+                                                        onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                            contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <option value="">-</option>
+                                                        {powerOptions.map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {contactLensErrors.right_power && (
+                                                        <p className="mt-1 text-xs text-red-600">{contactLensErrors.right_power}</p>
+                                                    )}
+                                                </div>
+                                            )
+                                        }
+                                        return null
+                                    })()}
                                 </div>
 
                                 {/* Left Eye Section */}
                                 <div>
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">(Left eye)</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                        {/* Qty */}
+                                        {/* Qty Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Qty
                                             </label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={contactLensFormData.left_qty || 1}
+                                            <select
+                                                value={contactLensFormData.left_qty || ''}
                                                 onChange={(e) => handleContactLensFieldChange('left_qty', parseInt(e.target.value) || 1)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
+                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                    contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                }`}
+                                            >
+                                                <option value="">-</option>
+                                                {qtyOptions.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
                                             {contactLensErrors.left_qty && (
                                                 <p className="mt-1 text-xs text-red-600">{contactLensErrors.left_qty}</p>
                                             )}
                                         </div>
 
-                                        {/* Raggio Base (B.C) */}
+                                        {/* Raggio Base (B.C) Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Raggio Base (B.C)
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 value={contactLensFormData.left_base_curve || ''}
                                                 onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
+                                            >
+                                                <option value="">-</option>
+                                                {baseCurveOptions.map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
 
-                                        {/* Diametro (DIA) */}
+                                        {/* Diametro (DIA) Dropdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Diametro (DIA)
                                             </label>
-                                            <input
-                                                type="text"
+                                            <select
                                                 value={contactLensFormData.left_diameter || ''}
                                                 onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
                                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Power Dropdowns - Always shown for left eye */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                        {/* Occhio Sinistro PWR Power */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                * Occhio Sinistro PWR Power
-                                            </label>
-                                            <select
-                                                value={contactLensFormData.left_power || ''}
-                                                onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                                    contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                }`}
                                             >
                                                 <option value="">-</option>
-                                                {powerOptions.map((option) => (
+                                                {diameterOptions.map((option) => (
                                                     <option key={option} value={option}>
                                                         {option}
                                                     </option>
                                                 ))}
                                             </select>
-                                            {contactLensErrors.left_power && (
-                                                <p className="mt-1 text-xs text-red-600">{contactLensErrors.left_power}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Occhio Destro PWR Power */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                * Occhio Destro PWR Power
-                                            </label>
-                                            <select
-                                                value={contactLensFormData.right_power || ''}
-                                                onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
-                                                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                                    contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                }`}
-                                            >
-                                                <option value="">-</option>
-                                                {powerOptions.map((option) => (
-                                                    <option key={option} value={option}>
-                                                        {option}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {contactLensErrors.right_power && (
-                                                <p className="mt-1 text-xs text-red-600">{contactLensErrors.right_power}</p>
-                                            )}
                                         </div>
                                     </div>
+                                    
+                                    {/* Power (PWR) Dropdown for Spherical - Left Eye */}
+                                    {(() => {
+                                        const formType = contactLensFormConfig?.formType || 
+                                                       (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+                                        
+                                        // Show Power dropdown for Spherical forms (for Astigmatism, it's shown separately below)
+                                        if (formType === 'spherical') {
+                                            return (
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        * Power (PWR)
+                                                    </label>
+                                                    <select
+                                                        value={contactLensFormData.left_power || ''}
+                                                        onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                            contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                        }`}
+                                                    >
+                                                        <option value="">-</option>
+                                                        {powerOptions.map((option) => (
+                                                            <option key={option} value={option}>
+                                                                {option}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                    {contactLensErrors.left_power && (
+                                                        <p className="mt-1 text-xs text-red-600">{contactLensErrors.left_power}</p>
+                                                    )}
+                                                </div>
+                                            )
+                                        }
+                                        return null
+                                    })()}
 
-                                    {/* Astigmatism Fields - Only shown for astigmatism products */}
-                                    {isAstigmatismSubSubcategory && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {/* Cilindro (CYL) - Left Eye */}
+                                    {/* Power, Cylinder, and Axis Fields - Only shown for Astigmatism forms */}
+                                    {(() => {
+                                        // Determine form type from config or subcategory
+                                        const formType = contactLensFormConfig?.formType || 
+                                                       (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+                                        
+                                        // Only show Power, Cylinder, Axis for Astigmatism forms
+                                        if (formType !== 'astigmatism') {
+                                            return null
+                                        }
+                                        
+                                        return (
+                                            <>
+                                                {/* Power Dropdowns - Only for Astigmatism */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                                    {/* Occhio Sinistro PWR Power */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            * Occhio Sinistro PWR Power
+                                                        </label>
+                                                        <select
+                                                            value={contactLensFormData.left_power || ''}
+                                                            onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <option value="">-</option>
+                                                            {powerOptions.map((option) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {contactLensErrors.left_power && (
+                                                            <p className="mt-1 text-xs text-red-600">{contactLensErrors.left_power}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Occhio Destro PWR Power */}
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                            * Occhio Destro PWR Power
+                                                        </label>
+                                                        <select
+                                                            value={contactLensFormData.right_power || ''}
+                                                            onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                                                contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                            }`}
+                                                        >
+                                                            <option value="">-</option>
+                                                            {powerOptions.map((option) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {contactLensErrors.right_power && (
+                                                            <p className="mt-1 text-xs text-red-600">{contactLensErrors.right_power}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Cylinder and Axis Fields - Only for Astigmatism */}
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* Cilindro (CYL) - Left Eye */}
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                                     * Cilindro (CYL)
@@ -2390,7 +2746,9 @@ const ProductDetail: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                    )}
+                                                </>
+                                        )
+                                    })()}
                                 </div>
                             </div>
 

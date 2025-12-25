@@ -22,6 +22,9 @@ export interface ContactLensFormConfig {
     leftEye: Record<string, FormField>
   }
   dropdownValues?: {
+    qty?: DropdownValue[]
+    base_curve?: DropdownValue[]
+    diameter?: DropdownValue[]
     power?: DropdownValue[]
     cylinder?: DropdownValue[]
     axis?: DropdownValue[]
@@ -39,7 +42,7 @@ export interface FormField {
 
 export interface DropdownValue {
   id: number
-  field_type: 'power' | 'cylinder' | 'axis'
+  field_type: 'qty' | 'base_curve' | 'diameter' | 'power' | 'cylinder' | 'axis'
   value: string
   label: string
   eye_type: 'left' | 'right' | 'both' | null
@@ -218,6 +221,110 @@ export const getSphericalConfigs = async (
   } catch (error) {
     console.error('Error fetching spherical configs:', error)
     return []
+  }
+}
+
+/**
+ * Contact Lens Options Response (aggregated from products in sub-subcategory)
+ */
+export interface ContactLensOptionsResponse {
+  subcategory: {
+    id: number
+    name: string
+    slug: string
+    parent?: {
+      id: number
+      name: string
+      slug: string
+    }
+    category?: {
+      id: number
+      name: string
+      slug: string
+    }
+  }
+  powerOptions: string[]
+  baseCurveOptions: number[]
+  diameterOptions: number[]
+  productCount: number
+  type: 'spherical' | 'astigmatism'
+  // Astigmatism-specific fields
+  cylinderOptions?: number[]
+  axisOptions?: number[]
+}
+
+/**
+ * Get aggregated contact lens options from all products in a sub-subcategory
+ * @param subCategoryId - The sub-sub-category ID (must have parent_id)
+ */
+export const getContactLensOptions = async (
+  subCategoryId: number | string
+): Promise<ContactLensOptionsResponse | null> => {
+  try {
+    // Ensure subCategoryId is a valid number (not a slug)
+    const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
+    
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('Invalid sub-category ID provided:', subCategoryId, '- must be a positive number')
+      return null
+    }
+    
+    const response = await apiClient.get<ContactLensOptionsResponse>(
+      API_ROUTES.SUBCATEGORIES.CONTACT_LENS_OPTIONS(numericId),
+      false // Public endpoint
+    )
+
+    if (response.success && response.data) {
+      return response.data
+    }
+
+    console.error('Failed to fetch contact lens options:', response.message, {
+      subCategoryId: numericId,
+      error: response.error
+    })
+    return null
+  } catch (error: any) {
+    console.error('Error fetching contact lens options:', error)
+    if (error?.message) {
+      console.error('Error details:', error.message)
+    }
+    return null
+  }
+}
+
+/**
+ * Get aggregated contact lens options from all products in a sub-subcategory by slug
+ * @param slug - The sub-sub-category slug
+ */
+export const getContactLensOptionsBySlug = async (
+  slug: string
+): Promise<ContactLensOptionsResponse | null> => {
+  try {
+    if (!slug || slug.trim() === '') {
+      console.error('Invalid sub-category slug provided:', slug)
+      return null
+    }
+    
+    const response = await apiClient.get<ContactLensOptionsResponse>(
+      API_ROUTES.SUBCATEGORIES.CONTACT_LENS_OPTIONS_BY_SLUG(slug),
+      false // Public endpoint
+    )
+
+    if (response.success && response.data) {
+      return response.data
+    }
+
+    console.error('Failed to fetch contact lens options by slug:', response.message, {
+      slug,
+      error: response.error
+    })
+    return null
+  } catch (error: any) {
+    console.error('Error fetching contact lens options by slug:', error)
+    if (error?.message) {
+      console.error('Error details:', error.message)
+    }
+    return null
   }
 }
 
