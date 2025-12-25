@@ -10,6 +10,33 @@ import { API_ROUTES } from '../config/apiRoutes';
 // Type Definitions
 // ============================================
 
+export interface ContactLensDetails {
+  right_eye?: {
+    qty: number;
+    base_curve: number | string;
+    diameter: number | string;
+    power: number | string;
+    cylinder?: number | string;
+    axis?: number | string;
+  };
+  left_eye?: {
+    qty: number;
+    base_curve: number | string;
+    diameter: number | string;
+    power: number | string;
+    cylinder?: number | string;
+    axis?: number | string;
+  };
+  astigmatism?: {
+    right_cylinder?: number | string;
+    right_axis?: number | string;
+    left_cylinder?: number | string;
+    left_axis?: number | string;
+  };
+  form_type?: 'spherical' | 'astigmatism';
+  unit?: string;
+}
+
 export interface CartItem {
   id: number;
   product_id: number;
@@ -21,6 +48,17 @@ export interface CartItem {
   prescription_id?: number | null;
   frame_size_id?: number | null;
   customization?: any;
+  // Contact lens fields (legacy - for backward compatibility)
+  contact_lens_right_qty?: number;
+  contact_lens_right_base_curve?: number;
+  contact_lens_right_diameter?: number;
+  contact_lens_right_power?: number | string;
+  contact_lens_left_qty?: number;
+  contact_lens_left_base_curve?: number;
+  contact_lens_left_diameter?: number;
+  contact_lens_left_power?: number | string;
+  // New formatted contact_lens_details field from API
+  contact_lens_details?: ContactLensDetails;
   product?: {
     id: number;
     name: string;

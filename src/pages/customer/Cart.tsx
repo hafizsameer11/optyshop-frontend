@@ -3,6 +3,33 @@ import { Link } from 'react-router-dom'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
 
+interface ContactLensDetails {
+  right_eye?: {
+    qty: number
+    base_curve: number | string
+    diameter: number | string
+    power: number | string
+    cylinder?: number | string
+    axis?: number | string
+  }
+  left_eye?: {
+    qty: number
+    base_curve: number | string
+    diameter: number | string
+    power: number | string
+    cylinder?: number | string
+    axis?: number | string
+  }
+  astigmatism?: {
+    right_cylinder?: number | string
+    right_axis?: number | string
+    left_cylinder?: number | string
+    left_axis?: number | string
+  }
+  form_type?: 'spherical' | 'astigmatism'
+  unit?: string
+}
+
 interface CartItem {
   id: number
   product_id: number
@@ -11,6 +38,18 @@ interface CartItem {
   unit_price: number
   lens_index?: number
   lens_coating?: string
+  // Contact lens fields (legacy - for backward compatibility)
+  contact_lens_right_qty?: number
+  contact_lens_right_base_curve?: number
+  contact_lens_right_diameter?: number
+  contact_lens_right_power?: number | string
+  contact_lens_left_qty?: number
+  contact_lens_left_base_curve?: number
+  contact_lens_left_diameter?: number
+  contact_lens_left_power?: number | string
+  customization?: any
+  // New formatted contact_lens_details field from API
+  contact_lens_details?: ContactLensDetails
 }
 
 interface Cart {
@@ -149,6 +188,104 @@ const Cart: React.FC = () => {
                         <p className="text-sm text-gray-600">
                           Coating: {item.lens_coating}
                         </p>
+                      )}
+                      
+                      {/* Contact Lens Details - Priority: contact_lens_details > legacy fields */}
+                      {(item.contact_lens_details || item.contact_lens_right_qty || item.contact_lens_left_qty) && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="font-semibold text-gray-700 mb-2 text-sm">Contact Lens Specifications:</p>
+                          {(() => {
+                            // Priority 1: Use contact_lens_details from API (new formatted structure)
+                            if (item.contact_lens_details) {
+                              const details = item.contact_lens_details
+                              const unit = details.unit || 'unit'
+                              const formType = details.form_type || 'spherical'
+                              const isAstigmatism = formType === 'astigmatism' || !!details.astigmatism
+                              
+                              return (
+                                <div className="space-y-2 text-xs">
+                                  {details.right_eye && (
+                                    <div>
+                                      <span className="font-semibold text-blue-600">Right Eye:</span>
+                                      <span className="ml-2">
+                                        Qty: {details.right_eye.qty || 0} {unit} | 
+                                        B.C: {details.right_eye.base_curve || 'N/A'} | 
+                                        DIA: {details.right_eye.diameter || 'N/A'} | 
+                                        PWR: {details.right_eye.power || 'N/A'}
+                                        {isAstigmatism && (details.right_eye.cylinder || details.astigmatism?.right_cylinder) && (
+                                          <> | CYL: {details.right_eye.cylinder || details.astigmatism?.right_cylinder}</>
+                                        )}
+                                        {isAstigmatism && (details.right_eye.axis || details.astigmatism?.right_axis) && (
+                                          <> | AXI: {details.right_eye.axis || details.astigmatism?.right_axis}°</>
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {details.left_eye && (
+                                    <div>
+                                      <span className="font-semibold text-purple-600">Left Eye:</span>
+                                      <span className="ml-2">
+                                        Qty: {details.left_eye.qty || 0} {unit} | 
+                                        B.C: {details.left_eye.base_curve || 'N/A'} | 
+                                        DIA: {details.left_eye.diameter || 'N/A'} | 
+                                        PWR: {details.left_eye.power || 'N/A'}
+                                        {isAstigmatism && (details.left_eye.cylinder || details.astigmatism?.left_cylinder) && (
+                                          <> | CYL: {details.left_eye.cylinder || details.astigmatism?.left_cylinder}</>
+                                        )}
+                                        {isAstigmatism && (details.left_eye.axis || details.astigmatism?.left_axis) && (
+                                          <> | AXI: {details.left_eye.axis || details.astigmatism?.left_axis}°</>
+                                        )}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            }
+                            
+                            // Priority 2: Use legacy contact_lens_* fields
+                            if (item.contact_lens_right_qty || item.contact_lens_left_qty) {
+                              const isAstigmatism = item.customization && typeof item.customization === 'object' && 
+                                (item.customization.left_cylinder || item.customization.right_cylinder)
+                              
+                              return (
+                                <div className="space-y-2 text-xs">
+                                  <div>
+                                    <span className="font-semibold text-blue-600">Right Eye:</span>
+                                    <span className="ml-2">
+                                      Qty: {item.contact_lens_right_qty || 0} | 
+                                      B.C: {item.contact_lens_right_base_curve || 'N/A'} | 
+                                      DIA: {item.contact_lens_right_diameter || 'N/A'} | 
+                                      PWR: {item.contact_lens_right_power || 'N/A'}
+                                      {isAstigmatism && item.customization?.right_cylinder && (
+                                        <> | CYL: {item.customization.right_cylinder}</>
+                                      )}
+                                      {isAstigmatism && item.customization?.right_axis && (
+                                        <> | AXI: {item.customization.right_axis}°</>
+                                      )}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold text-purple-600">Left Eye:</span>
+                                    <span className="ml-2">
+                                      Qty: {item.contact_lens_left_qty || 0} | 
+                                      B.C: {item.contact_lens_left_base_curve || 'N/A'} | 
+                                      DIA: {item.contact_lens_left_diameter || 'N/A'} | 
+                                      PWR: {item.contact_lens_left_power || 'N/A'}
+                                      {isAstigmatism && item.customization?.left_cylinder && (
+                                        <> | CYL: {item.customization.left_cylinder}</>
+                                      )}
+                                      {isAstigmatism && item.customization?.left_axis && (
+                                        <> | AXI: {item.customization.left_axis}°</>
+                                      )}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            }
+                            
+                            return null
+                          })()}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center gap-4">

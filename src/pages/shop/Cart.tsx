@@ -281,9 +281,57 @@ const Cart: React.FC = () => {
                                                         })()})
                                                     </p>
                                                 )}
-                                                {(item.category === 'contact-lenses' || item.category === 'eye-hygiene' || (item as any).customization?.contactLens) && (
+                                                {(item.category === 'contact-lenses' || item.category === 'eye-hygiene' || (item as any).customization?.contactLens || (item as any).contact_lens_details) && (
                                                     <div className="text-xs text-gray-600 mt-2 space-y-1">
                                                         {(() => {
+                                                            // Priority 1: Use contact_lens_details from API (new formatted structure)
+                                                            if ((item as any).contact_lens_details) {
+                                                                const details = (item as any).contact_lens_details
+                                                                const unit = details.unit || 'unit'
+                                                                const formType = details.form_type || 'spherical'
+                                                                const isAstigmatism = formType === 'astigmatism' || !!details.astigmatism
+                                                                
+                                                                // Right Eye Details
+                                                                const rightDetails = []
+                                                                if (details.right_eye) {
+                                                                    rightDetails.push(`Qty: ${details.right_eye.qty || 0} ${unit}`)
+                                                                    rightDetails.push(`B.C: ${details.right_eye.base_curve || 'N/A'}`)
+                                                                    rightDetails.push(`DIA: ${details.right_eye.diameter || 'N/A'}`)
+                                                                    rightDetails.push(`PWR: ${details.right_eye.power || 'N/A'}`)
+                                                                    if (isAstigmatism && (details.right_eye.cylinder || details.astigmatism?.right_cylinder)) {
+                                                                        rightDetails.push(`CYL: ${details.right_eye.cylinder || details.astigmatism?.right_cylinder}`)
+                                                                    }
+                                                                    if (isAstigmatism && (details.right_eye.axis || details.astigmatism?.right_axis)) {
+                                                                        rightDetails.push(`AXI: ${details.right_eye.axis || details.astigmatism?.right_axis}°`)
+                                                                    }
+                                                                }
+                                                                
+                                                                // Left Eye Details
+                                                                const leftDetails = []
+                                                                if (details.left_eye) {
+                                                                    leftDetails.push(`Qty: ${details.left_eye.qty || 0} ${unit}`)
+                                                                    leftDetails.push(`B.C: ${details.left_eye.base_curve || 'N/A'}`)
+                                                                    leftDetails.push(`DIA: ${details.left_eye.diameter || 'N/A'}`)
+                                                                    leftDetails.push(`PWR: ${details.left_eye.power || 'N/A'}`)
+                                                                    if (isAstigmatism && (details.left_eye.cylinder || details.astigmatism?.left_cylinder)) {
+                                                                        leftDetails.push(`CYL: ${details.left_eye.cylinder || details.astigmatism?.left_cylinder}`)
+                                                                    }
+                                                                    if (isAstigmatism && (details.left_eye.axis || details.astigmatism?.left_axis)) {
+                                                                        leftDetails.push(`AXI: ${details.left_eye.axis || details.astigmatism?.left_axis}°`)
+                                                                    }
+                                                                }
+                                                                
+                                                                return (
+                                                                    <div className="space-y-2">
+                                                                        <div className="font-semibold text-gray-700">Right Eye:</div>
+                                                                        <div className="text-gray-600 pl-2">{rightDetails.join(' | ')}</div>
+                                                                        <div className="font-semibold text-gray-700 mt-1">Left Eye:</div>
+                                                                        <div className="text-gray-600 pl-2">{leftDetails.join(' | ')}</div>
+                                                                    </div>
+                                                                )
+                                                            }
+                                                            
+                                                            // Priority 2: Use customization.contactLens from local cart
                                                             const custom = (item as any).customization?.contactLens
                                                             if (custom) {
                                                                 const unit = custom.unit || 'unit'
@@ -329,6 +377,7 @@ const Cart: React.FC = () => {
                                                                     </div>
                                                                 )
                                                             }
+                                                            
                                                             return item.category === 'eye-hygiene' ? 'Eye Hygiene' : 'Contact Lens'
                                                         })()}
                                                     </div>

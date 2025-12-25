@@ -116,6 +116,17 @@ const ProductDetail: React.FC = () => {
     const salePriceNum = hasValidSale ? displayPrice : null
     const p = product as any
 
+    // Check if product is eye hygiene
+    const isEyeHygiene = useMemo(() => {
+        if (!product) return false
+        const categorySlug = product.category?.slug || ''
+        const categoryName = product.category?.name || ''
+        return categorySlug.toLowerCase().includes('eye-hygiene') || 
+               categorySlug.toLowerCase().includes('hygiene') ||
+               categoryName.toLowerCase().includes('eye hygiene') ||
+               categoryName.toLowerCase().includes('hygiene')
+    }, [product])
+
     const isContactLens = useMemo(() => {
         if (!product) return false
         const p = product as any
@@ -1030,25 +1041,25 @@ const ProductDetail: React.FC = () => {
         // For Astigmatism forms: Use power values from astigmatism dropdown values API
         if (formType === 'astigmatism') {
             // Priority 1: Use astigmatism dropdown values API (from admin panel)
-            if (astigmatismDropdownValues.power.length > 0) {
-                if (import.meta.env.DEV) {
+        if (astigmatismDropdownValues.power.length > 0) {
+            if (import.meta.env.DEV) {
                     console.log('✅ Using power options from astigmatism dropdown API:', astigmatismDropdownValues.power.length, 'values')
-                }
-                return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
             }
+            return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
+        }
 
             // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
-            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
-                if (import.meta.env.DEV) {
+        if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+            if (import.meta.env.DEV) {
                     console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
-                }
-                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
-                    return parseFloat(b) - parseFloat(a)
-                })
             }
+            return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
+                return parseFloat(b) - parseFloat(a)
+            })
+        }
 
-            // No fallback - return empty array if no API data
-            return []
+        // No fallback - return empty array if no API data
+        return []
         }
 
         // If form type is not determined yet, return empty array
@@ -1393,13 +1404,27 @@ const ProductDetail: React.FC = () => {
                         console.log('✅ Contact lens added to cart successfully:', result.data.item)
                     }
                     
+                    // Calculate total price from API response
+                    // API returns unit_price (price per unit/box/pack) and quantities
+                    const apiItem = result.data.item
+                    const apiUnitPrice = typeof apiItem.unit_price === 'string' 
+                        ? parseFloat(apiItem.unit_price) 
+                        : Number(apiItem.unit_price) || 0
+                    
+                    // Total price = unit_price * (right_qty + left_qty)
+                    // This matches our local calculation: unitPrice * right_qty + unitPrice * left_qty
+                    const apiTotalPrice = apiUnitPrice * (apiItem.contact_lens_right_qty + apiItem.contact_lens_left_qty)
+                    
+                    // Use API price if available and valid, otherwise use calculated price
+                    const finalPrice = apiTotalPrice > 0 ? apiTotalPrice : calculateContactLensTotal
+                    
                     // Also add to local cart for UI consistency
                     const cartProduct = {
                         id: product.id || 0,
                         name: product.name || '',
                         brand: product.brand || '',
                         category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
-                        price: calculateContactLensTotal,
+                        price: finalPrice,
                         image: getColorSpecificImageUrl(product, selectedImageIndex),
                         description: product.description || '',
                         inStock: product.in_stock || false,
@@ -1538,120 +1563,105 @@ const ProductDetail: React.FC = () => {
                             {/* Product Images - Left Side */}
                             <div>
                                 {isContactLens ? (
-                                    /* Contact Lens - Two Image Fields (Right Eye & Left Eye) */
+                                    /* Contact Lens - Single Product Image with Price */
                                     <div className="space-y-6">
-                                        {/* Parse images array */}
-                                        {(() => {
-                                            // Parse images if it's a JSON string
-                                            let imagesArray: string[] = []
-                                            if (product.images) {
-                                                if (typeof product.images === 'string') {
-                                                    try {
-                                                        imagesArray = JSON.parse(product.images)
-                                                    } catch (e) {
-                                                        imagesArray = [product.images]
+                                        {/* Single Product Image */}
+                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
+                                            {(() => {
+                                                // Parse images if it's a JSON string
+                                                let imagesArray: string[] = []
+                                                if (product.images) {
+                                                    if (typeof product.images === 'string') {
+                                                        try {
+                                                            imagesArray = JSON.parse(product.images)
+                                                        } catch (e) {
+                                                            imagesArray = [product.images]
+                                                        }
+                                                    } else if (Array.isArray(product.images)) {
+                                                        imagesArray = product.images
                                                     }
-                                                } else if (Array.isArray(product.images)) {
-                                                    imagesArray = product.images
                                                 }
-                                            }
 
-                                            // Get right eye image (first image) and left eye image (second image, or same as first if only one)
-                                            const rightEyeImage = imagesArray.length > 0
-                                                ? imagesArray[0]
-                                                : getProductImageUrl(product, 0)
-                                            const leftEyeImage = imagesArray.length > 1
-                                                ? imagesArray[1]
-                                                : (imagesArray.length > 0 ? imagesArray[0] : getProductImageUrl(product, 0))
+                                                // Get first image or fallback
+                                                const productImage = imagesArray.length > 0
+                                                    ? imagesArray[0]
+                                                    : getProductImageUrl(product, 0)
 
-                                            return (
-                                                <>
-                                                    {/* Right Eye Image */}
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Right Eye</h3>
-                                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
-                                                            <img
-                                                                key={`product-${product.id}-right-eye`}
-                                                                src={rightEyeImage}
-                                                                alt={`${product.name} - Right Eye`}
-                                                                className="w-full h-full object-cover p-8"
-                                                                onError={(e) => {
-                                                                    const target = e.target as HTMLImageElement
-                                                                    if (import.meta.env.DEV) {
-                                                                        console.warn('Right eye image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
-                                                                    }
-                                                                    target.src = '/assets/images/frame1.png'
-                                                                }}
-                                                            />
-                                                            {(() => {
-                                                                const p = product as any
-                                                                const stockStatus = p.stock_status
-                                                                const stockQty = product.stock_quantity
+                                                return (
+                                                    <img
+                                                        key={`product-${product.id}`}
+                                                        src={productImage}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-cover p-8"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            if (import.meta.env.DEV) {
+                                                                console.warn('Product image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                            }
+                                                            target.src = '/assets/images/frame1.png'
+                                                        }}
+                                                    />
+                                                )
+                                            })()}
+                                            {(() => {
+                                                const p = product as any
+                                                const stockStatus = p.stock_status
+                                                const stockQty = product.stock_quantity
 
-                                                                const isOutOfStock =
-                                                                    stockStatus === 'out_of_stock' ||
-                                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                                    (stockStatus === undefined && product.in_stock === false) ||
-                                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                const isOutOfStock =
+                                                    stockStatus === 'out_of_stock' ||
+                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
+                                                    (stockStatus === undefined && product.in_stock === false) ||
+                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
 
-                                                                return isOutOfStock ? (
-                                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                                        {t('shop.outOfStock')}
-                                                                    </div>
-                                                                ) : null
-                                                            })()}
-                                                            {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
-                                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                                    Sale
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                return isOutOfStock ? (
+                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                        {t('shop.outOfStock')}
                                                     </div>
+                                                ) : null
+                                            })()}
+                                            {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
+                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                    Sale
+                                                </div>
+                                            )}
+                                        </div>
 
-                                                    {/* Left Eye Image */}
-                                                    <div>
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Left Eye</h3>
-                                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden" style={{ aspectRatio: '1/1' }}>
-                                                            <img
-                                                                key={`product-${product.id}-left-eye`}
-                                                                src={leftEyeImage}
-                                                                alt={`${product.name} - Left Eye`}
-                                                                className="w-full h-full object-cover p-8"
-                                                                onError={(e) => {
-                                                                    const target = e.target as HTMLImageElement
-                                                                    if (import.meta.env.DEV) {
-                                                                        console.warn('Left eye image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
-                                                                    }
-                                                                    target.src = '/assets/images/frame1.png'
-                                                                }}
-                                                            />
-                                                            {(() => {
-                                                                const p = product as any
-                                                                const stockStatus = p.stock_status
-                                                                const stockQty = product.stock_quantity
-
-                                                                const isOutOfStock =
-                                                                    stockStatus === 'out_of_stock' ||
-                                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                                    (stockStatus === undefined && product.in_stock === false) ||
-                                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-
-                                                                return isOutOfStock ? (
-                                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                                        {t('shop.outOfStock')}
-                                                                    </div>
-                                                                ) : null
-                                                            })()}
-                                                            {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
-                                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                                    Sale
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )
-                                        })()}
+                                        {/* Price Display */}
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100">
+                                            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                                                {calculateContactLensTotal > 0 ? 'Total Price' : 'Price'}
+                                            </p>
+                                            <div className="flex items-baseline gap-3">
+                                                {calculateContactLensTotal > 0 ? (
+                                                    <p className="text-3xl font-bold text-blue-950">
+                                                        €{calculateContactLensTotal.toFixed(2)}
+                                                    </p>
+                                                ) : (
+                                                    <>
+                                                        {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
+                                                            <>
+                                                                <p className="text-3xl font-bold text-blue-950">
+                                                                    €{salePriceNum.toFixed(2)}
+                                                                </p>
+                                                                <p className="text-xl text-gray-400 line-through">
+                                                                    €{regularPriceNum.toFixed(2)}
+                                                                </p>
+                                                            </>
+                                                        ) : (
+                                                            <p className="text-3xl font-bold text-blue-950">
+                                                                €{regularPriceNum.toFixed(2)}
+                                                            </p>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
+                                            {contactLensFormData.unit && calculateContactLensTotal > 0 && (
+                                                <p className="text-xs text-gray-500 mt-2">
+                                                    Per {contactLensFormData.unit}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                 ) : (
                                     /* Regular Product - Single Image Display */
@@ -1790,18 +1800,10 @@ const ProductDetail: React.FC = () => {
                             {isContactLens && (
                                 <div>
                                     <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 md:p-10 shadow-xl">
-                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 pb-6 border-b-2 border-gray-100">
-                                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 md:mb-0">
+                                        <div className="mb-8 pb-6 border-b-2 border-gray-100">
+                                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
                                                 Select the parameters
                                             </h2>
-
-                                            {/* Price Display */}
-                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 border-2 border-blue-100">
-                                                <p className="text-xs md:text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Price</p>
-                                                <p className="text-3xl md:text-4xl font-bold text-blue-950">
-                                                    {calculateContactLensTotal > 0 ? `€${calculateContactLensTotal.toFixed(2)}` : '€0.00'}
-                                                </p>
-                                            </div>
                                         </div>
 
                                         {/* Unit Selection */}
@@ -2391,6 +2393,21 @@ const ProductDetail: React.FC = () => {
 
                                     {/* Actions */}
                                     <div className="space-y-4">
+                                        {/* For Eye Hygiene: Only show Add to Cart button */}
+                                        {isEyeHygiene ? (
+                                            <button
+                                                onClick={handleAddToCart}
+                                                disabled={isProductOutOfStock}
+                                                className={`w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
+                                                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
+                                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    }`}
+                                            >
+                                                {isProductOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                                            </button>
+                                        ) : (
+                                            <>
+                                                {/* For other products: Show both Add to Cart and Select Lenses */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
                                                 onClick={handleAddToCart}
@@ -2438,6 +2455,8 @@ const ProductDetail: React.FC = () => {
                                                 </svg>
                                             </a>
                                         </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -2526,8 +2545,8 @@ const ProductDetail: React.FC = () => {
 
             <Footer />
 
-            {/* Checkout Modal */}
-            {showCheckout && product && !isContactLens && (
+            {/* Checkout Modal - Only for non-contact lens and non-eye hygiene products */}
+            {showCheckout && product && !isContactLens && !isEyeHygiene && (
                 <ProductCheckout
                     product={product}
                     onClose={() => setShowCheckout(false)}
