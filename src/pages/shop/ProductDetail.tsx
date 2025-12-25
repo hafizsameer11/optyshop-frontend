@@ -1634,9 +1634,11 @@ const ProductDetail: React.FC = () => {
             {/* Product Details */}
             <section className="py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                        {/* Product Images */}
-                        <div>
+                    {isContactLens ? (
+                        /* Contact Lens Layout: Images and Form Side by Side */
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                            {/* Product Images - Left Side */}
+                            <div>
                             {isContactLens ? (
                                 /* Contact Lens - Two Image Fields (Right Eye & Left Eye) */
                                 <div className="space-y-6">
@@ -1886,509 +1888,69 @@ const ProductDetail: React.FC = () => {
                                     })()}
                                 </>
                             )}
-                        </div>
-
-                        {/* Product Info */}
-                        <div>
-                            <div className="mb-4">
-                                <p className="text-sm text-gray-500 uppercase tracking-wide mb-2">
-                                    {product.brand || product.category?.name || 'Brand'}
-                                </p>
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                                    {product.name}
-                                </h1>
-
-                                {/* Price */}
-                                <div className="mb-6">
-                                    {originalPrice ? (
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-4xl font-bold text-blue-950">
-                                                ${displayPrice.toFixed(2)}
-                                            </span>
-                                            <span className="text-2xl text-gray-500 line-through">
-                                                ${originalPrice.toFixed(2)}
-                                            </span>
-                                            <span className="text-lg font-semibold text-red-600">
-                                                {Math.round(((originalPrice - displayPrice) / originalPrice) * 100)}% OFF
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-4xl font-bold text-blue-950">
-                                            ${displayPrice.toFixed(2)}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Description */}
-                                {product.description && (
-                                    <div className="mb-6">
-                                        <h2 className="text-xl font-semibold text-gray-900 mb-2">Description</h2>
-                                        <p className="text-gray-600 leading-relaxed">
-                                            {product.description}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {/* Product Details */}
-                                <div className="mb-6 space-y-2">
-                                    {product.frame_shape && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Frame Shape:</span>
-                                            <span className="text-gray-600 capitalize">{product.frame_shape.replace('_', ' ')}</span>
-                                        </div>
-                                    )}
-                                    {product.frame_material && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Material:</span>
-                                            <span className="text-gray-600 capitalize">{product.frame_material}</span>
-                                        </div>
-                                    )}
-                                    {product.gender && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Gender:</span>
-                                            <span className="text-gray-600 capitalize">{product.gender}</span>
-                                        </div>
-                                    )}
-                                    {product.category && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">Category:</span>
-                                            <span className="text-gray-600">{translateCategory(product.category)}</span>
-                                        </div>
-                                    )}
-                                    {product.sku && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">SKU:</span>
-                                            <span className="text-gray-600">{product.sku}</span>
-                                        </div>
-                                    )}
-                                    {/* 3D Model URL - from Postman collection */}
-                                    {product.model_3d_url && (
-                                        <div className="flex">
-                                            <span className="font-semibold text-gray-700 w-32">3D Model:</span>
-                                            <a
-                                                href={product.model_3d_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:text-blue-800 underline"
-                                            >
-                                                {t('shop.view3DModel', 'View 3D Model')}
-                                            </a>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Regular Product - Hide for Contact Lenses */}
-                                {!isContactLens && (
-                                    /* Regular Product Quantity and Add to Cart */
-                                <div className="mb-6">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <label className="font-semibold text-gray-900">Quantity:</label>
-                                        <div className="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                                            <button
-                                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                                className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed border-r border-gray-300"
-                                                disabled={quantity <= 1}
-                                                aria-label="Decrease quantity"
-                                            >
-                                                −
-                                            </button>
-                                            <span className="px-6 py-2.5 min-w-[70px] text-center font-semibold text-gray-900 bg-white">{quantity}</span>
-                                            <button
-                                                onClick={() => setQuantity(quantity + 1)}
-                                                className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 active:bg-gray-200 transition-colors font-semibold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed border-l border-gray-300"
-                                                disabled={(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    return stockStatus === 'out_of_stock' ||
-                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                           (stockStatus === undefined && product.in_stock === false) ||
-                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                })()}
-                                                aria-label="Increase quantity"
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                    
-                                    {/* Lens Type Selection - Show only types available for this product */}
-                                    {(() => {
-                                        // Get available lens types for this product
-                                        const getAvailableLensTypes = (): string[] => {
-                                            if (!product || !productOptions?.lensTypeEnums) return []
-                                            
-                                            const p = product as any
-                                            
-                                            // Check if product has lens_types array
-                                            if (Array.isArray(p.lens_types) && p.lens_types.length > 0) {
-                                                const filtered = p.lens_types.filter((t: string) => 
-                                                    productOptions.lensTypeEnums.includes(t)
-                                                )
-                                                if (import.meta.env.DEV) {
-                                                    console.log('🔍 [Lens Types] Product has lens_types array:', p.lens_types)
-                                                    console.log('🔍 [Lens Types] Filtered available types:', filtered)
-                                                }
-                                                return filtered
-                                            }
-                                            
-                                            // Check if product has lensTypes array (from lensTypes field)
-                                            if (Array.isArray(p.lensTypes) && p.lensTypes.length > 0) {
-                                                const filtered = p.lensTypes
-                                                    .map((lt: any) => lt.type || lt.name || lt)
-                                                    .filter((t: string) => 
-                                                        productOptions.lensTypeEnums.includes(t)
-                                                    )
-                                                if (import.meta.env.DEV) {
-                                                    console.log('🔍 [Lens Types] Product has lensTypes array:', p.lensTypes)
-                                                    console.log('🔍 [Lens Types] Filtered available types:', filtered)
-                                                }
-                                                return filtered
-                                            }
-                                            
-                                            // Check if product has lens_type (singular)
-                                            if (p.lens_type) {
-                                                if (productOptions.lensTypeEnums.includes(p.lens_type)) {
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('🔍 [Lens Types] Product has single lens_type:', p.lens_type)
-                                                    }
-                                                    return [p.lens_type]
-                                                }
-                                            }
-                                            
-                                            // If product doesn't specify types, don't show lens type selection
-                                            if (import.meta.env.DEV) {
-                                                console.log('🔍 [Lens Types] Product has no specific lens types. Available options:', productOptions.lensTypeEnums)
-                                                console.log('🔍 [Lens Types] Product data:', {
-                                                    lens_types: p.lens_types,
-                                                    lensTypes: p.lensTypes,
-                                                    lens_type: p.lens_type
-                                                })
-                                            }
-                                            return []
-                                        }
-                                        
-                                        const availableLensTypes = getAvailableLensTypes()
-                                        
-                                        return (
-                                            <div className="mb-6">
-                                                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                                                    {t('shop.lensType', 'Lens Type')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
-                                                </label>
-                                                {availableLensTypes.length > 0 ? (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-1">
-                                                        {availableLensTypes.map((lensType) => {
-                                                            const isSelected = selectedLensType === lensType
-                                                            return (
-                                                                <label
-                                                                    key={lensType}
-                                                                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 shadow-sm ${
-                                                                        isSelected
-                                                                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-500 shadow-md ring-2 ring-blue-200'
-                                                                            : 'bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
-                                                                    }`}
-                                                                >
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="lensType"
-                                                                        value={lensType}
-                                                                        checked={isSelected}
-                                                                        onChange={() => setSelectedLensType(lensType)}
-                                                                        className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
-                                                                    />
-                                                                    <span className={`text-sm font-medium capitalize flex-1 ${
-                                                                        isSelected ? 'text-blue-900' : 'text-gray-700'
-                                                                    }`}>
-                                                                        {lensType.replace(/_/g, ' ')}
-                                                                    </span>
-                                                                    {isSelected && (
-                                                                        <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                    )}
-                                                                </label>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                                        <p className="text-sm text-gray-500 text-center">{t('shop.noLensTypesAvailable', 'No lens types available for this product')}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    })()}
-                                    
-                                    {/* Frame Material Selection - Show only materials available for this product */}
-                                    {(() => {
-                                        // Get available frame materials for this product
-                                        const getAvailableFrameMaterials = (): string[] => {
-                                            if (!product || !productOptions?.frameMaterials) return []
-                                            
-                                            const p = product as any
-                                            
-                                            // Check if product has frame_materials array (plural)
-                                            if (Array.isArray(p.frame_materials) && p.frame_materials.length > 0) {
-                                                // Filter to show only materials that exist in productOptions
-                                                const filtered = p.frame_materials.filter((m: string) => 
-                                                    productOptions.frameMaterials.includes(m)
-                                                )
-                                                if (import.meta.env.DEV) {
-                                                    console.log('🔍 [Frame Materials] Product has frame_materials array:', p.frame_materials)
-                                                    console.log('🔍 [Frame Materials] Filtered available materials:', filtered)
-                                                }
-                                                return filtered
-                                            }
-                                            
-                                            // Check if product has frame_material (singular)
-                                            if (p.frame_material) {
-                                                // If the product's frame_material exists in available options, show it
-                                                if (productOptions.frameMaterials.includes(p.frame_material)) {
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('🔍 [Frame Materials] Product has single frame_material:', p.frame_material)
-                                                    }
-                                                    return [p.frame_material]
-                                                }
-                                            }
-                                            
-                                            // If product doesn't specify materials, don't show frame material selection
-                                            if (import.meta.env.DEV) {
-                                                console.log('🔍 [Frame Materials] Product has no specific materials')
-                                            }
-                                            return []
-                                        }
-                                        
-                                        const availableMaterials = getAvailableFrameMaterials()
-                                        
-                                        return (
-                                            <div className="mb-6">
-                                                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                                                    {t('shop.frameMaterial', 'Frame Material')} <span className="text-xs font-normal text-gray-500">({t('shop.selectOne', 'Select One')})</span>
-                                                </label>
-                                                {availableMaterials.length > 0 ? (
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-1">
-                                                        {availableMaterials.map((material) => {
-                                                            const isSelected = selectedFrameMaterial === material
-                                                            return (
-                                                                <label
-                                                                    key={material}
-                                                                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 shadow-sm ${
-                                                                        isSelected
-                                                                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-500 shadow-md ring-2 ring-blue-200'
-                                                                            : 'bg-white border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 hover:shadow-md'
-                                                                    }`}
-                                                                >
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="frameMaterial"
-                                                                        value={material}
-                                                                        checked={isSelected}
-                                                                        onChange={() => setSelectedFrameMaterial(material)}
-                                                                        className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
-                                                                    />
-                                                                    <span className={`text-sm font-medium capitalize flex-1 ${
-                                                                        isSelected ? 'text-blue-900' : 'text-gray-700'
-                                                                    }`}>
-                                                                        {material.replace(/_/g, ' ')}
-                                                                    </span>
-                                                                    {isSelected && (
-                                                                        <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                                                        </svg>
-                                                                    )}
-                                                                </label>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                                        <p className="text-sm text-gray-500 text-center">{t('shop.noFrameMaterialsAvailable', 'No frame materials available for this product')}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    })()}
-                                    
-                                    <div className="space-y-3 pt-2">
-                                        <button
-                                            onClick={handleAddToCart}
-                                            disabled={(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-                                                
-                                                return stockStatus === 'out_of_stock' ||
-                                                       (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                       (stockStatus === undefined && product.in_stock === false) ||
-                                                       (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                            })()}
-                                            className={`w-full px-6 py-3.5 rounded-lg font-semibold text-base transition-all duration-200 shadow-md ${
-                                                (() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    const isInStock = stockStatus === 'in_stock' ||
-                                                                      (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
-                                                                      (stockStatus === undefined && product.in_stock === true) ||
-                                                                      (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
-                                                    
-                                                    return isInStock
-                                                        ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 hover:shadow-lg transform hover:-translate-y-0.5'
-                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                })()
-                                            }`}
-                                        >
-                                            Buy Glasses Only
-                                        </button>
-                                        
-                                        <button
-                                            onClick={() => setShowCheckout(true)}
-                                            disabled={(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-                                                
-                                                return stockStatus === 'out_of_stock' ||
-                                                       (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                       (stockStatus === undefined && product.in_stock === false) ||
-                                                       (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                            })()}
-                                            className={`w-full px-6 py-3.5 rounded-lg font-semibold text-base transition-all duration-200 shadow-md ${
-                                                (() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    const isInStock = stockStatus === 'in_stock' ||
-                                                                      (stockStatus !== 'out_of_stock' && stockQty !== undefined && stockQty > 0) ||
-                                                                      (stockStatus === undefined && product.in_stock === true) ||
-                                                                      (stockStatus === undefined && stockQty !== undefined && stockQty > 0)
-                                                    
-                                                    return isInStock
-                                                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-lg transform hover:-translate-y-0.5'
-                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                })()
-                                            }`}
-                                        >
-                                            Select Lenses
-                                        </button>
-                                        
-                                        <div className="flex gap-3">
-                                            {/* 3D Model Viewer Button - from Postman collection */}
-                                            {product.model_3d_url && (
-                                                <a
-                                                    href={product.model_3d_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                                    </svg>
-                                                    {t('shop.view3DModel', 'View 3D Model')}
-                                                </a>
-                                            )}
-                                            <button
-                                                onClick={() => setShowTryOn(true)}
-                                                disabled={(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
-                                                    
-                                                    return stockStatus === 'out_of_stock' ||
-                                                           (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                           (stockStatus === undefined && product.in_stock === false) ||
-                                                           (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                })()}
-                                                className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-all duration-200 bg-gradient-to-r from-gray-900 to-gray-800 text-white hover:from-gray-800 hover:to-gray-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                                            >
-                                                Try on
-                                            </button>
-                                            
-                                            <a
-                                                href="https://wa.me/1234567890"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 px-6 py-3 rounded-lg font-semibold text-base transition-all duration-200 bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                                            >
-                                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Contact Lens Parameter Selection Form */}
-            {isContactLens && (
-                <section className="py-12 md:py-16 bg-gradient-to-b from-gray-50 to-white px-4 sm:px-6">
-                    <div className="w-[90%] mx-auto max-w-7xl">
-                        <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 md:p-10 shadow-xl">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 pb-6 border-b-2 border-gray-100">
-                                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 md:mb-0">
-                                    Select the parameters
-                                </h2>
-                                
-                                {/* Price Display */}
-                                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 border-2 border-blue-100">
-                                    <p className="text-xs md:text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Price</p>
-                                    <p className="text-3xl md:text-4xl font-bold text-blue-950">
-                                        {calculateContactLensTotal > 0 ? `€${calculateContactLensTotal.toFixed(2)}` : '€0.00'}
-                                    </p>
-                                </div>
                             </div>
                             
-                            {/* Unit Selection */}
-                            <div className="mb-8">
-                                <label className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
-                                    Purchase Type
-                                </label>
-                                <div className="flex flex-wrap gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleContactLensFieldChange('unit', 'unit')}
-                                        className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
-                                            contactLensFormData.unit === 'unit'
-                                                ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                        }`}
-                                    >
-                                        Unit
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleContactLensFieldChange('unit', 'box')}
-                                        className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
-                                            contactLensFormData.unit === 'box'
-                                                ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                        }`}
-                                    >
-                                        Box
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleContactLensFieldChange('unit', 'pack')}
-                                        className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
-                                            contactLensFormData.unit === 'pack'
-                                                ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                        }`}
-                                    >
-                                        Pack
-                                    </button>
-                                </div>
-                            </div>
+                            {/* Contact Lens Parameter Selection Form - Right Side */}
+                            {isContactLens && (
+                                <div>
+                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 md:p-10 shadow-xl">
+                                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 pb-6 border-b-2 border-gray-100">
+                                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 md:mb-0">
+                                                Select the parameters
+                                            </h2>
+                                            
+                                            {/* Price Display */}
+                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 md:p-6 border-2 border-blue-100">
+                                                <p className="text-xs md:text-sm font-semibold text-gray-600 uppercase tracking-wide mb-1">Total Price</p>
+                                                <p className="text-3xl md:text-4xl font-bold text-blue-950">
+                                                    {calculateContactLensTotal > 0 ? `€${calculateContactLensTotal.toFixed(2)}` : '€0.00'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Unit Selection */}
+                                        <div className="mb-8">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
+                                                Purchase Type
+                                            </label>
+                                            <div className="flex flex-wrap gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleContactLensFieldChange('unit', 'unit')}
+                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
+                                                        contactLensFormData.unit === 'unit'
+                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                    }`}
+                                                >
+                                                    Unit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleContactLensFieldChange('unit', 'box')}
+                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
+                                                        contactLensFormData.unit === 'box'
+                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                    }`}
+                                                >
+                                                    Box
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleContactLensFieldChange('unit', 'pack')}
+                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
+                                                        contactLensFormData.unit === 'pack'
+                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                    }`}
+                                                >
+                                                    Pack
+                                                </button>
+                                            </div>
+                                        </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Right Eye Section */}
                                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-100">
                                     <div className="flex items-center gap-3 mb-6">
