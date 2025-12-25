@@ -53,18 +53,23 @@ export interface DropdownValue {
 export interface SphericalConfig {
   id: number
   name: string
-  sub_category_id: number
+  sub_category_id?: number
+  subCategory?: {
+    id: number
+    name: string
+    slug: string
+  }
   right_qty: number[]
   right_base_curve: number[]
   right_diameter: number[]
   left_qty: number[]
   left_base_curve: number[]
   left_diameter: number[]
-  price?: number
+  price?: number | string
   display_name?: string
-  is_active: boolean
-  created_at: string
-  updated_at: string
+  is_active?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 export interface ContactLensCheckoutRequest {
@@ -164,16 +169,49 @@ export const getAstigmatismDropdownValues = async (
   eyeType?: 'left' | 'right' | 'both'
 ): Promise<DropdownValue[]> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: DropdownValue[] }>(
+    const response = await apiClient.get<{ 
+      success: boolean
+      message: string
+      data: {
+        values?: DropdownValue[]
+        grouped?: {
+          power?: DropdownValue[]
+          cylinder?: DropdownValue[]
+          axis?: DropdownValue[]
+        }
+      }
+    }>(
       API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_DROPDOWN_VALUES(fieldType, eyeType),
       false // Public endpoint
     )
 
     if (response.success && response.data) {
+      let values: DropdownValue[] = []
+      
+      // Handle new response structure with grouped data
+      if (response.data.grouped) {
+        if (fieldType === 'power' && response.data.grouped.power) {
+          values = response.data.grouped.power
+        } else if (fieldType === 'cylinder' && response.data.grouped.cylinder) {
+          values = response.data.grouped.cylinder
+        } else if (fieldType === 'axis' && response.data.grouped.axis) {
+          values = response.data.grouped.axis
+        } else if (!fieldType) {
+          // If no fieldType specified, return all grouped values
+          values = [
+            ...(response.data.grouped.power || []),
+            ...(response.data.grouped.cylinder || []),
+            ...(response.data.grouped.axis || [])
+          ]
+        }
+      } else if (response.data.values) {
+        // Fallback to old structure
+        values = response.data.values
+      }
+      
       // Filter to only active values and sort by sort_order and value
-      const values: DropdownValue[] = Array.isArray(response.data) ? response.data : []
       return values
-        .filter((value: DropdownValue) => value.is_active)
+        .filter((value: DropdownValue) => value.is_active !== false)
         .sort((a: DropdownValue, b: DropdownValue) => {
           // First sort by sort_order
           if (a.sort_order !== b.sort_order) {
@@ -205,15 +243,30 @@ export const getSphericalConfigs = async (
   subCategoryId?: number | string
 ): Promise<SphericalConfig[]> => {
   try {
-    const response = await apiClient.get<{ success: boolean; data: SphericalConfig[] }>(
+    const response = await apiClient.get<{ 
+      success: boolean
+      message: string
+      data: {
+        configs?: SphericalConfig[]
+      }
+    }>(
       API_ROUTES.CONTACT_LENS_FORMS.GET_SPHERICAL_CONFIGS(subCategoryId),
       false // Public endpoint
     )
 
     if (response.success && response.data) {
-      // Filter to only active configs
-      const configs: SphericalConfig[] = Array.isArray(response.data) ? response.data : []
-      return configs.filter((config: SphericalConfig) => config.is_active)
+      // Handle new response structure with data.configs
+      let configs: SphericalConfig[] = []
+      
+      if (response.data.configs && Array.isArray(response.data.configs)) {
+        configs = response.data.configs
+      } else if (Array.isArray(response.data)) {
+        // Fallback to old structure (direct array)
+        configs = response.data as any
+      }
+      
+      // Filter to only active configs (if is_active field exists)
+      return configs.filter((config: SphericalConfig) => config.is_active !== false)
     }
 
     console.error('Failed to fetch spherical configs:', response.message)
