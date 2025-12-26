@@ -12,6 +12,7 @@ import {
 } from '../../services/prescriptionsService'
 import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '../../services/cartService'
 import { createOrder, createGuestOrder, type Address as OrderAddress } from '../../services/ordersService'
+import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
 import { 
@@ -239,6 +240,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [shippingLoading, setShippingLoading] = useState(true)
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+  const [couponError, setCouponError] = useState('')
   const [photochromicOptions, setPhotochromicOptions] = useState<LensOption[]>([])
   const [prescriptionSunOptions, setPrescriptionSunOptions] = useState<LensOption[]>([])
   const [prescriptionSunColors, setPrescriptionSunColors] = useState<LensColor[]>([])
@@ -1643,6 +1650,76 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     }
   }
 
+  // Coupon handlers
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code')
+      return
+    }
+
+    setIsApplyingCoupon(true)
+    setCouponError('')
+
+    // Calculate subtotal from order summary (excluding shipping)
+    const subtotal = orderSummary
+      .filter(item => item.type !== 'shipping')
+      .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+
+    // Build cart items for coupon API
+    const cartItemsForCoupon: CartItemForCoupon[] = [{
+      product_id: product.id,
+      quantity: 1,
+      unit_price: subtotal
+    }]
+
+    const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
+
+    if (result) {
+      setAppliedCoupon(result)
+      setCouponError('')
+    } else {
+      setAppliedCoupon(null)
+      setCouponError('Invalid or expired coupon code')
+    }
+
+    setIsApplyingCoupon(false)
+  }
+
+  const handleRemoveCoupon = () => {
+    setCouponCode('')
+    setAppliedCoupon(null)
+    setCouponError('')
+  }
+
+  // Calculate discount amount
+  const getDiscountAmount = () => {
+    if (appliedCoupon) {
+      return appliedCoupon.discount_amount || 0
+    }
+    return 0
+  }
+
+  // Calculate subtotal (before discount and shipping)
+  const getSubtotal = () => {
+    return orderSummary
+      .filter(item => item.type !== 'shipping')
+      .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+  }
+
+  // Calculate final total (with coupon discount and shipping)
+  const getFinalTotal = () => {
+    const subtotal = getSubtotal()
+    const discount = getDiscountAmount()
+    const shipping = selectedShippingMethod ? (Number(selectedShippingMethod.price) || 0) : 0
+    
+    if (appliedCoupon) {
+      // Use coupon's final_total and add shipping
+      return (appliedCoupon.final_total || 0) + shipping
+    }
+    
+    return subtotal - discount + shipping
+  }
+
   // Update order summary whenever selections change
   const updateOrderSummary = useCallback(() => {
     const summary: Array<{ name: string; price: number; type: 'product' | 'lens_type' | 'coating' | 'treatment' | 'lens_thickness' | 'shipping'; id?: string | number; removable?: boolean }> = []
@@ -2400,7 +2477,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           country: shippingAddress.country
         },
         payment_method: (paymentMethod || 'stripe').toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
-        shipping_method_id: selectedShippingMethod?.id // Include shipping method ID
+        shipping_method_id: selectedShippingMethod?.id, // Include shipping method ID
+        coupon_code: appliedCoupon ? couponCode : undefined // Include coupon code if applied
       }
 
       // Use appropriate order creation function based on authentication status
@@ -2617,6 +2695,59 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 </div>
               )}
 
+              {/* Coupon Code Section */}
+              <div className="pt-4 border-t border-gray-200 mt-4">
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">Have a coupon code?</h3>
+                {!appliedCoupon ? (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter coupon code"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase())
+                        setCouponError('')
+                      }}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleApplyCoupon()
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={isApplyingCoupon || !couponCode.trim()}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+                    >
+                      {isApplyingCoupon ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-sm font-semibold text-green-800">
+                        {couponCode} Applied
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <p className="mt-2 text-sm text-red-600">{couponError}</p>
+                )}
+              </div>
+
               {/* Payment Method Selection */}
               <div className="pt-4 border-t border-gray-200 mt-4">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
@@ -2668,14 +2799,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                     {t('common.subtotal')} ({orderSummary.filter(item => item.type !== 'shipping').length} {t('shop.items', 'items')})
                   </div>
                   <div className="text-sm font-medium text-gray-900">
-                    ${(() => {
-                      const subtotal = orderSummary
-                        .filter(item => item.type !== 'shipping')
-                        .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
-                      return subtotal.toFixed(2)
-                    })()}
+                    ${getSubtotal().toFixed(2)}
                   </div>
                 </div>
+                {appliedCoupon && getDiscountAmount() > 0 && (
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-green-600 font-medium">
+                      Discount ({couponCode})
+                    </div>
+                    <div className="text-sm font-medium text-green-600">
+                      -${getDiscountAmount().toFixed(2)}
+                    </div>
+                  </div>
+                )}
                 {selectedShippingMethod && (
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-sm text-gray-500">
@@ -2696,13 +2832,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 )}
                 <div className="text-sm text-gray-500 mb-1 mt-3">{t('shop.estimateTotal', 'Estimate Total')}</div>
                 <div className="text-2xl font-bold text-gray-900">
-                  ${(() => {
-                    // Always calculate total from order summary (source of truth) - includes shipping
-                    const total = orderSummary.reduce((sum, item) => {
-                      return sum + (Number(item.price) || 0)
-                    }, 0)
-                    return total.toFixed(2)
-                  })()}
+                  ${getFinalTotal().toFixed(2)}
                 </div>
               </div>
             </div>
