@@ -1,13 +1,16 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Elements } from '@stripe/react-stripe-js'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { getStripePromise } from '../../services/stripeService'
 import { createPaymentIntent } from '../../services/paymentsService'
 
-// Lazy load PaymentForm to avoid initialization issues
+// Lazy load Stripe Elements and PaymentForm to avoid initialization issues
+const StripeElementsWrapper = lazy(async () => {
+  const { Elements } = await import('@stripe/react-stripe-js')
+  return { default: Elements }
+})
 const PaymentForm = lazy(() => import('../../components/payment/PaymentForm'))
 
 /**
@@ -197,24 +200,24 @@ const Payment: React.FC = () => {
 
           {/* Stripe Elements Provider */}
           {stripePromise && clientSecret && (
-            <Elements 
-              stripe={stripePromise}
-              options={{
-                clientSecret,
-                appearance: {
-                  theme: 'stripe',
-                },
-              }}
-            >
-              <Suspense fallback={
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-950 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Loading payment form...</p>
-                </div>
-              }>
+            <Suspense fallback={
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-950 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading payment form...</p>
+              </div>
+            }>
+              <StripeElementsWrapper 
+                stripe={stripePromise}
+                options={{
+                  clientSecret,
+                  appearance: {
+                    theme: 'stripe',
+                  },
+                }}
+              >
                 <PaymentForm orderId={orderId} clientSecret={clientSecret} />
-              </Suspense>
-            </Elements>
+              </StripeElementsWrapper>
+            </Suspense>
           )}
 
           {/* Security Notice */}

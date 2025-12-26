@@ -5,8 +5,10 @@
 
 import { loadStripe, type Stripe } from '@stripe/stripe-js';
 
-// Get Stripe publishable key from environment variable
-const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+// Get Stripe publishable key from environment variable (lazy evaluation)
+const getStripeKey = (): string => {
+  return import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+};
 
 // Singleton instance
 let stripePromise: Promise<Stripe | null> | null = null;
@@ -17,8 +19,11 @@ let stripeInstance: Stripe | null = null;
  * @returns Promise<Stripe | null> - Stripe promise or null if key is missing
  */
 export const getStripePromise = (): Promise<Stripe | null> | null => {
+  // Get key lazily to avoid initialization issues
+  const key = getStripeKey();
+  
   // If no publishable key is provided, return null
-  if (!STRIPE_PUBLISHABLE_KEY) {
+  if (!key) {
     console.warn('Stripe publishable key not found. Set VITE_STRIPE_PUBLISHABLE_KEY in your .env file.');
     return null;
   }
@@ -29,7 +34,7 @@ export const getStripePromise = (): Promise<Stripe | null> | null => {
   }
 
   // Initialize Stripe and return the promise
-  stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
+  stripePromise = loadStripe(key);
   
   // Cache the instance when resolved
   stripePromise.then((stripe) => {
@@ -70,7 +75,7 @@ export const getStripe = async (): Promise<Stripe | null> => {
  * @returns boolean
  */
 export const isStripeAvailable = (): boolean => {
-  return !!STRIPE_PUBLISHABLE_KEY;
+  return !!getStripeKey();
 };
 
 /**
@@ -190,7 +195,8 @@ export const processPayment = async (
  * @returns string | null
  */
 export const getStripePublishableKey = (): string | null => {
-  return STRIPE_PUBLISHABLE_KEY || null;
+  const key = getStripeKey();
+  return key || null;
 };
 
 /**
