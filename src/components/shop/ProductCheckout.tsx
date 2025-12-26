@@ -327,10 +327,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 id: v.slug || v.id?.toString() || '',
                 name: v.name || 'Unknown',
                 price: v.price || 0,
-                description: v.description || v.useCases || v.viewingRange || '',
+                description: String(v.description || v.useCases || v.viewingRange || ''),
                 recommended: v.isRecommended || v.is_recommended || false,
-                viewingRange: v.viewingRange || v.viewing_range || null,
-                useCases: v.useCases || v.use_cases || null,
+                viewingRange: typeof v.viewingRange === 'string' ? v.viewingRange : (typeof v.viewing_range === 'string' ? v.viewing_range : null),
+                useCases: typeof v.useCases === 'string' ? v.useCases : (typeof v.use_cases === 'string' ? v.use_cases : null),
                 variantId: v.id
               }))
             
@@ -739,10 +739,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             id: variant.slug || variant.id?.toString() || '',
             name: variant.name || 'Unknown',
             price: variant.price || 0,
-            description: variant.description || (variant as any).useCases || (variant as any).use_cases || (variant as any).viewingRange || (variant as any).viewing_range || '',
+            description: String(variant.description || (variant as any).useCases || (variant as any).use_cases || (variant as any).viewingRange || (variant as any).viewing_range || ''),
             recommended: (variant as any).isRecommended || variant.is_recommended || false,
-            viewingRange: (variant as any).viewingRange || (variant as any).viewing_range || null,
-            useCases: (variant as any).useCases || (variant as any).use_cases || null,
+            viewingRange: typeof (variant as any).viewingRange === 'string' ? (variant as any).viewingRange : (typeof (variant as any).viewing_range === 'string' ? (variant as any).viewing_range : null),
+            useCases: typeof (variant as any).useCases === 'string' ? (variant as any).useCases : (typeof (variant as any).use_cases === 'string' ? (variant as any).use_cases : null),
             variantId: variant.id
           }))
         
@@ -3110,10 +3110,10 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
                   {option.description && (
                       <div className="text-sm text-gray-600 leading-relaxed mb-2">{option.description}</div>
                   )}
-                  {option.useCases && (
+                  {option.useCases && typeof option.useCases === 'string' && (
                       <div className="text-xs text-gray-500 italic">{option.useCases}</div>
                   )}
-                  {option.viewingRange && (
+                  {option.viewingRange && typeof option.viewingRange === 'string' && (
                       <div className="text-xs text-gray-500 mt-1">
                         <span className="font-medium">Viewing Range:</span> {option.viewingRange}
                       </div>
@@ -4008,8 +4008,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
           if (aIndex !== -1) return -1
           if (bIndex !== -1) return 1
-          const aName = (a.name || '').toLowerCase()
-          const bName = (b.name || '').toLowerCase()
+          // Use the already declared aName and bName variables
           return aName.localeCompare(bName)
         })
       })
