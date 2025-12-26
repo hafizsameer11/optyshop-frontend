@@ -19,12 +19,20 @@ interface CheckoutProps {
 const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormConfig }) => {
     const { t } = useTranslation()
     const { cartItems, getTotalPrice, getTotalItems, clearCart } = useCart()
-    const { isAuthenticated } = useAuth()
+    const { isAuthenticated, isLoading: authLoading } = useAuth()
     const navigate = useNavigate()
     const [isProcessing, setIsProcessing] = useState(false)
     const [isCompleted, setIsCompleted] = useState(false)
     const [orderNumber, setOrderNumber] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
+    
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            // Store the checkout URL to redirect back after login
+            navigate('/login?redirect=/checkout', { replace: true })
+        }
+    }, [isAuthenticated, authLoading, navigate])
     const [couponCode, setCouponCode] = useState('')
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
@@ -196,6 +204,16 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+        
+        // Require authentication before proceeding
+        if (!isAuthenticated) {
+            setError('Please login to complete your order. Redirecting to login page...')
+            setTimeout(() => {
+                navigate('/login?redirect=/checkout')
+            }, 2000)
+            return
+        }
+        
         setIsProcessing(true)
         setError(null)
 
@@ -250,7 +268,17 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                 return
             }
 
-            // If user is authenticated, create order via API
+            // REQUIRE AUTHENTICATION - Orders can only be created by authenticated users
+            if (!isAuthenticated) {
+                setError('You must be logged in to complete your order. Redirecting to login...')
+                setIsProcessing(false)
+                setTimeout(() => {
+                    navigate('/login?redirect=/checkout')
+                }, 2000)
+                return
+            }
+
+            // User is authenticated, create order via API
             if (isAuthenticated) {
                 // Map form data using configuration field names
                 const getFieldValue = (fieldName: string) => formData[fieldName] || ''
@@ -369,6 +397,70 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
             
             setIsProcessing(false)
         }
+    }
+
+    // Show loading state while checking authentication
+    if (authLoading) {
+        return (
+            <div className="bg-white min-h-screen">
+                <Navbar />
+                <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+                    <div className="w-[90%] mx-auto max-w-4xl text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">Loading...</p>
+                    </div>
+                </section>
+                <Footer />
+            </div>
+        )
+    }
+
+    // REQUIRE AUTHENTICATION - Show message and redirect if not logged in
+    if (!isAuthenticated) {
+        return (
+            <div className="bg-white min-h-screen">
+                <Navbar />
+                <section className="bg-white py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+                    <div className="w-[90%] mx-auto max-w-4xl text-center">
+                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded">
+                            <div className="flex">
+                                <div className="flex-shrink-0">
+                                    <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="ml-3">
+                                    <p className="text-sm text-yellow-700">
+                                        <strong>Login Required:</strong> You must be logged in to complete your order.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                            Login to Complete Order
+                        </h1>
+                        <p className="text-lg text-gray-600 mb-6">
+                            Please login or create an account to proceed with checkout.
+                        </p>
+                        <div className="flex gap-4 justify-center">
+                            <Link
+                                to="/login?redirect=/checkout"
+                                className="inline-block px-8 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                to="/register?redirect=/checkout"
+                                className="inline-block px-8 py-3 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors duration-300"
+                            >
+                                Create Account
+                            </Link>
+                        </div>
+                    </div>
+                </section>
+                <Footer />
+            </div>
+        )
     }
 
     if (cartItems.length === 0 && !isCompleted) {
