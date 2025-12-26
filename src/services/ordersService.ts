@@ -78,7 +78,8 @@ export interface CreateOrderRequest {
   payment_method?: string;
   shipping_method_id?: number; // Shipping method ID selected by user
   coupon_code?: string;
-  cart_items?: OrderCartItem[]; // Required for both authenticated and guest users
+  items?: OrderCartItem[]; // Preferred field name (per documentation)
+  cart_items?: OrderCartItem[]; // Alternative field name (also accepted by backend)
   
   // For guest checkout - include cart items and full details
   first_name?: string;
@@ -167,28 +168,25 @@ export const createOrder = async (
       normalizedPaymentMethod = 'stripe';
     }
 
-    // Backend expects shipping_address and billing_address as JSON strings, not objects
+    // Backend accepts addresses as objects (will be JSON stringified automatically)
+    // Backend accepts 'items' or 'cart_items' - prefer 'items' as per documentation
     const orderPayload: any = {
       ...orderData,
-      // Backend might expect 'items' or 'cart_items' - include both for compatibility
-      items: orderData.cart_items || [],
-      cart_items: orderData.cart_items || [],
+      // Use 'items' from orderData if provided, otherwise use 'cart_items'
+      items: orderData.items || orderData.cart_items || [],
       // Payment method should be lowercase (stripe, paypal, cod)
       payment_method: normalizedPaymentMethod,
       // Include shipping_method_id if provided
       shipping_method_id: orderData.shipping_method_id,
-      // Convert address objects to JSON strings if they exist
-      shipping_address: orderData.shipping_address 
-        ? JSON.stringify(orderData.shipping_address)
-        : undefined,
-      billing_address: orderData.billing_address
-        ? JSON.stringify(orderData.billing_address)
-        : undefined,
+      // Addresses can be sent as objects (backend will handle JSON stringification)
+      // Remove cart_items if items is provided to avoid confusion
+      ...(orderData.items ? {} : { cart_items: orderData.cart_items || [] }),
     };
 
     // Validate that we have items
-    if (!orderPayload.cart_items || orderPayload.cart_items.length === 0) {
-      console.error('Cannot create order: cart_items are required');
+    if ((!orderPayload.items || orderPayload.items.length === 0) && 
+        (!orderPayload.cart_items || orderPayload.cart_items.length === 0)) {
+      console.error('Cannot create order: items are required');
       return null;
     }
 

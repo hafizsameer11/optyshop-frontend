@@ -231,7 +231,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
 
         try {
             // Map cart items to order format - backend requires items
-            const orderCartItems: OrderCartItem[] = cartItems.map(item => ({
+            const orderItems = cartItems.map(item => ({
                 product_id: item.id,
                 quantity: item.quantity,
                 // Include any additional product customization if available
@@ -244,7 +244,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
             }))
 
             // Validate that we have valid cart items
-            if (orderCartItems.length === 0 || orderCartItems.some(item => !item.product_id || item.quantity <= 0)) {
+            if (orderItems.length === 0 || orderItems.some(item => !item.product_id || item.quantity <= 0)) {
                 setError('Invalid cart items. Please refresh and try again.')
                 setIsProcessing(false)
                 return
@@ -256,6 +256,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                 const getFieldValue = (fieldName: string) => formData[fieldName] || ''
 
                 const orderData = {
+                    items: orderItems, // Backend accepts 'items' or 'cart_items'
                     shipping_address: {
                         first_name: getFieldValue('firstName'),
                         last_name: getFieldValue('lastName'),
@@ -279,17 +280,16 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                     payment_method: paymentMethod.toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
                     shipping_method_id: selectedShippingMethod?.id,
                     coupon_code: appliedCoupon ? couponCode : undefined,
-                    // Include cart items - backend requires this
-                    cart_items: orderCartItems,
                 }
 
                 const order = await createOrder(orderData)
                 
                 if (order) {
+                    // Backend automatically clears cart when order is created
+                    // No need to manually clear cart
+                    
                     // If payment method is Stripe, redirect to payment page
                     if (paymentMethod.toLowerCase() === 'stripe') {
-                        // Clear cart and redirect to payment page
-                        await clearCart()
                         navigate(`/payment?orderId=${order.id}`)
                         return
                     }
@@ -297,7 +297,6 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                     // For other payment methods (PayPal, COD), show success
                     setOrderNumber(order.order_number)
                     setIsCompleted(true)
-                    await clearCart()
                 } else {
                     setError('Failed to create order. Please try again.')
                     setIsProcessing(false)
@@ -352,7 +351,22 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
             }
         } catch (error: any) {
             console.error('Error creating order:', error)
-            setError(error.message || 'Failed to create order. Please try again.')
+            
+            // Enhanced error handling as per documentation
+            if (error.response?.status === 400) {
+                // Validation error
+                setError(error.response.data?.message || 'Please check your order details and try again.')
+            } else if (error.response?.status === 401) {
+                // Unauthorized - redirect to login
+                setError('Your session has expired. Please login again.')
+                setTimeout(() => {
+                    navigate('/login?redirect=/checkout')
+                }, 2000)
+            } else {
+                // Other errors
+                setError(error.message || 'Failed to create order. Please try again.')
+            }
+            
             setIsProcessing(false)
         }
     }

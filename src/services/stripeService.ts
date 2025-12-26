@@ -3,7 +3,7 @@
  * Handles Stripe payment gateway initialization and payment processing
  */
 
-import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
+import { loadStripe, type Stripe } from '@stripe/stripe-js';
 
 // Get Stripe publishable key from environment variable
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
@@ -13,10 +13,10 @@ let stripePromise: Promise<Stripe | null> | null = null;
 let stripeInstance: Stripe | null = null;
 
 /**
- * Initialize Stripe with publishable key
- * @returns Promise<Stripe | null> - Stripe instance or null if key is missing
+ * Get or create Stripe promise (for Elements component)
+ * @returns Promise<Stripe | null> - Stripe promise or null if key is missing
  */
-export const initializeStripe = async (): Promise<Stripe | null> => {
+export const getStripePromise = (): Promise<Stripe | null> | null => {
   // If no publishable key is provided, return null
   if (!STRIPE_PUBLISHABLE_KEY) {
     console.warn('Stripe publishable key not found. Set VITE_STRIPE_PUBLISHABLE_KEY in your .env file.');
@@ -28,17 +28,30 @@ export const initializeStripe = async (): Promise<Stripe | null> => {
     return stripePromise;
   }
 
-  // Initialize Stripe
+  // Initialize Stripe and return the promise
   stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
   
-  try {
-    stripeInstance = await stripePromise;
-    return stripeInstance;
-  } catch (error) {
+  // Cache the instance when resolved
+  stripePromise.then((stripe) => {
+    stripeInstance = stripe;
+  }).catch((error) => {
     console.error('Error initializing Stripe:', error);
     stripePromise = null;
+  });
+  
+  return stripePromise;
+};
+
+/**
+ * Initialize Stripe with publishable key
+ * @returns Promise<Stripe | null> - Stripe instance or null if key is missing
+ */
+export const initializeStripe = async (): Promise<Stripe | null> => {
+  const promise = getStripePromise();
+  if (!promise) {
     return null;
   }
+  return await promise;
 };
 
 /**
@@ -99,7 +112,7 @@ export interface PaymentResult {
 }
 
 export const processPayment = async (
-  elements: StripeElements | null,
+  elements: any, // StripeElements from @stripe/react-stripe-js
   clientSecret: string
 ): Promise<PaymentResult> => {
   const stripe = await getStripe();
