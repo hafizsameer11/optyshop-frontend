@@ -137,6 +137,34 @@ const ShopCategories: React.FC = () => {
         }
     }, [])
 
+    // Initialize default color selections when categories/products change
+    useEffect(() => {
+        const newSelections: Record<number, string> = {}
+        let hasChanges = false
+        
+        categories.forEach(category => {
+            if (category.products) {
+                category.products.forEach(product => {
+                    const productId = (product as any).id
+                    if (productId && !productColorSelections[productId]) {
+                        const productColorImages = (product as any).color_images || (product as any as Product).color_images
+                        if (productColorImages && productColorImages.length > 0) {
+                            newSelections[productId] = productColorImages[0].color
+                            hasChanges = true
+                        }
+                    }
+                })
+            }
+        })
+        
+        if (hasChanges) {
+            setProductColorSelections(prev => ({
+                ...prev,
+                ...newSelections
+            }))
+        }
+    }, [categories]) // Only depend on categories, not productColorSelections
+
     // Helper function to parse product images
     const getProductImages = (product: Category['products'][0]): string[] => {
         if (!product.images) return []
