@@ -120,6 +120,7 @@ const OrderDetail: React.FC = () => {
   }
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
     switch (status.toLowerCase()) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800'
@@ -138,6 +139,7 @@ const OrderDetail: React.FC = () => {
   }
 
   const getPaymentStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
     switch (status.toLowerCase()) {
       case 'paid':
         return 'bg-green-100 text-green-800'
@@ -205,8 +207,8 @@ const OrderDetail: React.FC = () => {
             <p className="text-gray-600">{t('orders.orderNumber')}: {order.order_number}</p>
           </div>
           <div className="flex flex-col md:items-end gap-2 mt-4 md:mt-0">
-            <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status)}`}>
-              {t(`orders.${order.status.toLowerCase()}`, { defaultValue: order.status })}
+            <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(order.status || '')}`}>
+              {t(`orders.${(order.status || '').toLowerCase()}`, { defaultValue: order.status || 'N/A' })}
             </span>
             {order.payment_status && (
               <span className={`px-3 py-1 text-sm font-medium rounded-full ${getPaymentStatusColor(order.payment_status)}`}>

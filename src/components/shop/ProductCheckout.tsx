@@ -2077,10 +2077,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         // Get lens thickness material ID
         let lensThicknessMaterialId: number | undefined
         if (lensSelection.lensThickness === 'plastic') {
-          const material = lensThicknessMaterials.find(m => m.slug === 'unbreakable-plastic' || m.name.toLowerCase().includes('plastic'))
+          const material = lensThicknessMaterials.find(m => m.slug === 'unbreakable-plastic' || (m.name && m.name.toLowerCase().includes('plastic')))
           lensThicknessMaterialId = material?.id
         } else if (lensSelection.lensThickness === 'glass') {
-          const material = lensThicknessMaterials.find(m => m.slug === 'minerals-glass' || m.name.toLowerCase().includes('glass'))
+          const material = lensThicknessMaterials.find(m => m.slug === 'minerals-glass' || (m.name && m.name.toLowerCase().includes('glass')))
           lensThicknessMaterialId = material?.id
         }
 
@@ -2120,8 +2120,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         // Get selected color variant details if color is selected
         const selectedColorVariant = selectedProductColor && product.color_images
           ? product.color_images.find(ci => 
-              ci.color?.toLowerCase() === selectedProductColor.toLowerCase() ||
-              ci.name?.toLowerCase() === selectedProductColor.toLowerCase()
+              (ci.color && ci.color.toLowerCase() === selectedProductColor.toLowerCase()) ||
+              (ci.name && ci.name.toLowerCase() === selectedProductColor.toLowerCase())
             )
           : null
 
@@ -2341,7 +2341,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           zip_code: shippingAddress.zip_code,
           country: shippingAddress.country
         },
-        payment_method: paymentMethod.toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
+        payment_method: (paymentMethod || 'stripe').toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
         shipping_method_id: selectedShippingMethod?.id // Include shipping method ID
       }
 
@@ -2369,7 +2369,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           zip_code: shippingAddress.zip_code,
           country: shippingAddress.country,
           payment_info: {
-            payment_method: paymentMethod.toLowerCase() // Backend expects lowercase (stripe, paypal, cod)
+            payment_method: (paymentMethod || 'stripe').toLowerCase() // Backend expects lowercase (stripe, paypal, cod)
           }
         })
         
@@ -2388,7 +2388,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       setCreatedOrder(order)
 
       // If payment method is Stripe, redirect to payment page
-      if (paymentMethod.toLowerCase() === 'stripe' && order.id) {
+      if (paymentMethod && paymentMethod.toLowerCase() === 'stripe' && order.id) {
         // Close modal if open
         if (onClose) {
           onClose()
@@ -2416,9 +2416,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
       
       // Check for authorization errors specifically
-      if (errorMessage.toLowerCase().includes('not authorized') || 
+      if (errorMessage && (errorMessage.toLowerCase().includes('not authorized') || 
           errorMessage.toLowerCase().includes('unauthorized') ||
-          errorMessage.toLowerCase().includes('401')) {
+          errorMessage.toLowerCase().includes('401'))) {
         if (!isAuthenticated) {
           errorMessage = 'Please login to complete your order. Guest checkout requires authentication.'
         } else {
@@ -3211,8 +3211,8 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
         <div className="space-y-3">
           {lensThicknessMaterials.length > 0 ? (
             lensThicknessMaterials.map((material) => {
-              const isPlastic = material.slug === 'unbreakable-plastic' || material.name.toLowerCase().includes('plastic')
-              const isGlass = material.slug === 'minerals-glass' || material.name.toLowerCase().includes('glass')
+              const isPlastic = material.slug === 'unbreakable-plastic' || (material.name && material.name.toLowerCase().includes('plastic'))
+              const isGlass = material.slug === 'minerals-glass' || (material.name && material.name.toLowerCase().includes('glass'))
               // Check if this specific material is selected
               // Priority: match by material ID if set, otherwise match by type
               const isSelected = lensSelection.lensThicknessMaterialId !== undefined
@@ -3866,7 +3866,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       activeOptions.forEach(option => {
         // Determine main type from name or slug
         // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
-        const nameLower = option.name.toLowerCase()
+        const nameLower = (option.name || '').toLowerCase()
         const slugLower = (option.slug || '').toLowerCase()
         
         let mainType = ''
@@ -3878,14 +3878,14 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           mainType = 'classic'
         } else {
           // Use first word of name or slug as main type
-          mainType = option.name.split(' ')[0].toLowerCase() || option.slug?.split('_')[0] || 'other'
+          mainType = (option.name ? option.name.split(' ')[0].toLowerCase() : '') || option.slug?.split('_')[0] || 'other'
         }
         
         // Initialize main option if not exists
         if (!grouped[mainType]) {
           // Find the base option for this type (usually the one without sub-type in name)
           const baseOption = activeOptions.find(opt => {
-            const optName = opt.name.toLowerCase()
+            const optName = (opt.name || '').toLowerCase()
             return (optName === mainType || optName.includes(mainType)) && 
                    !optName.includes('mirror') && 
                    !optName.includes('gradient') && 
@@ -3915,7 +3915,11 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
         }
         
         // Check if sub-option already exists
-        const existingSubOption = grouped[mainType].subOptions.find((sub: any) => sub.name.toLowerCase() === option.name.toLowerCase())
+        const existingSubOption = grouped[mainType].subOptions.find((sub: any) => {
+          const subName = (sub.name || '').toLowerCase()
+          const optionName = (option.name || '').toLowerCase()
+          return subName === optionName
+        })
         
         const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
         if (!existingSubOption && option.colors && option.colors.length > 0) {
@@ -5266,7 +5270,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   const { t } = useTranslation()
   
   // Check if error is login-related
-  const isLoginError = error && (
+  const isLoginError = error && typeof error === 'string' && (
     error.toLowerCase().includes('login') ||
     error.toLowerCase().includes('authentication') ||
     error.toLowerCase().includes('unauthorized') ||
