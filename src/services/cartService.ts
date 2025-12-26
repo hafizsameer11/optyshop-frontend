@@ -105,6 +105,7 @@ export interface AddToCartRequest {
   photochromic_color_id?: number | null;
   prescription_sun_color_id?: number | null;
   shipping_method_id?: number;
+  selected_color?: string; // Color value from product's color_images (e.g., "black", "brown")
   // Legacy fields for backward compatibility
   lens_index?: number | string;
   lens_coating?: string;

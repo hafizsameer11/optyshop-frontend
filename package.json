@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "validate:postman": "node scripts/validate-postman-integration.js"
+    "validate:postman": "node scripts/validate-postman-integration.js",
+    "setup-prescription-types": "node scripts/setup-prescription-lens-types.js"
   },
   "dependencies": {
     "@mediapipe/camera_utils": "^0.3.1675466862",

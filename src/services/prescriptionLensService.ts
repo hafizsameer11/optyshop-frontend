@@ -125,9 +125,13 @@ export const getPrescriptionLensTypes = async (params?: {
     if (params?.limit) queryParams.limit = params.limit;
 
     const url = buildQueryString(API_ROUTES.LENS.PRESCRIPTION_LENS_TYPES.LIST, queryParams);
-    console.log('🔗 Fetching prescription lens types from:', url);
+    if (import.meta.env.DEV) {
+      console.log('🔗 Fetching prescription lens types from:', url);
+    }
     const response = await apiClient.get<PrescriptionLensTypesResponse>(url, false);
-    console.log('📥 Prescription lens types API response:', JSON.stringify(response, null, 2));
+    if (import.meta.env.DEV) {
+      console.log('📥 Prescription lens types API response:', JSON.stringify(response, null, 2));
+    }
 
     if (response.success && response.data) {
       let types: PrescriptionLensType[] = [];
@@ -135,13 +139,19 @@ export const getPrescriptionLensTypes = async (params?: {
       // Handle different response structures
       if (Array.isArray(response.data)) {
         types = response.data;
-        console.log('✅ Response is direct array');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response is direct array');
+        }
       } else if ((response.data as any).prescriptionLensTypes && Array.isArray((response.data as any).prescriptionLensTypes)) {
         types = (response.data as any).prescriptionLensTypes;
-        console.log('✅ Response has data.prescriptionLensTypes array');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response has data.prescriptionLensTypes array');
+        }
       } else if ((response.data as any).data && Array.isArray((response.data as any).data)) {
         types = (response.data as any).data;
-        console.log('✅ Response has data.data array');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response has data.data array');
+        }
       }
       
       // Map camelCase to snake_case if needed
@@ -160,22 +170,43 @@ export const getPrescriptionLensTypes = async (params?: {
       }));
       
       if (mappedTypes.length === 0) {
-        console.info('ℹ️ API returned empty array - no prescription lens types in database');
+        if (import.meta.env.DEV) {
+          console.info('ℹ️ API returned empty array - no prescription lens types in database');
+        }
       } else {
-        console.log(`✅ Fetched ${mappedTypes.length} prescription lens types`);
+        if (import.meta.env.DEV) {
+          console.log(`✅ Fetched ${mappedTypes.length} prescription lens types`);
+        }
       }
       return mappedTypes;
     }
 
     // API call succeeded but response structure is unexpected
     if (response.success) {
-      console.warn('⚠️ API returned success but no data structure matched. Response:', response.data);
+      if (import.meta.env.DEV) {
+        console.warn('⚠️ API returned success but no data structure matched. Response:', response.data);
+      }
     } else {
-      console.warn('⚠️ API call failed:', response.message || response.error || 'Unknown error');
+      // Check if it's a 404 error (route not found)
+      const errorMsg = response.message || response.error || 'Unknown error';
+      const is404Error = errorMsg.includes('Route not found') || 
+                        errorMsg.includes('404') ||
+                        errorMsg.includes('not found');
+      
+      if (is404Error) {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ Prescription lens types endpoint not available (404):', url);
+          console.warn('   → This endpoint may not be implemented in the backend yet.');
+        }
+      } else if (import.meta.env.DEV) {
+        console.warn('⚠️ API call failed:', errorMsg);
+      }
     }
     return null;
   } catch (error) {
-    console.error('Error fetching prescription lens types:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error fetching prescription lens types:', error);
+    }
     return null;
   }
 };
@@ -188,12 +219,16 @@ export const getPrescriptionLensTypeById = async (
   id: number | string
 ): Promise<PrescriptionLensType | null> => {
   try {
-    console.log('🔗 Fetching prescription lens type by ID:', id);
+    if (import.meta.env.DEV) {
+      console.log('🔗 Fetching prescription lens type by ID:', id);
+    }
     const response = await apiClient.get<PrescriptionLensTypeResponse>(
       API_ROUTES.LENS.PRESCRIPTION_LENS_TYPES.BY_ID(id),
       false // PUBLIC endpoint
     );
-    console.log('📥 Prescription lens type by ID response:', JSON.stringify(response, null, 2));
+    if (import.meta.env.DEV) {
+      console.log('📥 Prescription lens type by ID response:', JSON.stringify(response, null, 2));
+    }
 
     if (response.success && response.data) {
       let typeData: any = response.data;
@@ -201,14 +236,20 @@ export const getPrescriptionLensTypeById = async (
       // Handle different response structures
       if ((response.data as any).prescriptionLensType) {
         typeData = (response.data as any).prescriptionLensType;
-        console.log('✅ Response has data.prescriptionLensType');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response has data.prescriptionLensType');
+        }
       } else if ((response.data as any).data) {
         typeData = (response.data as any).data;
-        console.log('✅ Response has data.data');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response has data.data');
+        }
       } else if (typeof (response.data as any).id === 'number') {
         // It's already a PrescriptionLensType object
         typeData = response.data;
-        console.log('✅ Response is direct PrescriptionLensType object');
+        if (import.meta.env.DEV) {
+          console.log('✅ Response is direct PrescriptionLensType object');
+        }
       }
       
       // Map camelCase to snake_case
@@ -226,14 +267,20 @@ export const getPrescriptionLensTypeById = async (
         updated_at: typeData.updatedAt || typeData.updated_at
       };
       
-      console.log('✅ Mapped prescription lens type:', mappedType);
+      if (import.meta.env.DEV) {
+        console.log('✅ Mapped prescription lens type:', mappedType);
+      }
       return mappedType;
     }
 
-    console.error('❌ Failed to fetch prescription lens type:', response.message);
+    if (import.meta.env.DEV) {
+      console.error('❌ Failed to fetch prescription lens type:', response.message);
+    }
     return null;
   } catch (error) {
-    console.error('❌ Error fetching prescription lens type:', error);
+    if (import.meta.env.DEV) {
+      console.error('❌ Error fetching prescription lens type:', error);
+    }
     return null;
   }
 };
@@ -262,11 +309,15 @@ export const getPrescriptionLensVariantsByType = async (
     const baseUrl = API_ROUTES.LENS.PRESCRIPTION_LENS_TYPES.VARIANTS(typeId);
     const url = buildQueryString(baseUrl, queryParams);
     const fullUrl = `https://optyshop-frontend.hmstech.org/api${url}`;
-    console.log('🔗 Fetching variants from URL:', url);
-    console.log('🔗 Full API endpoint:', fullUrl);
-    console.log('🔗 Expected endpoint: https://optyshop-frontend.hmstech.org/api/lens/prescription-lens-types/' + typeId + '/variants');
+    if (import.meta.env.DEV) {
+      console.log('🔗 Fetching variants from URL:', url);
+      console.log('🔗 Full API endpoint:', fullUrl);
+      console.log('🔗 Expected endpoint: https://optyshop-frontend.hmstech.org/api/lens/prescription-lens-types/' + typeId + '/variants');
+    }
     const response = await apiClient.get<PrescriptionLensVariantsResponse>(url, false);
-    console.log('📥 Raw API Response:', JSON.stringify(response, null, 2));
+    if (import.meta.env.DEV) {
+      console.log('📥 Raw API Response:', JSON.stringify(response, null, 2));
+    }
 
     if (response.success && response.data) {
       // Handle the API response structure: { success: true, data: { variants: [...], prescriptionLensType: {...}, count: N } }
@@ -276,18 +327,26 @@ export const getPrescriptionLensVariantsByType = async (
       if (Array.isArray(response.data)) {
         // Direct array response
         variants = response.data;
-        console.log('✅ [API] Response is direct array, found', variants.length, 'variants');
+        if (import.meta.env.DEV) {
+          console.log('✅ [API] Response is direct array, found', variants.length, 'variants');
+        }
       } else if (response.data.variants && Array.isArray(response.data.variants)) {
         // Nested variants: { data: { variants: [...] } }
         variants = response.data.variants;
-        console.log('✅ [API] Response has data.variants array, found', variants.length, 'variants');
+        if (import.meta.env.DEV) {
+          console.log('✅ [API] Response has data.variants array, found', variants.length, 'variants');
+        }
       } else if (response.data.data && Array.isArray(response.data.data)) {
         // Double nested: { data: { data: [...] } }
         variants = response.data.data;
-        console.log('✅ [API] Response has data.data array, found', variants.length, 'variants');
+        if (import.meta.env.DEV) {
+          console.log('✅ [API] Response has data.data array, found', variants.length, 'variants');
+        }
       } else {
-        console.warn('⚠️ [API] Unexpected response structure. Available keys:', Object.keys(response.data || {}));
-        console.warn('⚠️ [API] Full response.data:', JSON.stringify(response.data, null, 2));
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] Unexpected response structure. Available keys:', Object.keys(response.data || {}));
+          console.warn('⚠️ [API] Full response.data:', JSON.stringify(response.data, null, 2));
+        }
       }
       
       // Map camelCase API response to snake_case TypeScript interface

@@ -199,17 +199,32 @@ export const calculateCustomizationPrice = async (
   customization: CalculatePriceRequest
 ): Promise<CalculatePriceResponse> => {
   try {
-    console.log('💰 [API] Calculating price for product:', productId);
-    console.log('💰 [API] Customization data:', JSON.stringify(customization, null, 2));
+    const endpoint = API_ROUTES.CUSTOMIZATION.CALCULATE_PRICE(productId)
+    
+    if (import.meta.env.DEV) {
+      console.log('💰 [API] Calculating price for product:', productId);
+      console.log('💰 [API] Endpoint:', endpoint);
+      console.log('💰 [API] Customization data:', JSON.stringify(customization, null, 2));
+    }
     
     const response = await apiClient.post<CalculatePriceResponse>(
-      API_ROUTES.CUSTOMIZATION.CALCULATE_PRICE(productId),
+      endpoint,
       customization
     );
     
     // apiClient.post returns ApiResponse<T> which has structure: { success: boolean, data?: T, message?: string }
     if (!response.success) {
       const errorMsg = response.message || response.error || 'Failed to calculate customization price';
+      
+      // Check if it's a 404 error (route not found)
+      if (errorMsg.includes('Route not found') || errorMsg.includes('404') || errorMsg.includes('not found')) {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] Price calculation endpoint not available (404):', endpoint);
+          console.warn('⚠️ [API] This endpoint may not be implemented in the backend yet.');
+        }
+        throw new Error('Route not found');
+      }
+      
       console.error('❌ [API] Price calculation failed:', errorMsg);
       throw new Error(errorMsg);
     }
@@ -255,11 +270,16 @@ export const calculateCustomizationPriceWithPrescription = async (
   customization: CalculatePriceRequest
 ): Promise<CalculatePriceResponse> => {
   try {
-    console.log('💰 [API] Calculating price with prescription for product:', productId);
-    console.log('💰 [API] Customization data:', JSON.stringify(customization, null, 2));
+    const endpoint = API_ROUTES.CUSTOMIZATION.CALCULATE_WITH_PRESCRIPTION(productId)
+    
+    if (import.meta.env.DEV) {
+      console.log('💰 [API] Calculating price with prescription for product:', productId);
+      console.log('💰 [API] Endpoint:', endpoint);
+      console.log('💰 [API] Customization data:', JSON.stringify(customization, null, 2));
+    }
     
     const response = await apiClient.post<CalculatePriceResponse>(
-      API_ROUTES.CUSTOMIZATION.CALCULATE_WITH_PRESCRIPTION(productId),
+      endpoint,
       customization
     );
     
@@ -272,6 +292,16 @@ export const calculateCustomizationPriceWithPrescription = async (
     // So response.success is the success flag, and response.data contains the actual CalculatePriceResponse
     if (!response.success) {
       const errorMsg = response.message || response.error || 'Failed to calculate customization price with prescription';
+      
+      // Check if it's a 404 error (route not found)
+      if (errorMsg.includes('Route not found') || errorMsg.includes('404') || errorMsg.includes('not found')) {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] Price calculation endpoint not available (404):', endpoint);
+          console.warn('⚠️ [API] This endpoint may not be implemented in the backend yet.');
+        }
+        throw new Error('Route not found');
+      }
+      
       console.error('❌ [API] Price calculation failed:', errorMsg);
       throw new Error(errorMsg);
     }

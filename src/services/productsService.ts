@@ -63,6 +63,9 @@ export interface ProductOptionsResponse {
 
 export interface ColorImage {
   color: string;
+  name?: string;
+  display_name?: string;
+  price?: number; // Variant-specific price (optional - uses base product price if not provided)
   images: string[];
 }
 

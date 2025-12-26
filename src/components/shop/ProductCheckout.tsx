@@ -67,6 +67,7 @@ interface ProductCheckoutProps {
   onClose?: () => void
   initialFrameMaterials?: string[] // Optional: pre-selected frame materials from product page
   initialLensType?: string // Optional: pre-selected lens type from product page
+  initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
 }
 
 type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
@@ -104,11 +105,14 @@ interface PrescriptionFormData {
   os_axis: string
 }
 
-const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) => {
+const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialFrameMaterials, initialLensType, initialSelectedColor }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
+  
+  // Store selected product color variant (from product page selection)
+  const [selectedProductColor, setSelectedProductColor] = useState<string | null>(initialSelectedColor || null)
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('lens_type')
   const [lensOptions, setLensOptions] = useState<LensType[]>([])
   const [coatingOptions, setCoatingOptions] = useState<LensCoating[]>([])
@@ -420,10 +424,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       }
       
       if (!types || types.length === 0) {
-        console.warn('⚠️ [API] No prescription lens types found in database.')
-        console.warn('   → Please add prescription lens types in admin panel')
-        console.warn('   → Make sure at least one type has prescription_type="progressive"')
-        console.warn('   → Using default fallback options as last resort')
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ [API] No prescription lens types found in database.')
+          console.warn('   → Please add prescription lens types in admin panel')
+          console.warn('   → Make sure at least one type has prescription_type="progressive"')
+          console.warn('   → Using default fallback options as last resort')
+        }
         // Only use defaults if API completely fails
         const defaultOptions = [
           {
@@ -548,8 +554,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           prescription_type: t.prescription_type,
           slug: t.slug
         })))
-        console.warn('   → Please ensure a lens type with prescription_type="progressive" exists')
-        console.warn('   → Using default fallback options as last resort')
+        if (import.meta.env.DEV) {
+          console.warn('   → Please ensure a lens type with prescription_type="progressive" exists')
+          console.warn('   → Using default fallback options as last resort')
+        }
         // Only use defaults if progressive type doesn't exist
         const defaultOptions = [
           {
@@ -650,7 +658,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           return
         }
         
-        console.info('   → No variants found (active or inactive). Using default fallback options.')
+        if (import.meta.env.DEV) {
+          console.info('   → No variants found (active or inactive). Using default fallback options.')
+        }
         // Only use defaults if truly no variants exist
         const defaultOptions = [
           {
@@ -768,7 +778,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         setProgressiveOptionsLoading(false)
         } else {
           // Only use defaults if truly no variants exist
-          console.warn('   → No variants found at all. Using default fallback options.')
+          if (import.meta.env.DEV) {
+            console.warn('   → No variants found at all. Using default fallback options.')
+          }
           const defaultOptions = [
             {
               id: 'premium',
@@ -800,8 +812,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
         }
       }
     } catch (error: any) {
-      console.error('❌ [API] Error in fallback method:', error?.message || error)
-      console.info('   → Using default fallback options')
+      if (import.meta.env.DEV) {
+        console.error('❌ [API] Error in fallback method:', error?.message || error)
+        console.info('   → Using default fallback options')
+      }
       // Use default fallback options on error
       const defaultOptions = [
         {
@@ -1336,10 +1350,27 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
             breakdown: priceData.breakdown || []
           })
         }
-      } catch (error) {
-        console.error('Error calculating price:', error)
-        // Fallback to manual calculation
-        setPriceCalculation(null)
+      } catch (error: any) {
+        // Check if it's a 404 error (route not found)
+        const is404Error = error?.message?.includes('Route not found') || 
+                          error?.message?.includes('404') ||
+                          error?.message?.includes('not found')
+        
+        if (is404Error) {
+          // Price calculation endpoint not available - use base product price
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ [API] Price calculation endpoint not available (404). Using base product price.')
+          }
+          // Fallback to base product price
+          setPriceCalculation({
+            total: Number(product.price || 0),
+            breakdown: [{ item: 'Base Product', price: Number(product.price || 0) }]
+          })
+        } else {
+          console.error('❌ [API] Error calculating price:', error)
+          // Fallback to manual calculation
+          setPriceCalculation(null)
+        }
       }
     }
 
@@ -2086,9 +2117,18 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
                            lensSelection.type === 'near_vision' ? 'near_vision' :
                            undefined
 
+        // Get selected color variant details if color is selected
+        const selectedColorVariant = selectedProductColor && product.color_images
+          ? product.color_images.find(ci => 
+              ci.color?.toLowerCase() === selectedProductColor.toLowerCase() ||
+              ci.name?.toLowerCase() === selectedProductColor.toLowerCase()
+            )
+          : null
+
         const cartResult = await addItemToCart({
           product_id: product.id || 0,
           quantity: 1,
+          selected_color: selectedProductColor || undefined, // Pass selected product color variant
           lens_type: apiLensType,
           prescription_data: cartPrescriptionData,
           progressive_variant_id: lensSelection.progressiveVariantId,
@@ -2097,7 +2137,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           treatment_ids: treatmentIds.length > 0 ? treatmentIds : undefined,
           photochromic_color_id: photochromicColorId,
           prescription_sun_color_id: prescriptionSunColorId,
-          shipping_method_id: selectedShippingMethod?.id
+          shipping_method_id: selectedShippingMethod?.id,
+          customization: {
+            // Store color variant details if available
+            ...(selectedColorVariant ? {
+              selected_color: selectedProductColor,
+              color_name: selectedColorVariant.name,
+              color_display_name: selectedColorVariant.display_name,
+              variant_price: selectedColorVariant.price,
+              variant_images: selectedColorVariant.images
+            } : {})
+          }
         })
 
         if (!cartResult.success) {

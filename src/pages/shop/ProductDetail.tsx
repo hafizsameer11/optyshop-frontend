@@ -94,22 +94,35 @@ const ProductDetail: React.FC = () => {
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
 
-    // Price calculation
+    // Get selected color variant
+    const selectedColorVariant = useMemo(() => {
+        if (!product || !selectedColor || !product.color_images) return null
+        return product.color_images.find(ci => 
+            ci.color?.toLowerCase() === selectedColor.toLowerCase() ||
+            ci.name?.toLowerCase() === selectedColor.toLowerCase()
+        ) || null
+    }, [product, selectedColor])
+
+    // Price calculation - uses variant price if color is selected
     const { displayPrice, originalPrice, hasValidSale } = useMemo(() => {
         if (!product) return { displayPrice: 0, originalPrice: null, hasValidSale: false }
 
-        const price = Number(product.price || 0)
-        const salePrice = product.sale_price ? Number(product.sale_price) : null
+        // Use variant price if color is selected and variant has a price
+        let basePrice = Number(product.price || 0)
+        if (selectedColorVariant && selectedColorVariant.price !== undefined && selectedColorVariant.price !== null) {
+            basePrice = Number(selectedColorVariant.price)
+        }
 
-        const isValidSale = !!(salePrice && salePrice < price)
-        const finalPrice = isValidSale ? salePrice : price
+        const salePrice = product.sale_price ? Number(product.sale_price) : null
+        const isValidSale = !!(salePrice && salePrice < basePrice)
+        const finalPrice = isValidSale ? salePrice : basePrice
 
         return {
             displayPrice: finalPrice,
-            originalPrice: isValidSale ? price : null,
+            originalPrice: isValidSale ? basePrice : null,
             hasValidSale: isValidSale
         }
-    }, [product])
+    }, [product, selectedColorVariant])
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -210,6 +223,17 @@ const ProductDetail: React.FC = () => {
                 // Reset selections when product changes
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
+                
+                // Auto-select first color variant if available
+                if (productData.color_images && productData.color_images.length > 0) {
+                    const firstColor = productData.color_images[0]
+                    setSelectedColor(firstColor.color)
+                    if (import.meta.env.DEV) {
+                        console.log('🎨 Auto-selected first color variant:', firstColor.color, firstColor)
+                    }
+                } else {
+                    setSelectedColor(null)
+                }
 
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
@@ -1474,9 +1498,17 @@ const ProductDetail: React.FC = () => {
                 const cartRequest: AddToCartRequest = {
                     product_id: cartProduct.id,
                     quantity: quantity,
+                    selected_color: selectedColor || undefined, // Pass selected color for variant matching
                     customization: {
                         frame_material: cartProduct.frame_material,
-                        color: selectedColor || undefined
+                        color: selectedColor || undefined,
+                        // Store color variant details if available
+                        ...(selectedColorVariant ? {
+                            color_name: selectedColorVariant.name,
+                            color_display_name: selectedColorVariant.display_name,
+                            variant_price: selectedColorVariant.price,
+                            variant_images: selectedColorVariant.images
+                        } : {})
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
                 }
@@ -2366,7 +2398,7 @@ const ProductDetail: React.FC = () => {
                             <div>
                                 <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center mb-6">
                                     <img
-                                        src={getProductImageUrl(product, selectedImageIndex)}
+                                        src={getColorSpecificImageUrl(product, selectedImageIndex)}
                                         alt={product.name}
                                         className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
                                         onError={(e) => {
@@ -2388,24 +2420,39 @@ const ProductDetail: React.FC = () => {
                                             {t('shop.selectColor', 'Select Color')}
                                         </label>
                                         <div className="flex gap-3 flex-wrap">
-                                            {product.color_images.map((colorImage, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => {
-                                                        setSelectedColor(colorImage.color)
-                                                        setSelectedImageIndex(0) // Reset to first image of selected color
-                                                    }}
-                                                    className={`px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md ${selectedColor === colorImage.color
-                                                        ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
-                                                        : 'border-gray-200 hover:border-blue-200 hover:bg-white'
-                                                        }`}
-                                                >
-                                                    <span className={`text-sm font-semibold capitalize ${selectedColor === colorImage.color ? 'text-blue-950' : 'text-gray-700'
-                                                        }`}>
-                                                        {colorImage.color}
-                                                    </span>
-                                                </button>
-                                            ))}
+                                            {product.color_images.map((colorImage, index) => {
+                                                const isSelected = selectedColor === colorImage.color
+                                                const variantPrice = colorImage.price !== undefined && colorImage.price !== null
+                                                    ? Number(colorImage.price)
+                                                    : null
+                                                const displayName = colorImage.display_name || colorImage.name || colorImage.color
+                                                
+                                                return (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => {
+                                                            setSelectedColor(colorImage.color)
+                                                            setSelectedImageIndex(0) // Reset to first image of selected color
+                                                        }}
+                                                        className={`px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md ${isSelected
+                                                            ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
+                                                            : 'border-gray-200 hover:border-blue-200 hover:bg-white'
+                                                            }`}
+                                                    >
+                                                        <div className="flex flex-col items-center gap-1">
+                                                            <span className={`text-sm font-semibold capitalize ${isSelected ? 'text-blue-950' : 'text-gray-700'
+                                                                }`}>
+                                                                {displayName}
+                                                            </span>
+                                                            {variantPrice !== null && variantPrice !== Number(product.price) && (
+                                                                <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
+                                                                    ${variantPrice.toFixed(2)}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -2696,6 +2743,7 @@ const ProductDetail: React.FC = () => {
                     onClose={() => setShowCheckout(false)}
                     initialFrameMaterials={selectedFrameMaterial ? [selectedFrameMaterial] : []}
                     initialLensType={selectedLensType || undefined}
+                    initialSelectedColor={selectedColor || undefined}
                 />
             )}
 
