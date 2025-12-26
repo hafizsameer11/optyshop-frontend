@@ -36,6 +36,7 @@ import ProductDetail from './pages/shop/ProductDetail'
 import CategoryPage from './pages/shop/CategoryPage'
 import Cart from './pages/shop/Cart'
 import Checkout from './pages/shop/Checkout'
+import Payment from './pages/shop/Payment'
 import Wishlist from './pages/shop/Wishlist'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -97,6 +98,7 @@ function App() {
         <Route path="/shop/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

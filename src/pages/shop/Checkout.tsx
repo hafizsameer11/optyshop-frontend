@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { createOrder, createGuestOrder, type OrderCartItem } from '../../services/ordersService'
+import { createPaymentIntent } from '../../services/paymentsService'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 import DynamicFormField from '../../components/checkout/DynamicFormField'
 import { defaultCheckoutFormConfig, type CheckoutFormConfig } from '../../config/checkoutFormConfig'
@@ -285,6 +286,15 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                 const order = await createOrder(orderData)
                 
                 if (order) {
+                    // If payment method is Stripe, redirect to payment page
+                    if (paymentMethod.toLowerCase() === 'stripe') {
+                        // Clear cart and redirect to payment page
+                        await clearCart()
+                        navigate(`/payment?orderId=${order.id}`)
+                        return
+                    }
+                    
+                    // For other payment methods (PayPal, COD), show success
                     setOrderNumber(order.order_number)
                     setIsCompleted(true)
                     await clearCart()

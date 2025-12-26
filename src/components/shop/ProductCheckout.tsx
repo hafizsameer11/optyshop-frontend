@@ -12,7 +12,6 @@ import {
 } from '../../services/prescriptionsService'
 import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '../../services/cartService'
 import { createOrder, createGuestOrder, type Address as OrderAddress } from '../../services/ordersService'
-import { createPaymentIntent, confirmPayment } from '../../services/paymentsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
 import { 
@@ -2333,34 +2332,20 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
 
       setCreatedOrder(order)
 
-      // If payment method is Stripe, create payment intent
+      // If payment method is Stripe, redirect to payment page
       if (paymentMethod.toLowerCase() === 'stripe' && order.id) {
-        const paymentIntent = await createPaymentIntent({
-          order_id: order.id,
-          currency: 'USD'
-        })
-
-        if (paymentIntent && paymentIntent.client_secret) {
-          // Here you would integrate Stripe.js to handle the payment
-          // For now, we'll just show success
-          // In a real implementation, you'd use Stripe.js Elements here
-          alert('Order created successfully! Payment intent created. Please complete payment.')
-          
-          // Navigate to order confirmation or payment page
-          if (onClose) {
-            onClose()
-          }
-          navigate(`/orders/${order.id}`)
-        } else {
-          setOrderError('Order created but failed to initialize payment. Please contact support.')
-        }
-      } else {
-        // For other payment methods, just show success
-        alert('Order created successfully!')
+        // Close modal if open
         if (onClose) {
           onClose()
         }
-        navigate(`/orders/${order.id}`)
+        // Navigate to payment page
+        navigate(`/payment?orderId=${order.id}`)
+      } else {
+        // For other payment methods (PayPal, COD), show success and navigate to order
+        if (onClose) {
+          onClose()
+        }
+        navigate(`/customer/orders/${order.id}`)
       }
     } catch (error: any) {
       console.error('Error creating order:', error)
