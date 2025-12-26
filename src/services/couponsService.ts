@@ -132,11 +132,12 @@ export const applyCoupon = async (
  * @returns Array of available coupons
  */
 export const getAvailableCoupons = async (): Promise<Coupon[]> => {
+  // Try admin endpoint first (based on user's response, this is the working endpoint)
+  // The admin endpoint might be accessible publicly or might require auth
   try {
-    // Try public endpoint first
     const response = await apiClient.get<{ coupons: Coupon[] }>(
-      API_ROUTES.COUPONS.LIST,
-      false // PUBLIC endpoint
+      '/admin/coupons',
+      false // Try without auth first
     );
 
     if (response.success && response.data) {
@@ -152,16 +153,22 @@ export const getAvailableCoupons = async (): Promise<Coupon[]> => {
         return now >= startsAt && now <= endsAt;
       });
       
+      if (import.meta.env.DEV) {
+        console.log('[Coupon Service] Fetched coupons from admin endpoint:', activeCoupons.length);
+      }
+      
       return activeCoupons;
     }
-
-    return [];
-  } catch (error) {
-    // If public endpoint doesn't exist, try admin endpoint (might work for public)
+  } catch (adminError: any) {
+    // If admin endpoint fails (404 or auth required), try public endpoint
+    if (import.meta.env.DEV) {
+      console.log('[Coupon Service] Admin endpoint failed, trying public endpoint...', adminError?.message);
+    }
+    
     try {
       const response = await apiClient.get<{ coupons: Coupon[] }>(
-        '/admin/coupons',
-        false // Try without auth first
+        API_ROUTES.COUPONS.LIST,
+        false // PUBLIC endpoint
       );
 
       if (response.success && response.data) {
@@ -178,11 +185,18 @@ export const getAvailableCoupons = async (): Promise<Coupon[]> => {
         
         return activeCoupons;
       }
-    } catch (adminError) {
-      console.error('[Coupon Service] Error fetching coupons:', error);
+    } catch (publicError: any) {
+      // Both endpoints failed - log and return empty array
+      if (import.meta.env.DEV) {
+        console.warn('[Coupon Service] Both endpoints failed. Coupons dropdown will be hidden.', {
+          adminError: adminError?.message || 'Admin endpoint not accessible',
+          publicError: publicError?.message || 'Public endpoint not found (404)'
+        });
+      }
     }
-
-    return [];
   }
+
+  // Return empty array if both endpoints fail - dropdown will be hidden
+  return [];
 };
 
