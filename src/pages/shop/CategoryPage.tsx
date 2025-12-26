@@ -398,6 +398,25 @@ const CategoryPage: React.FC = () => {
         }
     }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage])
 
+    // Initialize default color selections for products with color images
+    useEffect(() => {
+        setProductColorSelections(prev => {
+            const newSelections: Record<number, string> = {}
+            products.forEach(product => {
+                if (!prev[product.id] && product.color_images && product.color_images.length > 0) {
+                    newSelections[product.id] = product.color_images[0].color
+                }
+            })
+            if (Object.keys(newSelections).length > 0) {
+                return {
+                    ...prev,
+                    ...newSelections
+                }
+            }
+            return prev
+        })
+    }, [products])
+
     const handleAddToCart = (product: Product) => {
         try {
             const salePrice = product?.sale_price ? Number(product.sale_price) : null
@@ -692,13 +711,6 @@ const CategoryPage: React.FC = () => {
                                     let selectedColor = productColorSelections[product.id]
                                     if (!selectedColor && product.color_images && product.color_images.length > 0) {
                                         selectedColor = product.color_images[0].color
-                                        // Set default selection if not already set
-                                        if (!productColorSelections[product.id]) {
-                                            setProductColorSelections(prev => ({
-                                                ...prev,
-                                                [product.id]: selectedColor
-                                            }))
-                                        }
                                     }
                                     
                                     // Get image URL based on selected color
