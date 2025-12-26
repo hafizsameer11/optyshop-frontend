@@ -48,6 +48,12 @@ export interface CartItem {
   prescription_id?: number | null;
   frame_size_id?: number | null;
   customization?: any;
+  // Image Display Fields (NEW - from API)
+  // These fields are automatically populated by the backend based on selected color and lens color
+  // Priority: display_image > customization.variant_images[0] > product.image
+  display_images?: string[]; // Array of images to display (selected color variant images if color selected, otherwise product's main images)
+  display_image?: string; // First image URL for quick access (selected color image if color selected, otherwise product image)
+  lens_color_image?: string | null; // Lens color image URL if a lens color was selected (photochromic or prescription sun color), null otherwise
   // Contact lens fields (legacy - for backward compatibility)
   contact_lens_right_qty?: number;
   contact_lens_right_base_curve?: number;

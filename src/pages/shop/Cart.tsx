@@ -222,10 +222,17 @@ const Cart: React.FC = () => {
                                     className="bg-white rounded-xl p-4 md:p-6 shadow-md flex flex-col sm:flex-row gap-4"
                                 >
                                     {/* Product Image */}
-                                    <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                    {/* 
+                                        Image Priority (per API documentation):
+                                        1. display_image - From API, shows selected color variant image if color was selected, otherwise product image
+                                        2. customization.variant_images[0] - Fallback for local cart items
+                                        3. item.image - Final fallback
+                                    */}
+                                    <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                         <img
                                             src={
-                                                // Use variant image from customization if available, otherwise use item.image
+                                                // Priority: display_image (from API) > variant_images > item.image
+                                                (item as any).display_image ||
                                                 (item.customization as any)?.variant_images?.[0] || 
                                                 item.image
                                             }
@@ -236,6 +243,20 @@ const Cart: React.FC = () => {
                                                 target.src = '/assets/images/frame1.png'
                                             }}
                                         />
+                                        {/* Lens Color Image Overlay (if applicable) */}
+                                        {(item as any).lens_color_image && (
+                                            <div className="absolute bottom-2 right-2 w-8 h-8 rounded-full border-2 border-white shadow-md overflow-hidden bg-white">
+                                                <img
+                                                    src={(item as any).lens_color_image}
+                                                    alt="Lens color"
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement
+                                                        target.style.display = 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Product Details */}

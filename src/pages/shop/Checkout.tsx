@@ -697,10 +697,17 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                 <div className="space-y-4 mb-6 max-h-64 overflow-y-auto">
                                     {cartItems.map((item) => (
                                         <div key={item.id} className="flex gap-3 pb-4 border-b border-gray-200">
-                                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                            {/* 
+                                                Image Priority (per API documentation):
+                                                1. display_image - From API, shows selected color variant image if color was selected
+                                                2. customization.variant_images[0] - Fallback for local cart items
+                                                3. item.image - Final fallback
+                                            */}
+                                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                                 <img
                                                     src={
-                                                        // Use variant image from customization if available, otherwise use item.image
+                                                        // Priority: display_image (from API) > variant_images > item.image
+                                                        (item as any).display_image ||
                                                         (item.customization as any)?.variant_images?.[0] || 
                                                         item.image
                                                     }
@@ -711,6 +718,20 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                                         target.src = '/assets/images/frame1.png'
                                                     }}
                                                 />
+                                                {/* Lens Color Image Indicator (if applicable) */}
+                                                {(item as any).lens_color_image && (
+                                                    <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full border border-white shadow-sm overflow-hidden">
+                                                        <img
+                                                            src={(item as any).lens_color_image}
+                                                            alt="Lens color"
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.style.display = 'none'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex-grow">
                                                 <h4 className="text-sm font-semibold text-gray-900">

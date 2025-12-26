@@ -38,6 +38,10 @@ interface CartItem {
   unit_price: number
   lens_index?: number
   lens_coating?: string
+  // Image Display Fields (NEW - from API)
+  display_images?: string[] // Array of images to display (selected color variant images or product images)
+  display_image?: string // First image URL for quick access (selected color image or product image)
+  lens_color_image?: string | null // Lens color image URL if a lens color was selected
   // Contact lens fields (legacy - for backward compatibility)
   contact_lens_right_qty?: number
   contact_lens_right_base_curve?: number
@@ -50,6 +54,13 @@ interface CartItem {
   customization?: any
   // New formatted contact_lens_details field from API
   contact_lens_details?: ContactLensDetails
+  product?: {
+    id: number
+    name: string
+    price: number
+    image?: string
+    images?: string[]
+  }
 }
 
 interface Cart {
