@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -56,6 +56,10 @@ const CategoryPage: React.FC = () => {
     const [showTryOnModal, setShowTryOnModal] = useState(false)
     // Removed: Contact lens configuration modal - forms are handled in ProductDetail page
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
+    const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
+    const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
+    const [imageOpacity, setImageOpacity] = useState<Record<number, number>>({}) // Track image opacity for fade effect
+    const hoverIntervals = useRef<Record<number, NodeJS.Timeout>>({}) // Store intervals for cleanup
 
     // Helper function to check if we're on a contact lens sub-subcategory page (Spherical or Astigmatism)
     const isContactLensSubSubcategory = (): boolean => {
@@ -403,8 +407,15 @@ const CategoryPage: React.FC = () => {
         setProductColorSelections(prev => {
             const newSelections: Record<number, string> = {}
             products.forEach(product => {
-                if (!prev[product.id] && product.color_images && product.color_images.length > 0) {
-                    newSelections[product.id] = product.color_images[0].color
+                if (!prev[product.id]) {
+                    const p = product as any
+                    // Prefer colors array, fallback to color_images
+                    if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+                        const firstColor = p.colors[0]
+                        newSelections[product.id] = firstColor.value || firstColor.hexCode || firstColor.color || firstColor.name
+                    } else if (product.color_images && product.color_images.length > 0) {
+                        newSelections[product.id] = product.color_images[0].color
+                    }
                 }
             })
             if (Object.keys(newSelections).length > 0) {
@@ -416,6 +427,15 @@ const CategoryPage: React.FC = () => {
             return prev
         })
     }, [products])
+    
+    // Cleanup intervals on unmount
+    useEffect(() => {
+        return () => {
+            Object.values(hoverIntervals.current).forEach(interval => {
+                if (interval) clearInterval(interval)
+            })
+        }
+    }, [])
 
     const handleAddToCart = (product: Product) => {
         try {
@@ -707,23 +727,129 @@ const CategoryPage: React.FC = () => {
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
                                 {products.map((product) => {
-                                    // Get selected color or default to first color if available
-                                    let selectedColor = productColorSelections[product.id]
-                                    if (!selectedColor && product.color_images && product.color_images.length > 0) {
-                                        selectedColor = product.color_images[0].color
-                                    }
+                                    const p = product as any
+                                    // Get available colors - prefer 'colors' array, fallback to 'color_images'
+                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0)
+                                        ? p.colors
+                                        : (product.color_images && product.color_images.length > 0
+                                            ? product.color_images.map((ci: any) => ({
+                                                value: ci.value || ci.color,
+                                                hexCode: ci.hexCode || '#E5E5E5',
+                                                display_name: ci.display_name || ci.name || ci.color,
+                                                color: ci.color,
+                                                images: ci.images || []
+                                            }))
+                                            : [])
                                     
-                                    // Get image URL based on selected color
-                                    const productImageUrl = selectedColor && product.color_images
+                                    // Get selected color or default to first color if available
+                                    const selectedColor = productColorSelections[product.id] || 
+                                        (colorsArray.length > 0 
+                                            ? (colorsArray[0].value || colorsArray[0].color || colorsArray[0].hexCode)
+                                            : null)
+                                    
+                                    // Find current selected color index
+                                    const selectedColorIndex = colorsArray.length > 0 && selectedColor
+                                        ? colorsArray.findIndex((c: any) => 
+                                            (c.value && c.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                            (c.color && c.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                            (c.hexCode && c.hexCode.toLowerCase() === selectedColor.toLowerCase())
+                                        )
+                                        : -1
+                                    const startIndex = selectedColorIndex >= 0 ? selectedColorIndex : 0
+                                    
+                                    // Get hover color index (for auto-cycling on hover) - cycle continuously
+                                    const hoverColorIndex = hoverColorCycles[product.id] ?? startIndex
+                                    const currentIndex = isHovering[product.id] && colorsArray.length > 0
+                                        ? hoverColorIndex % colorsArray.length
+                                        : (selectedColorIndex >= 0 ? selectedColorIndex : 0)
+                                    const displayColor = colorsArray.length > 0 && colorsArray[currentIndex]
+                                        ? (colorsArray[currentIndex].value || colorsArray[currentIndex].color || colorsArray[currentIndex].hexCode)
+                                        : selectedColor
+                                    
+                                    // Get image URL based on display color (hover or selected)
+                                    const productImageUrl = displayColor && colorsArray.length > 0
                                         ? (() => {
-                                            // Case-insensitive color matching
-                                            const selectedColorLower = (selectedColor || '').toLowerCase()
-                                            const colorImage = product.color_images.find(ci => 
-                                                ci.color && ci.color.toLowerCase() === selectedColorLower
+                                            const displayColorLower = (displayColor || '').toLowerCase()
+                                            const colorData = colorsArray.find((c: any) => 
+                                                (c.value && c.value.toLowerCase() === displayColorLower) ||
+                                                (c.color && c.color.toLowerCase() === displayColorLower) ||
+                                                (c.hexCode && c.hexCode.toLowerCase() === displayColorLower)
                                             )
-                                            return colorImage?.images?.[0] || getProductImageUrl(product)
+                                            if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                return colorData.images[0]
+                                            }
+                                            // Fallback to color_images if colors array doesn't have images
+                                            if (product.color_images) {
+                                                const colorImage = product.color_images.find((ci: any) =>
+                                                    (ci.color && ci.color.toLowerCase() === displayColorLower) ||
+                                                    (ci.name && ci.name.toLowerCase() === displayColorLower)
+                                                )
+                                                return colorImage?.images?.[0] || getProductImageUrl(product)
+                                            }
+                                            return getProductImageUrl(product)
                                         })()
                                         : getProductImageUrl(product)
+                                    
+                                    // Handle hover color cycling with smooth transitions
+                                    const handleMouseEnter = () => {
+                                        if (colorsArray.length <= 1) return // No need to cycle if only one color
+                                        
+                                        setIsHovering(prev => ({ ...prev, [product.id]: true }))
+                                        
+                                        // Clear any existing interval for this product
+                                        if (hoverIntervals.current[product.id]) {
+                                            clearInterval(hoverIntervals.current[product.id])
+                                        }
+                                        
+                                        // Start from selected color index
+                                        const startIdx = selectedColorIndex >= 0 ? selectedColorIndex : 0
+                                        setHoverColorCycles(prev => ({ ...prev, [product.id]: startIdx }))
+                                        setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
+                                        
+                                        // Start cycling through colors with smooth fade transitions
+                                        let currentIndex = startIdx
+                                        hoverIntervals.current[product.id] = setInterval(() => {
+                                            // Fade out
+                                            setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
+                                            
+                                            setTimeout(() => {
+                                                // Move to next color (cycle back to 0 after last)
+                                                currentIndex = (currentIndex + 1) % colorsArray.length
+                                                setHoverColorCycles(prev => ({
+                                                    ...prev,
+                                                    [product.id]: currentIndex
+                                                }))
+                                                
+                                                // Fade in
+                                                setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
+                                            }, 200) // Half of transition time
+                                        }, 1500) // Change color every 1.5 seconds
+                                    }
+                                    
+                                    const handleMouseLeave = () => {
+                                        setIsHovering(prev => {
+                                            const newState = { ...prev }
+                                            delete newState[product.id]
+                                            return newState
+                                        })
+                                        
+                                        // Clear interval and reset to selected color
+                                        if (hoverIntervals.current[product.id]) {
+                                            clearInterval(hoverIntervals.current[product.id])
+                                            delete hoverIntervals.current[product.id]
+                                        }
+                                        
+                                        // Smooth fade back to selected color
+                                        setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
+                                        setTimeout(() => {
+                                            setHoverColorCycles(prev => {
+                                                const newState = { ...prev }
+                                                delete newState[product.id]
+                                                return newState
+                                            })
+                                            setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
+                                        }, 200)
+                                    }
                                     
                                     // All products (including contact lenses) navigate to ProductDetail page
                                     // Contact lens forms are handled in ProductDetail page
@@ -732,6 +858,8 @@ const CategoryPage: React.FC = () => {
                                     <div
                                         key={product.id}
                                         className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all duration-300 flex flex-col group"
+                                        onMouseEnter={handleMouseEnter}
+                                        onMouseLeave={handleMouseLeave}
                                     >
                                         {/* Product Image */}
                                         <div className="relative h-64 md:h-72 bg-white overflow-hidden">
@@ -739,15 +867,28 @@ const CategoryPage: React.FC = () => {
                                                 <img
                                                     src={productImageUrl}
                                                     alt={product.name}
-                                                    key={`${product.id}-${selectedColor || 'default'}`}
+                                                    key={`${product.id}-${displayColor || 'default'}`}
                                                     className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                                    style={{ transition: 'opacity 0.3s ease-in-out' }}
+                                                    style={{ 
+                                                        opacity: imageOpacity[product.id] ?? 1,
+                                                        transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'
+                                                    }}
                                                     onError={(e) => {
                                                         const target = e.target as HTMLImageElement
                                                         target.src = '/assets/images/frame1.png'
                                                     }}
                                                 />
                                             </Link>
+                                            
+                                            {/* Next Color Indicator - Shows when hovering and multiple colors available */}
+                                            {isHovering[product.id] && colorsArray.length > 1 && (
+                                                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse z-30">
+                                                    <span>Next Color</span>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            )}
                                             
                                             {/* Favorite/Wishlist Icon - Always Visible */}
                                             <button
@@ -797,39 +938,15 @@ const CategoryPage: React.FC = () => {
                                         {/* Product Info */}
                                         <div className="p-4 flex-grow flex flex-col">
                                             {/* Color Swatches - Below Image - Only for Glasses */}
-                                            {isGlassesProduct(product) && product.color_images && product.color_images.length > 0 && (
+                                            {isGlassesProduct(product) && colorsArray.length > 0 && (
                                                 <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
-                                                    {product.color_images.map((colorImage, index) => {
-                                                        // Enhanced color detection with support for patterns and gradients
-                                                        const colorName = (colorImage.color || '').toLowerCase()
-                                                        const getColorValue = () => {
-                                                            // Check for hex code first
-                                                            if (colorName.match(/^#[0-9a-f]{6}$/i)) return colorName
-                                                            
-                                                            // Solid colors
-                                                            if (colorName.includes('black') || colorName === 'nero') return '#000000'
-                                                            if (colorName.includes('brown') || colorName.includes('tortoise') || colorName.includes('tortoiseshell')) return '#8B4513'
-                                                            if (colorName.includes('red') || colorName === 'rosso') return '#DC143C'
-                                                            if (colorName.includes('pink') || colorName === 'rosa') return '#FFC0CB'
-                                                            if (colorName.includes('green') || colorName === 'verde') return '#228B22'
-                                                            if (colorName.includes('blue') || colorName === 'blu') return '#4169E1'
-                                                            if (colorName.includes('purple') || colorName === 'viola') return '#9370DB'
-                                                            if (colorName.includes('white') || colorName === 'bianco') return '#FFFFFF'
-                                                            if (colorName.includes('yellow') || colorName === 'giallo') return '#FFD700'
-                                                            if (colorName.includes('gray') || colorName.includes('grey')) return '#808080'
-                                                            if (colorName.includes('gold')) return '#FFD700'
-                                                            if (colorName.includes('silver')) return '#C0C0C0'
-                                                            if (colorName.includes('beige') || colorName.includes('tan')) return '#F5DEB3'
-                                                            if (colorName.includes('navy')) return '#000080'
-                                                            if (colorName.includes('burgundy') || colorName.includes('wine')) return '#800020'
-                                                            if (colorName.includes('coral')) return '#FF7F50'
-                                                            if (colorName.includes('teal')) return '#008080'
-                                                            if (colorName.includes('orange')) return '#FFA500'
-                                                            
-                                                            return '#E5E5E5' // Default gray
-                                                        }
+                                                    {colorsArray.map((colorData: any, index: number) => {
+                                                        const colorValue = colorData.value || colorData.color || colorData.hexCode
+                                                        const hexCode = colorData.hexCode || '#E5E5E5'
+                                                        const displayName = colorData.display_name || colorData.name || colorData.color || 'Color'
                                                         
                                                         // Check if it's a pattern (tortoiseshell, gradient, etc.)
+                                                        const colorName = (displayName || '').toLowerCase()
                                                         const isPattern = colorName.includes('tortoise') || 
                                                                          colorName.includes('tortoiseshell') ||
                                                                          colorName.includes('gradient') ||
@@ -854,17 +971,22 @@ const CategoryPage: React.FC = () => {
                                                         }
                                                         
                                                         const gradientStyle = isPattern ? getGradientStyle() : null
-                                                        const isSelected = selectedColor === colorImage.color
+                                                        const isSelected = selectedColor && (
+                                                            (colorValue && colorValue.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                            (colorData.color && colorData.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                            (hexCode && hexCode.toLowerCase() === selectedColor.toLowerCase())
+                                                        )
                                                         
                                                         return (
                                                             <button
-                                                                key={`${product.id}-${index}-${colorImage.color}`}
+                                                                key={`${product.id}-${index}-${colorValue}`}
+                                                                type="button"
                                                                 onClick={(e) => {
                                                                     e.preventDefault()
                                                                     e.stopPropagation()
                                                                     setProductColorSelections(prev => ({
                                                                         ...prev,
-                                                                        [product.id]: colorImage.color
+                                                                        [product.id]: colorValue
                                                                     }))
                                                                 }}
                                                                 className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${
@@ -873,13 +995,13 @@ const CategoryPage: React.FC = () => {
                                                                         : 'border-gray-300 hover:border-gray-400'
                                                                 }`}
                                                                 style={{
-                                                                    backgroundColor: gradientStyle ? 'transparent' : getColorValue(),
+                                                                    backgroundColor: gradientStyle ? 'transparent' : hexCode,
                                                                     backgroundImage: gradientStyle || undefined,
                                                                     borderColor: isSelected ? '#2563EB' : undefined,
                                                                     backgroundSize: gradientStyle ? 'cover' : undefined,
                                                                 }}
-                                                                title={colorImage.color}
-                                                                aria-label={`Select color ${colorImage.color}`}
+                                                                title={displayName}
+                                                                aria-label={`Select color ${displayName}`}
                                                             >
                                                                 {isSelected && (
                                                                     <svg className="w-3 h-3 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">

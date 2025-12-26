@@ -120,6 +120,53 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [loading, setLoading] = useState(false)
   const [selectedImageIndex] = useState(0)
   
+  // Helper function to get the color-specific image URL
+  const getColorSpecificImageUrl = useCallback((product: Product, imageIndex: number = 0): string => {
+    if (!selectedProductColor) {
+      // Fallback to regular product image if no color selected
+      return getProductImageUrl(product, imageIndex)
+    }
+    
+    const p = product as any
+    const selectedColorLower = (selectedProductColor || '').toLowerCase()
+    
+    // First try 'colors' array (preferred format from API)
+    if (p.colors && Array.isArray(p.colors)) {
+      const colorData = p.colors.find((c: any) => 
+        (c.value && c.value.toLowerCase() === selectedColorLower) ||
+        (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+        (c.name && c.name.toLowerCase() === selectedColorLower)
+      )
+      if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+        if (colorData.images[imageIndex]) {
+          return colorData.images[imageIndex]
+        } else if (colorData.images[0]) {
+          // Fallback to first image of selected color if selected index doesn't exist
+          return colorData.images[0]
+        }
+      }
+    }
+    
+    // Fallback to 'color_images' array
+    if (product.color_images) {
+      const colorImage = product.color_images.find(ci =>
+        (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+        (ci.name && ci.name.toLowerCase() === selectedColorLower)
+      )
+      if (colorImage && colorImage.images) {
+        if (colorImage.images[imageIndex]) {
+          return colorImage.images[imageIndex]
+        } else if (colorImage.images[0]) {
+          // Fallback to first image of selected color if selected index doesn't exist
+          return colorImage.images[0]
+        }
+      }
+    }
+    
+    // Fallback to regular product image
+    return getProductImageUrl(product, imageIndex)
+  }, [selectedProductColor])
+  
   const [lensSelection, setLensSelection] = useState<LensSelection>({
     type: 'distance_vision',
     coatings: [],
@@ -2665,7 +2712,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           <div className="lg:col-span-1 flex flex-col">
             <div className="bg-gray-100 rounded-lg overflow-hidden flex-1 flex items-center justify-center relative" style={{ minHeight: '500px' }}>
               <img
-                src={getProductImageUrl(product, selectedImageIndex)}
+                key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}`}
+                src={getColorSpecificImageUrl(product, selectedImageIndex)}
                 alt={product.name}
                 className="w-full h-full object-contain p-8"
                 onError={(e) => {
