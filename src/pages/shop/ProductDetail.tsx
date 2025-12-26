@@ -94,24 +94,46 @@ const ProductDetail: React.FC = () => {
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
 
-    // Get selected color variant
+    // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
     const selectedColorVariant = useMemo(() => {
-        if (!product || !selectedColor || !product.color_images) return null
+        if (!product || !selectedColor) return null
+        
+        const p = product as any
         const selectedColorLower = (selectedColor || '').toLowerCase()
-        return product.color_images.find(ci => 
-            (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-            (ci.name && ci.name.toLowerCase() === selectedColorLower)
-        ) || null
+        
+        // First try to find in 'colors' array (preferred format from API)
+        if (p.colors && Array.isArray(p.colors)) {
+            const colorData = p.colors.find((c: any) => 
+                (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                (c.name && c.name.toLowerCase() === selectedColorLower)
+            )
+            if (colorData) return colorData
+        }
+        
+        // Fallback to 'color_images' array
+        if (product.color_images) {
+            return product.color_images.find(ci => 
+                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                (ci.name && ci.name.toLowerCase() === selectedColorLower)
+            ) || null
+        }
+        
+        return null
     }, [product, selectedColor])
 
-    // Price calculation - uses variant price if color is selected
+    // Price calculation - uses variant price if color is selected (supports both 'colors' array and 'color_images' array)
     const { displayPrice, originalPrice, hasValidSale } = useMemo(() => {
         if (!product) return { displayPrice: 0, originalPrice: null, hasValidSale: false }
 
         // Use variant price if color is selected and variant has a price
         let basePrice = Number(product.price || 0)
-        if (selectedColorVariant && selectedColorVariant.price !== undefined && selectedColorVariant.price !== null) {
-            basePrice = Number(selectedColorVariant.price)
+        if (selectedColorVariant) {
+            // Check if variant has a price (from 'colors' array or 'color_images' array)
+            const variantPrice = (selectedColorVariant as any).price
+            if (variantPrice !== undefined && variantPrice !== null) {
+                basePrice = Number(variantPrice)
+            }
         }
 
         const salePrice = product.sale_price ? Number(product.sale_price) : null
@@ -225,12 +247,38 @@ const ProductDetail: React.FC = () => {
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
                 
-                // Auto-select first color variant if available
-                if (productData.color_images && productData.color_images.length > 0) {
+                // Check URL parameters for color selection
+                const urlParams = new URLSearchParams(window.location.search)
+                const colorParam = urlParams.get('color')
+                
+                const p = productData as any
+                
+                // Auto-select color: URL parameter > product.selectedColor > first color
+                if (colorParam) {
+                    // Color from URL parameter (hex code or color name)
+                    setSelectedColor(colorParam)
+                    if (import.meta.env.DEV) {
+                        console.log('🎨 Color from URL parameter:', colorParam)
+                    }
+                } else if (p.selectedColor) {
+                    // Use product's default selected color
+                    setSelectedColor(p.selectedColor)
+                    if (import.meta.env.DEV) {
+                        console.log('🎨 Using product default color:', p.selectedColor)
+                    }
+                } else if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+                    // Use first color from 'colors' array (preferred)
+                    const firstColor = p.colors[0]
+                    setSelectedColor(firstColor.value || firstColor.hexCode || firstColor.name)
+                    if (import.meta.env.DEV) {
+                        console.log('🎨 Auto-selected first color from colors array:', firstColor)
+                    }
+                } else if (productData.color_images && productData.color_images.length > 0) {
+                    // Fallback to first color from 'color_images' array
                     const firstColor = productData.color_images[0]
                     setSelectedColor(firstColor.color)
                     if (import.meta.env.DEV) {
-                        console.log('🎨 Auto-selected first color variant:', firstColor.color, firstColor)
+                        console.log('🎨 Auto-selected first color from color_images:', firstColor.color, firstColor)
                     }
                 } else {
                     setSelectedColor(null)
@@ -1341,11 +1389,36 @@ const ProductDetail: React.FC = () => {
 
     // Helper function to get the color-specific image URL
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
-        // If color is selected and product has color_images, use color-specific image
-        if (selectedColor && product.color_images) {
-            const selectedColorLower = (selectedColor || '').toLowerCase()
+        if (!selectedColor) {
+            // Fallback to regular product image if no color selected
+            return getProductImageUrl(product, imageIndex)
+        }
+        
+        const p = product as any
+        const selectedColorLower = (selectedColor || '').toLowerCase()
+        
+        // First try 'colors' array (preferred format from API)
+        if (p.colors && Array.isArray(p.colors)) {
+            const colorData = p.colors.find((c: any) => 
+                (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                (c.name && c.name.toLowerCase() === selectedColorLower)
+            )
+            if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                if (colorData.images[imageIndex]) {
+                    return colorData.images[imageIndex]
+                } else if (colorData.images[0]) {
+                    // Fallback to first image of selected color if selected index doesn't exist
+                    return colorData.images[0]
+                }
+            }
+        }
+        
+        // Fallback to 'color_images' array
+        if (product.color_images) {
             const colorImage = product.color_images.find(ci =>
-                ci.color && ci.color.toLowerCase() === selectedColorLower
+                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                (ci.name && ci.name.toLowerCase() === selectedColorLower)
             )
             if (colorImage && colorImage.images) {
                 if (colorImage.images[imageIndex]) {
@@ -1356,6 +1429,7 @@ const ProductDetail: React.FC = () => {
                 }
             }
         }
+        
         // Fallback to regular product image
         return getProductImageUrl(product, imageIndex)
     }
@@ -1497,19 +1571,27 @@ const ProductDetail: React.FC = () => {
 
             // Use services/cartService addItemToCart if authenticated
             if (isAuthenticated) {
+                const p = product as any
+                // Get color value (hex code) - prefer value from 'colors' array, fallback to selectedColor
+                let colorValue = selectedColor
+                if (selectedColorVariant) {
+                    const variant = selectedColorVariant as any
+                    colorValue = variant.value || variant.hexCode || variant.color || selectedColor
+                }
+                
                 const cartRequest: AddToCartRequest = {
                     product_id: cartProduct.id,
                     quantity: quantity,
-                    selected_color: selectedColor || undefined, // Pass selected color for variant matching
+                    selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
                     customization: {
                         frame_material: cartProduct.frame_material,
-                        color: selectedColor || undefined,
+                        color: colorValue || undefined,
                         // Store color variant details if available
                         ...(selectedColorVariant ? {
-                            color_name: selectedColorVariant.name,
-                            color_display_name: selectedColorVariant.display_name,
-                            variant_price: selectedColorVariant.price,
-                            variant_images: selectedColorVariant.images
+                            color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
+                            color_display_name: (selectedColorVariant as any).display_name || (selectedColorVariant as any).name || (selectedColorVariant as any).color,
+                            variant_price: (selectedColorVariant as any).price,
+                            variant_images: (selectedColorVariant as any).images || []
                         } : {})
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
@@ -1890,49 +1972,111 @@ const ProductDetail: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {/* Color Selection (if color_images available from Postman collection) */}
-                                        {product.color_images && product.color_images.length > 0 && (
-                                            <div className="mb-4">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    {t('shop.selectColor', 'Select Color')}
-                                                </label>
-                                                <div className="flex gap-2 flex-wrap">
-                                                    {product.color_images.map((colorImage, index) => (
-                                                        <button
-                                                            key={index}
-                                                            onClick={() => {
-                                                                setSelectedColor(colorImage.color)
-                                                                setSelectedImageIndex(0) // Reset to first image of selected color
-                                                            }}
-                                                            className={`px-4 py-2 rounded-lg border-2 transition-colors ${selectedColor === colorImage.color
-                                                                ? 'border-blue-950 bg-blue-50'
-                                                                : 'border-gray-200 hover:border-gray-300'
-                                                                }`}
-                                                        >
-                                                            <span className="text-sm font-medium capitalize">
-                                                                {colorImage.color}
-                                                            </span>
-                                                        </button>
-                                                    ))}
+                                        {/* Color Selection - supports both 'colors' array (preferred) and 'color_images' array (fallback) */}
+                                        {(() => {
+                                            const p = product as any
+                                            const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
+                                                ? p.colors 
+                                                : (product.color_images && product.color_images.length > 0 
+                                                    ? product.color_images.map((ci: any) => ({
+                                                        name: ci.name || ci.color,
+                                                        display_name: ci.display_name || ci.name || ci.color,
+                                                        value: ci.value || ci.color,
+                                                        hexCode: ci.hexCode || '#E5E5E5',
+                                                        price: ci.price,
+                                                        images: ci.images || []
+                                                    }))
+                                                    : [])
+                                            
+                                            if (colorsArray.length === 0) return null
+                                            
+                                            return (
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        {t('shop.selectColor', 'Select Color')}
+                                                    </label>
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {colorsArray.map((color: any, index: number) => {
+                                                            const colorValue = color.value || color.hexCode || color.color || color.name
+                                                            const hexCode = color.hexCode || '#E5E5E5'
+                                                            const displayName = color.display_name || color.name || color.color || 'Color'
+                                                            const isSelected = selectedColor && (
+                                                                (color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                (color.hexCode && color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
+                                                            )
+                                                            
+                                                            return (
+                                                                <button
+                                                                    key={index}
+                                                                    onClick={() => {
+                                                                        const newColor = color.value || color.hexCode || color.color || color.name
+                                                                        setSelectedColor(newColor)
+                                                                        setSelectedImageIndex(0) // Reset to first image of selected color
+                                                                        
+                                                                        // Update URL without page reload
+                                                                        const url = new URL(window.location.href)
+                                                                        url.searchParams.set('color', newColor)
+                                                                        window.history.pushState({}, '', url)
+                                                                    }}
+                                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:scale-105 ${
+                                                                        isSelected
+                                                                            ? 'border-blue-950 bg-blue-50 ring-2 ring-blue-200'
+                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                    }`}
+                                                                    title={displayName}
+                                                                >
+                                                                    {/* Color Swatch */}
+                                                                    <span
+                                                                        className="w-6 h-6 rounded-full border border-gray-300"
+                                                                        style={{ backgroundColor: hexCode }}
+                                                                    />
+                                                                    <span className="text-sm font-medium capitalize">
+                                                                        {displayName}
+                                                                    </span>
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )
+                                        })()}
 
                                         {/* Thumbnail Images */}
                                         {(() => {
-                                            // Use color_images if available and color is selected, otherwise use regular images
+                                            // Get images for selected color - supports both 'colors' array and 'color_images' array
                                             let imagesArray: string[] = []
+                                            const p = product as any
 
-                                            if (selectedColor && product.color_images) {
-                                                const colorImage = product.color_images.find(ci =>
-                                                    ci.color.toLowerCase() === selectedColor.toLowerCase()
-                                                )
-                                                if (colorImage && colorImage.images) {
-                                                    imagesArray = colorImage.images
+                                            if (selectedColor) {
+                                                // First try 'colors' array (preferred)
+                                                if (p.colors && Array.isArray(p.colors)) {
+                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                    const colorData = p.colors.find((c: any) => 
+                                                        (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                                                        (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                        (c.name && c.name.toLowerCase() === selectedColorLower)
+                                                    )
+                                                    if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                        imagesArray = colorData.images
+                                                    }
+                                                }
+                                                
+                                                // Fallback to 'color_images' array
+                                                if (imagesArray.length === 0 && product.color_images) {
+                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                    const colorImage = product.color_images.find(ci =>
+                                                        (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                                                        (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                                    )
+                                                    if (colorImage && colorImage.images) {
+                                                        imagesArray = colorImage.images
+                                                    }
                                                 }
                                             }
 
-                                            // Fallback to regular images if no color_images or no color selected
+                                            // Fallback to regular images if no color images or no color selected
                                             if (imagesArray.length === 0 && product.images) {
                                                 if (typeof product.images === 'string') {
                                                     try {
