@@ -5,7 +5,7 @@ import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import CartHeroSection from '../../components/shop/CartHeroSection'
 import { useCart } from '../../context/CartContext'
-import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
+import { applyCoupon, getAvailableCoupons, type CouponDiscount, type CartItemForCoupon, type Coupon } from '../../services/couponsService'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 
 const Cart: React.FC = () => {
@@ -15,6 +15,8 @@ const Cart: React.FC = () => {
     const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
     const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
     const [couponError, setCouponError] = useState('')
+    const [availableCoupons, setAvailableCoupons] = useState<Coupon[]>([])
+    const [couponsLoading, setCouponsLoading] = useState(false)
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
     const [shippingLoading, setShippingLoading] = useState(true)
@@ -62,6 +64,27 @@ const Cart: React.FC = () => {
         }
         return 0
     }
+
+    // Fetch available coupons on component mount
+    useEffect(() => {
+        const fetchCoupons = async () => {
+            setCouponsLoading(true)
+            try {
+                const coupons = await getAvailableCoupons()
+                setAvailableCoupons(coupons)
+                if (import.meta.env.DEV) {
+                    console.log('[Cart] Available coupons loaded:', coupons.length)
+                }
+            } catch (error) {
+                console.error('[Cart] Error fetching coupons:', error)
+                setAvailableCoupons([])
+            } finally {
+                setCouponsLoading(false)
+            }
+        }
+
+        fetchCoupons()
+    }, [])
 
     // Fetch shipping methods
     useEffect(() => {
@@ -471,30 +494,111 @@ const Cart: React.FC = () => {
                                 <div className="mb-6 pb-6 border-b border-gray-200">
                                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Have a coupon code?</h3>
                                     {!appliedCoupon ? (
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Enter coupon code"
-                                                value={couponCode}
-                                                onChange={(e) => {
-                                                    setCouponCode(e.target.value.toUpperCase())
-                                                    setCouponError('')
-                                                }}
-                                                onKeyPress={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        handleApplyCoupon()
-                                                    }
-                                                }}
-                                                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={handleApplyCoupon}
-                                                disabled={isApplyingCoupon || !couponCode.trim()}
-                                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
-                                            >
-                                                {isApplyingCoupon ? '...' : 'Apply'}
-                                            </button>
+                                        <div className="space-y-3">
+                                            {/* Available Coupons Dropdown */}
+                                            {availableCoupons.length > 0 && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                        Available Coupons:
+                                                    </label>
+                                                    <select
+                                                        value={couponCode}
+                                                        onChange={(e) => {
+                                                            const selectedCode = e.target.value
+                                                            setCouponCode(selectedCode)
+                                                            setCouponError('')
+                                                            // Auto-apply when a coupon is selected from dropdown
+                                                            if (selectedCode) {
+                                                                setTimeout(() => handleApplyCoupon(), 100)
+                                                            }
+                                                        }}
+                                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm bg-white"
+                                                    >
+                                                        <option value="">Select a coupon...</option>
+                                                        {availableCoupons.map((coupon) => {
+                                                            const minOrder = coupon.min_order_amount ? Number(coupon.min_order_amount) : 0
+                                                            const discountValue = Number(coupon.discount_value)
+                                                            const discountText = coupon.discount_type === 'percentage' 
+                                                                ? `${discountValue}% off` 
+                                                                : `$${discountValue} off`
+                                                            const minOrderText = minOrder > 0 ? ` (Min: $${minOrder.toFixed(2)})` : ''
+                                                            
+                                                            return (
+                                                                <option key={coupon.id} value={coupon.code}>
+                                                                    {coupon.code} - {discountText}{minOrderText}
+                                                                </option>
+                                                            )
+                                                        })}
+                                                    </select>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Manual Input */}
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Or enter coupon code"
+                                                    value={couponCode}
+                                                    onChange={(e) => {
+                                                        setCouponCode(e.target.value.toUpperCase())
+                                                        setCouponError('')
+                                                    }}
+                                                    onKeyPress={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            handleApplyCoupon()
+                                                        }
+                                                    }}
+                                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleApplyCoupon}
+                                                    disabled={isApplyingCoupon || !couponCode.trim()}
+                                                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+                                                >
+                                                    {isApplyingCoupon ? '...' : 'Apply'}
+                                                </button>
+                                            </div>
+                                            
+                                            {/* Coupon Details Display */}
+                                            {couponCode && availableCoupons.length > 0 && (
+                                                <div className="text-xs text-gray-600 space-y-1">
+                                                    {availableCoupons
+                                                        .filter(c => c.code === couponCode)
+                                                        .map((coupon) => {
+                                                            const minOrder = coupon.min_order_amount ? Number(coupon.min_order_amount) : 0
+                                                            const discountValue = Number(coupon.discount_value)
+                                                            const discountText = coupon.discount_type === 'percentage' 
+                                                                ? `${discountValue}% off` 
+                                                                : `$${discountValue} off`
+                                                            const currentSubtotal = getTotalPrice()
+                                                            const canApply = minOrder === 0 || currentSubtotal >= minOrder
+                                                            
+                                                            return (
+                                                                <div key={coupon.id} className="bg-blue-50 p-2 rounded border border-blue-200">
+                                                                    <div className="font-semibold text-blue-900">{coupon.code}</div>
+                                                                    {coupon.description && (
+                                                                        <div className="text-blue-700">{coupon.description}</div>
+                                                                    )}
+                                                                    <div className="text-blue-800">
+                                                                        Discount: {discountText}
+                                                                        {coupon.max_discount && coupon.discount_type === 'percentage' && (
+                                                                            <span> (Max: ${Number(coupon.max_discount).toFixed(2)})</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {minOrder > 0 && (
+                                                                        <div className={canApply ? 'text-green-700' : 'text-red-700'}>
+                                                                            Minimum order: ${minOrder.toFixed(2)}
+                                                                            {!canApply && (
+                                                                                <span> (Current: ${currentSubtotal.toFixed(2)})</span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )
+                                                        })}
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">

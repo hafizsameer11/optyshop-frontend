@@ -160,6 +160,7 @@ export const API_ROUTES = {
   // ============================================
   COUPONS: {
     APPLY: `/coupons/apply`,                     // PUBLIC (but may require auth for user-specific limits)
+    LIST: `/coupons`,                            // PUBLIC - Get available coupons
   },
 
   // ============================================
