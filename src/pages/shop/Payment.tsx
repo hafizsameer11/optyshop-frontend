@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Elements } from '@stripe/react-stripe-js'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import PaymentForm from '../../components/payment/PaymentForm'
-import { getStripePromise, initializeStripe } from '../../services/stripeService'
+import { getStripePromise } from '../../services/stripeService'
 import { createPaymentIntent } from '../../services/paymentsService'
+
+// Lazy load PaymentForm to avoid initialization issues
+const PaymentForm = lazy(() => import('../../components/payment/PaymentForm'))
 
 /**
  * Payment Page Component
@@ -17,7 +19,6 @@ const Payment: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
-  const [stripeInitialized, setStripeInitialized] = useState(false)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
@@ -53,15 +54,6 @@ const Payment: React.FC = () => {
           return
         }
         setStripePromise(stripePromiseValue)
-        
-        // Wait for Stripe to be ready (for validation)
-        const stripe = await initializeStripe()
-        if (!stripe) {
-          setError('Stripe failed to initialize. Please contact support.')
-          setLoading(false)
-          return
-        }
-        setStripeInitialized(true)
 
         // Create payment intent
         const paymentIntent = await createPaymentIntent({
@@ -119,7 +111,7 @@ const Payment: React.FC = () => {
     )
   }
 
-  if (error || !clientSecret || !orderId || !stripePromise || !stripeInitialized) {
+  if (error || !clientSecret || !orderId || !stripePromise) {
     return (
       <div className="bg-white min-h-screen">
         <Navbar />
@@ -214,7 +206,14 @@ const Payment: React.FC = () => {
                 },
               }}
             >
-              <PaymentForm orderId={orderId} clientSecret={clientSecret} />
+              <Suspense fallback={
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-950 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading payment form...</p>
+                </div>
+              }>
+                <PaymentForm orderId={orderId} clientSecret={clientSecret} />
+              </Suspense>
             </Elements>
           )}
 
