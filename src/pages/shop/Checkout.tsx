@@ -699,7 +699,11 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                         <div key={item.id} className="flex gap-3 pb-4 border-b border-gray-200">
                                             <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                                 <img
-                                                    src={item.image}
+                                                    src={
+                                                        // Use variant image from customization if available, otherwise use item.image
+                                                        (item.customization as any)?.variant_images?.[0] || 
+                                                        item.image
+                                                    }
                                                     alt={item.name}
                                                     className="w-full h-full object-contain p-1"
                                                     onError={(e) => {

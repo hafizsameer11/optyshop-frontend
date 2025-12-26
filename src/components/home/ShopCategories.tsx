@@ -7,6 +7,9 @@ import { useTranslation } from 'react-i18next'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import VirtualTryOnModal from './VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
+import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
+import { addItemToCart } from '../../services/cartService'
 
 interface CategoryWithProducts extends Category {
     fetchedProducts?: Product[]
@@ -16,6 +19,8 @@ const ShopCategories: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
+    const { addToCart } = useCart()
+    const { isAuthenticated } = useAuth()
     const [categories, setCategories] = useState<CategoryWithProducts[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
@@ -455,6 +460,76 @@ const ShopCategories: React.FC = () => {
                                                                     {t('shop.tryOn', 'Try on')}
                                                                 </button>
                                                             )}
+
+                                                            {/* Add to Cart Button */}
+                                                            <button
+                                                                onClick={async (e) => {
+                                                                    e.preventDefault()
+                                                                    e.stopPropagation()
+                                                                    try {
+                                                                        const finalPrice = parseFloat(productPrice) || 0
+                                                                        
+                                                                        // Get selected color image
+                                                                        const selectedColor = productColorSelections[product.id] || 
+                                                                            (productColorImages && productColorImages.length > 0 
+                                                                                ? productColorImages[0].color 
+                                                                                : null)
+                                                                        
+                                                                        // Get image URL based on selected color
+                                                                        const finalImageUrl = selectedColor && productColorImages
+                                                                            ? (() => {
+                                                                                const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                                                const colorImage = productColorImages.find((ci: any) => 
+                                                                                    ci.color && ci.color.toLowerCase() === selectedColorLower
+                                                                                )
+                                                                                return colorImage?.images?.[0] || productImageUrl
+                                                                            })()
+                                                                            : productImageUrl
+                                                                        
+                                                                        const cartProduct = {
+                                                                            id: product.id,
+                                                                            name: productName || '',
+                                                                            brand: (product as any).brand || '',
+                                                                            category: (product as any).category?.slug || 'eyeglasses',
+                                                                            price: finalPrice,
+                                                                            image: finalImageUrl, // Use selected color image
+                                                                            description: (product as any).description || '',
+                                                                            inStock: (product as any).in_stock !== false,
+                                                                            rating: (product as any).rating ? Number((product as any).rating) : undefined,
+                                                                            customization: selectedColor ? {
+                                                                                selected_color: selectedColor,
+                                                                                color_name: productColorImages?.find((ci: any) => 
+                                                                                    ci.color?.toLowerCase() === selectedColor.toLowerCase()
+                                                                                )?.name,
+                                                                                variant_images: productColorImages?.find((ci: any) => 
+                                                                                    ci.color?.toLowerCase() === selectedColor.toLowerCase()
+                                                                                )?.images
+                                                                            } : undefined
+                                                                        }
+                                                                        
+                                                                        // Add to local cart
+                                                                        addToCart(cartProduct)
+                                                                        
+                                                                        // Add to API cart if authenticated
+                                                                        if (isAuthenticated) {
+                                                                            try {
+                                                                                await addItemToCart({
+                                                                                    product_id: product.id,
+                                                                                    quantity: 1,
+                                                                                    selected_color: selectedColor || undefined
+                                                                                })
+                                                                            } catch (error) {
+                                                                                console.error('Error adding to API cart:', error)
+                                                                            }
+                                                                        }
+                                                                    } catch (error) {
+                                                                        console.error('Error adding to cart:', error)
+                                                                    }
+                                                                }}
+                                                                className="mb-3 w-full bg-blue-950 hover:bg-blue-900 text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                                                            >
+                                                                {t('shop.addToCart', 'Add to Cart')}
+                                                            </button>
 
                                                             {/* Price and Reviews - Same Row */}
                                                             <div className="flex items-center justify-between mb-2">

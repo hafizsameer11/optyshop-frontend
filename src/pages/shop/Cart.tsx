@@ -224,7 +224,11 @@ const Cart: React.FC = () => {
                                     {/* Product Image */}
                                     <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                         <img
-                                            src={item.image}
+                                            src={
+                                                // Use variant image from customization if available, otherwise use item.image
+                                                (item.customization as any)?.variant_images?.[0] || 
+                                                item.image
+                                            }
                                             alt={item.name}
                                             className="w-full h-full object-contain p-2"
                                             onError={(e) => {

@@ -6,6 +6,9 @@ import { getProductImageUrl } from '../../utils/productImage'
 import { getCategoriesWithSubcategories, type Category } from '../../services/categoriesService'
 import VirtualTryOnModal from './VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
+import { useCart } from '../../context/CartContext'
+import { useAuth } from '../../context/AuthContext'
+import { addItemToCart } from '../../services/cartService'
 
 interface FeaturedArrivalsProps {
     categorySlug?: string
@@ -20,6 +23,8 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
 }) => {
     const { t } = useTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
+    const { addToCart } = useCart()
+    const { isAuthenticated } = useAuth()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
@@ -392,6 +397,78 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                         {t('shop.tryOn', 'Try on')}
                                     </button>
                                 )}
+
+                                {/* Add to Cart Button */}
+                                <button
+                                    onClick={async (e) => {
+                                        e.preventDefault()
+                                        e.stopPropagation()
+                                        try {
+                                            const salePrice = product?.sale_price ? Number(product.sale_price) : null
+                                            const regularPrice = product?.price ? Number(product.price) : 0
+                                            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
+                                            
+                                            // Get selected color image
+                                            const selectedColor = productColorSelections[product.id] || 
+                                                (product.color_images && product.color_images.length > 0 
+                                                    ? product.color_images[0].color 
+                                                    : null)
+                                            
+                                            // Get image URL based on selected color
+                                            const productImageUrl = selectedColor && product.color_images
+                                                ? (() => {
+                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                    const colorImage = product.color_images.find(ci => 
+                                                        ci.color && ci.color.toLowerCase() === selectedColorLower
+                                                    )
+                                                    return colorImage?.images?.[0] || getProductImageUrl(product)
+                                                })()
+                                                : getProductImageUrl(product)
+                                            
+                                            const cartProduct = {
+                                                id: product?.id || 0,
+                                                name: product?.name || '',
+                                                brand: product?.brand || '',
+                                                category: product?.category?.slug || 'eyeglasses',
+                                                price: finalPrice,
+                                                image: productImageUrl, // Use selected color image
+                                                description: product?.description || '',
+                                                inStock: product?.in_stock || false,
+                                                rating: product?.rating ? Number(product.rating) : undefined,
+                                                customization: selectedColor ? {
+                                                    selected_color: selectedColor,
+                                                    color_name: product.color_images?.find(ci => 
+                                                        ci.color?.toLowerCase() === selectedColor.toLowerCase()
+                                                    )?.name,
+                                                    variant_images: product.color_images?.find(ci => 
+                                                        ci.color?.toLowerCase() === selectedColor.toLowerCase()
+                                                    )?.images
+                                                } : undefined
+                                            }
+                                            
+                                            // Add to local cart
+                                            addToCart(cartProduct)
+                                            
+                                            // Add to API cart if authenticated
+                                            if (isAuthenticated) {
+                                                try {
+                                                    await addItemToCart({
+                                                        product_id: product.id,
+                                                        quantity: 1,
+                                                        selected_color: selectedColor || undefined
+                                                    })
+                                                } catch (error) {
+                                                    console.error('Error adding to API cart:', error)
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.error('Error adding to cart:', error)
+                                        }
+                                    }}
+                                    className="mb-3 w-full bg-blue-950 hover:bg-blue-900 text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                                >
+                                    {t('shop.addToCart', 'Add to Cart')}
+                                </button>
 
                                 {/* Price and Reviews - Same Row */}
                                 <div className="flex items-center justify-between mb-2">
