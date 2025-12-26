@@ -2544,6 +2544,7 @@ const ProductDetail: React.FC = () => {
                             <div>
                                 <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center mb-6">
                                     <img
+                                        key={`product-${product.id}-img-${selectedImageIndex}-${selectedColor || 'default'}`}
                                         src={getColorSpecificImageUrl(product, selectedImageIndex)}
                                         alt={product.name}
                                         className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
@@ -2559,66 +2560,125 @@ const ProductDetail: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Color Selection (if color_images available) */}
-                                {product.color_images && product.color_images.length > 0 && (
-                                    <div className="mb-6">
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                            {t('shop.selectColor', 'Select Color')}
-                                        </label>
-                                        <div className="flex gap-3 flex-wrap">
-                                            {product.color_images.map((colorImage, index) => {
-                                                const isSelected = selectedColor === colorImage.color
-                                                const variantPrice = colorImage.price !== undefined && colorImage.price !== null
-                                                    ? Number(colorImage.price)
-                                                    : null
-                                                const displayName = colorImage.display_name || colorImage.name || colorImage.color
-                                                
-                                                return (
-                                                    <button
-                                                        key={index}
-                                                        onClick={() => {
-                                                            setSelectedColor(colorImage.color)
-                                                            setSelectedImageIndex(0) // Reset to first image of selected color
-                                                        }}
-                                                        className={`px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md ${isSelected
-                                                            ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
-                                                            : 'border-gray-200 hover:border-blue-200 hover:bg-white'
+                                {/* Color Selection - supports both 'colors' array (preferred) and 'color_images' array (fallback) */}
+                                {(() => {
+                                    const p = product as any
+                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
+                                        ? p.colors 
+                                        : (product.color_images && product.color_images.length > 0 
+                                            ? product.color_images.map((ci: any) => ({
+                                                name: ci.name || ci.color,
+                                                display_name: ci.display_name || ci.name || ci.color,
+                                                value: ci.value || ci.color,
+                                                hexCode: ci.hexCode || '#E5E5E5',
+                                                price: ci.price,
+                                                images: ci.images || []
+                                            }))
+                                            : [])
+                                    
+                                    if (colorsArray.length === 0) return null
+                                    
+                                    return (
+                                        <div className="mb-6">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                {t('shop.selectColor', 'Select Color')}
+                                            </label>
+                                            <div className="flex gap-3 flex-wrap">
+                                                {colorsArray.map((color: any, index: number) => {
+                                                    const colorValue = color.value || color.hexCode || color.color || color.name
+                                                    const hexCode = color.hexCode || '#E5E5E5'
+                                                    const displayName = color.display_name || color.name || color.color || 'Color'
+                                                    const variantPrice = color.price !== undefined && color.price !== null
+                                                        ? Number(color.price)
+                                                        : null
+                                                    const isSelected = selectedColor && (
+                                                        (color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                        (color.hexCode && color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                        (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                        (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
+                                                    )
+                                                    
+                                                    return (
+                                                        <button
+                                                            key={index}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                const newColor = colorValue
+                                                                setSelectedColor(newColor)
+                                                                setSelectedImageIndex(0) // Reset to first image of selected color
+                                                                
+                                                                // Update URL without page reload
+                                                                const url = new URL(window.location.href)
+                                                                url.searchParams.set('color', newColor)
+                                                                window.history.pushState({}, '', url)
+                                                            }}
+                                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 ${
+                                                                isSelected
+                                                                    ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
+                                                                    : 'border-gray-200 hover:border-blue-200 hover:bg-white'
                                                             }`}
-                                                    >
-                                                        <div className="flex flex-col items-center gap-1">
-                                                            <span className={`text-sm font-semibold capitalize ${isSelected ? 'text-blue-950' : 'text-gray-700'
-                                                                }`}>
-                                                                {displayName}
-                                                            </span>
-                                                            {variantPrice !== null && variantPrice !== Number(product.price) && (
-                                                                <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
-                                                                    ${variantPrice.toFixed(2)}
+                                                            title={displayName}
+                                                        >
+                                                            {/* Color Swatch */}
+                                                            <span
+                                                                className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
+                                                                style={{ backgroundColor: hexCode }}
+                                                            />
+                                                            <div className="flex flex-col items-start gap-1">
+                                                                <span className={`text-sm font-semibold capitalize ${isSelected ? 'text-blue-950' : 'text-gray-700'
+                                                                    }`}>
+                                                                    {displayName}
                                                                 </span>
-                                                            )}
-                                                        </div>
-                                                    </button>
-                                                )
-                                            })}
+                                                                {variantPrice !== null && variantPrice !== Number(product.price) && (
+                                                                    <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
+                                                                        €{variantPrice.toFixed(2)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )
+                                })()}
 
                                 {/* Thumbnail Images */}
                                 {(() => {
-                                    // Use color_images if available and color is selected, otherwise use regular images
+                                    // Get images for selected color - supports both 'colors' array and 'color_images' array
                                     let imagesArray: string[] = []
+                                    const p = product as any
 
-                                    if (selectedColor && product.color_images) {
-                                        const selectedColorLower = (selectedColor || '').toLowerCase()
-                                        const colorImage = product.color_images.find(ci =>
-                                            ci.color && ci.color.toLowerCase() === selectedColorLower
-                                        )
-                                        if (colorImage && colorImage.images) {
-                                            imagesArray = colorImage.images
+                                    if (selectedColor) {
+                                        // First try 'colors' array (preferred)
+                                        if (p.colors && Array.isArray(p.colors)) {
+                                            const selectedColorLower = (selectedColor || '').toLowerCase()
+                                            const colorData = p.colors.find((c: any) => 
+                                                (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                                                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                (c.name && c.name.toLowerCase() === selectedColorLower)
+                                            )
+                                            if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                imagesArray = colorData.images
+                                            }
+                                        }
+                                        
+                                        // Fallback to 'color_images' array
+                                        if (imagesArray.length === 0 && product.color_images) {
+                                            const selectedColorLower = (selectedColor || '').toLowerCase()
+                                            const colorImage = product.color_images.find(ci =>
+                                                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                                                (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                            )
+                                            if (colorImage && colorImage.images) {
+                                                imagesArray = colorImage.images
+                                            }
                                         }
                                     }
 
-                                    // Fallback to regular images if no color_images or no color selected
+                                    // Fallback to regular images if no color images or no color selected
                                     if (imagesArray.length === 0 && product.images) {
                                         if (typeof product.images === 'string') {
                                             try {
@@ -2734,7 +2794,12 @@ const ProductDetail: React.FC = () => {
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
                                         {isEyeHygiene ? (
                                             <button
-                                                onClick={handleAddToCart}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    handleAddToCart()
+                                                }}
                                                 disabled={isProductOutOfStock}
                                                 className={`w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
                                                     ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
@@ -2748,7 +2813,12 @@ const ProductDetail: React.FC = () => {
                                                 {/* For other products: Show both Add to Cart and Select Lenses */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <button
-                                                onClick={handleAddToCart}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    handleAddToCart()
+                                                }}
                                                 disabled={isProductOutOfStock}
                                                 className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
                                                     ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
@@ -2759,7 +2829,12 @@ const ProductDetail: React.FC = () => {
                                             </button>
 
                                             <button
-                                                onClick={() => setShowCheckout(true)}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setShowCheckout(true)
+                                                }}
                                                 disabled={isProductOutOfStock}
                                                 className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
                                                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transform hover:-translate-y-1'
@@ -2772,7 +2847,12 @@ const ProductDetail: React.FC = () => {
 
                                         <div className="flex gap-3">
                                             <button
-                                                onClick={() => setShowTryOn(true)}
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault()
+                                                    e.stopPropagation()
+                                                    setShowTryOn(true)
+                                                }}
                                                 className="flex-1 px-6 py-4 rounded-xl font-bold text-gray-700 bg-white border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
                                             >
                                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
