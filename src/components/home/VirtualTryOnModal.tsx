@@ -450,7 +450,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                                     red: `rgba(255, 0, 0, ${colorIntensity * 0.3})`,
                                     yellow: `rgba(255, 255, 0, ${colorIntensity * 0.3})`,
                                 }
-                                const colorValue = colorMap[color.toLowerCase()] || `rgba(255, 255, 255, ${colorIntensity * 0.2})`
+                                const colorValue = colorMap[(color || '').toLowerCase()] || `rgba(255, 255, 255, ${colorIntensity * 0.2})`
                                 const stop = index / colors.length
                                 gradient.addColorStop(stop, colorValue)
                             })
@@ -532,7 +532,7 @@ const VirtualTryOnModal: React.FC<VirtualTryOnModalProps> = ({ open, onClose, se
                             amber: 'rgba(255, 191, 0,',
                             blue: 'rgba(0, 100, 200,',
                         }
-                        const baseColor = colorMap[color.toLowerCase()] || 'rgba(64, 64, 64,'
+                        const baseColor = colorMap[(color || '').toLowerCase()] || 'rgba(64, 64, 64,'
 
                         // Draw photochromic tint for both lenses
                         ;[leftLensX, rightLensX].forEach((lensX) => {

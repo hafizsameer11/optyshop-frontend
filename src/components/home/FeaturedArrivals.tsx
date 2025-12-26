@@ -168,8 +168,9 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                         const productImageUrl = selectedColor && product.color_images
                             ? (() => {
                                 // Case-insensitive color matching
+                                const selectedColorLower = (selectedColor || '').toLowerCase()
                                 const colorImage = product.color_images.find(ci => 
-                                    ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                    ci.color && ci.color.toLowerCase() === selectedColorLower
                                 )
                                 return colorImage?.images?.[0] || getProductImageUrl(product)
                             })()
@@ -242,7 +243,7 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                     <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
                                         {product.color_images.map((colorImage, index) => {
                                             // Enhanced color detection with support for patterns and gradients
-                                            const colorName = colorImage.color.toLowerCase()
+                                            const colorName = (colorImage.color || '').toLowerCase()
                                             const getColorValue = () => {
                                                 // Check for hex code first
                                                 if (colorName.match(/^#[0-9a-f]{6}$/i)) return colorName

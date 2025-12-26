@@ -704,8 +704,9 @@ const CategoryPage: React.FC = () => {
                                     const productImageUrl = selectedColor && product.color_images
                                         ? (() => {
                                             // Case-insensitive color matching
+                                            const selectedColorLower = (selectedColor || '').toLowerCase()
                                             const colorImage = product.color_images.find(ci => 
-                                                ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                                ci.color && ci.color.toLowerCase() === selectedColorLower
                                             )
                                             return colorImage?.images?.[0] || getProductImageUrl(product)
                                         })()

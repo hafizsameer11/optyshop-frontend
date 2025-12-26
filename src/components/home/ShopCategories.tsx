@@ -237,8 +237,9 @@ const ShopCategories: React.FC = () => {
                                                 const productImageUrl = selectedColor && productColorImages
                                                     ? (() => {
                                                         // Case-insensitive color matching
+                                                        const selectedColorLower = (selectedColor || '').toLowerCase()
                                                         const colorImage = productColorImages.find((ci: any) => 
-                                                            ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                                            ci.color && ci.color.toLowerCase() === selectedColorLower
                                                         )
                                                         return colorImage?.images?.[0] || (isApiProduct ? getProductImageUrl(productAsProduct) : getImageUrl(product as Category['products'][0]))
                                                     })()
@@ -299,7 +300,7 @@ const ShopCategories: React.FC = () => {
                                                                 <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
                                                                     {productColorImages.map((colorImage: any, index: number) => {
                                                                         // Enhanced color detection with support for patterns and gradients
-                                                                        const colorName = colorImage.color.toLowerCase()
+                                                                        const colorName = (colorImage.color || '').toLowerCase()
                                                                         const getColorValue = () => {
                                                                             // Check for hex code first
                                                                             if (colorName.match(/^#[0-9a-f]{6}$/i)) return colorName
