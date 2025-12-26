@@ -55,13 +55,6 @@ const Cart: React.FC = () => {
         setCouponError('')
     }
 
-    const getFinalTotal = () => {
-        if (appliedCoupon) {
-            return Number(appliedCoupon.final_total || 0)
-        }
-        return getTotalPrice()
-    }
-
     const getDiscountAmount = () => {
         if (appliedCoupon) {
             return Number(appliedCoupon.discount_amount || 0)
@@ -116,21 +109,16 @@ const Cart: React.FC = () => {
     }
 
     const getSubtotal = () => {
+        if (appliedCoupon) {
+            return appliedCoupon.final_total
+        }
         return getTotalPrice()
     }
 
-    const getTotal = () => {
+    const getFinalTotal = () => {
         const subtotal = getSubtotal()
-        const discount = getDiscountAmount()
-        const shipping = getShippingPrice()
-        const total = subtotal - discount + shipping
-        
-        if (appliedCoupon) {
-            // If coupon is applied, use the coupon's final_total and add shipping
-            return Number(appliedCoupon.final_total || 0) + shipping
-        }
-        
-        return total
+        const shipping = selectedShippingMethod?.price || 0
+        return subtotal + shipping
     }
 
     if (cartItems.length === 0) {
@@ -609,7 +597,7 @@ const Cart: React.FC = () => {
                                     <div className="border-t border-gray-200 pt-4">
                                         <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900">
                                             <span>{t('common.total')}</span>
-                                            <span>${getTotal().toFixed(2)}</span>
+                                            <span>${getFinalTotal().toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
