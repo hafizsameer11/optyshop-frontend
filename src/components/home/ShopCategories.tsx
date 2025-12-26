@@ -220,18 +220,11 @@ const ShopCategories: React.FC = () => {
                                                 const isApiProduct = 'image' in product || 'image_url' in product || 'images' in product
                                                 const productAsProduct = product as any as Product
                                                 // Get selected color or default to first color if available
-                                                let selectedColor = productColorSelections[product.id]
                                                 const productColorImages = (product as any).color_images || productAsProduct.color_images
-                                                if (!selectedColor && productColorImages && productColorImages.length > 0) {
-                                                    selectedColor = productColorImages[0].color
-                                                    // Set default selection if not already set
-                                                    if (!productColorSelections[product.id]) {
-                                                        setProductColorSelections(prev => ({
-                                                            ...prev,
-                                                            [product.id]: selectedColor
-                                                        }))
-                                                    }
-                                                }
+                                                const selectedColor = productColorSelections[product.id] || 
+                                                    (productColorImages && productColorImages.length > 0 
+                                                        ? productColorImages[0].color 
+                                                        : null)
                                                 
                                                 // Get image URL based on selected color
                                                 const productImageUrl = selectedColor && productColorImages

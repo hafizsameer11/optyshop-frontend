@@ -120,6 +120,28 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
         }
     }, [categorySlug, limit])
 
+    // Initialize default color selections when products change
+    useEffect(() => {
+        if (products.length === 0) return
+        
+        const newSelections: Record<number, string> = {}
+        let hasChanges = false
+        
+        products.forEach(product => {
+            if (!productColorSelections[product.id] && product.color_images && product.color_images.length > 0) {
+                newSelections[product.id] = product.color_images[0].color
+                hasChanges = true
+            }
+        })
+        
+        if (hasChanges) {
+            setProductColorSelections(prev => ({
+                ...prev,
+                ...newSelections
+            }))
+        }
+    }, [products]) // Only depend on products, not productColorSelections
+
     if (loading) {
         return (
             <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
@@ -152,17 +174,10 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {products.map((product) => {
                         // Get selected color or default to first color if available
-                        let selectedColor = productColorSelections[product.id]
-                        if (!selectedColor && product.color_images && product.color_images.length > 0) {
-                            selectedColor = product.color_images[0].color
-                            // Set default selection if not already set
-                            if (!productColorSelections[product.id]) {
-                                setProductColorSelections(prev => ({
-                                    ...prev,
-                                    [product.id]: selectedColor
-                                }))
-                            }
-                        }
+                        const selectedColor = productColorSelections[product.id] || 
+                            (product.color_images && product.color_images.length > 0 
+                                ? product.color_images[0].color 
+                                : null)
                         
                         // Get image URL based on selected color
                         const productImageUrl = selectedColor && product.color_images
