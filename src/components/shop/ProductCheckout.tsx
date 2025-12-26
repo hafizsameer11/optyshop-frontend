@@ -339,7 +339,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
               if (sortOrderA !== sortOrderB) return sortOrderA - sortOrderB
               if (a.recommended && !b.recommended) return -1
               if (!a.recommended && b.recommended) return 1
-              return a.name.localeCompare(b.name)
+              const aName = (a.name || '').toLowerCase()
+              const bName = (b.name || '').toLowerCase()
+              return aName.localeCompare(bName)
             })
             
             console.log('✅ [API] Progressive options loaded from configuration:', mappedOptions.length, 'options')
@@ -720,7 +722,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           if (b.sort_order !== undefined) return 1
           if (a.is_recommended && !b.is_recommended) return -1
           if (!a.is_recommended && b.is_recommended) return 1
-          return a.name.localeCompare(b.name)
+          const aName = (a.name || '').toLowerCase()
+          const bName = (b.name || '').toLowerCase()
+          return aName.localeCompare(bName)
         })
         
         // Map variants to progressive options format according to API guide
@@ -1608,7 +1612,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       if (selectedLensType) {
         const price = selectedLensType.price || 0
         summary.push({
-          name: `${selectedLensType.name}${lensSelection.selectedColor ? ` (${lensSelection.selectedColor.name})` : ''}`,
+          name: `${selectedLensType.name || 'Lens Type'}${lensSelection.selectedColor && lensSelection.selectedColor.name ? ` (${lensSelection.selectedColor.name})` : ''}`,
           price: price,
           type: 'lens_type',
           id: `lens_type_${lensSelection.selectedLensTypeId}`,
@@ -1713,12 +1717,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           : (selectedColor as any)?.price_adjustment || 0;
         // The mapped photochromicOption has a 'price' property (base price)
         const totalPrice = (photochromicOption as any).price + colorPrice;
-        if (totalPrice > 0) {
+        if (totalPrice > 0 && lensSelection.photochromicColor && lensSelection.photochromicColor.name) {
           summary.push({
             name: `Photochromic - ${lensSelection.photochromicColor.name}`,
             price: totalPrice,
             type: 'treatment',
-            id: `photochromic_${lensSelection.photochromicColor.id}`,
+            id: `photochromic_${lensSelection.photochromicColor.id || 'unknown'}`,
             removable: true
           })
         }
@@ -1749,12 +1753,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           }
         }
         const totalPrice = basePrice + colorPrice
-        if (totalPrice > 0) {
+        if (totalPrice > 0 && lensSelection.prescriptionSunColor && lensSelection.prescriptionSunColor.name) {
           summary.push({
             name: `Prescription Sun - ${lensSelection.prescriptionSunColor.name}`,
             price: totalPrice,
             type: 'treatment',
-            id: `prescription_sun_${lensSelection.prescriptionSunColor.id}`,
+            id: `prescription_sun_${lensSelection.prescriptionSunColor.id || 'unknown'}`,
             removable: true
           })
         }
@@ -3996,7 +4000,9 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
           if (aIndex !== -1) return -1
           if (bIndex !== -1) return 1
-          return a.name.localeCompare(b.name)
+          const aName = (a.name || '').toLowerCase()
+          const bName = (b.name || '').toLowerCase()
+          return aName.localeCompare(bName)
         })
       })
       
