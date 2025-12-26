@@ -762,6 +762,57 @@
 			"name": "Coupons (Public Apply)",
 			"item": [
 			  {
+				"name": "Get Active Coupons",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/coupons",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "coupons"
+					]
+				  },
+				  "description": "Get all active coupons. Returns coupons that are currently active and within their valid date range. Use this endpoint to display available coupons in a dropdown or list."
+				}
+			  },
+			  {
+				"name": "Get Available Coupons",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"cartItems\": [\n    {\n      \"product_id\": 1,\n      \"quantity\": 1,\n      \"unit_price\": 100.00\n    },\n    {\n      \"product_id\": 2,\n      \"quantity\": 2,\n      \"unit_price\": 50.00\n    }\n  ],\n  \"subtotal\": 200.00\n}",
+					"options": {
+					  "raw": {
+						"language": "json"
+					  }
+					}
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/coupons/available",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "coupons",
+					  "available"
+					]
+				  },
+				  "description": "Get available coupons for cart items. Returns coupons that are:\n- Active\n- Within valid date range\n- Applicable to products in cart (if coupon has product/category restrictions)\n- Meet minimum order amount requirements\n\n**Request Body:**\n- `cartItems` (optional): Array of cart items with `product_id`, `quantity`, `unit_price`\n- `productIds` (optional): Array of product IDs\n- `subtotal` (optional): Cart subtotal for minimum order validation\n\n**Response:** Returns array of available coupons with discount amounts calculated."
+				}
+			  },
+			  {
 				"name": "Apply Coupon",
 				"request": {
 				  "method": "POST",
@@ -3444,13 +3495,13 @@
 						"key": "frame_shape",
 						"value": "round",
 						"type": "text",
-						"description": "Optional: Frame shape. Valid values: round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric"
+						"description": "Optional: Frame shape. Accepts any string value."
 					  },
 					  {
 						"key": "frame_material",
 						"value": "plastic",
 						"type": "text",
-						"description": "Optional: Frame material. Valid values: plastic, metal, acetate, titanium, wood, mixed"
+						"description": "Optional: Frame material. Accepts any string value. Can be a single value or JSON array for multiple materials."
 					  },
 					  {
 						"key": "frame_color",
@@ -3468,7 +3519,7 @@
 						"key": "lens_type",
 						"value": "prescription",
 						"type": "text",
-						"description": "Optional: Lens type. Valid values: prescription, sunglasses, reading, computer, photochromic, plastic, glass, polycarbonate, trivex, high_index"
+						"description": "Optional: Lens type. Accepts any string value."
 					  },
 					  {
 						"key": "images",
@@ -3567,13 +3618,13 @@
 						"key": "frame_shape",
 						"value": "round",
 						"type": "text",
-						"description": "Optional: Frame shape. Valid values: round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric"
+						"description": "Optional: Frame shape. Accepts any string value."
 					  },
 					  {
 						"key": "frame_material",
 						"value": "plastic",
 						"type": "text",
-						"description": "Optional: Frame material. Valid values: plastic, metal, acetate, titanium, wood, mixed"
+						"description": "Optional: Frame material. Accepts any string value. Can be a single value or JSON array for multiple materials."
 					  },
 					  {
 						"key": "frame_color",
@@ -3591,7 +3642,7 @@
 						"key": "lens_type",
 						"value": "sunglasses",
 						"type": "text",
-						"description": "Optional: Lens type. Valid values: prescription, sunglasses, reading, computer, photochromic, plastic, glass, polycarbonate, trivex, high_index"
+						"description": "Optional: Lens type. Accepts any string value."
 					  },
 					  {
 						"key": "sub_category_id",
@@ -5571,7 +5622,12 @@
 				  ],
 				  "body": {
 					"mode": "raw",
-					"raw": "{\n  \"code\": \"SAVE20\",\n  \"discount_type\": \"percentage\",\n  \"discount_value\": 20,\n  \"valid_from\": \"2024-01-01\",\n  \"valid_until\": \"2024-12-31\"\n}"
+					"raw": "{\n  \"code\": \"SAVE20\",\n  \"description\": \"20% off on all orders\",\n  \"discount_type\": \"percentage\",\n  \"discount_value\": 20,\n  \"max_discount\": 50.00,\n  \"min_order_amount\": 100.00,\n  \"usage_limit\": 100,\n  \"usage_per_user\": 1,\n  \"valid_from\": \"2024-01-01T00:00:00Z\",\n  \"valid_until\": \"2024-12-31T23:59:59Z\",\n  \"is_active\": true,\n  \"conditions\": {\n    \"product_ids\": [1, 2, 3]\n  }\n}",
+					"options": {
+					  "raw": {
+						"language": "json"
+					  }
+					}
 				  },
 				  "url": {
 					"raw": "{{base_url}}/api/admin/coupons",
@@ -5602,7 +5658,12 @@
 				  ],
 				  "body": {
 					"mode": "raw",
-					"raw": "{\n  \"discount_value\": 25\n}"
+					"raw": "{\n  \"code\": \"SAVE25\",\n  \"description\": \"25% off on selected products\",\n  \"discount_type\": \"percentage\",\n  \"discount_value\": 25,\n  \"max_discount\": 75.00,\n  \"min_order_amount\": 150.00,\n  \"usage_limit\": 50,\n  \"usage_per_user\": 2,\n  \"valid_from\": \"2024-01-01T00:00:00Z\",\n  \"valid_until\": \"2024-12-31T23:59:59Z\",\n  \"is_active\": true,\n  \"conditions\": {\n    \"category_ids\": [1, 2]\n  }\n}",
+					"options": {
+					  "raw": {
+						"language": "json"
+					  }
+					}
 				  },
 				  "url": {
 					"raw": "{{base_url}}/api/admin/coupons/1",
