@@ -97,9 +97,10 @@ const ProductDetail: React.FC = () => {
     // Get selected color variant
     const selectedColorVariant = useMemo(() => {
         if (!product || !selectedColor || !product.color_images) return null
+        const selectedColorLower = (selectedColor || '').toLowerCase()
         return product.color_images.find(ci => 
-            ci.color?.toLowerCase() === selectedColor.toLowerCase() ||
-            ci.name?.toLowerCase() === selectedColor.toLowerCase()
+            (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+            (ci.name && ci.name.toLowerCase() === selectedColorLower)
         ) || null
     }, [product, selectedColor])
 

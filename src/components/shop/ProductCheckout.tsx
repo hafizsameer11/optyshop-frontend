@@ -2119,10 +2119,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
         // Get selected color variant details if color is selected
         const selectedColorVariant = selectedProductColor && product.color_images
-          ? product.color_images.find(ci => 
-              (ci.color && ci.color.toLowerCase() === selectedProductColor.toLowerCase()) ||
-              (ci.name && ci.name.toLowerCase() === selectedProductColor.toLowerCase())
-            )
+          ? product.color_images.find(ci => {
+              const selectedColorLower = (selectedProductColor || '').toLowerCase()
+              return (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                     (ci.name && ci.name.toLowerCase() === selectedColorLower)
+            })
           : null
 
         const cartResult = await addItemToCart({
@@ -3606,7 +3607,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   id: color.id.toString(),
                   name: color.name,
                   color: hexCode,
-                  gradient: colorCode.toLowerCase().includes('gradient') || false,
+                  gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
                   priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
                 };
               })
@@ -3947,7 +3948,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   id: color.id.toString(),
                   name: color.name,
                   color: hexCode,
-                  gradient: colorCode.toLowerCase().includes('gradient') || false,
+                  gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
                   priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
                 };
               })
@@ -3988,8 +3989,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       Object.values(grouped).forEach((group: any) => {
         group.subOptions.sort((a: any, b: any) => {
           const order = ['classic', 'fashion', 'mirror', 'gradient']
-          const aIndex = order.findIndex(o => a.name.toLowerCase().includes(o))
-          const bIndex = order.findIndex(o => b.name.toLowerCase().includes(o))
+          const aName = (a.name || '').toLowerCase()
+          const bName = (b.name || '').toLowerCase()
+          const aIndex = order.findIndex(o => aName.includes(o))
+          const bIndex = order.findIndex(o => bName.includes(o))
           if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
           if (aIndex !== -1) return -1
           if (bIndex !== -1) return 1
@@ -4252,7 +4255,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                       (+${subOption.price.toFixed(2)})
                                     </span>
                                   )}
-                                  {subOption.price === 0 && subOption.name.toLowerCase().includes('free') && (
+                                  {subOption.price === 0 && subOption.name && subOption.name.toLowerCase().includes('free') && (
                                     <span className="text-sm font-medium text-green-600">(Free)</span>
                                   )}
                                 </div>

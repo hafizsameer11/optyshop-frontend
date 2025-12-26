@@ -212,7 +212,7 @@ const OrderDetail: React.FC = () => {
             </span>
             {order.payment_status && (
               <span className={`px-3 py-1 text-sm font-medium rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                {t('orders.paymentStatus')}: {t(`orders.${order.payment_status.toLowerCase()}`, { defaultValue: order.payment_status })}
+                {t('orders.paymentStatus')}: {t(`orders.${(order.payment_status || '').toLowerCase()}`, { defaultValue: order.payment_status || 'N/A' })}
               </span>
             )}
           </div>
