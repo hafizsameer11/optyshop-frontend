@@ -269,20 +269,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             is_active: true,
             sort_order: 0,
             colors: [],
-            variants: (type.variants || []).map(variant => ({
-              id: variant.id,
-              prescription_lens_type_id: type.id,
-              name: variant.name,
-              slug: variant.slug,
-              description: variant.description,
-              price: variant.price,
-              is_recommended: variant.isRecommended || false,
-              viewing_range: variant.viewingRange || null,
-              use_cases: variant.useCases || undefined,
-              is_active: true,
-              sort_order: 0,
-              colors: []
-            }))
+            variants: (type.variants || [])
+              .filter(variant => variant && variant.id) // Filter out null/undefined variants
+              .map(variant => ({
+                id: variant.id,
+                prescription_lens_type_id: type.id,
+                name: variant.name || 'Unknown',
+                slug: variant.slug || '',
+                description: variant.description || null,
+                price: variant.price || 0,
+                is_recommended: variant.isRecommended || false,
+                viewing_range: variant.viewingRange || null,
+                use_cases: variant.useCases || null,
+                is_active: true,
+                sort_order: 0,
+                colors: []
+              }))
           }))
           setApiPrescriptionLensTypes(apiTypes)
           
@@ -319,16 +321,18 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           if (activeVariants.length > 0) {
             // Map variants according to the API guide structure
             // API returns: isRecommended, viewingRange, useCases (camelCase)
-            const mappedOptions = activeVariants.map((v: any) => ({
-              id: v.slug || v.id.toString(),
-              name: v.name,
-              price: v.price || 0,
-              description: v.description || v.useCases || v.viewingRange || '',
-              recommended: v.isRecommended || v.is_recommended || false,
-              viewingRange: v.viewingRange || v.viewing_range,
-              useCases: v.useCases || v.use_cases,
-              variantId: v.id
-            }))
+            const mappedOptions = activeVariants
+              .filter((v: any) => v && v.id) // Filter out null/undefined variants
+              .map((v: any) => ({
+                id: v.slug || v.id?.toString() || '',
+                name: v.name || 'Unknown',
+                price: v.price || 0,
+                description: v.description || v.useCases || v.viewingRange || '',
+                recommended: v.isRecommended || v.is_recommended || false,
+                viewingRange: v.viewingRange || v.viewing_range || null,
+                useCases: v.useCases || v.use_cases || null,
+                variantId: v.id
+              }))
             
             // Sort by sortOrder if available, then by recommended, then by name
             mappedOptions.sort((a, b) => {
@@ -729,16 +733,18 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         
         // Map variants to progressive options format according to API guide
         // Handle both camelCase (from API) and snake_case (from database) formats
-        const mappedOptions = sortedVariants.map((variant: PrescriptionLensVariant) => ({
-          id: variant.slug || variant.id.toString(),
-          name: variant.name,
-          price: variant.price || 0,
-          description: variant.description || (variant as any).useCases || (variant as any).use_cases || (variant as any).viewingRange || (variant as any).viewing_range || '',
-          recommended: (variant as any).isRecommended || variant.is_recommended || false,
-          viewingRange: (variant as any).viewingRange || (variant as any).viewing_range,
-          useCases: (variant as any).useCases || (variant as any).use_cases,
-          variantId: variant.id
-        }))
+        const mappedOptions = sortedVariants
+          .filter((variant: PrescriptionLensVariant) => variant && variant.id) // Filter out null/undefined variants
+          .map((variant: PrescriptionLensVariant) => ({
+            id: variant.slug || variant.id?.toString() || '',
+            name: variant.name || 'Unknown',
+            price: variant.price || 0,
+            description: variant.description || (variant as any).useCases || (variant as any).use_cases || (variant as any).viewingRange || (variant as any).viewing_range || '',
+            recommended: (variant as any).isRecommended || variant.is_recommended || false,
+            viewingRange: (variant as any).viewingRange || (variant as any).viewing_range || null,
+            useCases: (variant as any).useCases || (variant as any).use_cases || null,
+            variantId: variant.id
+          }))
         
         console.log('📋 [API] Sorted variants before mapping:', sortedVariants.map(v => ({
           id: v.id,
@@ -3070,24 +3076,26 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
             <p className="text-xs text-gray-400">Please check the admin panel to ensure variants are added and active.</p>
           </div>
         ) : (
-          progressiveOptions.map((option) => {
-          const isSelected = lensSelection.progressiveOption === option.id || 
-                            (option.id === 'premium' && !lensSelection.progressiveOption && progressiveOptions.length > 0)
-          
-          return (
-            <button
-              key={option.id}
-              onClick={() => onProgressiveOptionChange(option.id)}
-              className={`w-full p-4 border-2 rounded-lg text-left transition-all ${
-                isSelected
-                  ? 'border-blue-600 bg-blue-50'
-                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-semibold text-gray-900 text-base">{option.name}</span>
+          progressiveOptions
+            .filter(option => option && option.id && option.name) // Filter out null/undefined options
+            .map((option) => {
+            const isSelected = lensSelection.progressiveOption === option.id || 
+                              (option.id === 'premium' && !lensSelection.progressiveOption && progressiveOptions.length > 0)
+            
+            return (
+              <button
+                key={option.id || `option-${Math.random()}`}
+                onClick={() => onProgressiveOptionChange(option.id)}
+                className={`w-full p-4 border-2 rounded-lg text-left transition-all ${
+                  isSelected
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="font-semibold text-gray-900 text-base">{option.name || 'Unknown'}</span>
                     {option.recommended && (
                         <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
                           Recommended
