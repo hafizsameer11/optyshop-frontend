@@ -41,6 +41,7 @@ const Transactions: React.FC = () => {
   )
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
     switch (status.toLowerCase()) {
       case 'completed':
         return 'bg-green-100 text-green-800'
@@ -59,6 +60,7 @@ const Transactions: React.FC = () => {
   }
 
   const getTypeColor = (type: string) => {
+    if (!type) return 'bg-gray-100 text-gray-800'
     switch (type.toLowerCase()) {
       case 'payment':
         return 'bg-blue-100 text-blue-800'
@@ -205,7 +207,7 @@ const Transactions: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(transaction.type)}`}>
-                          {t(`transactions.${transaction.type.toLowerCase()}`, { defaultValue: transaction.type })}
+                          {t(`transactions.${(transaction.type || '').toLowerCase()}`, { defaultValue: transaction.type || 'N/A' })}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">

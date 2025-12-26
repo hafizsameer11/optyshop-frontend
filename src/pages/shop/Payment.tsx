@@ -81,7 +81,7 @@ const Payment: React.FC = () => {
           const errorMessage = err.response.data?.message || 'This order may have already been paid.'
           setError(errorMessage)
           // Redirect to order page if already paid
-          if (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('paid')) {
+          if (errorMessage && (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('paid'))) {
             setTimeout(() => {
               navigate(`/customer/orders/${parsedOrderId}`)
             }, 3000)

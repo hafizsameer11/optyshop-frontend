@@ -305,7 +305,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                         zip_code: getFieldValue('zipCode'),
                         country: getFieldValue('country'),
                     },
-                    payment_method: paymentMethod.toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
+                    payment_method: (paymentMethod || 'stripe').toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
                     shipping_method_id: selectedShippingMethod?.id,
                     coupon_code: appliedCoupon ? couponCode : undefined,
                 }
@@ -317,7 +317,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                     // No need to manually clear cart
                     
                     // If payment method is Stripe, redirect to payment page
-                    if (paymentMethod.toLowerCase() === 'stripe') {
+                    if (paymentMethod && paymentMethod.toLowerCase() === 'stripe') {
                         navigate(`/payment?orderId=${order.id}`)
                         return
                     }

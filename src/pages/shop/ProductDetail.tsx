@@ -1343,8 +1343,9 @@ const ProductDetail: React.FC = () => {
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
         // If color is selected and product has color_images, use color-specific image
         if (selectedColor && product.color_images) {
+            const selectedColorLower = (selectedColor || '').toLowerCase()
             const colorImage = product.color_images.find(ci =>
-                ci.color.toLowerCase() === selectedColor.toLowerCase()
+                ci.color && ci.color.toLowerCase() === selectedColorLower
             )
             if (colorImage && colorImage.images) {
                 if (colorImage.images[imageIndex]) {
@@ -2464,8 +2465,9 @@ const ProductDetail: React.FC = () => {
                                     let imagesArray: string[] = []
 
                                     if (selectedColor && product.color_images) {
+                                        const selectedColorLower = (selectedColor || '').toLowerCase()
                                         const colorImage = product.color_images.find(ci =>
-                                            ci.color.toLowerCase() === selectedColor.toLowerCase()
+                                            ci.color && ci.color.toLowerCase() === selectedColorLower
                                         )
                                         if (colorImage && colorImage.images) {
                                             imagesArray = colorImage.images

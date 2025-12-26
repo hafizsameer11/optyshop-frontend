@@ -61,8 +61,8 @@ const CategoryPage: React.FC = () => {
     const isContactLensSubSubcategory = (): boolean => {
         if (!categoryInfo.subSubcategory) return false
         
-        const subSubcategoryName = categoryInfo.subSubcategory.name.toLowerCase()
-        const subSubcategorySlug = categoryInfo.subSubcategory.slug.toLowerCase()
+        const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
+        const subSubcategorySlug = (categoryInfo.subSubcategory.slug || '').toLowerCase()
         
         // Check for Spherical
         const isSpherical = subSubcategoryName.includes('spherical') || 
@@ -176,8 +176,9 @@ const CategoryPage: React.FC = () => {
                         const nestedSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
                         if (!isCancelled) {
                             // Find the sub-subcategory by slug (case-insensitive comparison)
+                            const subSubcategorySlugLower = (subSubcategorySlug || '').toLowerCase()
                             subSubcategory = nestedSubcategories.find(sub => 
-                                sub.slug.toLowerCase() === subSubcategorySlug.toLowerCase()
+                                sub.slug && sub.slug.toLowerCase() === subSubcategorySlugLower
                             ) || null
                             
                             if (import.meta.env.DEV) {
@@ -788,7 +789,7 @@ const CategoryPage: React.FC = () => {
                                                 <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
                                                     {product.color_images.map((colorImage, index) => {
                                                         // Enhanced color detection with support for patterns and gradients
-                                                        const colorName = colorImage.color.toLowerCase()
+                                                        const colorName = (colorImage.color || '').toLowerCase()
                                                         const getColorValue = () => {
                                                             // Check for hex code first
                                                             if (colorName.match(/^#[0-9a-f]{6}$/i)) return colorName

@@ -57,6 +57,7 @@ const TransactionDetail: React.FC = () => {
   }
 
   const getTypeColor = (type: string) => {
+    if (!type) return 'bg-gray-100 text-gray-800'
     switch (type.toLowerCase()) {
       case 'payment':
         return 'bg-blue-100 text-blue-800'
@@ -146,7 +147,7 @@ const TransactionDetail: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">{t('transactions.status', { defaultValue: 'Status' })}</span>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(transaction.status)}`}>
-                  {t(`transactions.${transaction.status.toLowerCase()}`, { defaultValue: transaction.status })}
+                  {t(`transactions.${(transaction.status || '').toLowerCase()}`, { defaultValue: transaction.status || 'N/A' })}
                 </span>
               </div>
               <div className="flex justify-between items-center">

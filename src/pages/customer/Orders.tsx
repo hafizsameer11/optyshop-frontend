@@ -78,15 +78,18 @@ const Orders: React.FC = () => {
 
   const canCancelOrder = (order: Order): boolean => {
     // Only allow cancellation for pending orders
-    return order.status.toLowerCase() === 'pending'
+    return order.status && order.status.toLowerCase() === 'pending'
   }
 
-  const filteredOrders = orders.filter(order =>
-    order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.id.toString().includes(searchTerm)
-  )
+  const filteredOrders = orders.filter(order => {
+    const orderNumber = (order.order_number || '').toLowerCase()
+    const searchTermLower = (searchTerm || '').toLowerCase()
+    return orderNumber.includes(searchTermLower) ||
+           order.id.toString().includes(searchTerm)
+  })
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
     switch (status.toLowerCase()) {
       case 'pending':
         return 'bg-yellow-100 text-yellow-800'
@@ -105,6 +108,7 @@ const Orders: React.FC = () => {
   }
 
   const getPaymentStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-100 text-gray-800'
     switch (status.toLowerCase()) {
       case 'paid':
         return 'bg-green-100 text-green-800'
@@ -231,7 +235,7 @@ const Orders: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                          {t(`orders.${order.status.toLowerCase()}`, { defaultValue: order.status })}
+                          {t(`orders.${(order.status || '').toLowerCase()}`, { defaultValue: order.status || 'N/A' })}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

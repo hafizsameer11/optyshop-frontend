@@ -776,7 +776,7 @@ const Products: React.FC = () => {
                                             <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
                                                 {product.color_images.map((colorImage, index) => {
                                                     // Enhanced color detection with support for patterns and gradients
-                                                    const colorName = colorImage.color.toLowerCase()
+                                                    const colorName = (colorImage.color || '').toLowerCase()
                                                     const getColorValue = () => {
                                                         // Check for hex code first
                                                         if (colorName.match(/^#[0-9a-f]{6}$/i)) return colorName
