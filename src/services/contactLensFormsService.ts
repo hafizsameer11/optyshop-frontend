@@ -371,6 +371,27 @@ export const getAstigmatismConfigs = async (
   subCategoryId?: number | string
 ): Promise<AstigmatismConfig[]> => {
   try {
+    const endpoint = API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId)
+    
+    // Get the base URL to show full URL in logs
+    const baseURL = import.meta.env.VITE_API_BASE_URL || 
+      (import.meta.env.DEV 
+        ? 'http://localhost:5000/api'
+        : 'https://optyshop-frontend.hmstech.org/api'
+      )
+    const fullURL = `${baseURL}${endpoint}`
+    
+    if (import.meta.env.DEV) {
+      console.log('🔍 Fetching astigmatism configs:', {
+        endpoint,
+        fullURL,
+        subCategoryId,
+        routePath: '/contact-lens-forms/astigmatism',
+        queryParams: subCategoryId ? `?sub_category_id=${subCategoryId}` : ''
+      })
+      console.log('📍 EXACT ROUTE BEING CALLED:', fullURL)
+    }
+    
     const response = await apiClient.get<{ 
       success: boolean
       message: string
@@ -384,9 +405,21 @@ export const getAstigmatismConfigs = async (
         }
       }
     }>(
-      API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId),
+      endpoint,
       false // Public endpoint
     )
+
+    if (import.meta.env.DEV) {
+      console.log('📥 Astigmatism configs response:', {
+        success: response.success,
+        hasData: !!response.data,
+        hasConfigs: !!response.data?.configs,
+        configsCount: response.data?.configs?.length || 0,
+        message: response.message,
+        error: response.error,
+        fullResponse: response
+      })
+    }
 
     if (response.success && response.data) {
       // Handle response structure with data.configs
@@ -400,13 +433,45 @@ export const getAstigmatismConfigs = async (
       }
       
       // Filter to only active configs (if is_active field exists)
-      return configs.filter((config: AstigmatismConfig) => config.is_active !== false)
+      const activeConfigs = configs.filter((config: AstigmatismConfig) => config.is_active !== false)
+      
+      if (import.meta.env.DEV) {
+        console.log('✅ Astigmatism configs processed:', {
+          total: configs.length,
+          active: activeConfigs.length
+        })
+      }
+      
+      return activeConfigs
     }
 
-    console.error('Failed to fetch astigmatism configs:', response.message)
+    console.error('❌ Failed to fetch astigmatism configs:', {
+      message: response.message,
+      success: response.success,
+      hasData: !!response.data,
+      error: response.error,
+      endpoint,
+      fullURL,
+      subCategoryId
+    })
+    
+    // If it's a 404, provide helpful message
+    if (response.message?.includes('Route not found') || response.error?.includes('Route not found')) {
+      console.error('⚠️ Backend route not found. Please verify:')
+      console.error('   1. The backend route is registered: GET /api/contact-lens-forms/astigmatism')
+      console.error('   2. The route is placed AFTER /astigmatism/dropdown-values to avoid conflicts')
+      console.error('   3. The backend server has been restarted after adding the route')
+      console.error(`   4. The full URL being called: ${fullURL}`)
+    }
+    
     return []
-  } catch (error) {
-    console.error('Error fetching astigmatism configs:', error)
+  } catch (error: any) {
+    console.error('❌ Error fetching astigmatism configs:', error)
+    // Check if it's a 404 error
+    if (error?.message?.includes('404') || error?.message?.includes('Route not found')) {
+      console.error('⚠️ 404 Error: The astigmatism configs endpoint may not be available yet')
+      console.error('   Please verify the backend route is properly registered and the server is restarted')
+    }
     return []
   }
 }

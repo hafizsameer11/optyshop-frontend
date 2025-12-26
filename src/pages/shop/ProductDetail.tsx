@@ -138,6 +138,61 @@ const ProductDetail: React.FC = () => {
             (p.contact_lens_type && p.contact_lens_type.length > 0)
     }, [product])
 
+    // Helper function to check if product belongs to astigmatism sub-subcategory
+    // Priority: Configuration type > Sub-subcategory options > Product data
+    const isAstigmatismSubSubcategory = useMemo(() => {
+        if (!product) return false
+
+        // Priority 1: SphericalConfig doesn't have configuration_type field
+        // Form type is determined from contactLensFormConfig.formType instead
+
+        // Priority 2: Check if we have sub-subcategory options with type field
+        if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from sub-subcategory options type:', subSubcategoryOptions.type)
+            }
+            return true
+        }
+
+        const p = product as any
+
+        // Priority 3: Check contact_lens_type field
+        const lensType = (p.contact_lens_type || '').toLowerCase()
+        if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from contact_lens_type:', lensType)
+            }
+            return true
+        }
+
+        // Priority 4: Check subcategory slug/name if available
+        const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+        const subcategoryName = (p.subcategory?.name || '').toLowerCase()
+        // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
+        if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') ||
+            subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
+            subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
+            subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Detected astigmatism from subcategory name/slug:', { subcategoryName, subcategorySlug })
+            }
+            return true
+        }
+
+        if (import.meta.env.DEV) {
+            console.log('ℹ️ Product is NOT astigmatism:', {
+                hasSelectedConfig: !!selectedConfig,
+                hasSubSubcategoryOptions: !!subSubcategoryOptions,
+                subSubcategoryType: subSubcategoryOptions?.type,
+                contactLensType: lensType,
+                subcategoryName,
+                subcategorySlug
+            })
+        }
+
+        return false
+    }, [product, subSubcategoryOptions, selectedConfig])
+
     useEffect(() => {
         let isCancelled = false
 
@@ -1036,62 +1091,6 @@ const ProductDetail: React.FC = () => {
         // All dropdown values must come from admin-managed API (formFields, dropdownValues, or Spherical configs)
         return []
     }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, sphericalConfigs])
-
-
-    // Helper function to check if product belongs to astigmatism sub-subcategory
-    // Priority: Configuration type > Sub-subcategory options > Product data
-    const isAstigmatismSubSubcategory = useMemo(() => {
-        if (!product) return false
-
-        // Priority 1: SphericalConfig doesn't have configuration_type field
-        // Form type is determined from contactLensFormConfig.formType instead
-
-        // Priority 2: Check if we have sub-subcategory options with type field
-        if (subSubcategoryOptions && subSubcategoryOptions.type === 'astigmatism') {
-            if (import.meta.env.DEV) {
-                console.log('✅ Detected astigmatism from sub-subcategory options type:', subSubcategoryOptions.type)
-            }
-            return true
-        }
-
-        const p = product as any
-
-        // Priority 3: Check contact_lens_type field
-        const lensType = (p.contact_lens_type || '').toLowerCase()
-        if (lensType.includes('astigmatism') || lensType.includes('astigmatismo') || lensType.includes('toric')) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Detected astigmatism from contact_lens_type:', lensType)
-            }
-            return true
-        }
-
-        // Priority 4: Check subcategory slug/name if available
-        const subcategorySlug = (p.subcategory?.slug || '').toLowerCase()
-        const subcategoryName = (p.subcategory?.name || '').toLowerCase()
-        // Check for astigmatism variations: "astigmatism", "astigmatismo", "astighmatism" (typo in admin panel), "toric"
-        if (subcategorySlug.includes('astigmatism') || subcategorySlug.includes('astigmatismo') ||
-            subcategorySlug.includes('astighmatism') || // Handle typo variant from admin panel
-            subcategoryName.includes('astigmatism') || subcategoryName.includes('astigmatismo') ||
-            subcategorySlug.includes('toric') || subcategoryName.includes('toric')) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Detected astigmatism from subcategory name/slug:', { subcategoryName, subcategorySlug })
-            }
-            return true
-        }
-
-        if (import.meta.env.DEV) {
-            console.log('ℹ️ Product is NOT astigmatism:', {
-                hasSelectedConfig: !!selectedConfig,
-                hasSubSubcategoryOptions: !!subSubcategoryOptions,
-                subSubcategoryType: subSubcategoryOptions?.type,
-                contactLensType: lensType,
-                subcategoryName,
-                subcategorySlug
-            })
-        }
-
-        return false
-    }, [product, subSubcategoryOptions, selectedConfig])
 
     // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
     // Priority: API Dropdown Values > Configuration > Sub-subcategory > Standard

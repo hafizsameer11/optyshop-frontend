@@ -2011,6 +2011,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
       // If authenticated, add to cart via API
       if (isAuthenticated) {
         // Build prescription data for cart
+        // Construct od and os objects separately to avoid initialization issues
+        const odData = {
+          sph: parseFloat(prescriptionData.od_sphere),
+          cyl: prescriptionData.od_cylinder ? parseFloat(prescriptionData.od_cylinder) : undefined,
+          axis: prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : undefined
+        }
+        
+        const osData = {
+          sph: parseFloat(prescriptionData.os_sphere),
+          cyl: prescriptionData.os_cylinder ? parseFloat(prescriptionData.os_cylinder) : undefined,
+          axis: prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : undefined
+        }
+        
         const cartPrescriptionData: CartPrescriptionData = {
           pd: lensSelection.type === 'progressive' && prescriptionData.pd_mm
             ? parseFloat(prescriptionData.pd_mm)
@@ -2026,16 +2039,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose }) =
           year_of_birth: lensSelection.type === 'progressive' && prescriptionData.year_of_birth
             ? parseInt(prescriptionData.year_of_birth)
             : undefined,
-          od: {
-            sph: parseFloat(prescriptionData.od_sphere),
-            cyl: prescriptionData.od_cylinder ? parseFloat(prescriptionData.od_cylinder) : undefined,
-            axis: prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : undefined
-          },
-          os: {
-            sph: parseFloat(prescriptionData.os_sphere),
-            cyl: prescriptionData.os_cylinder ? parseFloat(prescriptionData.os_cylinder) : undefined,
-            axis: prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : undefined
-          }
+          od: odData,
+          os: osData
         }
 
         // Get lens thickness material ID
