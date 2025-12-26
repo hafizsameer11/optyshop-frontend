@@ -1660,29 +1660,30 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     setIsApplyingCoupon(true)
     setCouponError('')
 
-    // Calculate subtotal from order summary (excluding shipping)
-    const subtotal = orderSummary
-      .filter(item => item.type !== 'shipping')
-      .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
+    try {
+      // Calculate subtotal from order summary (excluding shipping)
+      const subtotal = orderSummary
+        .filter(item => item.type !== 'shipping')
+        .reduce((sum, item) => sum + (Number(item.price) || 0), 0)
 
-    // Build cart items for coupon API
-    const cartItemsForCoupon: CartItemForCoupon[] = [{
-      product_id: product.id,
-      quantity: 1,
-      unit_price: subtotal
-    }]
+      // Build cart items for coupon API
+      const cartItemsForCoupon: CartItemForCoupon[] = [{
+        product_id: product.id,
+        quantity: 1,
+        unit_price: subtotal
+      }]
 
-    const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
+      const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
 
-    if (result) {
       setAppliedCoupon(result)
       setCouponError('')
-    } else {
+    } catch (error: any) {
+      // Display the actual error message from the backend
       setAppliedCoupon(null)
-      setCouponError('Invalid or expired coupon code')
+      setCouponError(error?.message || 'Invalid or expired coupon code')
+    } finally {
+      setIsApplyingCoupon(false)
     }
-
-    setIsApplyingCoupon(false)
   }
 
   const handleRemoveCoupon = () => {

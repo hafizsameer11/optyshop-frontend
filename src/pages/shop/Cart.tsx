@@ -28,25 +28,26 @@ const Cart: React.FC = () => {
         setIsApplyingCoupon(true)
         setCouponError('')
 
-        // Convert cart items to API format
-        const cartItemsForCoupon: CartItemForCoupon[] = cartItems.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            unit_price: Number(item.price || 0)
-        }))
+        try {
+            // Convert cart items to API format
+            const cartItemsForCoupon: CartItemForCoupon[] = cartItems.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                unit_price: Number(item.price || 0)
+            }))
 
-        const subtotal = getTotalPrice()
-        const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
+            const subtotal = getTotalPrice()
+            const result = await applyCoupon(couponCode, subtotal, cartItemsForCoupon)
 
-        if (result) {
             setAppliedCoupon(result)
             setCouponError('')
-        } else {
+        } catch (error: any) {
+            // Display the actual error message from the backend
             setAppliedCoupon(null)
-            setCouponError(t('cart.invalidCoupon'))
+            setCouponError(error?.message || t('cart.invalidCoupon'))
+        } finally {
+            setIsApplyingCoupon(false)
         }
-
-        setIsApplyingCoupon(false)
     }
 
     const handleRemoveCoupon = () => {

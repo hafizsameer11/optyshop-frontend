@@ -43,37 +43,60 @@ export interface ApplyCouponResponse {
  * @param subtotal - Cart subtotal
  * @param cartItems - Array of cart items with product_id, quantity, and unit_price
  */
+/**
+ * Apply a coupon code to the cart
+ * @param code - Coupon code (e.g., "SAVE20")
+ * @param subtotal - Cart subtotal
+ * @param cartItems - Array of cart items with product_id, quantity, and unit_price
+ * @returns CouponDiscount object if successful
+ * @throws Error with backend error message if failed
+ */
 export const applyCoupon = async (
   code: string,
   subtotal: number,
   cartItems: CartItemForCoupon[]
-): Promise<CouponDiscount | null> => {
-  try {
-    const requestBody: ApplyCouponRequest = {
-      code: code.toUpperCase().trim(),
+): Promise<CouponDiscount> => {
+  const requestBody: ApplyCouponRequest = {
+    code: code.toUpperCase().trim(),
+    subtotal,
+    cartItems,
+  };
+
+  // Log request for debugging
+  if (import.meta.env.DEV) {
+    console.log('[Coupon Service] Applying coupon:', {
+      code: requestBody.code,
       subtotal,
-      cartItems,
-    };
-
-    const response = await apiClient.post<CouponDiscount>(
-      API_ROUTES.COUPONS.APPLY,
-      requestBody,
-      false // PUBLIC endpoint (may require auth for user-specific limits)
-    );
-
-    if (response.success && response.data) {
-      // The apiClient already extracts data.data || data, so response.data should be the CouponDiscount object
-      return response.data;
-    }
-
-    // Log error for debugging
-    if (import.meta.env.DEV) {
-      console.error('Failed to apply coupon:', response.message || response.error);
-    }
-    return null;
-  } catch (error) {
-    console.error('Error applying coupon:', error);
-    return null;
+      cartItemsCount: cartItems.length,
+      endpoint: API_ROUTES.COUPONS.APPLY,
+      requestBody
+    });
   }
+
+  const response = await apiClient.post<CouponDiscount>(
+    API_ROUTES.COUPONS.APPLY,
+    requestBody,
+    false // PUBLIC endpoint (may require auth for user-specific limits)
+  );
+
+  if (response.success && response.data) {
+    // The apiClient already extracts data.data || data, so response.data should be the CouponDiscount object
+    if (import.meta.env.DEV) {
+      console.log('[Coupon Service] Coupon applied successfully:', response.data);
+    }
+    return response.data;
+  }
+
+  // Log detailed error for debugging
+  const errorMessage = response.message || response.error || 'Invalid or expired coupon code';
+  console.error('[Coupon Service] Failed to apply coupon:', {
+    success: response.success,
+    message: response.message,
+    error: response.error,
+    fullResponse: response
+  });
+  
+  // Throw error with backend message so components can display it
+  throw new Error(errorMessage);
 };
 
