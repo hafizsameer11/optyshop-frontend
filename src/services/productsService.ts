@@ -103,6 +103,11 @@ export interface Product {
   lensTypes?: LensType[];
   lensCoatings?: LensCoating[];
   
+  // Eye Hygiene specific fields (only present for Eye Hygiene category/subcategory)
+  size_volume?: string | null; // e.g., "5ml", "10ml", "30ml"
+  pack_type?: string | null; // e.g., "Single", "Pack of 2", "Pack of 3"
+  expiry_date?: string | null; // ISO 8601 format date string
+  
   [key: string]: any; // Allow for additional product properties
 }
 
@@ -303,8 +308,19 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
       // { success: true, data: { product: {...} } } or { success: true, data: {...} }
       const product = (response.data as any).product || response.data;
       
+      // Log Eye Hygiene fields if present (for debugging)
+      if (import.meta.env.DEV && ((product as any).size_volume || (product as any).pack_type || (product as any).expiry_date)) {
+        console.log('[Product Service] Eye Hygiene fields detected:', {
+          size_volume: (product as any).size_volume,
+          pack_type: (product as any).pack_type,
+          expiry_date: (product as any).expiry_date,
+          category: product.category?.name,
+          subcategory: (product as any).subCategory?.name || (product as any).sub_category?.name
+        });
+      }
+      
       // Ensure all Postman collection fields are preserved
-      // (model_3d_url, color_images, contact lens fields, etc.)
+      // (model_3d_url, color_images, contact lens fields, Eye Hygiene fields, etc.)
       return product as Product;
     }
 
@@ -336,6 +352,17 @@ export const getProductById = async (id: number | string): Promise<Product | nul
       // Handle Postman collection response structure:
       // { success: true, data: { product: {...} } } or { success: true, data: {...} }
       const product = (response.data as any).product || response.data;
+      
+      // Log Eye Hygiene fields if present (for debugging)
+      if (import.meta.env.DEV && ((product as any).size_volume || (product as any).pack_type || (product as any).expiry_date)) {
+        console.log('[Product Service] Eye Hygiene fields detected:', {
+          size_volume: (product as any).size_volume,
+          pack_type: (product as any).pack_type,
+          expiry_date: (product as any).expiry_date,
+          category: product.category?.name,
+          subcategory: (product as any).subCategory?.name || (product as any).sub_category?.name
+        });
+      }
       
       // Ensure all Postman collection fields are preserved
       return product as Product;

@@ -152,15 +152,29 @@ const ProductDetail: React.FC = () => {
     const salePriceNum = hasValidSale ? displayPrice : null
     const p = product as any
 
-    // Check if product is eye hygiene
+    // Check if product is eye hygiene (check both category and subcategory)
     const isEyeHygiene = useMemo(() => {
         if (!product) return false
         const categorySlug = product.category?.slug || ''
         const categoryName = product.category?.name || ''
-        return categorySlug.toLowerCase().includes('eye-hygiene') || 
-               categorySlug.toLowerCase().includes('hygiene') ||
-               categoryName.toLowerCase().includes('eye hygiene') ||
-               categoryName.toLowerCase().includes('hygiene')
+        const subCategorySlug = (product as any).subCategory?.slug || (product as any).sub_category?.slug || ''
+        const subCategoryName = (product as any).subCategory?.name || (product as any).sub_category?.name || ''
+        
+        // Check if category or subcategory contains "eye hygiene" or "hygiene"
+        const categoryMatch = categorySlug.toLowerCase().includes('eye-hygiene') || 
+                             categorySlug.toLowerCase().includes('hygiene') ||
+                             categoryName.toLowerCase().includes('eye hygiene') ||
+                             categoryName.toLowerCase().includes('hygiene')
+        
+        const subCategoryMatch = subCategorySlug.toLowerCase().includes('eye-hygiene') ||
+                                subCategorySlug.toLowerCase().includes('hygiene') ||
+                                subCategoryName.toLowerCase().includes('eye hygiene') ||
+                                subCategoryName.toLowerCase().includes('hygiene')
+        
+        // Also check if product has Eye Hygiene fields
+        const hasEyeHygieneFields = !!(product as any).size_volume || !!(product as any).pack_type || !!(product as any).expiry_date
+        
+        return categoryMatch || subCategoryMatch || hasEyeHygieneFields
     }, [product])
 
     const isContactLens = useMemo(() => {
@@ -247,11 +261,25 @@ const ProductDetail: React.FC = () => {
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
                 
+                // Log Eye Hygiene fields if present
+                const p = productData as any
+                if (import.meta.env.DEV && (p.size_volume || p.pack_type || p.expiry_date)) {
+                    console.log('👁️ Eye Hygiene Product Detected:', {
+                        name: productData.name,
+                        size_volume: p.size_volume,
+                        pack_type: p.pack_type,
+                        expiry_date: p.expiry_date,
+                        stock_quantity: productData.stock_quantity,
+                        category: productData.category?.name,
+                        categorySlug: productData.category?.slug,
+                        subCategory: p.subCategory?.name || p.sub_category?.name,
+                        subCategorySlug: p.subCategory?.slug || p.sub_category?.slug
+                    });
+                }
+                
                 // Check URL parameters for color selection
                 const urlParams = new URLSearchParams(window.location.search)
                 const colorParam = urlParams.get('color')
-                
-                const p = productData as any
                 
                 // Auto-select color: URL parameter > product.selectedColor > first color
                 if (colorParam) {
@@ -2761,33 +2789,78 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Product Details Grid */}
-                                    <div className="mb-8 grid grid-cols-2 gap-y-4 gap-x-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                        {product.frame_shape && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">Frame Shape</span>
-                                                <span className="text-gray-700 font-semibold capitalize">{product.frame_shape.replace('_', ' ')}</span>
+                                    {/* Eye Hygiene Fields Section */}
+                                    {isEyeHygiene && ((product as any).size_volume || (product as any).pack_type || (product as any).expiry_date || product.stock_quantity) && (
+                                        <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                Product Information
+                                            </h2>
+                                            <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+                                                {(product as any).size_volume && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Size / Volume</span>
+                                                        <span className="text-gray-900 font-semibold text-lg">{(product as any).size_volume}</span>
+                                                    </div>
+                                                )}
+                                                {(product as any).pack_type && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Pack Type</span>
+                                                        <span className="text-gray-900 font-semibold text-lg">{(product as any).pack_type}</span>
+                                                    </div>
+                                                )}
+                                                {product.stock_quantity !== undefined && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Quantity Available</span>
+                                                        <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {(product as any).expiry_date && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                        <span className="text-gray-900 font-semibold text-lg">
+                                                            {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric'
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
-                                        {product.frame_material && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">Material</span>
-                                                <span className="text-gray-700 font-semibold capitalize">{product.frame_material}</span>
-                                            </div>
-                                        )}
-                                        {product.gender && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">Gender</span>
-                                                <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>
-                                            </div>
-                                        )}
-                                        {product.category && (
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">Category</span>
-                                                <span className="text-gray-700 font-semibold">{translateCategory(product.category)}</span>
-                                            </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
+
+                                    {/* Product Details Grid (for non-Eye Hygiene products or additional details) */}
+                                    {(!isEyeHygiene || (product.frame_shape || product.frame_material || product.gender)) && (
+                                        <div className="mb-8 grid grid-cols-2 gap-y-4 gap-x-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                            {product.frame_shape && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Frame Shape</span>
+                                                    <span className="text-gray-700 font-semibold capitalize">{product.frame_shape.replace('_', ' ')}</span>
+                                                </div>
+                                            )}
+                                            {product.frame_material && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Material</span>
+                                                    <span className="text-gray-700 font-semibold capitalize">{product.frame_material}</span>
+                                                </div>
+                                            )}
+                                            {product.gender && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Gender</span>
+                                                    <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>
+                                                </div>
+                                            )}
+                                            {product.category && (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Category</span>
+                                                    <span className="text-gray-700 font-semibold">{translateCategory(product.category)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Actions */}
                                     <div className="space-y-4">
