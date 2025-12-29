@@ -419,8 +419,9 @@ const CategoryPage: React.FC = () => {
                     
                     const filteredProducts = result.products.filter((p: any) => {
                         // Check if product's subcategory matches the sub-subcategory
-                        const productSubcategoryId = p.subcategory?.id
-                        const productSubcategorySlug = p.subcategory?.slug
+                        // API can return subcategory (lowercase) or subCategory (camelCase) or sub_category_id
+                        const productSubcategoryId = p.subcategory?.id || p.subCategory?.id || p.sub_category_id
+                        const productSubcategorySlug = p.subcategory?.slug || p.subCategory?.slug
                         
                         // Match by ID (most reliable) or slug
                         const matchesSubSubcategory = 
@@ -439,9 +440,12 @@ const CategoryPage: React.FC = () => {
                             products: filteredProducts.map((p: any) => ({
                                 id: p.id,
                                 name: p.name,
-                                subcategoryId: p.subcategory?.id,
-                                subcategorySlug: p.subcategory?.slug,
-                                subcategoryName: p.subcategory?.name
+                                subcategoryId: p.subcategory?.id || p.subCategory?.id || p.sub_category_id,
+                                subcategorySlug: p.subcategory?.slug || p.subCategory?.slug,
+                                subcategoryName: p.subcategory?.name || p.subCategory?.name,
+                                rawSubcategory: p.subcategory,
+                                rawSubCategory: p.subCategory,
+                                sub_category_id: p.sub_category_id
                             }))
                         })
                     }
@@ -517,15 +521,17 @@ const CategoryPage: React.FC = () => {
                             // Filter for spherical-related products that match the sub-subcategory
                             const sphericalProducts = parentSubcategoryResult.products.filter((p: any) => {
                                 // First check if product matches the sub-subcategory
-                                const productSubcategoryId = p.subcategory?.id
-                                const productSubcategorySlug = p.subcategory?.slug
+                                // API can return subcategory (lowercase) or subCategory (camelCase) or sub_category_id
+                                const productSubcategoryId = p.subcategory?.id || p.subCategory?.id || p.sub_category_id
+                                const productSubcategorySlug = p.subcategory?.slug || p.subCategory?.slug
+                                const productSubcategoryName = (p.subcategory?.name || p.subCategory?.name || '').toLowerCase()
+                                
                                 const matchesSubSubcategory = 
                                     productSubcategoryId === subSubcategoryId ||
                                     (productSubcategorySlug && productSubcategorySlug.toLowerCase() === subSubcategorySlug.toLowerCase())
                                 
                                 // Also check if product is spherical-related (for additional products from parent)
                                 const contactLensType = (p.contact_lens_type || '').toLowerCase()
-                                const productSubcategoryName = (p.subcategory?.name || '').toLowerCase()
                                 const isSphericalProduct = 
                                     contactLensType.includes('spherical') ||
                                     contactLensType.includes('sferiche') ||
