@@ -27,6 +27,28 @@ export interface DropdownValue {
   updated_at?: string;
 }
 
+// API Response Structure (what the backend returns)
+export interface ApiPrescriptionFormStructure {
+  formType: FormType;
+  dropdownValues: {
+    pd?: DropdownValue[];
+    h?: DropdownValue[];
+    year_of_birth?: DropdownValue[];
+    select_option?: DropdownValue[];
+    rightEye?: {
+      sph?: DropdownValue[];
+      cyl?: DropdownValue[];
+      axis?: DropdownValue[];
+    };
+    leftEye?: {
+      sph?: DropdownValue[];
+      cyl?: DropdownValue[];
+      axis?: DropdownValue[];
+    };
+  };
+}
+
+// Internal Structure (what the frontend uses)
 export interface PrescriptionFormStructure {
   form_type: FormType;
   fields: {
@@ -98,42 +120,149 @@ export interface PrescriptionFormSubmitResponse {
 // ============================================
 
 /**
+ * Transform API response structure to internal structure
+ */
+function transformApiResponse(apiData: ApiPrescriptionFormStructure): PrescriptionFormStructure {
+  const structure: PrescriptionFormStructure = {
+    form_type: apiData.formType,
+    fields: {}
+  };
+
+  const { dropdownValues } = apiData;
+
+  // Transform PD, H, Year of Birth, Select Option (these are "both" eye type)
+  if (dropdownValues.pd && dropdownValues.pd.length > 0) {
+    structure.fields.pd = { both: dropdownValues.pd };
+  }
+  if (dropdownValues.h && dropdownValues.h.length > 0) {
+    structure.fields.h = { both: dropdownValues.h };
+  }
+  if (dropdownValues.year_of_birth && dropdownValues.year_of_birth.length > 0) {
+    structure.fields.year_of_birth = { both: dropdownValues.year_of_birth };
+  }
+  if (dropdownValues.select_option && dropdownValues.select_option.length > 0) {
+    structure.fields.select_option = { both: dropdownValues.select_option };
+  }
+
+    // Transform SPH, CYL, AXIS from leftEye and rightEye
+    if (dropdownValues.leftEye || dropdownValues.rightEye) {
+      const leftEye = dropdownValues.leftEye || {};
+      const rightEye = dropdownValues.rightEye || {};
+
+      // Helper function to merge left and right eye values
+      const mergeEyeValues = (leftValues?: DropdownValue[], rightValues?: DropdownValue[]) => {
+        const result: { left?: DropdownValue[]; right?: DropdownValue[]; both?: DropdownValue[] } = {};
+        const bothSet = new Map<string, DropdownValue>();
+        const leftSet = new Map<string, DropdownValue>();
+        const rightSet = new Map<string, DropdownValue>();
+        
+        // Process left eye values
+        if (leftValues && leftValues.length > 0) {
+          leftValues.forEach(v => {
+            // If eye_type is null or 'both', it applies to both eyes
+            if (v.eye_type === null || v.eye_type === 'both' || !v.eye_type) {
+              bothSet.set(v.value, v);
+            } else if (v.eye_type === 'left') {
+              leftSet.set(v.value, v);
+            }
+          });
+        }
+        
+        // Process right eye values
+        if (rightValues && rightValues.length > 0) {
+          rightValues.forEach(v => {
+            // If eye_type is null or 'both', it applies to both eyes
+            if (v.eye_type === null || v.eye_type === 'both' || !v.eye_type) {
+              bothSet.set(v.value, v);
+            } else if (v.eye_type === 'right') {
+              rightSet.set(v.value, v);
+            }
+          });
+        }
+
+        // If same value appears in both left and right arrays, add to 'both'
+        if (leftValues && rightValues) {
+          const leftValueSet = new Set(leftValues.map(v => v.value));
+          rightValues.forEach(v => {
+            if (leftValueSet.has(v.value)) {
+              bothSet.set(v.value, v);
+            }
+          });
+        }
+
+        // Build result
+        if (bothSet.size > 0) {
+          result.both = Array.from(bothSet.values()).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+        if (leftSet.size > 0) {
+          result.left = Array.from(leftSet.values()).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+        if (rightSet.size > 0) {
+          result.right = Array.from(rightSet.values()).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        }
+
+        return Object.keys(result).length > 0 ? result : undefined;
+      };
+
+      // SPH
+      const sphMerged = mergeEyeValues(leftEye.sph, rightEye.sph);
+      if (sphMerged) {
+        structure.fields.sph = sphMerged;
+      }
+
+      // CYL
+      const cylMerged = mergeEyeValues(leftEye.cyl, rightEye.cyl);
+      if (cylMerged) {
+        structure.fields.cyl = cylMerged;
+      }
+
+      // AXIS
+      const axisMerged = mergeEyeValues(leftEye.axis, rightEye.axis);
+      if (axisMerged) {
+        structure.fields.axis = axisMerged;
+      }
+    }
+
+  return structure;
+}
+
+/**
  * Get prescription form structure for Progressive Vision
  */
 export async function getProgressiveFormStructure(): Promise<PrescriptionFormStructure> {
-  const response = await apiClient.get<PrescriptionFormStructure>(
+  const response = await apiClient.get<ApiPrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_PROGRESSIVE
   );
   if (!response.success || !response.data) {
     throw new Error(response.message || 'Failed to fetch progressive form structure');
   }
-  return response.data;
+  return transformApiResponse(response.data);
 }
 
 /**
  * Get prescription form structure for Near Vision
  */
 export async function getNearVisionFormStructure(): Promise<PrescriptionFormStructure> {
-  const response = await apiClient.get<PrescriptionFormStructure>(
+  const response = await apiClient.get<ApiPrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_NEAR_VISION
   );
   if (!response.success || !response.data) {
     throw new Error(response.message || 'Failed to fetch near vision form structure');
   }
-  return response.data;
+  return transformApiResponse(response.data);
 }
 
 /**
  * Get prescription form structure for Distance Vision
  */
 export async function getDistanceVisionFormStructure(): Promise<PrescriptionFormStructure> {
-  const response = await apiClient.get<PrescriptionFormStructure>(
+  const response = await apiClient.get<ApiPrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_DISTANCE_VISION
   );
   if (!response.success || !response.data) {
     throw new Error(response.message || 'Failed to fetch distance vision form structure');
   }
-  return response.data;
+  return transformApiResponse(response.data);
 }
 
 /**
