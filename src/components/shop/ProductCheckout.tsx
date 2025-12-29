@@ -53,6 +53,13 @@ import {
   type PhotochromicLens,
   type PrescriptionSunLens,
 } from '../../services/lensOptionsService'
+import {
+  getFormStructure,
+  getFieldValues,
+  getAllFieldValues,
+  type PrescriptionFormStructure,
+  type FormType,
+} from '../../services/prescriptionFormsService'
 
 // Import test function in dev mode
 if (import.meta.env.DEV) {
@@ -4637,76 +4644,109 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const isDistanceVision = lensType === 'distance_vision'
   const isNearVision = lensType === 'near_vision'
 
-  // Generate PD options (1-30)
-  const pdOptions = Array.from({ length: 30 }, (_, i) => i + 1)
-  
-  // Generate SPH and CYL options from -16.00 to +16.00 in steps of 0.25
-  const generateSphereCylinderOptions = () => {
-    const options: string[] = []
-    // Generate from -16.00 to +16.00 in steps of 0.25 (using integer steps to avoid floating point issues)
-    // -16.00 = -64 * 0.25, +16.00 = 64 * 0.25, so we need 129 values (from -64 to +64)
-    for (let i = -64; i <= 64; i++) {
-      const value = (i * 0.25).toFixed(2)
-      // Format with + sign for positive values, - for negative, and 0.00 for zero
-      if (i > 0) {
-        options.push(`+${value}`)
-      } else if (i < 0) {
-        options.push(value)
-      } else {
-        options.push('0.00')
+  // State for form structure from API
+  const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
+  const [formLoading, setFormLoading] = useState(true)
+  const [copyLeftToRight, setCopyLeftToRight] = useState(false)
+
+  // Fetch form structure from API
+  useEffect(() => {
+    const fetchFormStructure = async () => {
+      setFormLoading(true)
+      try {
+        const formType: FormType = isProgressive ? 'progressive' : 
+                                   isDistanceVision ? 'distance_vision' : 'near_vision'
+        const structure = await getFormStructure(formType)
+        setFormStructure(structure)
+      } catch (error) {
+        console.error('Failed to fetch form structure:', error)
+        // Fallback to hardcoded values if API fails
+        setFormStructure(null)
+      } finally {
+        setFormLoading(false)
       }
     }
-    return options
+
+    fetchFormStructure()
+  }, [isProgressive, isDistanceVision, isNearVision])
+
+  // Handle copy left to right
+  const handleCopyLeftToRight = () => {
+    if (prescriptionData.os_sphere) {
+      onPrescriptionChange('od_sphere', prescriptionData.os_sphere)
+    }
+    if (prescriptionData.os_cylinder) {
+      onPrescriptionChange('od_cylinder', prescriptionData.os_cylinder)
+    }
+    if (prescriptionData.os_axis) {
+      onPrescriptionChange('od_axis', prescriptionData.os_axis)
+    }
+    setCopyLeftToRight(true)
+    // Reset the flag after a short delay to allow the success message to show
+    setTimeout(() => setCopyLeftToRight(false), 3000)
   }
+
+  // Get dropdown values from API structure or fallback to hardcoded
+  const getFieldOptions = (fieldType: 'pd' | 'sph' | 'cyl' | 'axis' | 'h' | 'year_of_birth' | 'select_option', eyeType: 'left' | 'right' | 'both' = 'both'): string[] => {
+    if (formStructure) {
+      const values = getFieldValues(formStructure, fieldType, eyeType)
+      return values.map(v => v.value || v.label)
+    }
+    
+    // Fallback to hardcoded values
+    if (fieldType === 'pd') {
+      return Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+    }
+    if (fieldType === 'sph' || fieldType === 'cyl') {
+      const options: string[] = []
+      for (let i = -64; i <= 64; i++) {
+        const value = (i * 0.25).toFixed(2)
+        options.push(i > 0 ? `+${value}` : value)
+      }
+      return options
+    }
+    if (fieldType === 'axis') {
+      if (isProgressive || isDistanceVision) {
+        return eyeType === 'left' ? ['10', '45', '90', '135', '180'] : ['20', '60', '100', '140', '180']
+      } else if (isNearVision) {
+        return eyeType === 'left' ? ['5', '45', '90', '135', '180'] : ['10', '60', '100', '140', '180']
+      }
+    }
+    if (fieldType === 'h') {
+      return Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+    }
+    if (fieldType === 'year_of_birth') {
+      return Array.from({ length: 100 }, (_, i) => (2025 - i).toString())
+    }
+    return []
+  }
+
+  // Generate PD options (fallback)
+  const pdOptions = getFieldOptions('pd', 'both')
   
-  const sphereCylinderOptions = generateSphereCylinderOptions()
+  // Generate SPH and CYL options (fallback)
+  const sphereCylinderOptions = getFieldOptions('sph', 'both')
   
   // Generate SPH, CYL, AXIS options based on lens type
-  const getSphereOptions = () => {
-    // Return all options from -16.00 to +16.00 for all lens types
-    return sphereCylinderOptions
+  const getSphereOptions = (eye: 'left' | 'right') => {
+    return getFieldOptions('sph', eye)
   }
 
-  const getCylinderOptions = () => {
-    // Return all options from -16.00 to +16.00 for all lens types
-    return sphereCylinderOptions
+  const getCylinderOptions = (eye: 'left' | 'right') => {
+    return getFieldOptions('cyl', eye)
   }
 
-  const getAxisOptions = () => {
-    if (isProgressive) {
-      return ['10', '45', '90', '135', '180']
-    } else if (isDistanceVision) {
-      return ['10', '45', '90', '135', '180']
-    } else if (isNearVision) {
-      return ['5', '45', '90', '135', '180']
-    }
-    return []
+  const getAxisOptions = (eye: 'left' | 'right') => {
+    return getFieldOptions('axis', eye)
   }
 
-  const getOSSphereOptions = () => {
-    // Return all options from -16.00 to +16.00 for all lens types
-    return sphereCylinderOptions
-  }
-
-  const getOSCylinderOptions = () => {
-    // Return all options from -16.00 to +16.00 for all lens types
-    return sphereCylinderOptions
-  }
-
-  const getOSAxisOptions = () => {
-    if (isProgressive) {
-      return ['20', '60', '100', '140', '180']
-    } else if (isDistanceVision) {
-      return ['20', '60', '100', '140', '180']
-    } else if (isNearVision) {
-      return ['10', '60', '100', '140', '180']
-    }
-    return []
-  }
+  const getOSSphereOptions = () => getSphereOptions('left')
+  const getOSCylinderOptions = () => getCylinderOptions('left')
+  const getOSAxisOptions = () => getAxisOptions('left')
 
   const addOptions = ['-0.5', '-0.75', '-1.25', '-1.5', '-1.75', '-2', '-2.25', '-2.5', '-2.75', '-3', '-3.25', '-3.50', '-3.75', '-4']
-  const hOptions = Array.from({ length: 30 }, (_, i) => i + 1)
-  const yearOptions = Array.from({ length: 100 }, (_, i) => 2025 - i) // Years from 2025 to 1925
+  const hOptions = getFieldOptions('h', 'both')
+  const yearOptions = getFieldOptions('year_of_birth', 'both')
 
   return (
     <div>
@@ -4873,88 +4913,21 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </div>
       )}
 
-      {/* Right Eye (OD) */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <label className="text-sm font-medium text-gray-700">Right Eye OD</label>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600"
-            title="OD = Oculus Dexter (Right Eye)"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <select
-              value={prescriptionData.od_sphere}
-              onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_sphere ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">SPH</option>
-              {getSphereOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_sphere && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_sphere}</p>
-            )}
-          </div>
-          <div>
-            <select
-              value={prescriptionData.od_cylinder}
-              onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">CYL</option>
-              {getCylinderOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_cylinder && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_cylinder}</p>
-            )}
-          </div>
-          <div>
-            <select
-              value={prescriptionData.od_axis}
-              onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_axis ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">AXIS</option>
-              {getAxisOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_axis && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_axis}</p>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Left Eye (OS) */}
       <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <label className="text-sm font-medium text-gray-700">Left Eye OS</label>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600"
-            title="OS = Oculus Sinister (Left Eye)"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Left Eye OS</label>
+            <button
+              type="button"
+              className="text-gray-400 hover:text-gray-600"
+              title="OS = Oculus Sinister (Left Eye)"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2">
           <div>
@@ -5011,6 +4984,93 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </div>
       </div>
 
+      {/* Copy Left to Right Button */}
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={handleCopyLeftToRight}
+          disabled={!prescriptionData.os_sphere && !prescriptionData.os_cylinder && !prescriptionData.os_axis}
+          className="w-full px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+          </svg>
+          Copy Left to Right
+        </button>
+        {copyLeftToRight && (
+          <p className="text-xs text-green-600 mt-1 text-center">✓ Left eye values copied to right eye</p>
+        )}
+      </div>
+
+      {/* Right Eye (OD) */}
+      <div className="mb-4">
+        <div className="flex items-center gap-2 mb-2">
+          <label className="text-sm font-medium text-gray-700">Right Eye OD</label>
+          <button
+            type="button"
+            className="text-gray-400 hover:text-gray-600"
+            title="OD = Oculus Dexter (Right Eye)"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <select
+              value={prescriptionData.od_sphere}
+              onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.od_sphere ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">SPH</option>
+              {getSphereOptions('right').map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            {errors.od_sphere && (
+              <p className="text-xs text-red-500 mt-1">{errors.od_sphere}</p>
+            )}
+          </div>
+          <div>
+            <select
+              value={prescriptionData.od_cylinder}
+              onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">CYL</option>
+              {getCylinderOptions('right').map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            {errors.od_cylinder && (
+              <p className="text-xs text-red-500 mt-1">{errors.od_cylinder}</p>
+            )}
+          </div>
+          <div>
+            <select
+              value={prescriptionData.od_axis}
+              onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.od_axis ? 'border-red-500' : 'border-gray-300'
+              }`}
+            >
+              <option value="">AXIS</option>
+              {getAxisOptions('right').map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            {errors.od_axis && (
+              <p className="text-xs text-red-500 mt-1">{errors.od_axis}</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Select Option (ADD) - Only for Progressive */}
       {isProgressive && (
         <div className="mb-4">
@@ -5023,9 +5083,14 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             }`}
           >
             <option value="">- Select -</option>
-            {addOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
+            {formStructure 
+              ? getFieldOptions('select_option', 'both').map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))
+              : addOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))
+            }
           </select>
           {errors.select_option && (
             <p className="text-sm text-red-500 mt-1">{errors.select_option}</p>

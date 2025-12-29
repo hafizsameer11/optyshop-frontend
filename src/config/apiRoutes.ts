@@ -355,6 +355,29 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // PRESCRIPTION FORMS (PUBLIC)
+  // ============================================
+  PRESCRIPTION_FORMS: {
+    // Get form structure by type
+    GET_PROGRESSIVE: `/prescription-forms/progressive`, // PUBLIC - Get Progressive Vision form structure
+    GET_NEAR_VISION: `/prescription-forms/near_vision`, // PUBLIC - Get Near Vision form structure
+    GET_DISTANCE_VISION: `/prescription-forms/distance_vision`, // PUBLIC - Get Distance Vision form structure
+    
+    // Get dropdown values (with optional filters)
+    GET_DROPDOWN_VALUES: (fieldType?: 'pd' | 'sph' | 'cyl' | 'axis' | 'h' | 'year_of_birth' | 'select_option', eyeType?: 'left' | 'right' | 'both', formType?: 'progressive' | 'near_vision' | 'distance_vision') => {
+      const params = new URLSearchParams();
+      if (fieldType) params.append('field_type', fieldType);
+      if (eyeType) params.append('eye_type', eyeType);
+      if (formType) params.append('form_type', formType);
+      const queryString = params.toString();
+      return `/prescription-forms/dropdown-values${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get active dropdown values
+    
+    // Submit form
+    SUBMIT: `/prescription-forms/submit`, // PUBLIC - Submit prescription form with copy_left_to_right support
+  },
+
+  // ============================================
   // HEALTH & API INFO (PUBLIC)
   // ============================================
   HEALTH: {
