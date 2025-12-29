@@ -278,14 +278,26 @@ const CategoryPage: React.FC = () => {
                 }
 
                 // Filter products based on category hierarchy
-                // Priority: sub-subcategory > subcategory > category
+                // Products should appear on all their parent category pages:
+                // - Category page: Shows all products in category (including subcategories and sub-subcategories)
+                // - Subcategory page: Shows all products in subcategory (including sub-subcategories)
+                // - Sub-subcategory page: Shows products in sub-subcategory
                 // API expects slugs (strings) for category and subCategory parameters
                 if (categoryInfo.subSubcategory) {
-                    // Filter ONLY by sub-subcategory - show only products linked to this sub-subcategory
-                    // Use sub-subcategory slug to filter products - API will return only products from this sub-subcategory
+                    // Filter by sub-subcategory - show products linked to this sub-subcategory
+                    // Also include category filter to ensure we get all related products
                     filters.subcategory = categoryInfo.subSubcategory.slug
-                    // Explicitly exclude category filter to ensure only sub-subcategory products are shown
-                    delete filters.category
+                    filters.category = categoryInfo.category!.slug
+                    
+                    // Check if this is a spherical sub-subcategory page
+                    const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
+                    const subSubcategorySlug = (categoryInfo.subSubcategory.slug || '').toLowerCase()
+                    const isSphericalPage = subSubcategoryName.includes('spherical') || 
+                                           subSubcategoryName.includes('sferiche') || 
+                                           subSubcategoryName.includes('sferica') ||
+                                           subSubcategorySlug.includes('spherical') ||
+                                           subSubcategorySlug.includes('sferiche') ||
+                                           subSubcategorySlug.includes('sferica')
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 Fetching products for sub-subcategory:', {
@@ -294,29 +306,30 @@ const CategoryPage: React.FC = () => {
                             subSubcategorySlug: categoryInfo.subSubcategory.slug,
                             parentSubcategoryId: categoryInfo.subcategory?.id,
                             parentSubcategoryName: categoryInfo.subcategory?.name,
+                            isSphericalPage,
                             filters
                         })
                     }
                 } else if (categoryInfo.subcategory) {
-                    // Filter ONLY by subcategory - show only products directly linked to this subcategory
-                    // Note: This will show products from the subcategory but NOT from its sub-subcategories
-                    // To see sub-subcategory products, user must navigate to that sub-subcategory page
+                    // Filter by subcategory AND category - show all products in this subcategory
+                    // This includes products directly linked to subcategory AND products in its sub-subcategories
                     filters.subcategory = categoryInfo.subcategory.slug
-                    // Explicitly exclude category filter to ensure only subcategory products are shown
-                    delete filters.category
+                    filters.category = categoryInfo.category!.slug
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 Fetching products for subcategory:', {
                             subcategoryId: categoryInfo.subcategory.id,
                             subcategoryName: categoryInfo.subcategory.name,
                             subcategorySlug: categoryInfo.subcategory.slug,
+                            categorySlug: categoryInfo.category!.slug,
                             filters
                         })
                     }
                 } else {
                     // Filter by category only - show all products linked to this category
+                    // This includes products in all subcategories and sub-subcategories
                     filters.category = categoryInfo.category!.slug
-                    // Explicitly exclude subcategory filter to show all category products
+                    // Don't set subcategory filter to get all products in the category
                     delete filters.subcategory
                     
                     if (import.meta.env.DEV) {
@@ -329,7 +342,104 @@ const CategoryPage: React.FC = () => {
                     }
                 }
 
-                const result = await getProducts(filters)
+                let result = await getProducts(filters)
+                
+                // If on a spherical sub-subcategory page, also fetch spherical-related products from parent subcategory
+                if (categoryInfo.subSubcategory && categoryInfo.subcategory) {
+                    const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
+                    const subSubcategorySlug = (categoryInfo.subSubcategory.slug || '').toLowerCase()
+                    const isSphericalPage = subSubcategoryName.includes('spherical') || 
+                                           subSubcategoryName.includes('sferiche') || 
+                                           subSubcategoryName.includes('sferica') ||
+                                           subSubcategorySlug.includes('spherical') ||
+                                           subSubcategorySlug.includes('sferiche') ||
+                                           subSubcategorySlug.includes('sferica')
+                    
+                    if (isSphericalPage) {
+                        // Fetch additional products from parent subcategory that are spherical-related
+                        const parentSubcategoryFilters: ProductFilters = {
+                            page: 1,
+                            limit: 100, // Get more products to filter
+                            category: categoryInfo.category!.slug,
+                            subcategory: categoryInfo.subcategory.slug
+                        }
+                        
+                        const parentSubcategoryResult = await getProducts(parentSubcategoryFilters)
+                        
+                        if (parentSubcategoryResult && parentSubcategoryResult.products) {
+                            // Filter for spherical-related products (check contact_lens_type or subcategory name)
+                            const sphericalProducts = parentSubcategoryResult.products.filter((p: any) => {
+                                const contactLensType = (p.contact_lens_type || '').toLowerCase()
+                                const productSubcategoryName = (p.subcategory?.name || '').toLowerCase()
+                                const productSubcategorySlug = (p.subcategory?.slug || '').toLowerCase()
+                                
+                                // Include products that are spherical-related
+                                const isSphericalProduct = 
+                                    contactLensType.includes('spherical') ||
+                                    contactLensType.includes('sferiche') ||
+                                    contactLensType.includes('sferica') ||
+                                    productSubcategoryName.includes('spherical') ||
+                                    productSubcategoryName.includes('sferiche') ||
+                                    productSubcategoryName.includes('sferica') ||
+                                    productSubcategorySlug.includes('spherical') ||
+                                    productSubcategorySlug.includes('sferiche') ||
+                                    productSubcategorySlug.includes('sferica')
+                                
+                                return isSphericalProduct
+                            })
+                            
+                            // Combine and deduplicate products
+                            if (result && result.products) {
+                                const existingIds = new Set(result.products.map(p => p.id))
+                                const newSphericalProducts = sphericalProducts.filter((p: Product) => !existingIds.has(p.id))
+                                
+                                // Combine all products
+                                const allProducts = [...result.products, ...newSphericalProducts]
+                                const totalCount = allProducts.length
+                                const limit = filters.limit || 12
+                                
+                                // Apply pagination to combined results
+                                const startIndex = (currentPage - 1) * limit
+                                const endIndex = startIndex + limit
+                                const paginatedProducts = allProducts.slice(startIndex, endIndex)
+                                
+                                result.products = paginatedProducts
+                                result.pagination = {
+                                    total: totalCount,
+                                    page: currentPage,
+                                    limit: limit,
+                                    pages: Math.ceil(totalCount / limit)
+                                }
+                                
+                                if (import.meta.env.DEV) {
+                                    console.log('✅ Added spherical-related products:', {
+                                        originalCount: result.products.length - newSphericalProducts.length,
+                                        addedCount: newSphericalProducts.length,
+                                        totalCount: totalCount,
+                                        currentPage: currentPage,
+                                        showing: paginatedProducts.length
+                                    })
+                                }
+                            } else if (sphericalProducts.length > 0) {
+                                // If no result from sub-subcategory, use spherical products from parent
+                                const limit = filters.limit || 12
+                                const startIndex = (currentPage - 1) * limit
+                                const endIndex = startIndex + limit
+                                const paginatedProducts = sphericalProducts.slice(startIndex, endIndex)
+                                
+                                result = {
+                                    products: paginatedProducts,
+                                    pagination: {
+                                        total: sphericalProducts.length,
+                                        page: currentPage,
+                                        limit: limit,
+                                        pages: Math.ceil(sphericalProducts.length / limit)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 
                 if (import.meta.env.DEV && result) {
                     console.log('📦 Products received:', {
@@ -344,26 +454,6 @@ const CategoryPage: React.FC = () => {
                             expectedSubSubcategorySlug: categoryInfo.subSubcategory?.slug
                         }))
                     })
-                    
-                    // Verify that products match the selected sub-subcategory
-                    if (categoryInfo.subSubcategory && result.products) {
-                        const mismatchedProducts = result.products.filter(p => {
-                            const productSubcategorySlug = (p as any).subcategory?.slug
-                            return productSubcategorySlug !== categoryInfo.subSubcategory?.slug
-                        })
-                        if (mismatchedProducts.length > 0) {
-                            console.warn('⚠️ Some products do not match the selected sub-subcategory:', {
-                                expectedSlug: categoryInfo.subSubcategory.slug,
-                                mismatchedProducts: mismatchedProducts.map(p => ({
-                                    id: p.id,
-                                    name: p.name,
-                                    actualSubcategorySlug: (p as any).subcategory?.slug
-                                }))
-                            })
-                        } else {
-                            console.log('✅ All products match the selected sub-subcategory:', categoryInfo.subSubcategory.slug)
-                        }
-                    }
                 }
                 
                 if (isCancelled) return

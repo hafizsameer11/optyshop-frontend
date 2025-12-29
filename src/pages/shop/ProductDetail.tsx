@@ -2366,7 +2366,7 @@ const ProductDetail: React.FC = () => {
                                                 })()}
                                             </div>
 
-                                            {/* Right Eye Section */}
+                                            {/* Left Eye Section */}
                                             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-100 shadow-sm">
                                                 <div className="flex items-center gap-3 mb-6">
                                                     <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
