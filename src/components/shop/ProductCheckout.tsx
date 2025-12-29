@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCart } from '../../context/CartContext'
@@ -4657,6 +4657,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         const formType: FormType = isProgressive ? 'progressive' : 
                                    isDistanceVision ? 'distance_vision' : 'near_vision'
         const structure = await getFormStructure(formType)
+        if (import.meta.env.DEV) {
+          console.log('📋 [Prescription Form] Fetched structure:', formType, structure)
+        }
         setFormStructure(structure)
       } catch (error) {
         console.error('Failed to fetch form structure:', error)
@@ -4687,17 +4690,28 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   }
 
   // Get dropdown values from API structure or fallback to hardcoded
-  const getFieldOptions = (fieldType: 'pd' | 'sph' | 'cyl' | 'axis' | 'h' | 'year_of_birth' | 'select_option', eyeType: 'left' | 'right' | 'both' = 'both'): string[] => {
-    if (formStructure && formStructure.fields) {
+  const getFieldOptions = useCallback((fieldType: 'pd' | 'sph' | 'cyl' | 'axis' | 'h' | 'year_of_birth' | 'select_option', eyeType: 'left' | 'right' | 'both' = 'both'): string[] => {
+    // Try to get values from API structure first
+    if (formStructure && formStructure.fields && formStructure.fields[fieldType]) {
       const values = getFieldValues(formStructure, fieldType, eyeType)
       if (values && values.length > 0) {
-        return values.map(v => v.value || v.label)
+        const apiValues = values.map(v => v.value || v.label).filter(v => v)
+        if (apiValues.length > 0) {
+          if (import.meta.env.DEV) {
+            console.log(`✅ [Prescription Form] Using API values for ${fieldType} (${eyeType}):`, apiValues.length, 'options')
+          }
+          return apiValues
+        }
       }
     }
     
-    // Fallback to hardcoded values
+    // Fallback to hardcoded values - always ensure we have values
     if (fieldType === 'pd') {
-      return Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+      const fallback = Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+      if (import.meta.env.DEV && !formStructure) {
+        console.log(`📋 [Prescription Form] Using fallback PD values:`, fallback.length, 'options')
+      }
+      return fallback
     }
     if (fieldType === 'sph' || fieldType === 'cyl') {
       const options: string[] = []
@@ -4705,50 +4719,95 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         const value = (i * 0.25).toFixed(2)
         options.push(i > 0 ? `+${value}` : value)
       }
+      if (import.meta.env.DEV && !formStructure) {
+        console.log(`📋 [Prescription Form] Using fallback ${fieldType} values:`, options.length, 'options')
+      }
       return options
     }
     if (fieldType === 'axis') {
+      let fallback: string[]
       if (isProgressive || isDistanceVision) {
-        return eyeType === 'left' ? ['10', '45', '90', '135', '180'] : ['20', '60', '100', '140', '180']
+        fallback = eyeType === 'left' ? ['10', '45', '90', '135', '180'] : ['20', '60', '100', '140', '180']
       } else if (isNearVision) {
-        return eyeType === 'left' ? ['5', '45', '90', '135', '180'] : ['10', '60', '100', '140', '180']
+        fallback = eyeType === 'left' ? ['5', '45', '90', '135', '180'] : ['10', '60', '100', '140', '180']
+      } else {
+        fallback = ['0', '10', '20', '30', '45', '60', '90', '120', '135', '150', '180']
       }
+      if (import.meta.env.DEV && !formStructure) {
+        console.log(`📋 [Prescription Form] Using fallback axis values:`, fallback)
+      }
+      return fallback
     }
     if (fieldType === 'h') {
-      return Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+      const fallback = Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+      return fallback
     }
     if (fieldType === 'year_of_birth') {
-      return Array.from({ length: 100 }, (_, i) => (2025 - i).toString())
+      const fallback = Array.from({ length: 100 }, (_, i) => (2025 - i).toString())
+      return fallback
     }
     return []
-  }
+  }, [formStructure, isProgressive, isDistanceVision, isNearVision])
 
-  // Generate PD options (fallback)
-  const pdOptions = getFieldOptions('pd', 'both')
+  // Generate options - these will use API values if available, otherwise fallback
+  // Use useMemo to recalculate when formStructure changes
+  const pdOptions = useMemo(() => {
+    const options = getFieldOptions('pd', 'both')
+    return options.length > 0 ? options : Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+  }, [formStructure, isProgressive, isDistanceVision, isNearVision])
   
   // Generate SPH and CYL options (fallback)
-  const sphereCylinderOptions = getFieldOptions('sph', 'both')
+  const sphereCylinderOptions = useMemo(() => {
+    const options = getFieldOptions('sph', 'both')
+    if (options.length > 0) return options
+    // Fallback: generate from -16.00 to +16.00 in steps of 0.25
+    const fallback: string[] = []
+    for (let i = -64; i <= 64; i++) {
+      const value = (i * 0.25).toFixed(2)
+      fallback.push(i > 0 ? `+${value}` : value)
+    }
+    return fallback
+  }, [formStructure, isProgressive, isDistanceVision, isNearVision])
   
   // Generate SPH, CYL, AXIS options based on lens type
-  const getSphereOptions = (eye: 'left' | 'right') => {
-    return getFieldOptions('sph', eye)
-  }
+  const getSphereOptions = useCallback((eye: 'left' | 'right') => {
+    const options = getFieldOptions('sph', eye)
+    if (options.length > 0) return options
+    return sphereCylinderOptions
+  }, [formStructure, sphereCylinderOptions])
 
-  const getCylinderOptions = (eye: 'left' | 'right') => {
-    return getFieldOptions('cyl', eye)
-  }
+  const getCylinderOptions = useCallback((eye: 'left' | 'right') => {
+    const options = getFieldOptions('cyl', eye)
+    if (options.length > 0) return options
+    return sphereCylinderOptions
+  }, [formStructure, sphereCylinderOptions])
 
-  const getAxisOptions = (eye: 'left' | 'right') => {
-    return getFieldOptions('axis', eye)
-  }
+  const getAxisOptions = useCallback((eye: 'left' | 'right') => {
+    const options = getFieldOptions('axis', eye)
+    if (options.length > 0) return options
+    // Fallback values
+    if (isProgressive || isDistanceVision) {
+      return eye === 'left' ? ['10', '45', '90', '135', '180'] : ['20', '60', '100', '140', '180']
+    } else if (isNearVision) {
+      return eye === 'left' ? ['5', '45', '90', '135', '180'] : ['10', '60', '100', '140', '180']
+    }
+    return ['0', '10', '20', '30', '45', '60', '90', '120', '135', '150', '180']
+  }, [formStructure, isProgressive, isDistanceVision, isNearVision])
 
-  const getOSSphereOptions = () => getSphereOptions('left')
-  const getOSCylinderOptions = () => getCylinderOptions('left')
-  const getOSAxisOptions = () => getAxisOptions('left')
+  const getOSSphereOptions = useCallback(() => getSphereOptions('left'), [getSphereOptions])
+  const getOSCylinderOptions = useCallback(() => getCylinderOptions('left'), [getCylinderOptions])
+  const getOSAxisOptions = useCallback(() => getAxisOptions('left'), [getAxisOptions])
 
   const addOptions = ['-0.5', '-0.75', '-1.25', '-1.5', '-1.75', '-2', '-2.25', '-2.5', '-2.75', '-3', '-3.25', '-3.50', '-3.75', '-4']
-  const hOptions = getFieldOptions('h', 'both')
-  const yearOptions = getFieldOptions('year_of_birth', 'both')
+  const hOptions = useMemo(() => {
+    const options = getFieldOptions('h', 'both')
+    return options.length > 0 ? options : Array.from({ length: 30 }, (_, i) => (i + 1).toString())
+  }, [formStructure])
+  
+  const yearOptions = useMemo(() => {
+    const options = getFieldOptions('year_of_birth', 'both')
+    return options.length > 0 ? options : Array.from({ length: 100 }, (_, i) => (2025 - i).toString())
+  }, [formStructure])
 
   return (
     <div>
