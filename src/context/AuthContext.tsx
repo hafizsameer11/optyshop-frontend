@@ -162,11 +162,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (data: RegisterData) => {
     try {
+      // Clean up data - remove undefined values and trim strings
+      const cleanData: any = {
+        email: data.email?.trim(),
+        password: data.password,
+        first_name: data.first_name?.trim(),
+        last_name: data.last_name?.trim(),
+      };
+      
+      // Only include phone if it has a value
+      if (data.phone && data.phone.trim()) {
+        cleanData.phone = data.phone.trim();
+      }
+      
+      // Include role if specified, otherwise default to 'customer'
+      if (data.role) {
+        cleanData.role = data.role;
+      } else {
+        cleanData.role = 'customer';
+      }
+      
       const response = await apiClient.post<{
         user: User;
         token: string;
         refreshToken: string;
-      }>(API_ROUTES.AUTH.REGISTER, data, false);
+      }>(API_ROUTES.AUTH.REGISTER, cleanData, false);
 
       if (response.success && response.data) {
         // Backend returns: { user, token, refreshToken }
@@ -178,10 +198,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         return { success: true };
       } else {
-        return { success: false, message: response.message || 'Registration failed' };
+        // Return detailed error message
+        return { 
+          success: false, 
+          message: response.message || response.error || 'Registration failed',
+          error: response.error
+        };
       }
     } catch (error: any) {
-      return { success: false, message: error.message || 'Registration failed' };
+      return { 
+        success: false, 
+        message: error.message || error.error || 'Registration failed',
+        error: error.error || error.message
+      };
     }
   };
 

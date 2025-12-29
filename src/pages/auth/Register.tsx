@@ -82,21 +82,44 @@ const Register: React.FC = () => {
 
         setIsSubmitting(true)
         try {
-            const result = await register({
-                email: formData.email,
+            // Build registration data - only include phone if it has a value
+            const registerData: any = {
+                email: formData.email.trim(),
                 password: formData.password,
-                first_name: formData.firstName,
-                last_name: formData.lastName,
-                phone: formData.phone || undefined,
-            })
+                first_name: formData.firstName.trim(),
+                last_name: formData.lastName.trim(),
+            }
+            
+            // Only include phone if it's not empty
+            if (formData.phone && formData.phone.trim()) {
+                registerData.phone = formData.phone.trim()
+            }
+            
+            // Role defaults to 'customer' if not specified
+            registerData.role = 'customer'
+            
+            const result = await register(registerData)
             if (result.success) {
                 // Navigate to login page after successful registration
                 navigate('/login')
             } else {
-                setSubmitError(result.message || t('auth.register.registrationFailed'))
+                // Show detailed error message from backend
+                const errorMessage = result.message || t('auth.register.registrationFailed')
+                setSubmitError(errorMessage)
+                
+                // If there are validation errors, show them
+                if (result.error && typeof result.error === 'object') {
+                    const validationErrors = Object.entries(result.error)
+                        .map(([field, message]) => `${field}: ${message}`)
+                        .join(', ')
+                    if (validationErrors) {
+                        setSubmitError(`${errorMessage}: ${validationErrors}`)
+                    }
+                }
             }
         } catch (error: any) {
-            setSubmitError(error.message || t('auth.register.errorOccurred'))
+            const errorMessage = error.message || error.error || t('auth.register.errorOccurred')
+            setSubmitError(errorMessage)
         } finally {
             setIsSubmitting(false)
         }
