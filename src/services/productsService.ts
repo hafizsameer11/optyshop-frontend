@@ -283,7 +283,17 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
       };
     }
 
-    console.error('Failed to fetch products:', response.message);
+    // Log detailed error information for debugging
+    if (import.meta.env.DEV) {
+      console.error('❌ Failed to fetch products:', {
+        message: response.message,
+        error: response.error,
+        filters: filters,
+        endpoint: endpoint
+      });
+    } else {
+      console.error('Failed to fetch products:', response.message || response.error);
+    }
     return null;
   } catch (error) {
     console.error('Error fetching products:', error);

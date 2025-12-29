@@ -2759,55 +2759,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 )}
               </div>
 
-              {/* Payment Method Selection */}
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  {t('shop.paymentMethod', 'Payment Method')}
-                </label>
-                <div className="space-y-2">
-                  {[
-                    { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe', icon: '💳' },
-                    { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account', icon: '🔵' },
-                    { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' }
-                  ].map((method) => (
-                    <label
-                      key={method.id}
-                      className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                        paymentMethod === method.id
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="payment-method"
-                        value={method.id}
-                        checked={paymentMethod === method.id}
-                        onChange={(e) => {
-                          setPaymentMethod(e.target.value)
-                          // Store in localStorage for consistency
-                          localStorage.setItem('selectedPaymentMethod', e.target.value)
-                        }}
-                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-lg">{method.icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-900">{method.name}</div>
-                              {method.description && (
-                                <div className="text-xs text-gray-600 mt-0.5">{method.description}</div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
               <div className="pt-4 border-t-2 border-gray-300 mt-4">
                 <div className="flex justify-between items-center mb-2">
                   <div className="text-sm text-gray-500">

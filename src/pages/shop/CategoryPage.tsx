@@ -288,14 +288,14 @@ const CategoryPage: React.FC = () => {
                     // Then filter client-side to show only products linked to this sub-subcategory
                     // This ensures we get all products that might be linked to the sub-subcategory
                     if (categoryInfo.subcategory) {
-                        // Fetch all products from parent subcategory (no pagination limit for initial fetch)
+                        // Fetch all products from parent subcategory (API limit is 100, so we'll fetch multiple pages if needed)
                         filters.subcategory = categoryInfo.subcategory.slug
                         filters.category = categoryInfo.category!.slug
                         filters.page = 1
-                        filters.limit = 1000 // Fetch many products to filter client-side
+                        filters.limit = 100 // API maximum limit
                     } else {
                         // Fallback: try filtering by sub-subcategory slug directly
-                        filters.subcategory = categoryInfo.subSubcategory.slug
+                    filters.subcategory = categoryInfo.subSubcategory.slug
                         filters.category = categoryInfo.category!.slug
                     }
                     
@@ -354,6 +354,62 @@ const CategoryPage: React.FC = () => {
                 }
 
                 let result = await getProducts(filters)
+                
+                // If we got an error (400 Bad Request) when filtering by subcategory, 
+                // fall back to fetching by category only
+                if (!result && (categoryInfo.subcategory || categoryInfo.subSubcategory)) {
+                    if (import.meta.env.DEV) {
+                        console.warn('⚠️ Failed to fetch products with subcategory filter, falling back to category only:', {
+                            subcategory: categoryInfo.subcategory?.slug,
+                            subSubcategory: categoryInfo.subSubcategory?.slug,
+                            category: categoryInfo.category!.slug
+                        })
+                    }
+                    
+                    // Try fetching by category only
+                    const fallbackFilters: ProductFilters = {
+                        page: currentPage,
+                        limit: categoryInfo.subSubcategory ? 100 : 12,
+                        category: categoryInfo.category!.slug
+                    }
+                    delete fallbackFilters.subcategory
+                    
+                    result = await getProducts(fallbackFilters)
+                    
+                    if (import.meta.env.DEV && result) {
+                        console.log('✅ Fallback fetch successful, got products by category:', {
+                            count: result.products?.length || 0
+                        })
+                    }
+                }
+                
+                // For sub-subcategory pages, fetch all products from parent subcategory (multiple pages if needed)
+                if (categoryInfo.subSubcategory && categoryInfo.subcategory && result && result.products) {
+                    // If there are more pages, fetch them all
+                    if (result.pagination && result.pagination.pages > 1) {
+                        const allProducts = [...result.products]
+                        const totalPages = result.pagination.pages
+                        
+                        // Fetch remaining pages
+                        for (let page = 2; page <= totalPages; page++) {
+                            const pageFilters: ProductFilters = {
+                                ...filters,
+                                page: page,
+                                limit: 100
+                            }
+                            const pageResult = await getProducts(pageFilters)
+                            if (pageResult && pageResult.products) {
+                                allProducts.push(...pageResult.products)
+                            }
+                        }
+                        
+                        // Update result with all products
+                        result.products = allProducts
+                        if (import.meta.env.DEV) {
+                            console.log(`✅ Fetched all ${allProducts.length} products from ${totalPages} pages`)
+                        }
+                    }
+                }
                 
                 // Filter products by sub-subcategory if we're on a sub-subcategory page
                 if (categoryInfo.subSubcategory && result && result.products) {
@@ -420,14 +476,39 @@ const CategoryPage: React.FC = () => {
                     
                     if (isSphericalPage) {
                         // Fetch additional products from parent subcategory that are spherical-related
+                        // Fetch all pages if needed (API limit is 100 per page)
                         const parentSubcategoryFilters: ProductFilters = {
                             page: 1,
-                            limit: 1000, // Get many products to filter
+                            limit: 100, // API maximum limit
                             category: categoryInfo.category!.slug,
                             subcategory: categoryInfo.subcategory.slug
                         }
                         
-                        const parentSubcategoryResult = await getProducts(parentSubcategoryFilters)
+                        let parentSubcategoryResult = await getProducts(parentSubcategoryFilters)
+                        
+                        // If there are more pages, fetch them all
+                        if (parentSubcategoryResult && parentSubcategoryResult.pagination && parentSubcategoryResult.pagination.pages > 1) {
+                            const allProducts = [...parentSubcategoryResult.products]
+                            const totalPages = parentSubcategoryResult.pagination.pages
+                            
+                            // Fetch remaining pages
+                            for (let page = 2; page <= totalPages; page++) {
+                                const pageFilters: ProductFilters = {
+                                    ...parentSubcategoryFilters,
+                                    page: page
+                                }
+                                const pageResult = await getProducts(pageFilters)
+                                if (pageResult && pageResult.products) {
+                                    allProducts.push(...pageResult.products)
+                                }
+                            }
+                            
+                            // Update result with all products
+                            parentSubcategoryResult.products = allProducts
+                            if (import.meta.env.DEV) {
+                                console.log(`✅ Fetched all ${allProducts.length} products from ${totalPages} pages for spherical filtering`)
+                            }
+                        }
                         
                         if (parentSubcategoryResult && parentSubcategoryResult.products) {
                             const subSubcategoryId = categoryInfo.subSubcategory.id
