@@ -43,7 +43,10 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
     const [shippingLoading, setShippingLoading] = useState(false)
-    const [paymentMethod, setPaymentMethod] = useState<string>('stripe')
+    const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+        // Load from localStorage (set in Cart page) or default to stripe
+        return localStorage.getItem('selectedPaymentMethod') || 'stripe'
+    })
     
     // Initialize form data from configuration
     const initializeFormData = () => {
@@ -870,49 +873,32 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                         </div>
                                     )}
 
-                                    {/* Payment Method Selection */}
+                                    {/* Payment Method Display (Read-only - selected in Cart) */}
                                     <div className="pt-4 border-t border-gray-200 mt-4">
                                         <label className="block text-sm font-semibold text-gray-900 mb-3">
                                             {t('shop.paymentMethod', 'Payment Method')}
                                         </label>
-                                        <div className="space-y-2">
-                                            {[
-                                                { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe', icon: '💳' },
-                                                { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account', icon: '🔵' },
-                                                { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' }
-                                            ].map((method) => (
-                                                <label
-                                                    key={method.id}
-                                                    className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                                                        paymentMethod === method.id
-                                                            ? 'border-blue-600 bg-blue-50'
-                                                            : 'border-gray-200 bg-white hover:border-gray-300'
-                                                    }`}
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name="payment-method"
-                                                        value={method.id}
-                                                        checked={paymentMethod === method.id}
-                                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                                        className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center justify-between gap-2">
-                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                <span className="text-lg">{method.icon}</span>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <div className="font-medium text-gray-900">{method.name}</div>
-                                                                    {method.description && (
-                                                                        <div className="text-xs text-gray-600 mt-0.5">{method.description}</div>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
+                                        <div className="p-3 border-2 border-blue-600 bg-blue-50 rounded-lg">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-lg">
+                                                    {paymentMethod === 'stripe' ? '💳' : paymentMethod === 'paypal' ? '🔵' : '💵'}
+                                                </span>
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-900">
+                                                        {paymentMethod === 'stripe' ? 'Credit/Debit Card' : paymentMethod === 'paypal' ? 'PayPal' : 'Cash on Delivery'}
                                                     </div>
-                                                </label>
-                                            ))}
+                                                    <div className="text-xs text-gray-600 mt-0.5">
+                                                        {paymentMethod === 'stripe' ? 'Pay securely with Stripe' : paymentMethod === 'paypal' ? 'Pay with your PayPal account' : 'Pay when you receive your order'}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            To change payment method, please go back to{' '}
+                                            <Link to="/shop/cart" className="text-blue-600 hover:text-blue-800 underline">
+                                                your cart
+                                            </Link>
+                                        </p>
                                     </div>
 
                                     {/* Shipping Cost Display */}

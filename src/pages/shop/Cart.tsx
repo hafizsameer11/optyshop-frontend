@@ -20,6 +20,10 @@ const Cart: React.FC = () => {
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
     const [shippingLoading, setShippingLoading] = useState(true)
+    const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+        // Load from localStorage or default to stripe
+        return localStorage.getItem('selectedPaymentMethod') || 'stripe'
+    })
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
@@ -674,6 +678,55 @@ const Cart: React.FC = () => {
                                     </div>
                                 )}
 
+                                {/* Payment Method Selection */}
+                                <div className="mb-6 pb-6 border-b border-gray-200">
+                                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                                        {t('shop.paymentMethod', 'Payment Method')}
+                                    </label>
+                                    <div className="space-y-2">
+                                        {[
+                                            { id: 'stripe', name: 'Credit/Debit Card', description: 'Pay securely with Stripe', icon: '💳' },
+                                            { id: 'paypal', name: 'PayPal', description: 'Pay with your PayPal account', icon: '🔵' },
+                                            { id: 'cod', name: 'Cash on Delivery', description: 'Pay when you receive your order', icon: '💵' }
+                                        ].map((method) => (
+                                            <label
+                                                key={method.id}
+                                                className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
+                                                    paymentMethod === method.id
+                                                        ? 'border-blue-600 bg-blue-50'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
+                                            >
+                                                <input
+                                                    type="radio"
+                                                    name="payment-method"
+                                                    value={method.id}
+                                                    checked={paymentMethod === method.id}
+                                                    onChange={(e) => {
+                                                        setPaymentMethod(e.target.value)
+                                                        // Store in localStorage for checkout page
+                                                        localStorage.setItem('selectedPaymentMethod', e.target.value)
+                                                    }}
+                                                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                                                />
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                            <span className="text-lg">{method.icon}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="font-medium text-gray-900">{method.name}</div>
+                                                                {method.description && (
+                                                                    <div className="text-xs text-gray-600 mt-0.5">{method.description}</div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-gray-700">
                                         <span>Subtotal ({getTotalItems()} items)</span>
@@ -709,6 +762,13 @@ const Cart: React.FC = () => {
 
                                 <Link
                                     to="/checkout"
+                                    onClick={() => {
+                                        // Store payment method and shipping method in localStorage for checkout
+                                        localStorage.setItem('selectedPaymentMethod', paymentMethod)
+                                        if (selectedShippingMethod) {
+                                            localStorage.setItem('selectedShippingMethodId', selectedShippingMethod.id.toString())
+                                        }
+                                    }}
                                     className="block w-full text-center px-6 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 mb-4"
                                 >
                                     {t('cart.proceedToCheckout')}

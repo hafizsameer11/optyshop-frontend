@@ -46,6 +46,8 @@ const Products: React.FC = () => {
     const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
     const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
     const [gender, setGender] = useState<string>('')
+    const [selectedColor, setSelectedColor] = useState<string>('')
+    const [availableColors, setAvailableColors] = useState<string[]>([])
     const [currentPage, setCurrentPage] = useState(1)
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
     const [showNewArrivals, setShowNewArrivals] = useState(false)
@@ -253,6 +255,9 @@ const Products: React.FC = () => {
                     filters.gender = gender
                 }
 
+                // Note: Color filtering is done client-side after fetching products
+                // This ensures it doesn't interfere with the search parameter
+
                 // Add sorting
                 if (sortBy === 'newest') {
                     filters.sortBy = 'created_at'
@@ -275,9 +280,67 @@ const Products: React.FC = () => {
             if (isCancelled) return
             
             if (result) {
+                // Extract unique colors from all products for color filter dropdown
+                if (result.products && result.products.length > 0) {
+                    const colorSet = new Set<string>()
+                    result.products.forEach((product: Product) => {
+                        const p = product as any
+                        // Extract colors from 'colors' array
+                        if (p.colors && Array.isArray(p.colors)) {
+                            p.colors.forEach((c: any) => {
+                                const colorName = c.display_name || c.name || c.value || c.color
+                                if (colorName) {
+                                    colorSet.add(colorName)
+                                }
+                            })
+                        }
+                        // Extract colors from 'color_images' array
+                        if (product.color_images && Array.isArray(product.color_images)) {
+                            product.color_images.forEach((ci: any) => {
+                                const colorName = ci.display_name || ci.name || ci.color
+                                if (colorName) {
+                                    colorSet.add(colorName)
+                                }
+                            })
+                        }
+                    })
+                    if (!isCancelled) {
+                        setAvailableColors(Array.from(colorSet).sort())
+                    }
+                }
+
+                // Filter products by color if color is selected (client-side filtering)
+                let filteredProducts = result.products || []
+                if (selectedColor && filteredProducts.length > 0) {
+                    filteredProducts = filteredProducts.filter((product: Product) => {
+                        const p = product as any
+                        const selectedColorLower = selectedColor.toLowerCase()
+                        
+                        // Check in 'colors' array
+                        if (p.colors && Array.isArray(p.colors)) {
+                            const hasColor = p.colors.some((c: any) => {
+                                const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
+                                return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                            })
+                            if (hasColor) return true
+                        }
+                        
+                        // Check in 'color_images' array
+                        if (product.color_images && Array.isArray(product.color_images)) {
+                            const hasColor = product.color_images.some((ci: any) => {
+                                const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
+                                return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                            })
+                            if (hasColor) return true
+                        }
+                        
+                        return false
+                    })
+                }
+
                 // Log first product to debug image and stock data - show ALL image-related fields
-                if (result.products && result.products.length > 0 && import.meta.env.DEV) {
-                    const sampleProduct = result.products[0]
+                if (filteredProducts.length > 0 && import.meta.env.DEV) {
+                    const sampleProduct = filteredProducts[0]
                     const selectedImageUrl = getProductImageUrl(sampleProduct)
                     console.log('🔍 API Product List - Sample Product Data:', {
                         id: sampleProduct.id,
@@ -306,13 +369,14 @@ const Products: React.FC = () => {
                     })
                 }
                 if (!isCancelled) {
-                    setProducts(result.products || [])
-                    setPagination(result.pagination || {
-                        total: 0,
-                        page: 1,
-                        limit: 12,
-                        pages: 0
-                    })
+                    setProducts(filteredProducts)
+                    // Update pagination total if we filtered client-side
+                    const updatedPagination = { ...result.pagination }
+                    if (selectedColor && filteredProducts.length !== (result.products || []).length) {
+                        updatedPagination.total = filteredProducts.length
+                        updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                    }
+                    setPagination(updatedPagination)
                 }
             } else {
                 if (!isCancelled) {
@@ -352,7 +416,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, currentPage, sortBy, showNewArrivals])
+    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals])
 
 
     const handlePageChange = (newPage: number) => {
@@ -616,8 +680,8 @@ const Products: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Price Range */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Price Range and Color Filter */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Min Price</label>
                                 <input
@@ -630,6 +694,24 @@ const Products: React.FC = () => {
                                     }}
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Colors</label>
+                                <select
+                                    value={selectedColor}
+                                    onChange={(e) => {
+                                        setSelectedColor(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                >
+                                    <option value="">All Colors</option>
+                                    {availableColors.map((color) => (
+                                        <option key={color} value={color}>
+                                            {color}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>

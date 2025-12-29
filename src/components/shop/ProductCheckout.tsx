@@ -272,7 +272,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     country: '',
     state: ''
   })
-  const [paymentMethod, setPaymentMethod] = useState<string>('stripe')
+  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
+    // Load from localStorage or default to stripe
+    return localStorage.getItem('selectedPaymentMethod') || 'stripe'
+  })
   const [isProcessingOrder, setIsProcessingOrder] = useState(false)
   const [orderError, setOrderError] = useState<string | null>(null)
   const [createdOrder, setCreatedOrder] = useState<any>(null)
@@ -2780,7 +2783,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         name="payment-method"
                         value={method.id}
                         checked={paymentMethod === method.id}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        onChange={(e) => {
+                          setPaymentMethod(e.target.value)
+                          // Store in localStorage for consistency
+                          localStorage.setItem('selectedPaymentMethod', e.target.value)
+                        }}
                         className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                       />
                       <div className="flex-1 min-w-0">
@@ -2848,12 +2855,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
           {/* Middle: Product Image */}
           <div className="lg:col-span-1 flex flex-col">
-            <div className="bg-gray-100 rounded-lg overflow-hidden flex-1 flex items-center justify-center relative" style={{ minHeight: '500px' }}>
+            <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}>
               <img
-                key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}`}
+                key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
                 src={getColorSpecificImageUrl(product, selectedImageIndex)}
                 alt={product.name}
-                className="w-full h-full object-contain p-8"
+                style={{ 
+                  width: 'auto',
+                  height: '100%',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  objectPosition: 'top center'
+                }}
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.src = '/assets/images/frame1.png'
@@ -3323,13 +3337,15 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
       </div>
 
       {/* Continue Button */}
-      <button
-        onClick={onNext}
-        disabled={!lensSelection.progressiveOption && progressiveOptions.length > 0}
-        className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors mt-auto disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Continue
-      </button>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={onNext}
+          disabled={!lensSelection.progressiveOption && progressiveOptions.length > 0}
+          className="bg-gray-600 text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Continue
+        </button>
+      </div>
     </div>
   )
 }
@@ -3553,12 +3569,14 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
         </div>
       </div>
 
-      <button
-        onClick={onNext}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors mt-auto"
-      >
-        Add
-      </button>
+      <div className="flex justify-center mt-4">
+        <button
+          onClick={onNext}
+          className="bg-blue-950 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors"
+        >
+          Add
+        </button>
+      </div>
     </div>
   )
 }
@@ -4602,12 +4620,14 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
 
           </div>
 
-          <button
-            onClick={onNext}
-            className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors mt-auto"
-          >
-            {t('shop.addToCart')}
-          </button>
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={onNext}
+              className="bg-blue-950 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors"
+            >
+              {t('shop.addToCart')}
+            </button>
+          </div>
         </>
       )}
     </div>
@@ -5307,12 +5327,12 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-col items-center space-y-3 mt-4">
         {onCheckoutNow && (
           <button
             onClick={onCheckoutNow}
             disabled={loading}
-            className="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {t('shop.checkoutNow', 'Checkout Now')}
           </button>
@@ -5320,7 +5340,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         <button
           onClick={onAddToCart}
           disabled={loading}
-          className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-blue-950 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? t('shop.addingToCart') : t('shop.addToCart')}
         </button>
