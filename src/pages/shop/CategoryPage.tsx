@@ -284,10 +284,20 @@ const CategoryPage: React.FC = () => {
                 // - Sub-subcategory page: Shows products in sub-subcategory
                 // API expects slugs (strings) for category and subCategory parameters
                 if (categoryInfo.subSubcategory) {
-                    // Filter by sub-subcategory - show products linked to this sub-subcategory
-                    // Also include category filter to ensure we get all related products
-                    filters.subcategory = categoryInfo.subSubcategory.slug
-                    filters.category = categoryInfo.category!.slug
+                    // For sub-subcategory pages, fetch ALL products from parent subcategory first
+                    // Then filter client-side to show only products linked to this sub-subcategory
+                    // This ensures we get all products that might be linked to the sub-subcategory
+                    if (categoryInfo.subcategory) {
+                        // Fetch all products from parent subcategory (no pagination limit for initial fetch)
+                        filters.subcategory = categoryInfo.subcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                        filters.page = 1
+                        filters.limit = 1000 // Fetch many products to filter client-side
+                    } else {
+                        // Fallback: try filtering by sub-subcategory slug directly
+                        filters.subcategory = categoryInfo.subSubcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                    }
                     
                     // Check if this is a spherical sub-subcategory page
                     const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
@@ -306,6 +316,7 @@ const CategoryPage: React.FC = () => {
                             subSubcategorySlug: categoryInfo.subSubcategory.slug,
                             parentSubcategoryId: categoryInfo.subcategory?.id,
                             parentSubcategoryName: categoryInfo.subcategory?.name,
+                            parentSubcategorySlug: categoryInfo.subcategory?.slug,
                             isSphericalPage,
                             filters
                         })
@@ -344,6 +355,58 @@ const CategoryPage: React.FC = () => {
 
                 let result = await getProducts(filters)
                 
+                // Filter products by sub-subcategory if we're on a sub-subcategory page
+                if (categoryInfo.subSubcategory && result && result.products) {
+                    // Filter products to only show those linked to this specific sub-subcategory
+                    const subSubcategoryId = categoryInfo.subSubcategory.id
+                    const subSubcategorySlug = categoryInfo.subSubcategory.slug
+                    
+                    const filteredProducts = result.products.filter((p: any) => {
+                        // Check if product's subcategory matches the sub-subcategory
+                        const productSubcategoryId = p.subcategory?.id
+                        const productSubcategorySlug = p.subcategory?.slug
+                        
+                        // Match by ID (most reliable) or slug
+                        const matchesSubSubcategory = 
+                            productSubcategoryId === subSubcategoryId ||
+                            (productSubcategorySlug && productSubcategorySlug.toLowerCase() === subSubcategorySlug.toLowerCase())
+                        
+                        return matchesSubSubcategory
+                    })
+                    
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 Filtered products by sub-subcategory:', {
+                            subSubcategoryId,
+                            subSubcategorySlug,
+                            totalProducts: result.products.length,
+                            filteredProducts: filteredProducts.length,
+                            products: filteredProducts.map((p: any) => ({
+                                id: p.id,
+                                name: p.name,
+                                subcategoryId: p.subcategory?.id,
+                                subcategorySlug: p.subcategory?.slug,
+                                subcategoryName: p.subcategory?.name
+                            }))
+                        })
+                    }
+                    
+                    // Apply pagination to filtered products
+                    const limit = 12 // Use standard page limit
+                    const totalCount = filteredProducts.length
+                    const startIndex = (currentPage - 1) * limit
+                    const endIndex = startIndex + limit
+                    const paginatedProducts = filteredProducts.slice(startIndex, endIndex)
+                    
+                    // Update result with paginated filtered products
+                    result.products = paginatedProducts
+                    result.pagination = {
+                        total: totalCount,
+                        page: currentPage,
+                        limit: limit,
+                        pages: Math.ceil(totalCount / limit)
+                    }
+                }
+                
                 // If on a spherical sub-subcategory page, also fetch spherical-related products from parent subcategory
                 if (categoryInfo.subSubcategory && categoryInfo.subcategory) {
                     const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
@@ -359,7 +422,7 @@ const CategoryPage: React.FC = () => {
                         // Fetch additional products from parent subcategory that are spherical-related
                         const parentSubcategoryFilters: ProductFilters = {
                             page: 1,
-                            limit: 100, // Get more products to filter
+                            limit: 1000, // Get many products to filter
                             category: categoryInfo.category!.slug,
                             subcategory: categoryInfo.subcategory.slug
                         }
@@ -367,13 +430,21 @@ const CategoryPage: React.FC = () => {
                         const parentSubcategoryResult = await getProducts(parentSubcategoryFilters)
                         
                         if (parentSubcategoryResult && parentSubcategoryResult.products) {
-                            // Filter for spherical-related products (check contact_lens_type or subcategory name)
+                            const subSubcategoryId = categoryInfo.subSubcategory.id
+                            const subSubcategorySlug = categoryInfo.subSubcategory.slug
+                            
+                            // Filter for spherical-related products that match the sub-subcategory
                             const sphericalProducts = parentSubcategoryResult.products.filter((p: any) => {
+                                // First check if product matches the sub-subcategory
+                                const productSubcategoryId = p.subcategory?.id
+                                const productSubcategorySlug = p.subcategory?.slug
+                                const matchesSubSubcategory = 
+                                    productSubcategoryId === subSubcategoryId ||
+                                    (productSubcategorySlug && productSubcategorySlug.toLowerCase() === subSubcategorySlug.toLowerCase())
+                                
+                                // Also check if product is spherical-related (for additional products from parent)
                                 const contactLensType = (p.contact_lens_type || '').toLowerCase()
                                 const productSubcategoryName = (p.subcategory?.name || '').toLowerCase()
-                                const productSubcategorySlug = (p.subcategory?.slug || '').toLowerCase()
-                                
-                                // Include products that are spherical-related
                                 const isSphericalProduct = 
                                     contactLensType.includes('spherical') ||
                                     contactLensType.includes('sferiche') ||
@@ -381,22 +452,23 @@ const CategoryPage: React.FC = () => {
                                     productSubcategoryName.includes('spherical') ||
                                     productSubcategoryName.includes('sferiche') ||
                                     productSubcategoryName.includes('sferica') ||
-                                    productSubcategorySlug.includes('spherical') ||
-                                    productSubcategorySlug.includes('sferiche') ||
-                                    productSubcategorySlug.includes('sferica')
+                                    (productSubcategorySlug && productSubcategorySlug.includes('spherical')) ||
+                                    (productSubcategorySlug && productSubcategorySlug.includes('sferiche')) ||
+                                    (productSubcategorySlug && productSubcategorySlug.includes('sferica'))
                                 
-                                return isSphericalProduct
+                                // Include products that match sub-subcategory OR are spherical-related
+                                return matchesSubSubcategory || isSphericalProduct
                             })
                             
-                            // Combine and deduplicate products
+                            // Combine and deduplicate products (sub-subcategory products first, then spherical)
                             if (result && result.products) {
                                 const existingIds = new Set(result.products.map(p => p.id))
                                 const newSphericalProducts = sphericalProducts.filter((p: Product) => !existingIds.has(p.id))
                                 
-                                // Combine all products
+                                // Combine all products (sub-subcategory products first)
                                 const allProducts = [...result.products, ...newSphericalProducts]
                                 const totalCount = allProducts.length
-                                const limit = filters.limit || 12
+                                const limit = 12 // Use standard page limit
                                 
                                 // Apply pagination to combined results
                                 const startIndex = (currentPage - 1) * limit
@@ -422,7 +494,7 @@ const CategoryPage: React.FC = () => {
                                 }
                             } else if (sphericalProducts.length > 0) {
                                 // If no result from sub-subcategory, use spherical products from parent
-                                const limit = filters.limit || 12
+                                const limit = 12
                                 const startIndex = (currentPage - 1) * limit
                                 const endIndex = startIndex + limit
                                 const paginatedProducts = sphericalProducts.slice(startIndex, endIndex)
