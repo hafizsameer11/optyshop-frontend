@@ -104,7 +104,10 @@ export async function getProgressiveFormStructure(): Promise<PrescriptionFormStr
   const response = await apiClient.get<PrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_PROGRESSIVE
   );
-  return response;
+  if (!response.success || !response.data) {
+    throw new Error(response.message || 'Failed to fetch progressive form structure');
+  }
+  return response.data;
 }
 
 /**
@@ -114,7 +117,10 @@ export async function getNearVisionFormStructure(): Promise<PrescriptionFormStru
   const response = await apiClient.get<PrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_NEAR_VISION
   );
-  return response;
+  if (!response.success || !response.data) {
+    throw new Error(response.message || 'Failed to fetch near vision form structure');
+  }
+  return response.data;
 }
 
 /**
@@ -124,7 +130,10 @@ export async function getDistanceVisionFormStructure(): Promise<PrescriptionForm
   const response = await apiClient.get<PrescriptionFormStructure>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_DISTANCE_VISION
   );
-  return response;
+  if (!response.success || !response.data) {
+    throw new Error(response.message || 'Failed to fetch distance vision form structure');
+  }
+  return response.data;
 }
 
 /**
@@ -154,7 +163,10 @@ export async function getDropdownValues(
   const response = await apiClient.get<DropdownValue[]>(
     API_ROUTES.PRESCRIPTION_FORMS.GET_DROPDOWN_VALUES(fieldType, eyeType, formType)
   );
-  return response;
+  if (!response.success || !response.data) {
+    throw new Error(response.message || 'Failed to fetch dropdown values');
+  }
+  return response.data || [];
 }
 
 /**
@@ -183,6 +195,9 @@ export function getFieldValues(
   fieldType: FieldType,
   eyeType: 'left' | 'right' | 'both' = 'both'
 ): DropdownValue[] {
+  // Safety check: ensure structure and fields exist
+  if (!structure || !structure.fields) return [];
+  
   const field = structure.fields[fieldType];
   if (!field) return [];
 
@@ -198,6 +213,9 @@ export function getAllFieldValues(
   structure: PrescriptionFormStructure,
   fieldType: FieldType
 ): DropdownValue[] {
+  // Safety check: ensure structure and fields exist
+  if (!structure || !structure.fields) return [];
+  
   const field = structure.fields[fieldType];
   if (!field) return [];
 

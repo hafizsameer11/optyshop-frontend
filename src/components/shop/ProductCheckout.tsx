@@ -4688,9 +4688,11 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
   // Get dropdown values from API structure or fallback to hardcoded
   const getFieldOptions = (fieldType: 'pd' | 'sph' | 'cyl' | 'axis' | 'h' | 'year_of_birth' | 'select_option', eyeType: 'left' | 'right' | 'both' = 'both'): string[] => {
-    if (formStructure) {
+    if (formStructure && formStructure.fields) {
       const values = getFieldValues(formStructure, fieldType, eyeType)
-      return values.map(v => v.value || v.label)
+      if (values && values.length > 0) {
+        return values.map(v => v.value || v.label)
+      }
     }
     
     // Fallback to hardcoded values
