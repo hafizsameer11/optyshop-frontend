@@ -22,8 +22,8 @@ import {
     addContactLensToCart,
     getContactLensOptions,
     type ContactLensFormConfig,
-    type DropdownValue,
     type SphericalConfig,
+    type AstigmatismConfig,
     type ContactLensCheckoutRequest
 } from '../../services/contactLensFormsService'
 
@@ -48,11 +48,6 @@ const ProductDetail: React.FC = () => {
 
     // Contact Lens Forms API Integration State
     const [contactLensFormConfig, setContactLensFormConfig] = useState<ContactLensFormConfig | null>(null)
-    const [astigmatismDropdownValues, setAstigmatismDropdownValues] = useState<{
-        power: DropdownValue[]
-        cylinder: DropdownValue[]
-        axis: DropdownValue[]
-    }>({ power: [], cylinder: [], axis: [] })
     // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
     const [sphericalPowerValues, setSphericalPowerValues] = useState<string[]>([])
 
@@ -89,6 +84,8 @@ const ProductDetail: React.FC = () => {
     const [contactLensLoading, setContactLensLoading] = useState(false)
     const [selectedConfig, setSelectedConfig] = useState<SphericalConfig | null>(null)
     const [sphericalConfigs, setSphericalConfigs] = useState<SphericalConfig[]>([])
+    const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
+    const [selectedAstigmatismConfig, setSelectedAstigmatismConfig] = useState<AstigmatismConfig | null>(null)
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
 
     // Check if product is a contact lens
@@ -483,57 +480,11 @@ const ProductDetail: React.FC = () => {
                         console.log('✅ Contact Lens Form Config loaded:', config)
                     }
 
-                    // For Astigmatism, extract dropdown values from the configuration itself
-                    // The backend stores dropdown values directly in the config (right_power, right_cylinder, etc.)
+                    // For Astigmatism, dropdown values are extracted from astigmatismConfigs
+                    // (see fetchAstigmatismConfigs useEffect below)
                     if (config.formType === 'astigmatism') {
-                        // Extract unique values from the configuration arrays
-                        const configData = config as any
-                        
-                        // Combine left and right values for each field type
-                        const powerValues = [
-                            ...(configData.left_power || []),
-                            ...(configData.right_power || [])
-                        ].filter((v, i, arr) => arr.indexOf(v) === i) // Remove duplicates
-                        
-                        const cylinderValues = [
-                            ...(configData.left_cylinder || []),
-                            ...(configData.right_cylinder || [])
-                        ].filter((v, i, arr) => arr.indexOf(v) === i)
-                        
-                        const axisValues = [
-                            ...(configData.left_axis || []),
-                            ...(configData.right_axis || [])
-                        ].filter((v, i, arr) => arr.indexOf(v) === i)
-
-                        // Convert to DropdownValue format for consistency
-                        const formatValues = (values: string[], fieldType: string) => {
-                            return values.map((value, index) => ({
-                                id: index,
-                                field_type: fieldType as any,
-                                value: value,
-                                label: value,
-                                eye_type: 'both' as const,
-                                is_active: true,
-                                sort_order: index
-                            }))
-                        }
-
-                        setAstigmatismDropdownValues({
-                            power: formatValues(powerValues, 'power'),
-                            cylinder: formatValues(cylinderValues, 'cylinder'),
-                            axis: formatValues(axisValues, 'axis')
-                        })
-
-                        if (import.meta.env.DEV) {
-                            console.log('✅ Astigmatism dropdown values extracted from config:', {
-                                power: powerValues.length,
-                                cylinder: cylinderValues.length,
-                                axis: axisValues.length,
-                                powerValues,
-                                cylinderValues,
-                                axisValues
-                            })
-                        }
+                        // Astigmatism dropdown values are handled in fetchAstigmatismConfigs
+                        // No need to extract here since we use astigmatismConfigs directly
                     } else {
                         // For Spherical, fetch configurations which contain the dropdown values
                         const configs = await getSphericalConfigs(numericId)
@@ -611,12 +562,7 @@ const ProductDetail: React.FC = () => {
                             // Store in spherical power values state (NOT in astigmatism dropdown values)
                             setSphericalPowerValues(powerValuesArray)
                             
-                            // Clear astigmatism dropdown values for spherical forms
-                            setAstigmatismDropdownValues({
-                                power: [],
-                                cylinder: [],
-                                axis: []
-                            })
+                            // Astigmatism dropdown values are not used for spherical forms
 
                             if (import.meta.env.DEV) {
                                 console.log('✅ Spherical configurations loaded:', {
@@ -629,11 +575,6 @@ const ProductDetail: React.FC = () => {
                         } else {
                             // No configs found, set empty values
                             setSphericalPowerValues([])
-                            setAstigmatismDropdownValues({
-                                power: [],
-                                cylinder: [],
-                                axis: []
-                            })
                         }
                     }
                 } else {
@@ -697,11 +638,6 @@ const ProductDetail: React.FC = () => {
                         })
                         
                         setSphericalPowerValues(powerValuesArray)
-                        setAstigmatismDropdownValues({
-                            power: [],
-                            cylinder: [],
-                            axis: []
-                        })
 
                         if (import.meta.env.DEV) {
                             console.log('✅ Spherical configurations loaded (fallback):', {
@@ -771,11 +707,6 @@ const ProductDetail: React.FC = () => {
                         })
                         
                         setSphericalPowerValues(powerValuesArray)
-                        setAstigmatismDropdownValues({
-                            power: [],
-                            cylinder: [],
-                            axis: []
-                        })
                     }
                 } catch (fallbackError) {
                     console.error('Error in fallback fetch:', fallbackError)
@@ -964,7 +895,38 @@ const ProductDetail: React.FC = () => {
                     // Fetch astigmatism configurations
                     const configs = await getAstigmatismConfigs(numericId)
                     
+                    if (import.meta.env.DEV) {
+                        console.log('📦 Fetched astigmatism configs:', {
+                            count: configs?.length || 0,
+                            firstConfig: configs?.[0] ? {
+                                id: configs[0].id,
+                                name: configs[0].name,
+                                right_qty: configs[0].right_qty,
+                                right_base_curve: configs[0].right_base_curve,
+                                right_diameter: configs[0].right_diameter,
+                                right_power: configs[0].right_power?.slice(0, 5),
+                                right_cylinder: configs[0].right_cylinder,
+                                right_axis: configs[0].right_axis?.slice(0, 5)
+                            } : null
+                        })
+                    }
+                    
                     if (configs && configs.length > 0) {
+                        // Store astigmatism configs in state
+                        setAstigmatismConfigs(configs)
+                        // Auto-select first config if available
+                        if (configs.length > 0) {
+                            setSelectedAstigmatismConfig(configs[0])
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Selected first astigmatism config:', {
+                                    id: configs[0].id,
+                                    right_qty: configs[0].right_qty,
+                                    right_base_curve: configs[0].right_base_curve,
+                                    right_diameter: configs[0].right_diameter
+                                })
+                            }
+                        }
+                        
                         // Extract unique dropdown values from all configurations
                         const allPowerValues = new Set<string>()
                         const allCylinderValues = new Set<string>()
@@ -1007,49 +969,16 @@ const ProductDetail: React.FC = () => {
                                 })
                             }
                         })
-                        
-                        // Convert to DropdownValue format and sort
-                        const formatValues = (values: Set<string>, fieldType: string) => {
-                            return Array.from(values)
-                                .map((value, index) => ({
-                                    id: index,
-                                    field_type: fieldType as any,
-                                    value: value,
-                                    label: value,
-                                    eye_type: 'both' as const,
-                                    is_active: true,
-                                    sort_order: index
-                                }))
-                                .sort((a, b) => {
-                                    const numA = parseFloat(a.value)
-                                    const numB = parseFloat(b.value)
-                                    if (!isNaN(numA) && !isNaN(numB)) {
-                                        return numA - numB
-                                    }
-                                    return a.value.localeCompare(b.value)
-                                })
-                        }
-                        
-                        const powerValues = formatValues(allPowerValues, 'power')
-                        const cylinderValues = formatValues(allCylinderValues, 'cylinder')
-                        const axisValues = formatValues(allAxisValues, 'axis')
-                        
-                        // Update state with extracted values
-                        setAstigmatismDropdownValues({
-                            power: powerValues,
-                            cylinder: cylinderValues,
-                            axis: axisValues
-                        })
 
                         if (import.meta.env.DEV) {
                             console.log('✅ Astigmatism dropdown values extracted from configurations:', {
                                 configsCount: configs.length,
-                                power: powerValues.length,
-                                cylinder: cylinderValues.length,
-                                axis: axisValues.length,
-                                powerValues: Array.from(allPowerValues),
+                                power: allPowerValues.size,
+                                cylinder: allCylinderValues.size,
+                                axis: allAxisValues.size,
+                                powerValues: Array.from(allPowerValues).slice(0, 10),
                                 cylinderValues: Array.from(allCylinderValues),
-                                axisValues: Array.from(allAxisValues)
+                                axisValues: Array.from(allAxisValues).slice(0, 10)
                             })
                         }
                     }
@@ -1068,6 +997,8 @@ const ProductDetail: React.FC = () => {
 
     // Qty Options - from form config (admin-managed dropdowns)
     const qtyOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
         // Priority 1: Use formFields from API config (most reliable - admin-managed)
         if (contactLensFormConfig?.formFields?.rightEye?.qty?.options) {
             const options = contactLensFormConfig.formFields.rightEye.qty.options
@@ -1087,16 +1018,23 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.qty.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available
-        if (selectedConfig && selectedConfig.right_qty && Array.isArray(selectedConfig.right_qty) && selectedConfig.right_qty.length > 0) {
+        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_qty && Array.isArray(selectedConfig.right_qty) && selectedConfig.right_qty.length > 0) {
             if (import.meta.env.DEV) {
-                console.log('✅ Using qty options from selected configuration:', selectedConfig.right_qty)
+                console.log('✅ Using qty options from selected spherical configuration:', selectedConfig.right_qty)
             }
             return selectedConfig.right_qty.map(v => String(v))
         }
+        
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_qty && Array.isArray(selectedAstigmatismConfig.right_qty) && selectedAstigmatismConfig.right_qty.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using qty options from selected astigmatism configuration:', selectedAstigmatismConfig.right_qty)
+            }
+            return selectedAstigmatismConfig.right_qty.map(v => String(v))
+        }
 
-        // Priority 3b: Use all spherical configs to aggregate qty options
-        if (sphericalConfigs.length > 0) {
+        // Priority 3b: Use all configs to aggregate qty options
+        if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allQtyOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_qty && Array.isArray(config.right_qty)) {
@@ -1129,23 +1067,60 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
+        
+        if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
+            const allQtyOptions = new Set<string | number>()
+            astigmatismConfigs.forEach(config => {
+                if (config.right_qty && Array.isArray(config.right_qty)) {
+                    config.right_qty.forEach(qty => {
+                        if (qty != null && qty !== '') {
+                            allQtyOptions.add(qty)
+                        }
+                    })
+                }
+                if (config.left_qty && Array.isArray(config.left_qty)) {
+                    config.left_qty.forEach(qty => {
+                        if (qty != null && qty !== '') {
+                            allQtyOptions.add(qty)
+                        }
+                    })
+                }
+            })
+            if (allQtyOptions.size > 0) {
+                const sortedOptions = Array.from(allQtyOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using qty options from astigmatism configs:', sortedOptions)
+                }
+                return sortedOptions.map(v => String(v))
+            }
+        }
 
         // Debug: Log why no options are available
         if (import.meta.env.DEV) {
             console.warn('⚠️ No qty options available:', {
+                formType,
                 hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: !!selectedConfig,
-                selectedConfigQty: selectedConfig?.right_qty,
-                sphericalConfigsCount: sphericalConfigs.length,
-                firstConfigQty: sphericalConfigs[0]?.right_qty
+                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
+                selectedConfigQty: formType === 'spherical' ? selectedConfig?.right_qty : selectedAstigmatismConfig?.right_qty,
+                configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
+                firstConfigQty: formType === 'spherical' ? sphericalConfigs[0]?.right_qty : astigmatismConfigs[0]?.right_qty
             })
         }
 
         // No fallback - return empty array if no API data
         return []
-    }, [contactLensFormConfig, selectedConfig, sphericalConfigs])
+    }, [contactLensFormConfig, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     const baseCurveOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
         // Priority 1: Use formFields from API config (most reliable - admin-managed)
         if (contactLensFormConfig?.formFields?.rightEye?.baseCurve?.options) {
             const options = contactLensFormConfig.formFields.rightEye.baseCurve.options
@@ -1165,16 +1140,23 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.base_curve.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available
-        if (selectedConfig && selectedConfig.right_base_curve && Array.isArray(selectedConfig.right_base_curve) && selectedConfig.right_base_curve.length > 0) {
+        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_base_curve && Array.isArray(selectedConfig.right_base_curve) && selectedConfig.right_base_curve.length > 0) {
             if (import.meta.env.DEV) {
-                console.log('✅ Using base curve options from selected configuration:', selectedConfig.right_base_curve)
+                console.log('✅ Using base curve options from selected spherical configuration:', selectedConfig.right_base_curve)
             }
             return selectedConfig.right_base_curve.map(v => String(v))
         }
+        
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_base_curve && Array.isArray(selectedAstigmatismConfig.right_base_curve) && selectedAstigmatismConfig.right_base_curve.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using base curve options from selected astigmatism configuration:', selectedAstigmatismConfig.right_base_curve)
+            }
+            return selectedAstigmatismConfig.right_base_curve.map(v => String(v))
+        }
 
-        // Priority 3b: Use all spherical configs to aggregate base curve options
-        if (sphericalConfigs.length > 0) {
+        // Priority 3b: Use all configs to aggregate base curve options
+        if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allBCOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_base_curve && Array.isArray(config.right_base_curve)) {
@@ -1207,24 +1189,61 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
+        
+        if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
+            const allBCOptions = new Set<string | number>()
+            astigmatismConfigs.forEach(config => {
+                if (config.right_base_curve && Array.isArray(config.right_base_curve)) {
+                    config.right_base_curve.forEach(bc => {
+                        if (bc != null && bc !== '') {
+                            allBCOptions.add(bc)
+                        }
+                    })
+                }
+                if (config.left_base_curve && Array.isArray(config.left_base_curve)) {
+                    config.left_base_curve.forEach(bc => {
+                        if (bc != null && bc !== '') {
+                            allBCOptions.add(bc)
+                        }
+                    })
+                }
+            })
+            if (allBCOptions.size > 0) {
+                const sortedOptions = Array.from(allBCOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using base curve options from astigmatism configs:', sortedOptions)
+                }
+                return sortedOptions.map(v => String(v))
+            }
+        }
 
         // Debug: Log why no options are available
         if (import.meta.env.DEV) {
             console.warn('⚠️ No base curve options available:', {
+                formType,
                 hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: !!selectedConfig,
-                selectedConfigBC: selectedConfig?.right_base_curve,
-                sphericalConfigsCount: sphericalConfigs.length,
-                firstConfigBC: sphericalConfigs[0]?.right_base_curve
+                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
+                selectedConfigBC: formType === 'spherical' ? selectedConfig?.right_base_curve : selectedAstigmatismConfig?.right_base_curve,
+                configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
+                firstConfigBC: formType === 'spherical' ? sphericalConfigs[0]?.right_base_curve : astigmatismConfigs[0]?.right_base_curve
             })
         }
 
         // No fallback - return empty array if no API data
-        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or Spherical configs)
+        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
         return []
-    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, sphericalConfigs])
+    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     const diameterOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
         // Priority 1: Use formFields from API config (most reliable - admin-managed)
         if (contactLensFormConfig?.formFields?.rightEye?.diameter?.options) {
             const options = contactLensFormConfig.formFields.rightEye.diameter.options
@@ -1244,16 +1263,23 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.diameter.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available
-        if (selectedConfig && selectedConfig.right_diameter && Array.isArray(selectedConfig.right_diameter) && selectedConfig.right_diameter.length > 0) {
+        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_diameter && Array.isArray(selectedConfig.right_diameter) && selectedConfig.right_diameter.length > 0) {
             if (import.meta.env.DEV) {
-                console.log('✅ Using diameter options from selected configuration:', selectedConfig.right_diameter)
+                console.log('✅ Using diameter options from selected spherical configuration:', selectedConfig.right_diameter)
             }
             return selectedConfig.right_diameter.map(v => String(v))
         }
+        
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_diameter && Array.isArray(selectedAstigmatismConfig.right_diameter) && selectedAstigmatismConfig.right_diameter.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using diameter options from selected astigmatism configuration:', selectedAstigmatismConfig.right_diameter)
+            }
+            return selectedAstigmatismConfig.right_diameter.map(v => String(v))
+        }
 
-        // Priority 3b: Use all spherical configs to aggregate diameter options
-        if (sphericalConfigs.length > 0) {
+        // Priority 3b: Use all configs to aggregate diameter options
+        if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allDiaOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_diameter && Array.isArray(config.right_diameter)) {
@@ -1286,74 +1312,227 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
+        
+        if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
+            const allDiaOptions = new Set<string | number>()
+            astigmatismConfigs.forEach(config => {
+                if (config.right_diameter && Array.isArray(config.right_diameter)) {
+                    config.right_diameter.forEach(dia => {
+                        if (dia != null && dia !== '') {
+                            allDiaOptions.add(dia)
+                        }
+                    })
+                }
+                if (config.left_diameter && Array.isArray(config.left_diameter)) {
+                    config.left_diameter.forEach(dia => {
+                        if (dia != null && dia !== '') {
+                            allDiaOptions.add(dia)
+                        }
+                    })
+                }
+            })
+            if (allDiaOptions.size > 0) {
+                const sortedOptions = Array.from(allDiaOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using diameter options from astigmatism configs:', sortedOptions)
+                }
+                return sortedOptions.map(v => String(v))
+            }
+        }
 
         // Debug: Log why no options are available
         if (import.meta.env.DEV) {
             console.warn('⚠️ No diameter options available:', {
+                formType,
                 hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: !!selectedConfig,
-                selectedConfigDia: selectedConfig?.right_diameter,
-                sphericalConfigsCount: sphericalConfigs.length,
-                firstConfigDia: sphericalConfigs[0]?.right_diameter
+                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
+                selectedConfigDia: formType === 'spherical' ? selectedConfig?.right_diameter : selectedAstigmatismConfig?.right_diameter,
+                configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
+                firstConfigDia: formType === 'spherical' ? sphericalConfigs[0]?.right_diameter : astigmatismConfigs[0]?.right_diameter
             })
         }
 
         // No fallback - return empty array if no API data
-        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or Spherical configs)
+        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
         return []
-    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, sphericalConfigs])
+    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
-    // Generate cylinder options (from -6.00 to +6.00 in 0.25 steps)
-    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Standard
+    // Generate cylinder options from astigmatism configs
     const cylinderOptions = useMemo(() => {
-        // Priority 1: Use API dropdown values if available (from admin panel)
-        if (astigmatismDropdownValues.cylinder.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using cylinder options from API:', astigmatismDropdownValues.cylinder.length, 'values')
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
+        // Cylinder is only available for astigmatism forms
+        if (formType === 'astigmatism') {
+            // Priority 1: Use selected astigmatism config if available
+            if (selectedAstigmatismConfig) {
+                const rightCylinder = (selectedAstigmatismConfig.right_cylinder && Array.isArray(selectedAstigmatismConfig.right_cylinder)) ? selectedAstigmatismConfig.right_cylinder : []
+                const leftCylinder = (selectedAstigmatismConfig.left_cylinder && Array.isArray(selectedAstigmatismConfig.left_cylinder)) ? selectedAstigmatismConfig.left_cylinder : []
+                const allCylinder = [...rightCylinder, ...leftCylinder].filter(v => v != null && v !== '').map(v => String(v))
+                if (allCylinder.length > 0) {
+                    const uniqueCylinder = Array.from(new Set(allCylinder)).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using cylinder options from selected astigmatism config:', uniqueCylinder)
+                    }
+                    return uniqueCylinder
+                }
             }
-            return astigmatismDropdownValues.cylinder.map(dv => dv.value || dv.label)
-        }
 
-        // Priority 2: Use sub-subcategory options if available (aggregated from products)
-        if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using cylinder options from sub-subcategory options:', subSubcategoryOptions.cylinderOptions.length, 'values')
+            // Priority 2: Use all astigmatism configs to aggregate cylinder options
+            if (astigmatismConfigs.length > 0) {
+                const allCylinderValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightCylinder = (config.right_cylinder && Array.isArray(config.right_cylinder)) ? config.right_cylinder : []
+                    const leftCylinder = (config.left_cylinder && Array.isArray(config.left_cylinder)) ? config.left_cylinder : []
+                    rightCylinder.forEach(v => {
+                        if (v != null && v !== '') {
+                            allCylinderValues.add(String(v))
+                        }
+                    })
+                    leftCylinder.forEach(v => {
+                        if (v != null && v !== '') {
+                            allCylinderValues.add(String(v))
+                        }
+                    })
+                })
+                if (allCylinderValues.size > 0) {
+                    const cylinderArray = Array.from(allCylinderValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using cylinder options from all astigmatism configs:', cylinderArray)
+                    }
+                    return cylinderArray
+                }
             }
-            return subSubcategoryOptions.cylinderOptions.map((v: number) => String(v.toFixed(2)))
-        }
 
-        // Note: SphericalConfig doesn't have cylinder fields - cylinder only comes from astigmatism dropdown values API
+            // Priority 3: Use sub-subcategory options if available (aggregated from products)
+            if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using cylinder options from sub-subcategory options:', subSubcategoryOptions.cylinderOptions.length, 'values')
+                }
+                return subSubcategoryOptions.cylinderOptions.map((v: number) => String(v.toFixed(2)))
+            }
+
+            // Debug: Log why no cylinder options are available
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No cylinder options available:', {
+                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
+                    selectedConfigRightCylinder: selectedAstigmatismConfig?.right_cylinder,
+                    selectedConfigLeftCylinder: selectedAstigmatismConfig?.left_cylinder,
+                    astigmatismConfigsCount: astigmatismConfigs.length,
+                    firstConfigRightCylinder: astigmatismConfigs[0]?.right_cylinder
+                })
+            }
+        }
 
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API
         return []
-    }, [astigmatismDropdownValues.cylinder, subSubcategoryOptions, selectedConfig])
+    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
 
-    // Generate axis options (0 to 180 in 1 degree steps)
-    // Priority: API Dropdown Values > Configuration > Sub-subcategory > Standard
+    // Generate axis options from astigmatism configs
     const axisOptions = useMemo(() => {
-        // Priority 1: Use API dropdown values if available (from admin panel)
-        if (astigmatismDropdownValues.axis.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using axis options from API:', astigmatismDropdownValues.axis.length, 'values')
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        
+        // Axis is only available for astigmatism forms
+        if (formType === 'astigmatism') {
+            // Priority 1: Use selected astigmatism config if available
+            if (selectedAstigmatismConfig) {
+                const rightAxis = (selectedAstigmatismConfig.right_axis && Array.isArray(selectedAstigmatismConfig.right_axis)) ? selectedAstigmatismConfig.right_axis : []
+                const leftAxis = (selectedAstigmatismConfig.left_axis && Array.isArray(selectedAstigmatismConfig.left_axis)) ? selectedAstigmatismConfig.left_axis : []
+                const allAxis = [...rightAxis, ...leftAxis].filter(v => v != null && v !== '').map(v => String(v))
+                if (allAxis.length > 0) {
+                    const uniqueAxis = Array.from(new Set(allAxis)).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using axis options from selected astigmatism config:', uniqueAxis)
+                    }
+                    return uniqueAxis
+                }
             }
-            return astigmatismDropdownValues.axis.map(dv => dv.value || dv.label)
-        }
 
-        // Priority 2: Use sub-subcategory options if available (aggregated from products)
-        if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using axis options from sub-subcategory options:', subSubcategoryOptions.axisOptions.length, 'values')
+            // Priority 2: Use all astigmatism configs to aggregate axis options
+            if (astigmatismConfigs.length > 0) {
+                const allAxisValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightAxis = (config.right_axis && Array.isArray(config.right_axis)) ? config.right_axis : []
+                    const leftAxis = (config.left_axis && Array.isArray(config.left_axis)) ? config.left_axis : []
+                    rightAxis.forEach(v => {
+                        if (v != null && v !== '') {
+                            allAxisValues.add(String(v))
+                        }
+                    })
+                    leftAxis.forEach(v => {
+                        if (v != null && v !== '') {
+                            allAxisValues.add(String(v))
+                        }
+                    })
+                })
+                if (allAxisValues.size > 0) {
+                    const axisArray = Array.from(allAxisValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using axis options from all astigmatism configs:', axisArray)
+                    }
+                    return axisArray
+                }
             }
-            return subSubcategoryOptions.axisOptions.map((v: number) => String(v))
-        }
 
-        // Note: SphericalConfig doesn't have axis fields - axis only comes from astigmatism dropdown values API
+            // Priority 3: Use sub-subcategory options if available (aggregated from products)
+            if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using axis options from sub-subcategory options:', subSubcategoryOptions.axisOptions.length, 'values')
+                }
+                return subSubcategoryOptions.axisOptions.map((v: number) => String(v))
+            }
+
+            // Debug: Log why no axis options are available
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No axis options available:', {
+                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
+                    selectedConfigRightAxis: selectedAstigmatismConfig?.right_axis,
+                    selectedConfigLeftAxis: selectedAstigmatismConfig?.left_axis,
+                    astigmatismConfigsCount: astigmatismConfigs.length,
+                    firstConfigRightAxis: astigmatismConfigs[0]?.right_axis
+                })
+            }
+        }
 
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API
         return []
-    }, [astigmatismDropdownValues.axis, subSubcategoryOptions, selectedConfig])
+    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
 
     // Parse power range to generate options (memoized)
     // CRITICAL: Astigmatism dropdown values API should NEVER be used for Spherical forms
@@ -1363,7 +1542,6 @@ const ProductDetail: React.FC = () => {
         const formType = contactLensFormConfig?.formType
 
         // For Spherical forms: Use power values from spherical configurations ONLY
-        // DO NOT use astigmatismDropdownValues.power for spherical forms
         if (formType === 'spherical') {
             // Priority 1: Use power values from spherical configs (right_power/left_power arrays)
             // These come from the spherical configs API response, NOT from astigmatism dropdown API
@@ -1454,33 +1632,90 @@ const ProductDetail: React.FC = () => {
             return []
         }
 
-        // For Astigmatism forms: Use power values from astigmatism dropdown values API
+        // For Astigmatism forms: Use power values from astigmatism configs
         if (formType === 'astigmatism') {
-            // Priority 1: Use astigmatism dropdown values API (from admin panel)
-        if (astigmatismDropdownValues.power.length > 0) {
-            if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from astigmatism dropdown API:', astigmatismDropdownValues.power.length, 'values')
+            // Priority 1: Use selected astigmatism config if available
+            if (selectedAstigmatismConfig) {
+                const rightPower = (selectedAstigmatismConfig.right_power && Array.isArray(selectedAstigmatismConfig.right_power)) ? selectedAstigmatismConfig.right_power : []
+                const leftPower = (selectedAstigmatismConfig.left_power && Array.isArray(selectedAstigmatismConfig.left_power)) ? selectedAstigmatismConfig.left_power : []
+                const allPower = [...rightPower, ...leftPower].filter(v => v != null && v !== '').map(v => String(v))
+                if (allPower.length > 0) {
+                    const uniquePower = Array.from(new Set(allPower)).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using power options from selected astigmatism config:', uniquePower.length, 'values', uniquePower.slice(0, 10))
+                    }
+                    return uniquePower
+                }
             }
-            return astigmatismDropdownValues.power.map(dv => dv.value || dv.label)
-        }
 
-            // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
-        if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
-            if (import.meta.env.DEV) {
+            // Priority 2: Use all astigmatism configs to aggregate power options
+            if (astigmatismConfigs.length > 0) {
+                const allPowerValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
+                    const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
+                    rightPower.forEach(v => {
+                        if (v != null && v !== '') {
+                            allPowerValues.add(String(v))
+                        }
+                    })
+                    leftPower.forEach(v => {
+                        if (v != null && v !== '') {
+                            allPowerValues.add(String(v))
+                        }
+                    })
+                })
+                if (allPowerValues.size > 0) {
+                    const powerArray = Array.from(allPowerValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using power options from all astigmatism configs:', powerArray.length, 'values', powerArray.slice(0, 10))
+                    }
+                    return powerArray
+                }
+            }
+
+            // Priority 3: Use sub-subcategory options as fallback (aggregated from products)
+            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
+                if (import.meta.env.DEV) {
                     console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
+                }
+                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
+                    return parseFloat(b) - parseFloat(a)
+                })
             }
-            return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
-                return parseFloat(b) - parseFloat(a)
-            })
-        }
 
-        // No fallback - return empty array if no API data
-        return []
+            // Debug: Log why no power options are available
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No power options available for astigmatism form:', {
+                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
+                    selectedConfigRightPower: selectedAstigmatismConfig?.right_power?.slice(0, 5),
+                    selectedConfigLeftPower: selectedAstigmatismConfig?.left_power?.slice(0, 5),
+                    astigmatismConfigsCount: astigmatismConfigs.length,
+                    firstConfigRightPower: astigmatismConfigs[0]?.right_power?.slice(0, 5)
+                })
+            }
+
+            // No fallback - return empty array if no config data
+            return []
         }
 
         // If form type is not determined yet, return empty array
         return []
-    }, [contactLensFormConfig?.formType, sphericalPowerValues, astigmatismDropdownValues.power, subSubcategoryOptions])
+    }, [contactLensFormConfig?.formType, sphericalPowerValues, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
 
     // Initialize contact lens form when product loads
     useEffect(() => {
