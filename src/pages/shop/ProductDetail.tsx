@@ -1018,22 +1018,7 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.qty.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
-        if (formType === 'spherical' && selectedConfig && selectedConfig.right_qty && Array.isArray(selectedConfig.right_qty) && selectedConfig.right_qty.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using qty options from selected spherical configuration:', selectedConfig.right_qty)
-            }
-            return selectedConfig.right_qty.map(v => String(v))
-        }
-        
-        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_qty && Array.isArray(selectedAstigmatismConfig.right_qty) && selectedAstigmatismConfig.right_qty.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using qty options from selected astigmatism configuration:', selectedAstigmatismConfig.right_qty)
-            }
-            return selectedAstigmatismConfig.right_qty.map(v => String(v))
-        }
-
-        // Priority 3b: Use all configs to aggregate qty options
+        // Priority 3: Use all configs to aggregate qty options (check configs first as they're more reliable)
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allQtyOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1066,6 +1051,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3b: Use selected configuration data if available (fallback if configs didn't work)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_qty && Array.isArray(selectedConfig.right_qty) && selectedConfig.right_qty.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using qty options from selected spherical configuration:', selectedConfig.right_qty)
+            }
+            return selectedConfig.right_qty.map(v => String(v))
         }
         
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
@@ -1100,6 +1093,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3c: Use selected astigmatism configuration data if available (fallback)
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_qty && Array.isArray(selectedAstigmatismConfig.right_qty) && selectedAstigmatismConfig.right_qty.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using qty options from selected astigmatism configuration:', selectedAstigmatismConfig.right_qty)
+            }
+            return selectedAstigmatismConfig.right_qty.map(v => String(v))
         }
 
         // Debug: Log why no options are available
@@ -1140,22 +1141,7 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.base_curve.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
-        if (formType === 'spherical' && selectedConfig && selectedConfig.right_base_curve && Array.isArray(selectedConfig.right_base_curve) && selectedConfig.right_base_curve.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using base curve options from selected spherical configuration:', selectedConfig.right_base_curve)
-            }
-            return selectedConfig.right_base_curve.map(v => String(v))
-        }
-        
-        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_base_curve && Array.isArray(selectedAstigmatismConfig.right_base_curve) && selectedAstigmatismConfig.right_base_curve.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using base curve options from selected astigmatism configuration:', selectedAstigmatismConfig.right_base_curve)
-            }
-            return selectedAstigmatismConfig.right_base_curve.map(v => String(v))
-        }
-
-        // Priority 3b: Use all configs to aggregate base curve options
+        // Priority 3: Use all configs to aggregate base curve options (check configs first as they're more reliable)
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allBCOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1188,6 +1174,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3b: Use selected configuration data if available (fallback if configs didn't work)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_base_curve && Array.isArray(selectedConfig.right_base_curve) && selectedConfig.right_base_curve.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using base curve options from selected spherical configuration:', selectedConfig.right_base_curve)
+            }
+            return selectedConfig.right_base_curve.map(v => String(v))
         }
         
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
@@ -1222,6 +1216,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3c: Use selected astigmatism configuration data if available (fallback)
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_base_curve && Array.isArray(selectedAstigmatismConfig.right_base_curve) && selectedAstigmatismConfig.right_base_curve.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using base curve options from selected astigmatism configuration:', selectedAstigmatismConfig.right_base_curve)
+            }
+            return selectedAstigmatismConfig.right_base_curve.map(v => String(v))
         }
 
         // Debug: Log why no options are available
@@ -1263,22 +1265,7 @@ const ProductDetail: React.FC = () => {
             return contactLensFormConfig.dropdownValues.diameter.map(dv => dv.value || dv.label)
         }
 
-        // Priority 3: Use selected configuration data if available (spherical or astigmatism)
-        if (formType === 'spherical' && selectedConfig && selectedConfig.right_diameter && Array.isArray(selectedConfig.right_diameter) && selectedConfig.right_diameter.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using diameter options from selected spherical configuration:', selectedConfig.right_diameter)
-            }
-            return selectedConfig.right_diameter.map(v => String(v))
-        }
-        
-        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_diameter && Array.isArray(selectedAstigmatismConfig.right_diameter) && selectedAstigmatismConfig.right_diameter.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using diameter options from selected astigmatism configuration:', selectedAstigmatismConfig.right_diameter)
-            }
-            return selectedAstigmatismConfig.right_diameter.map(v => String(v))
-        }
-
-        // Priority 3b: Use all configs to aggregate diameter options
+        // Priority 3: Use all configs to aggregate diameter options (check configs first as they're more reliable)
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allDiaOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1311,6 +1298,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3b: Use selected configuration data if available (fallback if configs didn't work)
+        if (formType === 'spherical' && selectedConfig && selectedConfig.right_diameter && Array.isArray(selectedConfig.right_diameter) && selectedConfig.right_diameter.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using diameter options from selected spherical configuration:', selectedConfig.right_diameter)
+            }
+            return selectedConfig.right_diameter.map(v => String(v))
         }
         
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
@@ -1345,6 +1340,14 @@ const ProductDetail: React.FC = () => {
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Priority 3c: Use selected astigmatism configuration data if available (fallback)
+        if (formType === 'astigmatism' && selectedAstigmatismConfig && selectedAstigmatismConfig.right_diameter && Array.isArray(selectedAstigmatismConfig.right_diameter) && selectedAstigmatismConfig.right_diameter.length > 0) {
+            if (import.meta.env.DEV) {
+                console.log('✅ Using diameter options from selected astigmatism configuration:', selectedAstigmatismConfig.right_diameter)
+            }
+            return selectedAstigmatismConfig.right_diameter.map(v => String(v))
         }
 
         // Debug: Log why no options are available
