@@ -1068,10 +1068,10 @@ const ProductDetail: React.FC = () => {
             const allQtyOptions = new Set<number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_qty && Array.isArray(config.right_qty)) {
-                    config.right_qty.forEach(qty => allQtyOptions.add(qty))
+                    config.right_qty.forEach(qty => allQtyOptions.add(typeof qty === 'string' ? parseFloat(qty) : qty))
                 }
                 if (config.left_qty && Array.isArray(config.left_qty)) {
-                    config.left_qty.forEach(qty => allQtyOptions.add(qty))
+                    config.left_qty.forEach(qty => allQtyOptions.add(typeof qty === 'string' ? parseFloat(qty) : qty))
                 }
             })
             if (allQtyOptions.size > 0) {
@@ -1120,10 +1120,10 @@ const ProductDetail: React.FC = () => {
             const allBCOptions = new Set<number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_base_curve && Array.isArray(config.right_base_curve)) {
-                    config.right_base_curve.forEach(bc => allBCOptions.add(bc))
+                    config.right_base_curve.forEach(bc => allBCOptions.add(typeof bc === 'string' ? parseFloat(bc) : bc))
                 }
                 if (config.left_base_curve && Array.isArray(config.left_base_curve)) {
-                    config.left_base_curve.forEach(bc => allBCOptions.add(bc))
+                    config.left_base_curve.forEach(bc => allBCOptions.add(typeof bc === 'string' ? parseFloat(bc) : bc))
                 }
             })
             if (allBCOptions.size > 0) {
@@ -1173,10 +1173,10 @@ const ProductDetail: React.FC = () => {
             const allDiaOptions = new Set<number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_diameter && Array.isArray(config.right_diameter)) {
-                    config.right_diameter.forEach(dia => allDiaOptions.add(dia))
+                    config.right_diameter.forEach(dia => allDiaOptions.add(typeof dia === 'string' ? parseFloat(dia) : dia))
                 }
                 if (config.left_diameter && Array.isArray(config.left_diameter)) {
-                    config.left_diameter.forEach(dia => allDiaOptions.add(dia))
+                    config.left_diameter.forEach(dia => allDiaOptions.add(typeof dia === 'string' ? parseFloat(dia) : dia))
                 }
             })
             if (allDiaOptions.size > 0) {
@@ -1599,7 +1599,6 @@ const ProductDetail: React.FC = () => {
 
             // Use services/cartService addItemToCart if authenticated
             if (isAuthenticated) {
-                const p = product as any
                 // Get color value (hex code) - prefer value from 'colors' array, fallback to selectedColor
                 let colorValue = selectedColor
                 if (selectedColorVariant) {
@@ -2039,13 +2038,12 @@ const ProductDetail: React.FC = () => {
                                                                 <button
                                                                     key={index}
                                                                     onClick={() => {
-                                                                        const newColor = color.value || color.hexCode || color.color || color.name
-                                                                        setSelectedColor(newColor)
+                                                                        setSelectedColor(colorValue)
                                                                         setSelectedImageIndex(0) // Reset to first image of selected color
                                                                         
                                                                         // Update URL without page reload
                                                                         const url = new URL(window.location.href)
-                                                                        url.searchParams.set('color', newColor)
+                                                                        url.searchParams.set('color', colorValue)
                                                                         window.history.pushState({}, '', url)
                                                                     }}
                                                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:scale-105 ${
