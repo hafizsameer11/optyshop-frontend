@@ -2608,6 +2608,176 @@ const ProductDetail: React.FC = () => {
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Right Eye Section */}
+                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-100 shadow-sm">
+                                                <div className="flex items-center gap-3 mb-6">
+                                                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+                                                        <span className="text-white font-bold text-lg">R</span>
+                                                    </div>
+                                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900">Right Eye</h3>
+                                                </div>
+                                                
+                                                <div className="space-y-5">
+                                                    {/* Qty Dropdown - Full Width */}
+                                                    <div>
+                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                            Quantity <span className="text-gray-500 font-normal">(Qty)</span>
+                                                        </label>
+                                                        <select
+                                                            value={contactLensFormData.right_qty || ''}
+                                                            onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
+                                                            className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                                }`}
+                                                        >
+                                                            <option value="">Select Qty</option>
+                                                            {qtyOptions.map((option: number | string) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                        {contactLensErrors.right_qty && (
+                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Base Curve and Diameter - Grouped Together */}
+                                                    <div className="grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                Base Curve <span className="text-gray-500 font-normal">(B.C)</span>
+                                                            </label>
+                                                            <select
+                                                                value={contactLensFormData.right_base_curve || ''}
+                                                                onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
+                                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
+                                                            >
+                                                                <option value="">Select B.C</option>
+                                                                {baseCurveOptions.map((option) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                Diameter <span className="text-gray-500 font-normal">(DIA)</span>
+                                                            </label>
+                                                            <select
+                                                                value={contactLensFormData.right_diameter || ''}
+                                                                onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
+                                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
+                                                            >
+                                                                <option value="">Select DIA</option>
+                                                                {diameterOptions.map((option: number | string) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
+                                                {(() => {
+                                                    const formType = contactLensFormConfig?.formType ||
+                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+                                                    if (formType === 'spherical') {
+                                                        return (
+                                                            <div className="pt-5 border-t border-blue-200">
+                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                                                    * Power <span className="text-gray-500 font-normal">(PWR)</span>
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.right_power || ''}
+                                                                    onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                                        }`}
+                                                                >
+                                                                    <option value="">Select Power</option>
+                                                                    {powerOptions.map((option: string | number) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.right_power && (
+                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    } else if (formType === 'astigmatism') {
+                                                        return (
+                                                            <div className="mt-6 space-y-6">
+                                                                <div className="pt-4 border-t border-blue-200">
+                                                                    <label className="block text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
+                                                                        Power Setting
+                                                                    </label>
+                                                                    <select
+                                                                        value={contactLensFormData.right_power || ''}
+                                                                        onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
+                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                                            }`}
+                                                                    >
+                                                                        <option value="">Select Power</option>
+                                                                        {powerOptions.map((option: string | number) => (
+                                                                            <option key={option} value={option}>
+                                                                                {option}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                    {contactLensErrors.right_power && (
+                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="pt-4 border-t border-blue-200">
+                                                                    <label className="block text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
+                                                                        Cylinder & Axis
+                                                                    </label>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cylinder (CYL)</label>
+                                                                            <select
+                                                                                value={contactLensFormData.right_cylinder || ''}
+                                                                                onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
+                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-300'}`}
+                                                                            >
+                                                                                <option value="">Select</option>
+                                                                                {cylinderOptions.map((option: number | string) => (
+                                                                                    <option key={option} value={option}>{option}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Axis (AX)</label>
+                                                                            <select
+                                                                                value={contactLensFormData.right_axis || ''}
+                                                                                onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
+                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-300'}`}
+                                                                            >
+                                                                                <option value="">Select</option>
+                                                                                {axisOptions.map((option: number | string) => (
+                                                                                    <option key={option} value={option}>{option}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    {(contactLensErrors.right_cylinder || contactLensErrors.right_axis) && (
+                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    return null
+                                                })()}
+                                            </div>
+
                                             {/* Left Eye Section */}
                                             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 md:p-8 border-2 border-purple-100 shadow-sm">
                                                 <div className="flex items-center gap-3 mb-6">
@@ -2768,176 +2938,6 @@ const ProductDetail: React.FC = () => {
                                                                         </div>
                                                                     </div>
                                                                     {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null
-                                                })()}
-                                            </div>
-
-                                            {/* Left Eye Section */}
-                                            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 border-blue-100 shadow-sm">
-                                                <div className="flex items-center gap-3 mb-6">
-                                                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
-                                                        <span className="text-white font-bold text-lg">R</span>
-                                                    </div>
-                                                    <h3 className="text-xl md:text-2xl font-bold text-gray-900">Right Eye</h3>
-                                                </div>
-                                                
-                                                <div className="space-y-5">
-                                                    {/* Qty Dropdown - Full Width */}
-                                                    <div>
-                                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                            Quantity <span className="text-gray-500 font-normal">(Qty)</span>
-                                                        </label>
-                                                        <select
-                                                            value={contactLensFormData.right_qty || ''}
-                                                            onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
-                                                            className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
-                                                                }`}
-                                                        >
-                                                            <option value="">Select Qty</option>
-                                                            {qtyOptions.map((option: number | string) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                        {contactLensErrors.right_qty && (
-                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Base Curve and Diameter - Grouped Together */}
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                                Base Curve <span className="text-gray-500 font-normal">(B.C)</span>
-                                                            </label>
-                                                            <select
-                                                                value={contactLensFormData.right_base_curve || ''}
-                                                                onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
-                                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
-                                                            >
-                                                                <option value="">Select B.C</option>
-                                                                {baseCurveOptions.map((option) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-
-                                                        <div>
-                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                                Diameter <span className="text-gray-500 font-normal">(DIA)</span>
-                                                            </label>
-                                                            <select
-                                                                value={contactLensFormData.right_diameter || ''}
-                                                                onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
-                                                                className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
-                                                            >
-                                                                <option value="">Select DIA</option>
-                                                                {diameterOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
-                                                {(() => {
-                                                    const formType = contactLensFormConfig?.formType ||
-                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-
-                                                    if (formType === 'spherical') {
-                                                        return (
-                                                            <div className="pt-5 border-t border-blue-200">
-                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                                                    * Power <span className="text-gray-500 font-normal">(PWR)</span>
-                                                                </label>
-                                                                <select
-                                                                    value={contactLensFormData.right_power || ''}
-                                                                    onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
-                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                                        }`}
-                                                                >
-                                                                    <option value="">Select Power</option>
-                                                                    {powerOptions.map((option: string | number) => (
-                                                                        <option key={option} value={option}>
-                                                                            {option}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                                {contactLensErrors.right_power && (
-                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    } else if (formType === 'astigmatism') {
-                                                        return (
-                                                            <div className="mt-6 space-y-6">
-                                                                <div className="pt-4 border-t border-blue-200">
-                                                                    <label className="block text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
-                                                                        Power Setting
-                                                                    </label>
-                                                                    <select
-                                                                        value={contactLensFormData.right_power || ''}
-                                                                        onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                                            }`}
-                                                                    >
-                                                                        <option value="">Select Power</option>
-                                                                        {powerOptions.map((option: string | number) => (
-                                                                            <option key={option} value={option}>
-                                                                                {option}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {contactLensErrors.right_power && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="pt-4 border-t border-blue-200">
-                                                                    <label className="block text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">
-                                                                        Cylinder & Axis
-                                                                    </label>
-                                                                    <div className="grid grid-cols-2 gap-3">
-                                                                        <div>
-                                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cylinder (CYL)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.right_cylinder || ''}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-300'}`}
-                                                                            >
-                                                                                <option value="">Select</option>
-                                                                                {cylinderOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Axis (AX)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.right_axis || ''}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-300'}`}
-                                                                            >
-                                                                                <option value="">Select</option>
-                                                                                {axisOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    {(contactLensErrors.right_cylinder || contactLensErrors.right_axis) && (
                                                                         <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
                                                                     )}
                                                                 </div>
