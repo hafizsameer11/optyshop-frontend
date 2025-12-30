@@ -537,11 +537,36 @@ const ProductDetail: React.FC = () => {
                     } else {
                         // For Spherical, fetch configurations which contain the dropdown values
                         const configs = await getSphericalConfigs(numericId)
+                        if (import.meta.env.DEV) {
+                            console.log('📦 Fetched spherical configs:', {
+                                count: configs?.length || 0,
+                                firstConfig: configs?.[0] ? {
+                                    id: configs[0].id,
+                                    name: configs[0].name,
+                                    right_qty: configs[0].right_qty,
+                                    right_base_curve: configs[0].right_base_curve,
+                                    right_diameter: configs[0].right_diameter,
+                                    right_power: configs[0].right_power?.slice(0, 5), // First 5 power values
+                                    left_qty: configs[0].left_qty,
+                                    left_base_curve: configs[0].left_base_curve,
+                                    left_diameter: configs[0].left_diameter,
+                                    left_power: configs[0].left_power?.slice(0, 5) // First 5 power values
+                                } : null
+                            })
+                        }
                         if (configs && configs.length > 0) {
                             setSphericalConfigs(configs)
                             // Auto-select first config if available
                             if (configs.length > 0) {
                                 setSelectedConfig(configs[0])
+                                if (import.meta.env.DEV) {
+                                    console.log('✅ Selected first config:', {
+                                        id: configs[0].id,
+                                        right_qty: configs[0].right_qty,
+                                        right_base_curve: configs[0].right_base_curve,
+                                        right_diameter: configs[0].right_diameter
+                                    })
+                                }
                             }
                             
                             // Extract power values from all spherical configs (right_power and left_power arrays)
@@ -575,6 +600,13 @@ const ProductDetail: React.FC = () => {
                                 }
                                 return a.localeCompare(b)
                             })
+                            
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Extracted power values:', {
+                                    total: powerValuesArray.length,
+                                    first10: powerValuesArray.slice(0, 10)
+                                })
+                            }
                             
                             // Store in spherical power values state (NOT in astigmatism dropdown values)
                             setSphericalPowerValues(powerValuesArray)
@@ -1065,22 +1097,48 @@ const ProductDetail: React.FC = () => {
 
         // Priority 3b: Use all spherical configs to aggregate qty options
         if (sphericalConfigs.length > 0) {
-            const allQtyOptions = new Set<number>()
+            const allQtyOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_qty && Array.isArray(config.right_qty)) {
-                    config.right_qty.forEach(qty => allQtyOptions.add(typeof qty === 'string' ? parseFloat(qty) : qty))
+                    config.right_qty.forEach(qty => {
+                        if (qty != null && qty !== '') {
+                            allQtyOptions.add(qty)
+                        }
+                    })
                 }
                 if (config.left_qty && Array.isArray(config.left_qty)) {
-                    config.left_qty.forEach(qty => allQtyOptions.add(typeof qty === 'string' ? parseFloat(qty) : qty))
+                    config.left_qty.forEach(qty => {
+                        if (qty != null && qty !== '') {
+                            allQtyOptions.add(qty)
+                        }
+                    })
                 }
             })
             if (allQtyOptions.size > 0) {
-                const sortedOptions = Array.from(allQtyOptions).sort((a, b) => a - b)
+                const sortedOptions = Array.from(allQtyOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
                 if (import.meta.env.DEV) {
                     console.log('✅ Using qty options from spherical configs:', sortedOptions)
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Debug: Log why no options are available
+        if (import.meta.env.DEV) {
+            console.warn('⚠️ No qty options available:', {
+                hasFormConfig: !!contactLensFormConfig,
+                hasSelectedConfig: !!selectedConfig,
+                selectedConfigQty: selectedConfig?.right_qty,
+                sphericalConfigsCount: sphericalConfigs.length,
+                firstConfigQty: sphericalConfigs[0]?.right_qty
+            })
         }
 
         // No fallback - return empty array if no API data
@@ -1117,22 +1175,48 @@ const ProductDetail: React.FC = () => {
 
         // Priority 3b: Use all spherical configs to aggregate base curve options
         if (sphericalConfigs.length > 0) {
-            const allBCOptions = new Set<number>()
+            const allBCOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_base_curve && Array.isArray(config.right_base_curve)) {
-                    config.right_base_curve.forEach(bc => allBCOptions.add(typeof bc === 'string' ? parseFloat(bc) : bc))
+                    config.right_base_curve.forEach(bc => {
+                        if (bc != null && bc !== '') {
+                            allBCOptions.add(bc)
+                        }
+                    })
                 }
                 if (config.left_base_curve && Array.isArray(config.left_base_curve)) {
-                    config.left_base_curve.forEach(bc => allBCOptions.add(typeof bc === 'string' ? parseFloat(bc) : bc))
+                    config.left_base_curve.forEach(bc => {
+                        if (bc != null && bc !== '') {
+                            allBCOptions.add(bc)
+                        }
+                    })
                 }
             })
             if (allBCOptions.size > 0) {
-                const sortedOptions = Array.from(allBCOptions).sort((a, b) => a - b)
+                const sortedOptions = Array.from(allBCOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
                 if (import.meta.env.DEV) {
                     console.log('✅ Using base curve options from spherical configs:', sortedOptions)
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Debug: Log why no options are available
+        if (import.meta.env.DEV) {
+            console.warn('⚠️ No base curve options available:', {
+                hasFormConfig: !!contactLensFormConfig,
+                hasSelectedConfig: !!selectedConfig,
+                selectedConfigBC: selectedConfig?.right_base_curve,
+                sphericalConfigsCount: sphericalConfigs.length,
+                firstConfigBC: sphericalConfigs[0]?.right_base_curve
+            })
         }
 
         // No fallback - return empty array if no API data
@@ -1170,22 +1254,48 @@ const ProductDetail: React.FC = () => {
 
         // Priority 3b: Use all spherical configs to aggregate diameter options
         if (sphericalConfigs.length > 0) {
-            const allDiaOptions = new Set<number>()
+            const allDiaOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
                 if (config.right_diameter && Array.isArray(config.right_diameter)) {
-                    config.right_diameter.forEach(dia => allDiaOptions.add(typeof dia === 'string' ? parseFloat(dia) : dia))
+                    config.right_diameter.forEach(dia => {
+                        if (dia != null && dia !== '') {
+                            allDiaOptions.add(dia)
+                        }
+                    })
                 }
                 if (config.left_diameter && Array.isArray(config.left_diameter)) {
-                    config.left_diameter.forEach(dia => allDiaOptions.add(typeof dia === 'string' ? parseFloat(dia) : dia))
+                    config.left_diameter.forEach(dia => {
+                        if (dia != null && dia !== '') {
+                            allDiaOptions.add(dia)
+                        }
+                    })
                 }
             })
             if (allDiaOptions.size > 0) {
-                const sortedOptions = Array.from(allDiaOptions).sort((a, b) => a - b)
+                const sortedOptions = Array.from(allDiaOptions).sort((a, b) => {
+                    const numA = typeof a === 'string' ? parseFloat(a) : a
+                    const numB = typeof b === 'string' ? parseFloat(b) : b
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return numA - numB
+                    }
+                    return String(a).localeCompare(String(b))
+                })
                 if (import.meta.env.DEV) {
                     console.log('✅ Using diameter options from spherical configs:', sortedOptions)
                 }
                 return sortedOptions.map(v => String(v))
             }
+        }
+
+        // Debug: Log why no options are available
+        if (import.meta.env.DEV) {
+            console.warn('⚠️ No diameter options available:', {
+                hasFormConfig: !!contactLensFormConfig,
+                hasSelectedConfig: !!selectedConfig,
+                selectedConfigDia: selectedConfig?.right_diameter,
+                sphericalConfigsCount: sphericalConfigs.length,
+                firstConfigDia: sphericalConfigs[0]?.right_diameter
+            })
         }
 
         // No fallback - return empty array if no API data
@@ -1259,9 +1369,63 @@ const ProductDetail: React.FC = () => {
             // These come from the spherical configs API response, NOT from astigmatism dropdown API
             if (sphericalPowerValues.length > 0) {
                 if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from spherical configs:', sphericalPowerValues.length, 'values')
+                    console.log('✅ Using power options from spherical configs:', sphericalPowerValues.length, 'values', sphericalPowerValues.slice(0, 10))
                 }
                 return sphericalPowerValues
+            }
+
+            // Priority 1b: Try to extract power from selectedConfig if sphericalPowerValues is empty
+            if (selectedConfig) {
+                const rightPower = (selectedConfig.right_power && Array.isArray(selectedConfig.right_power)) ? selectedConfig.right_power : []
+                const leftPower = (selectedConfig.left_power && Array.isArray(selectedConfig.left_power)) ? selectedConfig.left_power : []
+                const allPower = [...rightPower, ...leftPower].filter(v => v != null && v !== '').map(v => String(v))
+                if (allPower.length > 0) {
+                    const uniquePower = Array.from(new Set(allPower)).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using power options from selectedConfig (fallback):', uniquePower.length, 'values', uniquePower.slice(0, 10))
+                    }
+                    return uniquePower
+                }
+            }
+
+            // Priority 1c: Try to extract power from all sphericalConfigs if still empty
+            if (sphericalConfigs.length > 0) {
+                const allPowerValues = new Set<string>()
+                sphericalConfigs.forEach(config => {
+                    const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
+                    const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
+                    rightPower.forEach(v => {
+                        if (v != null && v !== '') {
+                            allPowerValues.add(String(v))
+                        }
+                    })
+                    leftPower.forEach(v => {
+                        if (v != null && v !== '') {
+                            allPowerValues.add(String(v))
+                        }
+                    })
+                })
+                if (allPowerValues.size > 0) {
+                    const powerArray = Array.from(allPowerValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using power options from all sphericalConfigs (fallback):', powerArray.length, 'values', powerArray.slice(0, 10))
+                    }
+                    return powerArray
+                }
             }
 
             // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
@@ -1271,6 +1435,18 @@ const ProductDetail: React.FC = () => {
                 }
                 return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
                     return parseFloat(b) - parseFloat(a)
+                })
+            }
+
+            // Debug: Log why no power options are available
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ No power options available for spherical form:', {
+                    sphericalPowerValuesCount: sphericalPowerValues.length,
+                    hasSelectedConfig: !!selectedConfig,
+                    selectedConfigRightPower: selectedConfig?.right_power?.slice(0, 5),
+                    selectedConfigLeftPower: selectedConfig?.left_power?.slice(0, 5),
+                    sphericalConfigsCount: sphericalConfigs.length,
+                    firstConfigRightPower: sphericalConfigs[0]?.right_power?.slice(0, 5)
                 })
             }
 
