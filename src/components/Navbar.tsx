@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import CartIcon from './CartIcon'
 import WishlistIcon from './WishlistIcon'
@@ -7,11 +7,13 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { useCategories } from '../hooks/useCategories'
 import type { Category } from '../services/categoriesService'
 import { useCategoryTranslation } from '../utils/categoryTranslations'
+import { searchAll, type SearchResult } from '../services/searchService'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
     const location = useLocation()
+    const navigate = useNavigate()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
     const [openDropdown, setOpenDropdown] = useState<number | null>(null)
@@ -24,6 +26,40 @@ const Navbar: React.FC = () => {
     const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const subDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const { categories, loading } = useCategories()
+    
+    // Search state
+    const [searchQuery, setSearchQuery] = useState('')
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
+    const [isSearching, setIsSearching] = useState(false)
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const searchRef = useRef<HTMLDivElement>(null)
+
+    // Close search dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchOpen(false)
+            }
+        }
+
+        if (isSearchOpen) {
+            document.addEventListener('mousedown', handleClickOutside)
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [isSearchOpen])
+
+    // Cleanup search timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current)
+            }
+        }
+    }, [])
 
     // Debug: Log categories structure
     useEffect(() => {
@@ -435,6 +471,148 @@ const Navbar: React.FC = () => {
                     </Link>
                 </nav>
                 
+                {/* Search Bar */}
+                <div className="hidden md:flex items-center flex-1 max-w-md mx-2 relative" ref={searchRef}>
+                    <div className="relative w-full">
+                        <input
+                            type="text"
+                            placeholder={t('navbar.search') || 'Search products, categories...'}
+                            value={searchQuery}
+                            onChange={(e) => {
+                                const value = e.target.value
+                                setSearchQuery(value)
+                                
+                                // Clear existing timeout
+                                if (searchTimeoutRef.current) {
+                                    clearTimeout(searchTimeoutRef.current)
+                                }
+                                
+                                // Debounce search
+                                if (value.trim().length >= 2) {
+                                    setIsSearching(true)
+                                    searchTimeoutRef.current = setTimeout(async () => {
+                                        try {
+                                            const results = await searchAll(value.trim(), 8)
+                                            if (results) {
+                                                setSearchResults(results.results)
+                                                setIsSearchOpen(true)
+                                            } else {
+                                                setSearchResults([])
+                                            }
+                                        } catch (error) {
+                                            console.error('Search error:', error)
+                                            setSearchResults([])
+                                        } finally {
+                                            setIsSearching(false)
+                                        }
+                                    }, 300)
+                                } else {
+                                    setSearchResults([])
+                                    setIsSearchOpen(false)
+                                    setIsSearching(false)
+                                }
+                            }}
+                            onFocus={() => {
+                                if (searchResults.length > 0) {
+                                    setIsSearchOpen(true)
+                                }
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    setSearchQuery('')
+                                    setIsSearchOpen(false)
+                                } else if (e.key === 'Escape') {
+                                    setIsSearchOpen(false)
+                                }
+                            }}
+                            className="w-full h-8 md:h-9 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-blue-950/60 border border-cyan-400/30 rounded-lg text-white placeholder-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
+                        />
+                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                            {isSearching ? (
+                                <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="h-4 w-4 text-cyan-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </div>
+                        
+                        {/* Search Results Dropdown */}
+                        {isSearchOpen && searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                                <div className="p-2">
+                                    {searchResults.map((result, index) => (
+                                        <Link
+                                            key={`${result.type}-${result.id}`}
+                                            to={result.url}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setIsSearchOpen(false)
+                                                setSearchResults([])
+                                            }}
+                                            className={`block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 ${
+                                                index > 0 ? 'mt-1' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                {result.image && (
+                                                    <img 
+                                                        src={result.image} 
+                                                        alt={result.name}
+                                                        className="w-10 h-10 object-cover rounded"
+                                                    />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                                            result.type === 'product' ? 'bg-green-500/20 text-green-300' :
+                                                            result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
+                                                            result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
+                                                            'bg-cyan-500/20 text-cyan-300'
+                                                        }`}>
+                                                            {result.type === 'product' ? 'Product' :
+                                                             result.type === 'category' ? 'Category' :
+                                                             result.type === 'subcategory' ? 'Subcategory' :
+                                                             'Sub-Subcategory'}
+                                                        </span>
+                                                        <p className="text-sm font-medium text-white truncate">{result.name}</p>
+                                                    </div>
+                                                    {result.description && (
+                                                        <p className="text-xs text-cyan-400/70 mt-1 line-clamp-1">{result.description}</p>
+                                                    )}
+                                                    {result.price && (
+                                                        <p className="text-xs font-semibold text-cyan-300 mt-1">€{result.price}</p>
+                                                    )}
+                                                    {result.category && (
+                                                        <p className="text-[10px] text-cyan-400/50 mt-1">in {result.category.name}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                    {searchQuery.trim().length >= 2 && (
+                                        <Link
+                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setIsSearchOpen(false)
+                                                setSearchResults([])
+                                            }}
+                                            className="block mt-2 px-3 py-2 text-center text-sm font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-all"
+                                        >
+                                            View all results for "{searchQuery}"
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+                
                 {/* Right side actions */}
                 <div className="flex items-center gap-0 md:gap-0.5 flex-shrink-0 ml-0 md:ml-0.5 pr-0 md:pr-0.5 lg:pr-1">
                     {/* Language Switcher - Always visible */}
@@ -486,6 +664,110 @@ const Navbar: React.FC = () => {
             {/* Mobile menu */}
             {isMobileOpen && (
                 <div className="mt-2 md:hidden rounded-2xl bg-blue-950/98 backdrop-blur-xl border border-cyan-400/30 shadow-2xl mx-4 mb-4 px-5 py-6 space-y-3 text-sm text-white">
+                    {/* Mobile Search Bar */}
+                    <div className="relative mb-4">
+                        <input
+                            type="text"
+                            placeholder={t('navbar.search') || 'Search products, categories...'}
+                            value={searchQuery}
+                            onChange={(e) => {
+                                const value = e.target.value
+                                setSearchQuery(value)
+                                
+                                if (searchTimeoutRef.current) {
+                                    clearTimeout(searchTimeoutRef.current)
+                                }
+                                
+                                if (value.trim().length >= 2) {
+                                    setIsSearching(true)
+                                    searchTimeoutRef.current = setTimeout(async () => {
+                                        try {
+                                            const results = await searchAll(value.trim(), 5)
+                                            if (results) {
+                                                setSearchResults(results.results)
+                                            } else {
+                                                setSearchResults([])
+                                            }
+                                        } catch (error) {
+                                            console.error('Search error:', error)
+                                            setSearchResults([])
+                                        } finally {
+                                            setIsSearching(false)
+                                        }
+                                    }, 300)
+                                } else {
+                                    setSearchResults([])
+                                    setIsSearching(false)
+                                }
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    setSearchQuery('')
+                                    setIsMobileOpen(false)
+                                }
+                            }}
+                            className="w-full h-10 px-4 py-2 text-sm bg-blue-950/60 border border-cyan-400/30 rounded-lg text-white placeholder-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {isSearching ? (
+                                <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="h-4 w-4 text-cyan-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </div>
+                        
+                        {/* Mobile Search Results */}
+                        {searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-2 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto">
+                                <div className="p-2">
+                                    {searchResults.map((result) => (
+                                        <Link
+                                            key={`mobile-${result.type}-${result.id}`}
+                                            to={result.url}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setSearchResults([])
+                                                setIsMobileOpen(false)
+                                            }}
+                                            className="block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 mb-1"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                                    result.type === 'product' ? 'bg-green-500/20 text-green-300' :
+                                                    result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
+                                                    result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
+                                                    'bg-cyan-500/20 text-cyan-300'
+                                                }`}>
+                                                    {result.type === 'product' ? 'P' : result.type === 'category' ? 'C' : result.type === 'subcategory' ? 'SC' : 'SS'}
+                                                </span>
+                                                <p className="text-sm font-medium text-white truncate">{result.name}</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                    {searchQuery.trim().length >= 2 && (
+                                        <Link
+                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setSearchResults([])
+                                                setIsMobileOpen(false)
+                                            }}
+                                            className="block mt-2 px-3 py-2 text-center text-sm font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-all"
+                                        >
+                                            View all results
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    
                     <div className="space-y-2">
                         <Link
                             to="/"
