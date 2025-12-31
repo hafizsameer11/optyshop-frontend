@@ -75,13 +75,13 @@ const ProductDetail: React.FC = () => {
 
     const [contactLensFormData, setContactLensFormData] = useState<ContactLensFormData>({
         right_qty: 0,
-        right_base_curve: '',
-        right_diameter: '',
-        right_power: '',
+        right_base_curve: '00.00',
+        right_diameter: '00.00',
+        right_power: '00.00',
         left_qty: 0,
-        left_base_curve: '',
-        left_diameter: '',
-        left_power: '',
+        left_base_curve: '00.00',
+        left_diameter: '00.00',
+        left_power: '00.00',
         unit: 'unit'
     })
     const [contactLensErrors, setContactLensErrors] = useState<Record<string, string>>({})
@@ -2554,12 +2554,12 @@ const ProductDetail: React.FC = () => {
                                                             Quantity <span className="text-gray-500 font-normal">(Qty)</span>
                                                         </label>
                                                         <select
-                                                            value={contactLensFormData.right_qty || ''}
+                                                            value={contactLensFormData.right_qty || '00.00'}
                                                             onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                 }`}
                                                         >
-                                                            <option value="">Select Qty</option>
+                                                            <option value="00.00">00.00</option>
                                                             {qtyOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
@@ -2578,11 +2578,11 @@ const ProductDetail: React.FC = () => {
                                                                 Base Curve <span className="text-gray-500 font-normal">(B.C)</span>
                                                             </label>
                                                             <select
-                                                                value={contactLensFormData.right_base_curve || ''}
+                                                                value={contactLensFormData.right_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
                                                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
                                                             >
-                                                                <option value="">Select B.C</option>
+                                                                <option value="00.00">00.00</option>
                                                                 {baseCurveOptions.map((option) => (
                                                                     <option key={option} value={option}>
                                                                         {option}
@@ -2596,11 +2596,11 @@ const ProductDetail: React.FC = () => {
                                                                 Diameter <span className="text-gray-500 font-normal">(DIA)</span>
                                                             </label>
                                                             <select
-                                                                value={contactLensFormData.right_diameter || ''}
+                                                                value={contactLensFormData.right_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
                                                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md"
                                                             >
-                                                                <option value="">Select DIA</option>
+                                                                <option value="00.00">00.00</option>
                                                                 {diameterOptions.map((option: number | string) => (
                                                                     <option key={option} value={option}>
                                                                         {option}
@@ -2623,12 +2623,12 @@ const ProductDetail: React.FC = () => {
                                                                     * Power <span className="text-gray-500 font-normal">(PWR)</span>
                                                                 </label>
                                                                 <select
-                                                                    value={contactLensFormData.right_power || ''}
+                                                                    value={contactLensFormData.right_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                     className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
                                                                         }`}
                                                                 >
-                                                                    <option value="">Select Power</option>
+                                                                    <option value="00.00">00.00</option>
                                                                     {powerOptions.map((option: string | number) => (
                                                                         <option key={option} value={option}>
                                                                             {option}
@@ -2648,12 +2648,12 @@ const ProductDetail: React.FC = () => {
                                                                         Power Setting
                                                                     </label>
                                                                     <select
-                                                                        value={contactLensFormData.right_power || ''}
+                                                                        value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                         className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
                                                                             }`}
                                                                     >
-                                                                        <option value="">Select Power</option>
+                                                                        <option value="00.00">00.00</option>
                                                                         {powerOptions.map((option: string | number) => (
                                                                             <option key={option} value={option}>
                                                                                 {option}
@@ -2673,11 +2673,11 @@ const ProductDetail: React.FC = () => {
                                                                         <div>
                                                                             <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cylinder (CYL)</label>
                                                                             <select
-                                                                                value={contactLensFormData.right_cylinder || ''}
+                                                                                value={contactLensFormData.right_cylinder || '00.00'}
                                                                                 onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
                                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-300'}`}
                                                                             >
-                                                                                <option value="">Select</option>
+                                                                                <option value="00.00">00.00</option>
                                                                                 {cylinderOptions.map((option: number | string) => (
                                                                                     <option key={option} value={option}>{option}</option>
                                                                                 ))}
@@ -2686,11 +2686,11 @@ const ProductDetail: React.FC = () => {
                                                                         <div>
                                                                             <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Axis (AX)</label>
                                                                             <select
-                                                                                value={contactLensFormData.right_axis || ''}
+                                                                                value={contactLensFormData.right_axis || '00.00'}
                                                                                 onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
                                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-300'}`}
                                                                             >
-                                                                                <option value="">Select</option>
+                                                                                <option value="00.00">00.00</option>
                                                                                 {axisOptions.map((option: number | string) => (
                                                                                     <option key={option} value={option}>{option}</option>
                                                                                 ))}
@@ -2724,12 +2724,12 @@ const ProductDetail: React.FC = () => {
                                                             Quantity <span className="text-gray-500 font-normal">(Qty)</span>
                                                         </label>
                                                         <select
-                                                            value={contactLensFormData.left_qty || ''}
+                                                            value={contactLensFormData.left_qty || '00.00'}
                                                             onChange={(e) => handleContactLensFieldChange('left_qty', parseInt(e.target.value) || 1)}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                 }`}
                                                         >
-                                                            <option value="">Select Qty</option>
+                                                            <option value="00.00">00.00</option>
                                                             {qtyOptions.map((option: number | string) => (
                                                                 <option key={option} value={option}>
                                                                     {option}
@@ -2748,11 +2748,11 @@ const ProductDetail: React.FC = () => {
                                                                 Base Curve <span className="text-gray-500 font-normal">(B.C)</span>
                                                             </label>
                                                             <select
-                                                                value={contactLensFormData.left_base_curve || ''}
+                                                                value={contactLensFormData.left_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
                                                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md"
                                                             >
-                                                                <option value="">Select B.C</option>
+                                                                <option value="00.00">00.00</option>
                                                                 {baseCurveOptions.map((option: number | string) => (
                                                                     <option key={option} value={option}>
                                                                         {option}
@@ -2766,11 +2766,11 @@ const ProductDetail: React.FC = () => {
                                                                 Diameter <span className="text-gray-500 font-normal">(DIA)</span>
                                                             </label>
                                                             <select
-                                                                value={contactLensFormData.left_diameter || ''}
+                                                                value={contactLensFormData.left_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
                                                                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md"
                                                             >
-                                                                <option value="">Select DIA</option>
+                                                                <option value="00.00">00.00</option>
                                                                 {diameterOptions.map((option: number | string) => (
                                                                     <option key={option} value={option}>
                                                                         {option}
@@ -2793,12 +2793,12 @@ const ProductDetail: React.FC = () => {
                                                                     * Power <span className="text-gray-500 font-normal">(PWR)</span>
                                                                 </label>
                                                                 <select
-                                                                    value={contactLensFormData.left_power || ''}
+                                                                    value={contactLensFormData.left_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                     className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
                                                                         }`}
                                                                 >
-                                                                    <option value="">Select Power</option>
+                                                                    <option value="00.00">00.00</option>
                                                                     {powerOptions.map((option: string | number) => (
                                                                         <option key={option} value={option}>
                                                                             {option}
@@ -2818,12 +2818,12 @@ const ProductDetail: React.FC = () => {
                                                                         Power Setting
                                                                     </label>
                                                                     <select
-                                                                        value={contactLensFormData.left_power || ''}
+                                                                        value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                         className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
                                                                             }`}
                                                                     >
-                                                                        <option value="">Select Power</option>
+                                                                        <option value="00.00">00.00</option>
                                                                         {powerOptions.map((option: string | number) => (
                                                                             <option key={option} value={option}>
                                                                                 {option}
@@ -2843,11 +2843,11 @@ const ProductDetail: React.FC = () => {
                                                                         <div>
                                                                             <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Cylinder (CYL)</label>
                                                                             <select
-                                                                                value={contactLensFormData.left_cylinder || ''}
+                                                                                value={contactLensFormData.left_cylinder || '00.00'}
                                                                                 onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
                                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-300'}`}
                                                                             >
-                                                                                <option value="">Select</option>
+                                                                                <option value="00.00">00.00</option>
                                                                                 {cylinderOptions.map((option: number | string) => (
                                                                                     <option key={option} value={option}>{option}</option>
                                                                                 ))}
@@ -2856,11 +2856,11 @@ const ProductDetail: React.FC = () => {
                                                                         <div>
                                                                             <label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Axis (AX)</label>
                                                                             <select
-                                                                                value={contactLensFormData.left_axis || ''}
+                                                                                value={contactLensFormData.left_axis || '00.00'}
                                                                                 onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
                                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-300'}`}
                                                                             >
-                                                                                <option value="">Select</option>
+                                                                                <option value="00.00">00.00</option>
                                                                                 {axisOptions.map((option: number | string) => (
                                                                                     <option key={option} value={option}>{option}</option>
                                                                                 ))}
