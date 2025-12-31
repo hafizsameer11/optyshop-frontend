@@ -198,7 +198,7 @@ const Navbar: React.FC = () => {
                     <div className="relative w-full">
                         <input
                             type="text"
-                            placeholder={t('navbar.search') || 'Search products, categories...'}
+                            placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => {
                                 const value = e.target.value
@@ -655,7 +655,7 @@ const Navbar: React.FC = () => {
                     <div className="relative mb-4">
                         <input
                             type="text"
-                            placeholder={t('navbar.search') || 'Search products, categories...'}
+                            placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => {
                                 const value = e.target.value
