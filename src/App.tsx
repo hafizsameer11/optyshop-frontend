@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import Home from './pages/Home'
 import VirtualTest from './pages/products/VirtualTest'
 import DigitalFrames from './pages/products/DigitalFrames'
@@ -54,6 +54,12 @@ import TransactionDetail from './pages/customer/TransactionDetail'
 import PageDetail from './pages/cms/PageDetail'
 import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
 
+// Redirect component for old /product/:slug URLs
+const ProductRedirect = () => {
+  const { slug } = useParams<{ slug: string }>()
+  return <Navigate to={`/shop/product/${slug}`} replace />
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -97,6 +103,8 @@ function App() {
         <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
         <Route path="/category/:categorySlug/:subcategorySlug/:subSubcategorySlug" element={<CategoryPage />} />
+        {/* Redirect old /product/:slug URLs to /shop/product/:slug for backward compatibility */}
+        <Route path="/product/:slug" element={<ProductRedirect />} />
         <Route path="/shop/product/:slug" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />

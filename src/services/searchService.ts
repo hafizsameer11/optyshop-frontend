@@ -81,7 +81,7 @@ export const searchAll = async (
             id: product.id,
             name: product.name,
             slug: product.slug,
-            url: `/product/${product.slug}`,
+            url: `/shop/product/${product.slug}`,
             description: product.short_description || product.description,
             image: product.image || (product.images && product.images[0]),
             price: product.sale_price && Number(product.sale_price) < Number(product.price)
