@@ -355,6 +355,19 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // EYE HYGIENE FORMS (PUBLIC)
+  // ============================================
+  EYE_HYGIENE_FORMS: {
+    GET_CONFIG: (subCategoryId: number | string) => `/eye-hygiene-forms/config/${subCategoryId}`, // PUBLIC - Get form configuration
+    GET_OPTIONS: (subCategoryId?: number | string) => {
+      const params = new URLSearchParams();
+      if (subCategoryId) params.append('sub_category_id', String(subCategoryId));
+      const queryString = params.toString();
+      return `/eye-hygiene-forms/options${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get dropdown options (size_volume, pack_type)
+  },
+
+  // ============================================
   // PRESCRIPTION FORMS (PUBLIC)
   // ============================================
   PRESCRIPTION_FORMS: {
