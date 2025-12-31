@@ -591,7 +591,7 @@ const ProductDetail: React.FC = () => {
                             setSelectedConfig(null)
                             setSphericalPowerValues([])
                             if (import.meta.env.DEV) {
-                                console.warn('⚠️ No spherical configs found - clearing all config data')
+                                console.info('ℹ️ API returned empty spherical configs - dropdowns will be empty (this is expected until admin adds configs)')
                             }
                         }
                     }
@@ -671,7 +671,7 @@ const ProductDetail: React.FC = () => {
                         setSelectedConfig(null)
                         setSphericalPowerValues([])
                         if (import.meta.env.DEV) {
-                            console.warn('⚠️ No spherical configs found either for sub-category:', subCategoryId, '- clearing all config data')
+                            console.info('ℹ️ API returned empty spherical configs for sub-category:', subCategoryId, '- dropdowns will be empty (this is expected until admin adds configs)')
                         }
                     }
                 }
@@ -1019,7 +1019,7 @@ const ProductDetail: React.FC = () => {
                         setAstigmatismConfigs([])
                         setSelectedAstigmatismConfig(null)
                         if (import.meta.env.DEV) {
-                            console.warn('⚠️ Astigmatism API returned empty configs - clearing all astigmatism config data')
+                            console.info('ℹ️ API returned empty astigmatism configs - dropdowns will be empty (this is expected until admin adds configs)')
                         }
                     }
                 } catch (error) {
@@ -1037,30 +1037,12 @@ const ProductDetail: React.FC = () => {
     // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
     // This ensures hooks run in the same order on every render
 
-    // Qty Options - from form config (admin-managed dropdowns)
+    // Qty Options - ONLY from API configs arrays (sphericalConfigs or astigmatismConfigs)
     const qtyOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
-        // Priority 1: Use formFields from API config (most reliable - admin-managed)
-        if (contactLensFormConfig?.formFields?.rightEye?.qty?.options) {
-            const options = contactLensFormConfig.formFields.rightEye.qty.options
-            if (options.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using qty options from formFields:', options)
-                }
-                return options.map(opt => opt.value)
-            }
-        }
-
-        // Priority 2: Use dropdownValues from API config
-        if (contactLensFormConfig?.dropdownValues?.qty && contactLensFormConfig.dropdownValues.qty.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using qty options from dropdownValues:', contactLensFormConfig.dropdownValues.qty.length)
-            }
-            return contactLensFormConfig.dropdownValues.qty.map(dv => dv.value || dv.label)
-        }
-
-        // Priority 3: Use all configs to aggregate qty options (check configs first as they're more reliable)
+        // ONLY use configs arrays from API - no formFields or dropdownValues
+        // Priority 1: Use all configs to aggregate qty options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allQtyOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1094,7 +1076,7 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
-
+        
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allQtyOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1129,15 +1111,12 @@ const ProductDetail: React.FC = () => {
             }
         }
 
-        // Debug: Log why no options are available
+        // Debug: Log why no options are available (expected when API returns empty configs)
         if (import.meta.env.DEV) {
-            console.warn('⚠️ No qty options available:', {
+            console.info('ℹ️ No qty options available (API returned empty configs - this is expected):', {
                 formType,
-                hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
-                selectedConfigQty: formType === 'spherical' ? selectedConfig?.right_qty : selectedAstigmatismConfig?.right_qty,
                 configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
-                firstConfigQty: formType === 'spherical' ? sphericalConfigs[0]?.right_qty : astigmatismConfigs[0]?.right_qty
+                message: 'Dropdowns will be empty until admin adds configs via API'
             })
         }
 
@@ -1148,26 +1127,8 @@ const ProductDetail: React.FC = () => {
     const baseCurveOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
-        // Priority 1: Use formFields from API config (most reliable - admin-managed)
-        if (contactLensFormConfig?.formFields?.rightEye?.baseCurve?.options) {
-            const options = contactLensFormConfig.formFields.rightEye.baseCurve.options
-            if (options.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using base curve options from formFields:', options)
-                }
-                return options.map(opt => opt.value)
-            }
-        }
-
-        // Priority 2: Use dropdownValues from API config
-        if (contactLensFormConfig?.dropdownValues?.base_curve && contactLensFormConfig.dropdownValues.base_curve.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using base curve options from dropdownValues:', contactLensFormConfig.dropdownValues.base_curve.length)
-            }
-            return contactLensFormConfig.dropdownValues.base_curve.map(dv => dv.value || dv.label)
-        }
-
-        // Priority 3: Use all configs to aggregate base curve options (check configs first as they're more reliable)
+        // ONLY use configs arrays from API - no formFields or dropdownValues
+        // Priority 1: Use all configs to aggregate base curve options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allBCOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1201,7 +1162,7 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
-
+        
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allBCOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1236,46 +1197,25 @@ const ProductDetail: React.FC = () => {
             }
         }
 
-        // Debug: Log why no options are available
+        // Debug: Log why no options are available (expected when API returns empty configs)
         if (import.meta.env.DEV) {
-            console.warn('⚠️ No base curve options available:', {
+            console.info('ℹ️ No base curve options available (API returned empty configs - this is expected):', {
                 formType,
-                hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
-                selectedConfigBC: formType === 'spherical' ? selectedConfig?.right_base_curve : selectedAstigmatismConfig?.right_base_curve,
                 configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
-                firstConfigBC: formType === 'spherical' ? sphericalConfigs[0]?.right_base_curve : astigmatismConfigs[0]?.right_base_curve
+                message: 'Dropdowns will be empty until admin adds configs via API'
             })
         }
 
         // No fallback - return empty array if no API data
-        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
+        // All dropdown values must come ONLY from API configs arrays (sphericalConfigs or astigmatismConfigs)
         return []
     }, [contactLensFormConfig, product, isContactLens, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     const diameterOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
-        // Priority 1: Use formFields from API config (most reliable - admin-managed)
-        if (contactLensFormConfig?.formFields?.rightEye?.diameter?.options) {
-            const options = contactLensFormConfig.formFields.rightEye.diameter.options
-            if (options.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using diameter options from formFields:', options)
-                }
-                return options.map(opt => opt.value)
-            }
-        }
-
-        // Priority 2: Use dropdownValues from API config
-        if (contactLensFormConfig?.dropdownValues?.diameter && contactLensFormConfig.dropdownValues.diameter.length > 0) {
-            if (import.meta.env.DEV) {
-                console.log('✅ Using diameter options from dropdownValues:', contactLensFormConfig.dropdownValues.diameter.length)
-            }
-            return contactLensFormConfig.dropdownValues.diameter.map(dv => dv.value || dv.label)
-        }
-
-        // Priority 3: Use all configs to aggregate diameter options (check configs first as they're more reliable)
+        // ONLY use configs arrays from API - no formFields or dropdownValues
+        // Priority 1: Use all configs to aggregate diameter options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
             const allDiaOptions = new Set<string | number>()
             sphericalConfigs.forEach(config => {
@@ -1309,7 +1249,7 @@ const ProductDetail: React.FC = () => {
                 return sortedOptions.map(v => String(v))
             }
         }
-
+        
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allDiaOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1344,20 +1284,17 @@ const ProductDetail: React.FC = () => {
             }
         }
 
-        // Debug: Log why no options are available
+        // Debug: Log why no options are available (expected when API returns empty configs)
         if (import.meta.env.DEV) {
-            console.warn('⚠️ No diameter options available:', {
+            console.info('ℹ️ No diameter options available (API returned empty configs - this is expected):', {
                 formType,
-                hasFormConfig: !!contactLensFormConfig,
-                hasSelectedConfig: formType === 'spherical' ? !!selectedConfig : !!selectedAstigmatismConfig,
-                selectedConfigDia: formType === 'spherical' ? selectedConfig?.right_diameter : selectedAstigmatismConfig?.right_diameter,
                 configsCount: formType === 'spherical' ? sphericalConfigs.length : astigmatismConfigs.length,
-                firstConfigDia: formType === 'spherical' ? sphericalConfigs[0]?.right_diameter : astigmatismConfigs[0]?.right_diameter
+                message: 'Dropdowns will be empty until admin adds configs via API'
             })
         }
 
         // No fallback - return empty array if no API data
-        // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
+        // All dropdown values must come ONLY from API configs arrays (sphericalConfigs or astigmatismConfigs)
         return []
     }, [contactLensFormConfig, product, isContactLens, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
@@ -1400,14 +1337,11 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Debug: Log why no cylinder options are available
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No cylinder options available:', {
-                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
-                    selectedConfigRightCylinder: selectedAstigmatismConfig?.right_cylinder,
-                    selectedConfigLeftCylinder: selectedAstigmatismConfig?.left_cylinder,
+            // Debug: Log why no cylinder options are available (expected when API returns empty configs)
+                if (import.meta.env.DEV) {
+                console.info('ℹ️ No cylinder options available (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
-                    firstConfigRightCylinder: astigmatismConfigs[0]?.right_cylinder
+                    message: 'Dropdowns will be empty until admin adds configs via API'
                 })
             }
         }
@@ -1456,14 +1390,11 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Debug: Log why no axis options are available
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No axis options available:', {
-                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
-                    selectedConfigRightAxis: selectedAstigmatismConfig?.right_axis,
-                    selectedConfigLeftAxis: selectedAstigmatismConfig?.left_axis,
+            // Debug: Log why no axis options are available (expected when API returns empty configs)
+                if (import.meta.env.DEV) {
+                console.info('ℹ️ No axis options available (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
-                    firstConfigRightAxis: astigmatismConfigs[0]?.right_axis
+                    message: 'Dropdowns will be empty until admin adds configs via API'
                 })
             }
         }
@@ -1524,15 +1455,12 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Debug: Log why no power options are available
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No power options available for spherical form:', {
+            // Debug: Log why no power options are available (expected when API returns empty configs)
+                if (import.meta.env.DEV) {
+                console.info('ℹ️ No power options available for spherical form (API returned empty configs - this is expected):', {
                     sphericalPowerValuesCount: sphericalPowerValues.length,
-                    hasSelectedConfig: !!selectedConfig,
-                    selectedConfigRightPower: selectedConfig?.right_power?.slice(0, 5),
-                    selectedConfigLeftPower: selectedConfig?.left_power?.slice(0, 5),
                     sphericalConfigsCount: sphericalConfigs.length,
-                    firstConfigRightPower: sphericalConfigs[0]?.right_power?.slice(0, 5)
+                    message: 'Dropdowns will be empty until admin adds configs via API'
                 })
             }
 
@@ -1575,14 +1503,11 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Debug: Log why no power options are available
-            if (import.meta.env.DEV) {
-                console.warn('⚠️ No power options available for astigmatism form:', {
-                    hasSelectedAstigmatismConfig: !!selectedAstigmatismConfig,
-                    selectedConfigRightPower: selectedAstigmatismConfig?.right_power?.slice(0, 5),
-                    selectedConfigLeftPower: selectedAstigmatismConfig?.left_power?.slice(0, 5),
+            // Debug: Log why no power options are available (expected when API returns empty configs)
+                if (import.meta.env.DEV) {
+                console.info('ℹ️ No power options available for astigmatism form (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
-                    firstConfigRightPower: astigmatismConfigs[0]?.right_power?.slice(0, 5)
+                    message: 'Dropdowns will be empty until admin adds configs via API'
                 })
             }
 
