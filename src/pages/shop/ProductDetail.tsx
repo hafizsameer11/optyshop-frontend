@@ -523,9 +523,12 @@ const ProductDetail: React.FC = () => {
                         // No need to extract here since we use astigmatismConfigs directly
                     } else {
                         // For Spherical, fetch configurations which contain the dropdown values
-                        const configs = await getSphericalConfigs(numericId)
+                        // Filter by product_id to get only configs assigned to this product
+                        // This ensures dropdown values are specific to the selected product
+                        const configs = await getSphericalConfigs(numericId, product.id)
                         if (import.meta.env.DEV) {
-                            console.log('📦 Fetched spherical configs:', {
+                            console.log('📦 Fetched spherical configs (filtered by product_id):', {
+                                productId: product.id,
                                 count: configs?.length || 0,
                                 firstConfig: configs?.[0] ? {
                                     id: configs[0].id,
@@ -558,6 +561,7 @@ const ProductDetail: React.FC = () => {
                             
                             // Extract power values from all spherical configs (right_power and left_power arrays)
                             // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
+                            // These values are already filtered by product_id since configs are filtered
                             const allPowerValues = new Set<string>()
                             configs.forEach(config => {
                                 // Safely extract power values - handle null, undefined, and empty arrays
@@ -626,7 +630,8 @@ const ProductDetail: React.FC = () => {
                     
                     // Fallback: Try to fetch spherical configs directly
                     // If configs exist, assume it's a spherical form
-                    const configs = await getSphericalConfigs(numericId)
+                    // Filter by product_id to get only configs assigned to this product
+                    const configs = await getSphericalConfigs(numericId, product.id)
                     if (configs && configs.length > 0) {
                         // Create a minimal config object for spherical form
                         setContactLensFormConfig({
@@ -702,7 +707,8 @@ const ProductDetail: React.FC = () => {
                 console.error('Error fetching contact lens form config:', error)
                 // Try fallback on error as well
                 try {
-                    const configs = await getSphericalConfigs(numericId)
+                    // Filter by product_id to get only configs assigned to this product
+                    const configs = await getSphericalConfigs(numericId, product.id)
                     if (configs && configs.length > 0) {
                         setContactLensFormConfig({
                             formType: 'spherical',
@@ -1020,10 +1026,13 @@ const ProductDetail: React.FC = () => {
                     }
                     
                     // Fetch astigmatism configurations
-                    const configs = await getAstigmatismConfigs(numericId)
+                    // Filter by product_id to get only configs assigned to this product
+                    // This ensures dropdown values are specific to the selected product
+                    const configs = await getAstigmatismConfigs(numericId, product.id)
                     
                     if (import.meta.env.DEV) {
-                        console.log('📦 Fetched astigmatism configs:', {
+                        console.log('📦 Fetched astigmatism configs (filtered by product_id):', {
+                            productId: product.id,
                             count: configs?.length || 0,
                             firstConfig: configs?.[0] ? {
                                 id: configs[0].id,
@@ -1055,6 +1064,7 @@ const ProductDetail: React.FC = () => {
                         }
                         
                         // Extract unique dropdown values from all configurations
+                        // These values are already filtered by product_id since configs are filtered
                         const allPowerValues = new Set<string>()
                         const allCylinderValues = new Set<string>()
                         const allAxisValues = new Set<string>()

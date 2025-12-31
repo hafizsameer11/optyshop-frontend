@@ -318,9 +318,11 @@ export const getAstigmatismDropdownValues = async (
 /**
  * Get spherical configurations
  * @param subCategoryId - Optional filter by sub-sub-category ID
+ * @param productId - Optional filter by product ID (returns only configs assigned to this product)
  */
 export const getSphericalConfigs = async (
-  subCategoryId?: number | string
+  subCategoryId?: number | string,
+  productId?: number | string
 ): Promise<SphericalConfig[]> => {
   try {
     const response = await apiClient.get<{ 
@@ -336,7 +338,7 @@ export const getSphericalConfigs = async (
         }
       }
     }>(
-      API_ROUTES.CONTACT_LENS_FORMS.GET_SPHERICAL_CONFIGS(subCategoryId),
+      API_ROUTES.CONTACT_LENS_FORMS.GET_SPHERICAL_CONFIGS(subCategoryId, productId),
       false // Public endpoint
     )
 
@@ -366,12 +368,14 @@ export const getSphericalConfigs = async (
 /**
  * Get astigmatism configurations
  * @param subCategoryId - Optional filter by sub-sub-category ID
+ * @param productId - Optional filter by product ID (returns only configs assigned to this product)
  */
 export const getAstigmatismConfigs = async (
-  subCategoryId?: number | string
+  subCategoryId?: number | string,
+  productId?: number | string
 ): Promise<AstigmatismConfig[]> => {
   try {
-    const endpoint = API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId)
+    const endpoint = API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId, productId)
     
     // Get the base URL to show full URL in logs
     const baseURL = import.meta.env.VITE_API_BASE_URL || 

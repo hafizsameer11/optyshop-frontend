@@ -337,18 +337,20 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/contact-lens-forms/astigmatism/dropdown-values${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get astigmatism dropdown values
-    GET_SPHERICAL_CONFIGS: (subCategoryId?: number | string) => {
+    GET_SPHERICAL_CONFIGS: (subCategoryId?: number | string, productId?: number | string) => {
       const params = new URLSearchParams();
       if (subCategoryId) params.append('sub_category_id', String(subCategoryId));
+      if (productId) params.append('product_id', String(productId));
       const queryString = params.toString();
       return `/contact-lens-forms/spherical${queryString ? `?${queryString}` : ''}`;
-    }, // PUBLIC - Get spherical configurations
-    GET_ASTIGMATISM_CONFIGS: (subCategoryId?: number | string) => {
+    }, // PUBLIC - Get spherical configurations (filtered by product_id if provided)
+    GET_ASTIGMATISM_CONFIGS: (subCategoryId?: number | string, productId?: number | string) => {
       const params = new URLSearchParams();
       if (subCategoryId) params.append('sub_category_id', String(subCategoryId));
+      if (productId) params.append('product_id', String(productId));
       const queryString = params.toString();
       return `/contact-lens-forms/astigmatism${queryString ? `?${queryString}` : ''}`;
-    }, // PUBLIC - Get astigmatism configurations
+    }, // PUBLIC - Get astigmatism configurations (filtered by product_id if provided)
     
     // User endpoints (requires authentication)
     CHECKOUT: `/contact-lens-forms/checkout`, // USER - Add contact lens to cart
