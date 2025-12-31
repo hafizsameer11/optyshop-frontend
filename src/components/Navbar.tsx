@@ -175,29 +175,169 @@ const Navbar: React.FC = () => {
         <header
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
                 isScrolled 
-                    ? 'bg-blue-950/98 backdrop-blur-xl shadow-xl border-b border-blue-500/20' 
+                    ? 'bg-blue-950/98 backdrop-blur-xl shadow-lg border-b border-blue-500/20' 
                     : 'bg-blue-950/95 backdrop-blur-md'
                 }`}
             style={{ 
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex items-center w-full max-w-[1920px] mx-auto py-1.5 md:py-2 px-0.5 md:px-1 lg:px-2 gap-0 md:gap-0.5">
+            <div className="flex items-center w-full max-w-[1920px] mx-auto py-1 md:py-1.5 px-2 md:px-3 gap-2 md:gap-3">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-0.5 flex-shrink-0 group">
-                    <div className="h-5 w-5 md:h-6 md:w-6 rounded-lg flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-md">
-                        <span className="text-white font-bold text-[8px] md:text-[9px]">OS</span>
+                <Link to="/" className="flex items-center space-x-1 flex-shrink-0 group">
+                    <div className="h-6 w-6 md:h-7 md:w-7 rounded-md flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-sm">
+                        <span className="text-white font-bold text-[10px] md:text-xs">OS</span>
                     </div>
-                    <span className="text-[9px] md:text-[10px] font-bold tracking-[0.05em] md:tracking-[0.1em] uppercase text-white group-hover:text-cyan-200 transition-colors">
+                    <span className="text-xs md:text-sm font-bold tracking-wide uppercase text-white group-hover:text-cyan-200 transition-colors hidden sm:inline">
                         OPTISHOP
                     </span>
                 </Link>
 
-                {/* Desktop navigation */}
-                <nav className="hidden md:flex items-center justify-center flex-1 space-x-0 md:space-x-0 lg:space-x-0.5 mx-0 md:mx-0.5 lg:mx-0.5" ref={dropdownRef}>
+                {/* Search Bar - Prominent and Centered */}
+                <div className="flex-1 max-w-2xl mx-auto relative" ref={searchRef}>
+                    <div className="relative w-full">
+                        <input
+                            type="text"
+                            placeholder={t('navbar.search') || 'Search products, categories...'}
+                            value={searchQuery}
+                            onChange={(e) => {
+                                const value = e.target.value
+                                setSearchQuery(value)
+                                
+                                if (searchTimeoutRef.current) {
+                                    clearTimeout(searchTimeoutRef.current)
+                                }
+                                
+                                if (value.trim().length >= 2) {
+                                    setIsSearching(true)
+                                    searchTimeoutRef.current = setTimeout(async () => {
+                                        try {
+                                            const results = await searchAll(value.trim(), 8)
+                                            if (results) {
+                                                setSearchResults(results.results)
+                                                setIsSearchOpen(true)
+                                            } else {
+                                                setSearchResults([])
+                                            }
+                                        } catch (error) {
+                                            console.error('Search error:', error)
+                                            setSearchResults([])
+                                        } finally {
+                                            setIsSearching(false)
+                                        }
+                                    }, 300)
+                                } else {
+                                    setSearchResults([])
+                                    setIsSearchOpen(false)
+                                    setIsSearching(false)
+                                }
+                            }}
+                            onFocus={() => {
+                                if (searchResults.length > 0) {
+                                    setIsSearchOpen(true)
+                                }
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    setSearchQuery('')
+                                    setIsSearchOpen(false)
+                                } else if (e.key === 'Escape') {
+                                    setIsSearchOpen(false)
+                                }
+                            }}
+                            className="w-full h-8 md:h-9 px-4 py-2 pr-10 text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {isSearching ? (
+                                <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            ) : (
+                                <svg className="h-4 w-4 text-cyan-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            )}
+                        </div>
+                        
+                        {/* Search Results Dropdown */}
+                        {isSearchOpen && searchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 mt-1 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
+                                <div className="p-2">
+                                    {searchResults.map((result, index) => (
+                                        <Link
+                                            key={`${result.type}-${result.id}`}
+                                            to={result.url}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setIsSearchOpen(false)
+                                                setSearchResults([])
+                                            }}
+                                            className={`block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 ${
+                                                index > 0 ? 'mt-1' : ''
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                {result.image && (
+                                                    <img 
+                                                        src={result.image} 
+                                                        alt={result.name}
+                                                        className="w-10 h-10 object-cover rounded"
+                                                    />
+                                                )}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                                            result.type === 'product' ? 'bg-green-500/20 text-green-300' :
+                                                            result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
+                                                            result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
+                                                            'bg-cyan-500/20 text-cyan-300'
+                                                        }`}>
+                                                            {result.type === 'product' ? 'Product' :
+                                                             result.type === 'category' ? 'Category' :
+                                                             result.type === 'subcategory' ? 'Subcategory' :
+                                                             'Sub-Subcategory'}
+                                                        </span>
+                                                        <p className="text-sm font-medium text-white truncate">{result.name}</p>
+                                                    </div>
+                                                    {result.description && (
+                                                        <p className="text-xs text-cyan-400/70 mt-1 line-clamp-1">{result.description}</p>
+                                                    )}
+                                                    {result.price && (
+                                                        <p className="text-xs font-semibold text-cyan-300 mt-1">€{result.price}</p>
+                                                    )}
+                                                    {result.category && (
+                                                        <p className="text-[10px] text-cyan-400/50 mt-1">in {result.category.name}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                    {searchQuery.trim().length >= 2 && (
+                                        <Link
+                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                                            onClick={() => {
+                                                setSearchQuery('')
+                                                setIsSearchOpen(false)
+                                                setSearchResults([])
+                                            }}
+                                            className="block mt-2 px-3 py-2 text-center text-sm font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-all"
+                                        >
+                                            View all results for "{searchQuery}"
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Desktop navigation - Compact */}
+                <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0" ref={dropdownRef}>
                     <Link
                         to="/"
-                        className={`h-8 md:h-9 px-1 md:px-1.5 py-1 md:py-1.5 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap flex-shrink-0 ${
+                        className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                             isActive('/') 
                                 ? 'bg-blue-800/50 text-blue-100' 
                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -235,10 +375,10 @@ const Navbar: React.FC = () => {
                             <div className="flex items-center">
                                 <Link
                                     to={`/category/${category.slug}`}
-                                    className={`h-8 md:h-9 px-1 md:px-1.5 lg:px-2 py-1 md:py-1.5 rounded-lg text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap gap-0 ${
+                                    className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
                                         isCategoryActive(category)
-                                            ? 'bg-blue-800/50 text-blue-100 shadow-md' 
-                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200 hover:shadow-lg'
+                                            ? 'bg-blue-800/50 text-blue-100' 
+                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                     }`}
                                 >
                                     <span>{translateCategory(category)}</span>
@@ -261,7 +401,7 @@ const Navbar: React.FC = () => {
                                                 setOpenSubDropdown(null)
                                             }
                                         }}
-                                        className={`h-8 md:h-9 px-0.5 flex items-center justify-center text-white transition-all duration-200 ${
+                                        className={`h-7 px-1 flex items-center justify-center text-white transition-all duration-200 ${
                                             openDropdown === category.id
                                                 ? 'text-cyan-200' 
                                                 : 'hover:text-cyan-200'
@@ -458,163 +598,10 @@ const Navbar: React.FC = () => {
                         </div>
                     ))}
                     
-                    <Link
-                        to="/virtual-test"
-                        className="h-6 md:h-7 inline-flex items-center justify-center gap-0.5 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 text-white px-1 md:px-1.5 py-0.5 text-[8px] md:text-[9px] font-bold shadow-lg hover:from-cyan-300 hover:to-cyan-400 hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer whitespace-nowrap border border-cyan-300/50 flex-shrink-0 ml-0"
-                        title={t('navbar.virtualTryOn')}
-                    >
-                        <svg className="w-2 h-2 md:w-2.5 md:h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                        <span className="hidden lg:inline">{t('navbar.virtualTryOn')}</span>
-                        <span className="lg:hidden">Try On</span>
-                    </Link>
                 </nav>
                 
-                {/* Search Bar */}
-                <div className="hidden md:flex items-center flex-1 max-w-md mx-2 relative" ref={searchRef}>
-                    <div className="relative w-full">
-                        <input
-                            type="text"
-                            placeholder={t('navbar.search') || 'Search products, categories...'}
-                            value={searchQuery}
-                            onChange={(e) => {
-                                const value = e.target.value
-                                setSearchQuery(value)
-                                
-                                // Clear existing timeout
-                                if (searchTimeoutRef.current) {
-                                    clearTimeout(searchTimeoutRef.current)
-                                }
-                                
-                                // Debounce search
-                                if (value.trim().length >= 2) {
-                                    setIsSearching(true)
-                                    searchTimeoutRef.current = setTimeout(async () => {
-                                        try {
-                                            const results = await searchAll(value.trim(), 8)
-                                            if (results) {
-                                                setSearchResults(results.results)
-                                                setIsSearchOpen(true)
-                                            } else {
-                                                setSearchResults([])
-                                            }
-                                        } catch (error) {
-                                            console.error('Search error:', error)
-                                            setSearchResults([])
-                                        } finally {
-                                            setIsSearching(false)
-                                        }
-                                    }, 300)
-                                } else {
-                                    setSearchResults([])
-                                    setIsSearchOpen(false)
-                                    setIsSearching(false)
-                                }
-                            }}
-                            onFocus={() => {
-                                if (searchResults.length > 0) {
-                                    setIsSearchOpen(true)
-                                }
-                            }}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
-                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                                    setSearchQuery('')
-                                    setIsSearchOpen(false)
-                                } else if (e.key === 'Escape') {
-                                    setIsSearchOpen(false)
-                                }
-                            }}
-                            className="w-full h-8 md:h-9 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-sm bg-blue-950/60 border border-cyan-400/30 rounded-lg text-white placeholder-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                            {isSearching ? (
-                                <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            ) : (
-                                <svg className="h-4 w-4 text-cyan-400/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            )}
-                        </div>
-                        
-                        {/* Search Results Dropdown */}
-                        {isSearchOpen && searchResults.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 mt-1 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
-                                <div className="p-2">
-                                    {searchResults.map((result, index) => (
-                                        <Link
-                                            key={`${result.type}-${result.id}`}
-                                            to={result.url}
-                                            onClick={() => {
-                                                setSearchQuery('')
-                                                setIsSearchOpen(false)
-                                                setSearchResults([])
-                                            }}
-                                            className={`block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 ${
-                                                index > 0 ? 'mt-1' : ''
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                {result.image && (
-                                                    <img 
-                                                        src={result.image} 
-                                                        alt={result.name}
-                                                        className="w-10 h-10 object-cover rounded"
-                                                    />
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                                            result.type === 'product' ? 'bg-green-500/20 text-green-300' :
-                                                            result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
-                                                            result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
-                                                            'bg-cyan-500/20 text-cyan-300'
-                                                        }`}>
-                                                            {result.type === 'product' ? 'Product' :
-                                                             result.type === 'category' ? 'Category' :
-                                                             result.type === 'subcategory' ? 'Subcategory' :
-                                                             'Sub-Subcategory'}
-                                                        </span>
-                                                        <p className="text-sm font-medium text-white truncate">{result.name}</p>
-                                                    </div>
-                                                    {result.description && (
-                                                        <p className="text-xs text-cyan-400/70 mt-1 line-clamp-1">{result.description}</p>
-                                                    )}
-                                                    {result.price && (
-                                                        <p className="text-xs font-semibold text-cyan-300 mt-1">€{result.price}</p>
-                                                    )}
-                                                    {result.category && (
-                                                        <p className="text-[10px] text-cyan-400/50 mt-1">in {result.category.name}</p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                    {searchQuery.trim().length >= 2 && (
-                                        <Link
-                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
-                                            onClick={() => {
-                                                setSearchQuery('')
-                                                setIsSearchOpen(false)
-                                                setSearchResults([])
-                                            }}
-                                            className="block mt-2 px-3 py-2 text-center text-sm font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-all"
-                                        >
-                                            View all results for "{searchQuery}"
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-                
-                {/* Right side actions */}
-                <div className="flex items-center gap-0 md:gap-0.5 flex-shrink-0 ml-0 md:ml-0.5 pr-0 md:pr-0.5 lg:pr-1">
+                {/* Right side actions - Compact */}
+                <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
                     {/* Language Switcher - Always visible */}
                     <div className="flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
@@ -632,7 +619,7 @@ const Navbar: React.FC = () => {
                     
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-8 w-8 rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
+                        className="relative inline-flex flex-col items-center justify-center md:hidden h-7 w-7 rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -654,7 +641,7 @@ const Navbar: React.FC = () => {
                     {/* Login Button */}
                     <Link
                         to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-8 md:h-9 min-w-[45px] rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-1.5 md:px-2 py-1 md:py-1.5 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        className="hidden md:inline-flex items-center justify-center h-7 min-w-[60px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
                     >
                         {t('navbar.login')}
                     </Link>
