@@ -573,8 +573,13 @@ const ProductDetail: React.FC = () => {
                                 })
                             }
                         } else {
-                            // No configs found, set empty values
+                            // No configs found, set empty values and clear configs
+                            setSphericalConfigs([])
+                            setSelectedConfig(null)
                             setSphericalPowerValues([])
+                            if (import.meta.env.DEV) {
+                                console.warn('⚠️ No spherical configs found - clearing all config data')
+                            }
                         }
                     }
                 } else {
@@ -648,8 +653,12 @@ const ProductDetail: React.FC = () => {
                             })
                         }
                     } else {
+                        // No configs found in fallback, clear all config data
+                        setSphericalConfigs([])
+                        setSelectedConfig(null)
+                        setSphericalPowerValues([])
                         if (import.meta.env.DEV) {
-                            console.warn('⚠️ No spherical configs found either for sub-category:', subCategoryId)
+                            console.warn('⚠️ No spherical configs found either for sub-category:', subCategoryId, '- clearing all config data')
                         }
                     }
                 }
@@ -1241,7 +1250,7 @@ const ProductDetail: React.FC = () => {
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
         return []
-    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig, product, isContactLens, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     const diameterOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
@@ -1365,7 +1374,7 @@ const ProductDetail: React.FC = () => {
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API (formFields, dropdownValues, or configs)
         return []
-    }, [contactLensFormConfig, product, isContactLens, subSubcategoryOptions, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig, product, isContactLens, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     // Generate cylinder options from astigmatism configs
     const cylinderOptions = useMemo(() => {
@@ -1427,14 +1436,6 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Priority 3: Use sub-subcategory options if available (aggregated from products)
-            if (subSubcategoryOptions?.cylinderOptions && subSubcategoryOptions.cylinderOptions.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using cylinder options from sub-subcategory options:', subSubcategoryOptions.cylinderOptions.length, 'values')
-                }
-                return subSubcategoryOptions.cylinderOptions.map((v: number) => String(v.toFixed(2)))
-            }
-
             // Debug: Log why no cylinder options are available
             if (import.meta.env.DEV) {
                 console.warn('⚠️ No cylinder options available:', {
@@ -1450,7 +1451,7 @@ const ProductDetail: React.FC = () => {
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API
         return []
-    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     // Generate axis options from astigmatism configs
     const axisOptions = useMemo(() => {
@@ -1512,14 +1513,6 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Priority 3: Use sub-subcategory options if available (aggregated from products)
-            if (subSubcategoryOptions?.axisOptions && subSubcategoryOptions.axisOptions.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using axis options from sub-subcategory options:', subSubcategoryOptions.axisOptions.length, 'values')
-                }
-                return subSubcategoryOptions.axisOptions.map((v: number) => String(v))
-            }
-
             // Debug: Log why no axis options are available
             if (import.meta.env.DEV) {
                 console.warn('⚠️ No axis options available:', {
@@ -1535,7 +1528,7 @@ const ProductDetail: React.FC = () => {
         // No fallback - return empty array if no API data
         // All dropdown values must come from admin-managed API
         return []
-    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     // Parse power range to generate options (memoized)
     // CRITICAL: Astigmatism dropdown values API should NEVER be used for Spherical forms
@@ -1607,16 +1600,6 @@ const ProductDetail: React.FC = () => {
                     }
                     return powerArray
                 }
-            }
-
-            // Priority 2: Use sub-subcategory options as fallback (aggregated from products)
-            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
-                }
-                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
-                    return parseFloat(b) - parseFloat(a)
-                })
             }
 
             // Debug: Log why no power options are available
@@ -1691,16 +1674,6 @@ const ProductDetail: React.FC = () => {
                 }
             }
 
-            // Priority 3: Use sub-subcategory options as fallback (aggregated from products)
-            if (subSubcategoryOptions?.powerOptions && subSubcategoryOptions.powerOptions.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from sub-subcategory options (fallback):', subSubcategoryOptions.powerOptions.length, 'values')
-                }
-                return [...subSubcategoryOptions.powerOptions].sort((a: string, b: string) => {
-                    return parseFloat(b) - parseFloat(a)
-                })
-            }
-
             // Debug: Log why no power options are available
             if (import.meta.env.DEV) {
                 console.warn('⚠️ No power options available for astigmatism form:', {
@@ -1718,7 +1691,7 @@ const ProductDetail: React.FC = () => {
 
         // If form type is not determined yet, return empty array
         return []
-    }, [contactLensFormConfig?.formType, sphericalPowerValues, selectedAstigmatismConfig, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig?.formType, sphericalPowerValues, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
     // Initialize contact lens form when product loads
     useEffect(() => {
