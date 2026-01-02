@@ -2739,12 +2739,8 @@ const ProductDetail: React.FC = () => {
                                             
                                             return (
                                                 <div className="mb-8">
-                                                    <label className="block text-xs text-gray-500 mb-2">
-                                                        Select Pack Size (Units)
-                                                    </label>
                                                     <div className="flex flex-wrap gap-3">
                                                         {availableUnits.map((unit: number) => {
-                                                            const unitPrice = (currentConfig as any).unit_prices?.[String(unit)]
                                                             const isSelected = selectedUnit === unit
                                                             
                                                             return (
@@ -2755,30 +2751,17 @@ const ProductDetail: React.FC = () => {
                                                                         setSelectedUnit(unit)
                                                                         setSelectedImageIndex(0) // Reset to first image when unit changes
                                                                     }}
-                                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
+                                                                    className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${
                                                                         isSelected
-                                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                                            ? 'bg-white text-gray-900 border-gray-900 shadow-md'
+                                                                            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                                                                     }`}
                                                                 >
-                                                                    {unitPrice !== undefined && typeof unitPrice === 'number'
-                                                                        ? `Unit ${unit} - €${unitPrice.toFixed(2)}`
-                                                                        : `Unit ${unit}`
-                                                                    }
+                                                                    unit {unit}
                                                                 </button>
                                                             )
                                                         })}
                                                     </div>
-                                                    {selectedUnit && (
-                                                        <p className="text-xs text-blue-600 font-medium mt-2">
-                                                            Selected: Unit {selectedUnit} (Pack Size)
-                                                            {(currentConfig as any).unit_prices?.[String(selectedUnit)] && (
-                                                                <span className="ml-2 text-gray-600">
-                                                                    - €{(currentConfig as any).unit_prices[String(selectedUnit)].toFixed(2)}
-                                                                </span>
-                                                            )}
-                                                        </p>
-                                                    )}
                                                 </div>
                                             )
                                         })()}
@@ -3663,32 +3646,132 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             )}
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Left Column */}
-                                <div className="space-y-4">
-                                    {p.can_sleep_with !== undefined && (
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-semibold text-gray-700">{t('shop.sleepingWithLenses')}:</span>
-                                            <span className="text-gray-900 font-medium">{p.can_sleep_with ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
+                            {/* Product Specifications - Two Column Layout */}
+                            <div className="space-y-0">
+                                {(() => {
+                                    const specs: Array<{ label: string; value: string | number | null | undefined; show?: boolean }> = []
+                                    
+                                    // Producer (contact_lens_brand or brand)
+                                    if ((product as any).contact_lens_brand || product.brand) {
+                                        specs.push({
+                                            label: 'Producer',
+                                            value: (product as any).contact_lens_brand || product.brand
+                                        })
+                                    }
+                                    
+                                    // Brand (if different from producer, or use brand field)
+                                    if (product.brand && (product as any).contact_lens_brand !== product.brand) {
+                                        specs.push({
+                                            label: 'Brand',
+                                            value: product.brand
+                                        })
+                                    }
+                                    
+                                    // Material
+                                    if ((product as any).contact_lens_material) {
+                                        specs.push({
+                                            label: 'Material',
+                                            value: (product as any).contact_lens_material
+                                        })
+                                    }
+                                    
+                                    // Product Type
+                                    if ((product as any).contact_lens_type) {
+                                        specs.push({
+                                            label: 'Product Type',
+                                            value: (product as any).contact_lens_type
+                                        })
+                                    }
+                                    
+                                    // Replacement Frequency
+                                    if ((product as any).replacement_frequency) {
+                                        specs.push({
+                                            label: 'Replacement Frequency',
+                                            value: (product as any).replacement_frequency
+                                        })
+                                    }
+                                    
+                                    // Water Content
+                                    if ((product as any).water_content !== undefined && (product as any).water_content !== null) {
+                                        specs.push({
+                                            label: 'Water Content',
+                                            value: typeof (product as any).water_content === 'number' 
+                                                ? `${(product as any).water_content}%`
+                                                : (product as any).water_content
+                                        })
+                                    }
+                                    
+                                    // Powers Range
+                                    if ((product as any).powers_range) {
+                                        const powersValue = typeof (product as any).powers_range === 'object'
+                                            ? JSON.stringify((product as any).powers_range)
+                                            : (product as any).powers_range
+                                        specs.push({
+                                            label: 'Powers',
+                                            value: powersValue
+                                        })
+                                    }
+                                    
+                                    // Sleeping with Lenses
+                                    if (product.can_sleep_with !== undefined) {
+                                        specs.push({
+                                            label: 'Sleeping with Lenses',
+                                            value: product.can_sleep_with ? 'si' : 'no'
+                                        })
+                                    }
+                                    
+                                    // Medical Device
+                                    if (product.is_medical_device !== undefined) {
+                                        specs.push({
+                                            label: 'Medical Device',
+                                            value: product.is_medical_device ? 'si' : 'no'
+                                        })
+                                    }
+                                    
+                                    // UV Filter
+                                    if (product.has_uv_filter !== undefined) {
+                                        specs.push({
+                                            label: 'UV Filter',
+                                            value: product.has_uv_filter ? 'si' : 'no'
+                                        })
+                                    }
+                                    
+                                    if (specs.length === 0) return null
+                                    
+                                    // Split specs into two columns
+                                    const leftColumn = specs.filter((_, index) => index % 2 === 0)
+                                    const rightColumn = specs.filter((_, index) => index % 2 === 1)
+                                    
+                                    return (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+                                            {/* Left Column */}
+                                            <div className="space-y-0 pr-4 md:pr-8">
+                                                {leftColumn.map((spec, index) => (
+                                                    <div 
+                                                        key={index}
+                                                        className={`flex items-center justify-between py-3 ${index < leftColumn.length - 1 ? 'border-b border-gray-100' : ''}`}
+                                                    >
+                                                        <span className="font-semibold text-gray-700">{spec.label}:</span>
+                                                        <span className="text-gray-900 font-medium text-right ml-4">{spec.value || '-'}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Right Column */}
+                                            <div className="space-y-0 pl-4 md:pl-8">
+                                                {rightColumn.map((spec, index) => (
+                                                    <div 
+                                                        key={index}
+                                                        className={`flex items-center justify-between py-3 ${index < rightColumn.length - 1 ? 'border-b border-gray-100' : ''}`}
+                                                    >
+                                                        <span className="font-semibold text-gray-700">{spec.label}:</span>
+                                                        <span className="text-gray-900 font-medium text-right ml-4">{spec.value || '-'}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
-                                    )}
-                                    {p.has_uv_filter !== undefined && (
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-semibold text-gray-700">{t('shop.uvFilter')}:</span>
-                                            <span className="text-gray-900 font-medium">{p.has_uv_filter ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Right Column */}
-                                <div className="space-y-4">
-                                    {p.is_medical_device !== undefined && (
-                                        <div className="flex items-center justify-between">
-                                            <span className="font-semibold text-gray-700">{t('shop.medicalDevice')}:</span>
-                                            <span className="text-gray-900 font-medium">{p.is_medical_device ? t('common.yes', 'YES') : t('common.no', 'NO')}</span>
-                                        </div>
-                                    )}
-                                </div>
+                                    )
+                                })()}
                             </div>
                         </div>
                     </div>

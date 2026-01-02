@@ -66,21 +66,28 @@
 
 /* Prevent search bar width expansion during loading */
 .navbar-search-container {
-    flex: 1 1 0%;
-    max-width: 42rem;
-    min-width: 0;
-    width: 100%;
-    overflow: hidden;
+    flex: 1 1 0% !important;
+    flex-basis: 0% !important;
+    flex-grow: 1 !important;
+    flex-shrink: 1 !important;
+    max-width: 42rem !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    position: relative;
 }
 
 .navbar-search-container > div {
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
 }
 
 .navbar-search-container input {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 1 !important;
 }
