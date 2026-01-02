@@ -194,7 +194,7 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Search Bar - Prominent and Centered */}
-                <div className="flex-1 max-w-2xl mx-auto relative" ref={searchRef}>
+                <div className="flex-1 max-w-2xl mx-auto relative min-w-0" ref={searchRef}>
                     <div className="relative w-full">
                         <input
                             type="text"
@@ -246,7 +246,7 @@ const Navbar: React.FC = () => {
                                     setIsSearchOpen(false)
                                 }
                             }}
-                            className="w-full h-8 md:h-9 px-4 py-2 pr-10 text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-all"
+                            className="w-full h-8 md:h-9 px-4 py-2 pr-10 text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-colors"
                         />
                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                             {isSearching ? (
