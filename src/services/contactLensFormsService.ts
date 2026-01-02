@@ -72,8 +72,9 @@ export interface SphericalConfig {
   is_active?: boolean
   created_at?: string
   updated_at?: string
-  unit_prices?: Record<string, number> // JSON object mapping unit (qty) to price, e.g., {"30": 990.00, "60": 1500.00}
-  unit_images?: Record<string, string[]> // JSON object mapping unit (qty) to image URLs, e.g., {"30": ["url1", "url2"], "60": ["url3"]}
+  available_units?: number[] // JSON array of available units (pack sizes), e.g., [10, 20, 30] - independent from qty
+  unit_prices?: Record<string, number> // JSON object mapping unit to price, e.g., {"10": 32.00, "20": 60.00, "30": 90.00}
+  unit_images?: Record<string, string[]> // JSON object mapping unit to image URLs, e.g., {"10": ["url1"], "20": ["url2"], "30": ["url3"]}
 }
 
 export interface AstigmatismConfig {
@@ -127,8 +128,9 @@ export interface AstigmatismConfig {
     name: string
     slug: string
   }
-  unit_prices?: Record<string, number> // JSON object mapping unit (qty) to price, e.g., {"30": 990.00, "60": 1500.00}
-  unit_images?: Record<string, string[]> // JSON object mapping unit (qty) to image URLs, e.g., {"30": ["url1", "url2"], "60": ["url3"]}
+  available_units?: number[] // JSON array of available units (pack sizes), e.g., [10, 20, 30] - independent from qty
+  unit_prices?: Record<string, number> // JSON object mapping unit to price, e.g., {"10": 32.00, "20": 60.00, "30": 90.00}
+  unit_images?: Record<string, string[]> // JSON object mapping unit to image URLs, e.g., {"10": ["url1"], "20": ["url2"], "30": ["url3"]}
 }
 
 export interface ContactLensCheckoutRequest {
@@ -148,6 +150,8 @@ export interface ContactLensCheckoutRequest {
   right_cylinder?: string
   left_axis?: string | number  // API expects string (e.g., "180", "90")
   right_axis?: string | number  // API expects string (e.g., "180", "90")
+  // Unit selection (pack size) - independent from qty
+  selected_unit?: number | string  // Selected unit (pack size), e.g., 10, 20, 30
 }
 
 export interface ContactLensCheckoutResponse {

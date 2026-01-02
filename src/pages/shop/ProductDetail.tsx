@@ -95,7 +95,8 @@ const ProductDetail: React.FC = () => {
     const [selectedAstigmatismConfig, setSelectedAstigmatismConfig] = useState<AstigmatismConfig | null>(null)
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
     
-    // Unit-based pricing and images state
+    // Unit-based pricing and images state (independent from qty)
+    const [selectedUnit, setSelectedUnit] = useState<number | null>(null) // Selected unit (pack size), e.g., 10, 20, 30
     const [unitPrice, setUnitPrice] = useState<number | null>(null)
     const [unitImages, setUnitImages] = useState<string[]>([])
     const [loadingUnitData, setLoadingUnitData] = useState(false)
@@ -1820,25 +1821,34 @@ const ProductDetail: React.FC = () => {
         }
     }
 
-    // Fetch unit price and images when quantity changes
+    // Auto-select first available unit when config loads or changes
+    useEffect(() => {
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        if (currentConfig && isContactLens) {
+            const availableUnits = (currentConfig as any).available_units
+            if (availableUnits && Array.isArray(availableUnits) && availableUnits.length > 0) {
+                // If no unit selected, or selected unit is not in available units, select first available
+                if (!selectedUnit || !availableUnits.includes(selectedUnit)) {
+                    setSelectedUnit(availableUnits[0])
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Auto-selected first available unit:', availableUnits[0])
+                    }
+                }
+            } else {
+                // No available units, clear selection
+                setSelectedUnit(null)
+            }
+        } else {
+            // No config, clear selection
+            setSelectedUnit(null)
+        }
+    }, [selectedConfig, selectedAstigmatismConfig, isContactLens])
+
+    // Fetch unit price and images when selected unit changes (independent from qty)
     useEffect(() => {
         const fetchUnitData = async () => {
-            // Only fetch if we have a valid config and quantity
             const currentConfig = selectedConfig || selectedAstigmatismConfig
-            if (!currentConfig || !isContactLens) {
-                setUnitPrice(null)
-                setUnitImages([])
-                return
-            }
-
-            // Use right_qty if enabled, otherwise left_qty, or fallback to first available qty
-            const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
-                ? contactLensFormData.right_qty
-                : leftEyeEnabled && contactLensFormData.left_qty > 0
-                ? contactLensFormData.left_qty
-                : null
-
-            if (!selectedQty || selectedQty === 0) {
+            if (!currentConfig || !isContactLens || !selectedUnit) {
                 setUnitPrice(null)
                 setUnitImages([])
                 return
@@ -1855,14 +1865,14 @@ const ProductDetail: React.FC = () => {
 
             setLoadingUnitData(true)
             try {
-                const unitData = await getUnitPriceAndImages(currentConfig.id, selectedQty)
+                const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
                 if (unitData && unitData.data) {
                     setUnitPrice(unitData.data.price)
                     setUnitImages(unitData.data.images || [])
                     if (import.meta.env.DEV) {
                         console.log('✅ Unit price and images fetched:', {
                             configId: currentConfig.id,
-                            unit: selectedQty,
+                            unit: selectedUnit,
                             price: unitData.data.price,
                             imagesCount: unitData.data.images?.length || 0
                         })
@@ -1884,10 +1894,7 @@ const ProductDetail: React.FC = () => {
     }, [
         selectedConfig,
         selectedAstigmatismConfig,
-        contactLensFormData.right_qty,
-        contactLensFormData.left_qty,
-        rightEyeEnabled,
-        leftEyeEnabled,
+        selectedUnit,
         isContactLens
     ])
 
@@ -2103,7 +2110,9 @@ const ProductDetail: React.FC = () => {
                     right_axis: contactLensFormData.right_axis || undefined, // Keep as string
                     left_cylinder: contactLensFormData.left_cylinder,
                     left_axis: contactLensFormData.left_axis || undefined // Keep as string
-                })
+                }),
+                // Unit selection (pack size) - independent from qty
+                selected_unit: selectedUnit || undefined
             }
 
             // Use new contact lens checkout API endpoint (requires authentication)
@@ -2314,18 +2323,11 @@ const ProductDetail: React.FC = () => {
                                                     productImage = getProductImageUrl(product, selectedImageIndex)
                                                 }
 
-                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                                const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
-                                                    ? contactLensFormData.right_qty
-                                                    : leftEyeEnabled && contactLensFormData.left_qty > 0
-                                                    ? contactLensFormData.left_qty
-                                                    : null
-
                                                 return (
                                                     <>
-                                                        {isUsingUnitImages && selectedQty && (
+                                                        {isUsingUnitImages && selectedUnit && (
                                                             <div className="absolute top-2 left-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10 shadow-lg">
-                                                                Unit {selectedQty} Images
+                                                                Unit {selectedUnit} Pack Images
                                                             </div>
                                                         )}
                                                         <img
@@ -2375,18 +2377,13 @@ const ProductDetail: React.FC = () => {
                                             </p>
                                             {(() => {
                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                                const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
-                                                    ? contactLensFormData.right_qty
-                                                    : leftEyeEnabled && contactLensFormData.left_qty > 0
-                                                    ? contactLensFormData.left_qty
-                                                    : null
                                                 const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
                                                 
                                                 return (
                                                     <>
-                                                        {selectedQty && hasUnitPricing && (
+                                                        {selectedUnit && hasUnitPricing && (
                                                             <p className="text-xs text-blue-600 font-medium mb-2">
-                                                                Selected: Unit {selectedQty}
+                                                                Selected Pack Size: Unit {selectedUnit}
                                                             </p>
                                                         )}
                                                         <div className="flex items-baseline gap-3">
@@ -2395,9 +2392,9 @@ const ProductDetail: React.FC = () => {
                                                                     <p className="text-3xl font-bold text-blue-950">
                                                                         €{calculateContactLensTotal.toFixed(2)}
                                                                     </p>
-                                                                    {unitPrice !== null && selectedQty && (
+                                                                    {unitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (€{unitPrice.toFixed(2)} per unit {selectedQty})
+                                                                            (€{unitPrice.toFixed(2)} per pack - Unit {selectedUnit})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2417,9 +2414,9 @@ const ProductDetail: React.FC = () => {
                                                                             €{unitPrice !== null ? unitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
                                                                         </p>
                                                                     )}
-                                                                    {unitPrice !== null && selectedQty && (
+                                                                    {unitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Unit {selectedQty})
+                                                                            (Pack Size: Unit {selectedUnit})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2428,13 +2425,8 @@ const ProductDetail: React.FC = () => {
                                                         {loadingUnitData && (
                                                             <div className="flex items-center gap-2 mt-2">
                                                                 <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                                                                <p className="text-xs text-gray-500">Loading unit price and images...</p>
+                                                                <p className="text-xs text-gray-500">Loading pack price and images...</p>
                                                             </div>
-                                                        )}
-                                                        {contactLensFormData.unit && calculateContactLensTotal > 0 && !loadingUnitData && (
-                                                            <p className="text-xs text-gray-500 mt-2">
-                                                                Per {contactLensFormData.unit}
-                                                            </p>
                                                         )}
                                                     </>
                                                 )
@@ -2657,44 +2649,55 @@ const ProductDetail: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {/* Unit Selection */}
-                                        <div className="mb-8">
-                                            <label className="block text-xs text-gray-500 mb-2">
-                                                Purchase Type
-                                            </label>
-                                            <div className="flex flex-wrap gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleContactLensFieldChange('unit', 'unit')}
-                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'unit'
-                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                                        }`}
-                                                >
-                                                    Unit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleContactLensFieldChange('unit', 'box')}
-                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'box'
-                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                                        }`}
-                                                >
-                                                    Box
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleContactLensFieldChange('unit', 'pack')}
-                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${contactLensFormData.unit === 'pack'
-                                                        ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
-                                                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
-                                                        }`}
-                                                >
-                                                    Pack
-                                                </button>
-                                            </div>
-                                        </div>
+                                        {/* Unit Selection (Pack Sizes) - Independent from Qty */}
+                                        {(() => {
+                                            const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                            const availableUnits = currentConfig ? ((currentConfig as any).available_units || []) : []
+                                            
+                                            if (availableUnits.length === 0) {
+                                                return null // No units available, don't show unit selection
+                                            }
+                                            
+                                            return (
+                                                <div className="mb-8">
+                                                    <label className="block text-xs text-gray-500 mb-2">
+                                                        Select Pack Size (Units)
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {availableUnits.map((unit: number) => {
+                                                            const unitPrice = (currentConfig as any).unit_prices?.[String(unit)]
+                                                            const isSelected = selectedUnit === unit
+                                                            
+                                                            return (
+                                                                <button
+                                                                    key={unit}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedUnit(unit)
+                                                                        setSelectedImageIndex(0) // Reset to first image when unit changes
+                                                                    }}
+                                                                    className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all duration-200 border-2 shadow-sm ${
+                                                                        isSelected
+                                                                            ? 'bg-gradient-to-r from-blue-950 to-blue-900 text-white border-blue-950 shadow-md transform scale-105'
+                                                                            : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300 hover:border-blue-300 hover:shadow-md'
+                                                                    }`}
+                                                                >
+                                                                    {unitPrice !== undefined && typeof unitPrice === 'number'
+                                                                        ? `Unit ${unit} - €${unitPrice.toFixed(2)}`
+                                                                        : `Unit ${unit}`
+                                                                    }
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                    {selectedUnit && (
+                                                        <p className="text-xs text-blue-600 font-medium mt-2">
+                                                            Selected: Unit {selectedUnit} (Pack Size)
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             {/* Right Eye Section */}
@@ -2727,28 +2730,17 @@ const ProductDetail: React.FC = () => {
                                                             onChange={(e) => {
                                                                 const selectedValue = parseInt(e.target.value) || 1
                                                                 handleContactLensFieldChange('right_qty', selectedValue)
-                                                                // Reset image index when unit changes
-                                                                setSelectedImageIndex(0)
                                                             }}
                                                             disabled={!rightEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <option value="00.00">Select Unit</option>
-                                                            {qtyOptions.map((option: number | string) => {
-                                                                const optionValue = typeof option === 'string' ? parseFloat(option) : option
-                                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
-                                                                const unitPrice = hasUnitPricing ? (currentConfig as any).unit_prices?.[String(option)] : undefined
-                                                                return (
-                                                                    <option key={option} value={option}>
-                                                                        {unitPrice !== undefined && typeof unitPrice === 'number'
-                                                                            ? `Unit ${option} - €${unitPrice.toFixed(2)}`
-                                                                            : `Unit ${option}`
-                                                                        }
-                                                                    </option>
-                                                                )
-                                                            })}
+                                                            <option value="00.00">Select Quantity</option>
+                                                            {qtyOptions.map((option: number | string) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                         {contactLensErrors.right_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
@@ -2928,28 +2920,17 @@ const ProductDetail: React.FC = () => {
                                                             onChange={(e) => {
                                                                 const selectedValue = parseInt(e.target.value) || 1
                                                                 handleContactLensFieldChange('left_qty', selectedValue)
-                                                                // Reset image index when unit changes
-                                                                setSelectedImageIndex(0)
                                                             }}
                                                             disabled={!leftEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <option value="00.00">Select Unit</option>
-                                                            {qtyOptions.map((option: number | string) => {
-                                                                const optionValue = typeof option === 'string' ? parseFloat(option) : option
-                                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
-                                                                const unitPrice = hasUnitPricing ? (currentConfig as any).unit_prices?.[String(option)] : undefined
-                                                                return (
-                                                                    <option key={option} value={option}>
-                                                                        {unitPrice !== undefined && typeof unitPrice === 'number'
-                                                                            ? `Unit ${option} - €${unitPrice.toFixed(2)}`
-                                                                            : `Unit ${option}`
-                                                                        }
-                                                                    </option>
-                                                                )
-                                                            })}
+                                                            <option value="00.00">Select Quantity</option>
+                                                            {qtyOptions.map((option: number | string) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
                                                         </select>
                                                         {contactLensErrors.left_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
