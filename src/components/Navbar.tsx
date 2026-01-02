@@ -194,7 +194,10 @@ const Navbar: React.FC = () => {
                 </Link>
 
                 {/* Search Bar - Prominent and Centered */}
-                <div className="flex-1 max-w-2xl mx-auto relative min-w-0" ref={searchRef}>
+                <div 
+                    className="navbar-search-container flex-1 max-w-2xl mx-auto relative" 
+                    ref={searchRef}
+                >
                     <div className="relative w-full">
                         <input
                             type="text"

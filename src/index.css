@@ -63,3 +63,24 @@
         transform: scale(1);
     }
 }
+
+/* Prevent search bar width expansion during loading */
+.navbar-search-container {
+    flex: 1 1 0%;
+    max-width: 42rem;
+    min-width: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+.navbar-search-container > div {
+    width: 100%;
+    max-width: 100%;
+}
+
+.navbar-search-container input {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}

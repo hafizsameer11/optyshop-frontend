@@ -1708,14 +1708,35 @@ const ProductDetail: React.FC = () => {
             return 0
         }
 
-        // Use unit-specific price if available, otherwise use base unit price
-        const pricePerUnit = unitPrice !== null ? unitPrice : getUnitPrice(contactLensFormData.unit)
+        // Get unit price: priority 1) unit_prices from config (immediate), 2) fetched unitPrice, 3) base price
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        let pricePerPack = 0
+        
+        // Priority 1: Use unit price directly from config (immediate, no API call needed)
+        if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
+            const configUnitPrice = (currentConfig as any).unit_prices[String(selectedUnit)]
+            if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
+                pricePerPack = configUnitPrice
+            } else if (unitPrice !== null) {
+                // Fallback to fetched unit price (from API)
+                pricePerPack = unitPrice
+            } else {
+                // Fallback to base price
+                pricePerPack = getUnitPrice(contactLensFormData.unit)
+            }
+        } else if (unitPrice !== null) {
+            // Use fetched unit price (from API) if no config unit_prices
+            pricePerPack = unitPrice
+        } else {
+            // No unit selected or no unit pricing, use base price
+            pricePerPack = getUnitPrice(contactLensFormData.unit)
+        }
 
-        // For unit selection, calculate total based on quantity
-        // If unit is 'box' or 'pack', the price is already for the whole box/pack
-        // So we multiply by quantity of boxes/packs
-        const rightTotal = pricePerUnit * (rightEyeEnabled ? contactLensFormData.right_qty : 0)
-        const leftTotal = pricePerUnit * (leftEyeEnabled ? contactLensFormData.left_qty : 0)
+        // Calculate total: unit price (pack price) * (right_qty + left_qty)
+        // Example: Unit 30 pack = €9.00, right_qty=1, left_qty=1 → Total = €9.00 * (1+1) = €18.00
+        // Note: Price changes when unit is selected, not when qty changes
+        const rightTotal = pricePerPack * (rightEyeEnabled ? contactLensFormData.right_qty : 0)
+        const leftTotal = pricePerPack * (leftEyeEnabled ? contactLensFormData.left_qty : 0)
 
         return rightTotal + leftTotal
     }, [
@@ -1726,9 +1747,15 @@ const ProductDetail: React.FC = () => {
         contactLensFormData.left_qty,
         contactLensFormData.unit,
         unitPrice,
+        selectedUnit,
+        selectedConfig,
+        selectedAstigmatismConfig,
         rightEyeEnabled,
         leftEyeEnabled,
         getUnitPrice
+        // Note: Price updates when:
+        // 1. Unit is selected (selectedUnit changes) → unit price changes
+        // 2. Qty changes (right_qty/left_qty changes) → total = unit_price * qty changes
     ])
 
     // Helper function to check if product is out of stock (MUST be before conditional returns)
@@ -1844,9 +1871,9 @@ const ProductDetail: React.FC = () => {
         }
     }, [selectedConfig, selectedAstigmatismConfig, isContactLens])
 
-    // Fetch unit price and images when selected unit changes (independent from qty)
+    // Update unit price and images when selected unit changes (independent from qty)
     useEffect(() => {
-        const fetchUnitData = async () => {
+        const updateUnitData = async () => {
             const currentConfig = selectedConfig || selectedAstigmatismConfig
             if (!currentConfig || !isContactLens || !selectedUnit) {
                 setUnitPrice(null)
@@ -1854,43 +1881,68 @@ const ProductDetail: React.FC = () => {
                 return
             }
 
-            // Check if config has unit_prices or unit_images
-            const hasUnitPricing = (currentConfig as any).unit_prices || (currentConfig as any).unit_images
-            if (!hasUnitPricing) {
-                // No unit-based pricing configured, use base price
-                setUnitPrice(null)
-                setUnitImages([])
-                return
-            }
-
-            setLoadingUnitData(true)
-            try {
-                const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
-                if (unitData && unitData.data) {
-                    setUnitPrice(unitData.data.price)
-                    setUnitImages(unitData.data.images || [])
-                    if (import.meta.env.DEV) {
-                        console.log('✅ Unit price and images fetched:', {
-                            configId: currentConfig.id,
-                            unit: selectedUnit,
-                            price: unitData.data.price,
-                            imagesCount: unitData.data.images?.length || 0
-                        })
+            // Priority 1: Use unit price directly from config (immediate, no API call needed)
+            const configUnitPrice = (currentConfig as any).unit_prices?.[String(selectedUnit)]
+            if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
+                // Set price immediately from config
+                setUnitPrice(configUnitPrice)
+                if (import.meta.env.DEV) {
+                    console.log('✅ Unit price set from config (immediate):', {
+                        unit: selectedUnit,
+                        price: configUnitPrice
+                    })
+                }
+            } else {
+                // No unit price in config, try to fetch from API
+                const hasUnitPricing = (currentConfig as any).unit_prices || (currentConfig as any).unit_images
+                if (hasUnitPricing) {
+                    setLoadingUnitData(true)
+                    try {
+                        const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
+                        if (unitData && unitData.data) {
+                            setUnitPrice(unitData.data.price)
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Unit price fetched from API:', {
+                                    unit: selectedUnit,
+                                    price: unitData.data.price
+                                })
+                            }
+                        } else {
+                            setUnitPrice(null)
+                        }
+                    } catch (error) {
+                        console.error('Error fetching unit price:', error)
+                        setUnitPrice(null)
+                    } finally {
+                        setLoadingUnitData(false)
                     }
                 } else {
+                    // No unit-based pricing configured
                     setUnitPrice(null)
+                }
+            }
+
+            // Handle images: Priority 1) config unit_images, 2) API fetch
+            const configUnitImages = (currentConfig as any).unit_images?.[String(selectedUnit)]
+            if (configUnitImages && Array.isArray(configUnitImages) && configUnitImages.length > 0) {
+                setUnitImages(configUnitImages)
+            } else {
+                // Fetch images from API if not in config
+                try {
+                    const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
+                    if (unitData && unitData.data && unitData.data.images) {
+                        setUnitImages(unitData.data.images)
+                    } else {
+                        setUnitImages([])
+                    }
+                } catch (error) {
+                    console.error('Error fetching unit images:', error)
                     setUnitImages([])
                 }
-            } catch (error) {
-                console.error('Error fetching unit price and images:', error)
-                setUnitPrice(null)
-                setUnitImages([])
-            } finally {
-                setLoadingUnitData(false)
             }
         }
 
-        fetchUnitData()
+        updateUnitData()
     }, [
         selectedConfig,
         selectedAstigmatismConfig,
@@ -2379,11 +2431,29 @@ const ProductDetail: React.FC = () => {
                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
                                                 const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
                                                 
+                                                // Get unit price: priority 1) config unit_prices (immediate), 2) fetched unitPrice, 3) base price
+                                                let displayUnitPrice: number | null = null
+                                                if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
+                                                    const configUnitPrice = (currentConfig as any).unit_prices[String(selectedUnit)]
+                                                    if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
+                                                        displayUnitPrice = configUnitPrice
+                                                    } else if (unitPrice !== null) {
+                                                        displayUnitPrice = unitPrice
+                                                    }
+                                                } else if (unitPrice !== null) {
+                                                    displayUnitPrice = unitPrice
+                                                }
+                                                
                                                 return (
                                                     <>
                                                         {selectedUnit && hasUnitPricing && (
                                                             <p className="text-xs text-blue-600 font-medium mb-2">
                                                                 Selected Pack Size: Unit {selectedUnit}
+                                                                {displayUnitPrice !== null && (
+                                                                    <span className="ml-2 text-gray-600">
+                                                                        - €{displayUnitPrice.toFixed(2)} per pack
+                                                                    </span>
+                                                                )}
                                                             </p>
                                                         )}
                                                         <div className="flex items-baseline gap-3">
@@ -2392,9 +2462,9 @@ const ProductDetail: React.FC = () => {
                                                                     <p className="text-3xl font-bold text-blue-950">
                                                                         €{calculateContactLensTotal.toFixed(2)}
                                                                     </p>
-                                                                    {unitPrice !== null && selectedUnit && (
+                                                                    {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (€{unitPrice.toFixed(2)} per pack - Unit {selectedUnit})
+                                                                            (€{displayUnitPrice.toFixed(2)} per pack × {contactLensFormData.right_qty + contactLensFormData.left_qty} = €{calculateContactLensTotal.toFixed(2)})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2403,7 +2473,7 @@ const ProductDetail: React.FC = () => {
                                                                     {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
                                                                         <>
                                                                             <p className="text-3xl font-bold text-blue-950">
-                                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
+                                                                                €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                             <p className="text-xl text-gray-400 line-through">
                                                                                 €{(regularPriceNum || 0).toFixed(2)}
@@ -2411,12 +2481,12 @@ const ProductDetail: React.FC = () => {
                                                                         </>
                                                                     ) : (
                                                                         <p className="text-3xl font-bold text-blue-950">
-                                                                            €{unitPrice !== null ? unitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
+                                                                            €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
                                                                         </p>
                                                                     )}
-                                                                    {unitPrice !== null && selectedUnit && (
+                                                                    {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Pack Size: Unit {selectedUnit})
+                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)} per pack)
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2652,7 +2722,16 @@ const ProductDetail: React.FC = () => {
                                         {/* Unit Selection (Pack Sizes) - Independent from Qty */}
                                         {(() => {
                                             const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                            const availableUnits = currentConfig ? ((currentConfig as any).available_units || []) : []
+                                            if (!currentConfig) return null
+                                            
+                                            // Get available units - check available_units first, then unit_prices keys as fallback
+                                            let availableUnits: number[] = []
+                                            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units)) {
+                                                availableUnits = (currentConfig as any).available_units
+                                            } else if ((currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
+                                                // Fallback: use unit_prices keys as available units
+                                                availableUnits = Object.keys((currentConfig as any).unit_prices).map(k => Number(k)).filter(n => !isNaN(n))
+                                            }
                                             
                                             if (availableUnits.length === 0) {
                                                 return null // No units available, don't show unit selection
@@ -2693,6 +2772,11 @@ const ProductDetail: React.FC = () => {
                                                     {selectedUnit && (
                                                         <p className="text-xs text-blue-600 font-medium mt-2">
                                                             Selected: Unit {selectedUnit} (Pack Size)
+                                                            {(currentConfig as any).unit_prices?.[String(selectedUnit)] && (
+                                                                <span className="ml-2 text-gray-600">
+                                                                    - €{(currentConfig as any).unit_prices[String(selectedUnit)].toFixed(2)}
+                                                                </span>
+                                                            )}
                                                         </p>
                                                     )}
                                                 </div>
@@ -3569,6 +3653,16 @@ const ProductDetail: React.FC = () => {
                     <div className="w-[90%] mx-auto max-w-7xl">
                         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">{t('shop.productSpecifications')}</h2>
                         <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8">
+                            {/* Product Description from Admin */}
+                            {product.description && (
+                                <div className="mb-8 pb-8 border-b border-gray-200">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Product Description</h3>
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {product.description}
+                                    </div>
+                                </div>
+                            )}
+                            
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Left Column */}
                                 <div className="space-y-4">
