@@ -351,6 +351,7 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/contact-lens-forms/astigmatism${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get astigmatism configurations (filtered by product_id if provided)
+    GET_UNIT_PRICE_AND_IMAGES: (configId: number | string, unit: number | string) => `/contact-lens-forms/config/${configId}/unit/${unit}`, // PUBLIC - Get price and images for a selected unit
     
     // User endpoints (requires authentication)
     CHECKOUT: `/contact-lens-forms/checkout`, // USER - Add contact lens to cart

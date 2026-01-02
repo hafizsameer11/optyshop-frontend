@@ -72,6 +72,8 @@ export interface SphericalConfig {
   is_active?: boolean
   created_at?: string
   updated_at?: string
+  unit_prices?: Record<string, number> // JSON object mapping unit (qty) to price, e.g., {"30": 990.00, "60": 1500.00}
+  unit_images?: Record<string, string[]> // JSON object mapping unit (qty) to image URLs, e.g., {"30": ["url1", "url2"], "60": ["url3"]}
 }
 
 export interface AstigmatismConfig {
@@ -125,6 +127,8 @@ export interface AstigmatismConfig {
     name: string
     slug: string
   }
+  unit_prices?: Record<string, number> // JSON object mapping unit (qty) to price, e.g., {"30": 990.00, "60": 1500.00}
+  unit_images?: Record<string, string[]> // JSON object mapping unit (qty) to image URLs, e.g., {"30": ["url1", "url2"], "60": ["url3"]}
 }
 
 export interface ContactLensCheckoutRequest {
@@ -671,6 +675,72 @@ export const addContactLensToCart = async (
     return null
   } catch (error) {
     console.error('Error adding contact lens to cart:', error)
+    return null
+  }
+}
+
+/**
+ * Unit Price and Images Response
+ */
+export interface UnitPriceAndImagesResponse {
+  success: boolean
+  message: string
+  data: {
+    config_id: number
+    config_name: string
+    unit: number | string
+    price: number
+    images: string[]
+    available_units: Array<{
+      unit: number | string
+      price: number
+    }>
+  }
+}
+
+/**
+ * Get price and images for a selected unit (qty)
+ * @param configId - Configuration ID (Spherical or Astigmatism)
+ * @param unit - Unit value (qty), e.g., 30, 60
+ */
+export const getUnitPriceAndImages = async (
+  configId: number | string,
+  unit: number | string
+): Promise<UnitPriceAndImagesResponse | null> => {
+  try {
+    const numericConfigId = typeof configId === 'string' ? parseInt(configId, 10) : configId
+    const numericUnit = typeof unit === 'string' ? parseInt(unit, 10) : unit
+    
+    if (isNaN(numericConfigId) || numericConfigId <= 0) {
+      console.error('Invalid config ID provided:', configId)
+      return null
+    }
+    
+    if (isNaN(numericUnit) || numericUnit <= 0) {
+      console.error('Invalid unit provided:', unit)
+      return null
+    }
+    
+    const response = await apiClient.get<UnitPriceAndImagesResponse>(
+      API_ROUTES.CONTACT_LENS_FORMS.GET_UNIT_PRICE_AND_IMAGES(numericConfigId, numericUnit),
+      false // Public endpoint
+    )
+
+    if (response.success && response.data) {
+      return response.data
+    }
+
+    console.error('Failed to fetch unit price and images:', response.message, {
+      configId: numericConfigId,
+      unit: numericUnit,
+      error: response.error
+    })
+    return null
+  } catch (error: any) {
+    console.error('Error fetching unit price and images:', error)
+    if (error?.message) {
+      console.error('Error details:', error.message)
+    }
     return null
   }
 }

@@ -21,6 +21,7 @@ import {
     getSphericalConfigs,
     addContactLensToCart,
     getContactLensOptions,
+    getUnitPriceAndImages,
     type ContactLensFormConfig,
     type SphericalConfig,
     type AstigmatismConfig,
@@ -93,6 +94,11 @@ const ProductDetail: React.FC = () => {
     const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
     const [selectedAstigmatismConfig, setSelectedAstigmatismConfig] = useState<AstigmatismConfig | null>(null)
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
+    
+    // Unit-based pricing and images state
+    const [unitPrice, setUnitPrice] = useState<number | null>(null)
+    const [unitImages, setUnitImages] = useState<string[]>([])
+    const [loadingUnitData, setLoadingUnitData] = useState(false)
 
     // Eye Hygiene Form Data State
     interface EyeHygieneFormData {
@@ -1701,14 +1707,14 @@ const ProductDetail: React.FC = () => {
             return 0
         }
 
-        // Get price per unit (unit/box/pack)
-        const unitPrice = getUnitPrice(contactLensFormData.unit)
+        // Use unit-specific price if available, otherwise use base unit price
+        const pricePerUnit = unitPrice !== null ? unitPrice : getUnitPrice(contactLensFormData.unit)
 
         // For unit selection, calculate total based on quantity
         // If unit is 'box' or 'pack', the price is already for the whole box/pack
         // So we multiply by quantity of boxes/packs
-        const rightTotal = unitPrice * contactLensFormData.right_qty
-        const leftTotal = unitPrice * contactLensFormData.left_qty
+        const rightTotal = pricePerUnit * (rightEyeEnabled ? contactLensFormData.right_qty : 0)
+        const leftTotal = pricePerUnit * (leftEyeEnabled ? contactLensFormData.left_qty : 0)
 
         return rightTotal + leftTotal
     }, [
@@ -1718,6 +1724,9 @@ const ProductDetail: React.FC = () => {
         contactLensFormData.right_qty,
         contactLensFormData.left_qty,
         contactLensFormData.unit,
+        unitPrice,
+        rightEyeEnabled,
+        leftEyeEnabled,
         getUnitPrice
     ])
 
@@ -1734,8 +1743,13 @@ const ProductDetail: React.FC = () => {
             (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
     }, [product])
 
-    // Helper function to get the color-specific image URL
+    // Helper function to get the color-specific image URL (with unit images support)
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
+        // Priority 1: Use unit-specific images if available
+        if (unitImages.length > 0 && imageIndex < unitImages.length) {
+            return unitImages[imageIndex]
+        }
+        
         if (!selectedColor) {
             // Fallback to regular product image if no color selected
             return getProductImageUrl(product, imageIndex)
@@ -1805,6 +1819,77 @@ const ProductDetail: React.FC = () => {
             })
         }
     }
+
+    // Fetch unit price and images when quantity changes
+    useEffect(() => {
+        const fetchUnitData = async () => {
+            // Only fetch if we have a valid config and quantity
+            const currentConfig = selectedConfig || selectedAstigmatismConfig
+            if (!currentConfig || !isContactLens) {
+                setUnitPrice(null)
+                setUnitImages([])
+                return
+            }
+
+            // Use right_qty if enabled, otherwise left_qty, or fallback to first available qty
+            const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
+                ? contactLensFormData.right_qty
+                : leftEyeEnabled && contactLensFormData.left_qty > 0
+                ? contactLensFormData.left_qty
+                : null
+
+            if (!selectedQty || selectedQty === 0) {
+                setUnitPrice(null)
+                setUnitImages([])
+                return
+            }
+
+            // Check if config has unit_prices or unit_images
+            const hasUnitPricing = (currentConfig as any).unit_prices || (currentConfig as any).unit_images
+            if (!hasUnitPricing) {
+                // No unit-based pricing configured, use base price
+                setUnitPrice(null)
+                setUnitImages([])
+                return
+            }
+
+            setLoadingUnitData(true)
+            try {
+                const unitData = await getUnitPriceAndImages(currentConfig.id, selectedQty)
+                if (unitData && unitData.data) {
+                    setUnitPrice(unitData.data.price)
+                    setUnitImages(unitData.data.images || [])
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Unit price and images fetched:', {
+                            configId: currentConfig.id,
+                            unit: selectedQty,
+                            price: unitData.data.price,
+                            imagesCount: unitData.data.images?.length || 0
+                        })
+                    }
+                } else {
+                    setUnitPrice(null)
+                    setUnitImages([])
+                }
+            } catch (error) {
+                console.error('Error fetching unit price and images:', error)
+                setUnitPrice(null)
+                setUnitImages([])
+            } finally {
+                setLoadingUnitData(false)
+            }
+        }
+
+        fetchUnitData()
+    }, [
+        selectedConfig,
+        selectedAstigmatismConfig,
+        contactLensFormData.right_qty,
+        contactLensFormData.left_qty,
+        rightEyeEnabled,
+        leftEyeEnabled,
+        isContactLens
+    ])
 
     // NOW we can do conditional returns AFTER all hooks have been called
     if (loading) {
@@ -2215,14 +2300,22 @@ const ProductDetail: React.FC = () => {
                                                     }
                                                 }
 
-                                                // Get first image or fallback
-                                                const productImage = imagesArray.length > 0
-                                                    ? imagesArray[0]
-                                                    : getProductImageUrl(product, 0)
+                                                // Use unit images if available, otherwise use color images or product images
+                                                let productImage: string
+                                                if (unitImages.length > 0 && selectedImageIndex < unitImages.length) {
+                                                    // Use unit-specific images
+                                                    productImage = unitImages[selectedImageIndex]
+                                                } else if (imagesArray.length > 0 && selectedImageIndex < imagesArray.length) {
+                                                    // Use color-specific images
+                                                    productImage = imagesArray[selectedImageIndex]
+                                                } else {
+                                                    // Fallback to regular product image
+                                                    productImage = getProductImageUrl(product, selectedImageIndex)
+                                                }
 
                                                 return (
                                                     <img
-                                                        key={`product-${product.id}`}
+                                                        key={`product-${product.id}-${selectedImageIndex}-${unitImages.length > 0 ? 'unit' : 'default'}`}
                                                         src={productImage}
                                                         alt={product.name}
                                                         className="w-full h-full object-contain p-6"
@@ -2267,15 +2360,22 @@ const ProductDetail: React.FC = () => {
                                             </p>
                                             <div className="flex items-baseline gap-3">
                                                 {calculateContactLensTotal > 0 ? (
-                                                    <p className="text-3xl font-bold text-blue-950">
-                                                        €{calculateContactLensTotal.toFixed(2)}
-                                                    </p>
+                                                    <>
+                                                        <p className="text-3xl font-bold text-blue-950">
+                                                            €{calculateContactLensTotal.toFixed(2)}
+                                                        </p>
+                                                        {unitPrice !== null && (
+                                                            <p className="text-sm text-gray-500">
+                                                                (€{unitPrice.toFixed(2)} per {contactLensFormData.unit === 'unit' ? 'unit' : contactLensFormData.unit === 'box' ? 'box' : 'pack'})
+                                                            </p>
+                                                        )}
+                                                    </>
                                                 ) : (
                                                     <>
                                                         {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
                                                             <>
                                                                 <p className="text-3xl font-bold text-blue-950">
-                                                                    €{salePriceNum.toFixed(2)}
+                                                                    €{unitPrice !== null ? unitPrice.toFixed(2) : salePriceNum.toFixed(2)}
                                                                 </p>
                                                                 <p className="text-xl text-gray-400 line-through">
                                                                     €{regularPriceNum.toFixed(2)}
@@ -2283,12 +2383,15 @@ const ProductDetail: React.FC = () => {
                                                             </>
                                                         ) : (
                                                             <p className="text-3xl font-bold text-blue-950">
-                                                                €{regularPriceNum.toFixed(2)}
+                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : regularPriceNum.toFixed(2)}
                                                             </p>
                                                         )}
                                                     </>
                                                 )}
                                             </div>
+                                            {loadingUnitData && (
+                                                <p className="text-xs text-gray-500 mt-2">Loading price...</p>
+                                            )}
                                             {contactLensFormData.unit && calculateContactLensTotal > 0 && (
                                                 <p className="text-xs text-gray-500 mt-2">
                                                     Per {contactLensFormData.unit}
@@ -2417,47 +2520,54 @@ const ProductDetail: React.FC = () => {
 
                                         {/* Thumbnail Images */}
                                         {(() => {
-                                            // Get images for selected color - supports both 'colors' array and 'color_images' array
+                                            // Priority: Use unit images if available, otherwise use color images or product images
                                             let imagesArray: string[] = []
-                                            const p = product as any
+                                            
+                                            // First priority: Use unit-specific images
+                                            if (unitImages.length > 0) {
+                                                imagesArray = unitImages
+                                            } else {
+                                                // Second priority: Get images for selected color - supports both 'colors' array and 'color_images' array
+                                                const p = product as any
 
-                                            if (selectedColor) {
-                                                // First try 'colors' array (preferred)
-                                                if (p.colors && Array.isArray(p.colors)) {
-                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
-                                                    const colorData = p.colors.find((c: any) => 
-                                                        (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                        (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
-                                                        (c.name && c.name.toLowerCase() === selectedColorLower)
-                                                    )
-                                                    if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                        imagesArray = colorData.images
+                                                if (selectedColor) {
+                                                    // First try 'colors' array (preferred)
+                                                    if (p.colors && Array.isArray(p.colors)) {
+                                                        const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                        const colorData = p.colors.find((c: any) => 
+                                                            (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                                                            (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                            (c.name && c.name.toLowerCase() === selectedColorLower)
+                                                        )
+                                                        if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                            imagesArray = colorData.images
+                                                        }
+                                                    }
+                                                    
+                                                    // Fallback to 'color_images' array
+                                                    if (imagesArray.length === 0 && product.color_images) {
+                                                        const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                        const colorImage = product.color_images.find(ci =>
+                                                            (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                                                            (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                                        )
+                                                        if (colorImage && colorImage.images) {
+                                                            imagesArray = colorImage.images
+                                                        }
                                                     }
                                                 }
-                                                
-                                                // Fallback to 'color_images' array
-                                                if (imagesArray.length === 0 && product.color_images) {
-                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
-                                                    const colorImage = product.color_images.find(ci =>
-                                                        (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                        (ci.name && ci.name.toLowerCase() === selectedColorLower)
-                                                    )
-                                                    if (colorImage && colorImage.images) {
-                                                        imagesArray = colorImage.images
-                                                    }
-                                                }
-                                            }
 
-                                            // Fallback to regular images if no color images or no color selected
-                                            if (imagesArray.length === 0 && product.images) {
-                                                if (typeof product.images === 'string') {
-                                                    try {
-                                                        imagesArray = JSON.parse(product.images)
-                                                    } catch (e) {
-                                                        imagesArray = [product.images]
+                                                // Fallback to regular images if no color images or no color selected
+                                                if (imagesArray.length === 0 && product.images) {
+                                                    if (typeof product.images === 'string') {
+                                                        try {
+                                                            imagesArray = JSON.parse(product.images)
+                                                        } catch (e) {
+                                                            imagesArray = [product.images]
+                                                        }
+                                                    } else if (Array.isArray(product.images)) {
+                                                        imagesArray = product.images
                                                     }
-                                                } else if (Array.isArray(product.images)) {
-                                                    imagesArray = product.images
                                                 }
                                             }
 
