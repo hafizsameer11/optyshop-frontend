@@ -2406,15 +2406,15 @@ const ProductDetail: React.FC = () => {
                                                                     {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
                                                                         <>
                                                                             <p className="text-3xl font-bold text-blue-950">
-                                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : salePriceNum.toFixed(2)}
+                                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                             <p className="text-xl text-gray-400 line-through">
-                                                                                €{regularPriceNum.toFixed(2)}
+                                                                                €{(regularPriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                         </>
                                                                     ) : (
                                                                         <p className="text-3xl font-bold text-blue-950">
-                                                                            €{unitPrice !== null ? unitPrice.toFixed(2) : regularPriceNum.toFixed(2)}
+                                                                            €{unitPrice !== null ? unitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
                                                                         </p>
                                                                     )}
                                                                     {unitPrice !== null && selectedQty && (
@@ -2739,10 +2739,10 @@ const ProductDetail: React.FC = () => {
                                                                 const optionValue = typeof option === 'string' ? parseFloat(option) : option
                                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
                                                                 const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
-                                                                const unitPrice = hasUnitPricing && (currentConfig as any).unit_prices?.[String(option)]
+                                                                const unitPrice = hasUnitPricing ? (currentConfig as any).unit_prices?.[String(option)] : undefined
                                                                 return (
                                                                     <option key={option} value={option}>
-                                                                        {unitPrice !== undefined 
+                                                                        {unitPrice !== undefined && typeof unitPrice === 'number'
                                                                             ? `Unit ${option} - €${unitPrice.toFixed(2)}`
                                                                             : `Unit ${option}`
                                                                         }
@@ -2940,10 +2940,10 @@ const ProductDetail: React.FC = () => {
                                                                 const optionValue = typeof option === 'string' ? parseFloat(option) : option
                                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
                                                                 const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
-                                                                const unitPrice = hasUnitPricing && (currentConfig as any).unit_prices?.[String(option)]
+                                                                const unitPrice = hasUnitPricing ? (currentConfig as any).unit_prices?.[String(option)] : undefined
                                                                 return (
                                                                     <option key={option} value={option}>
-                                                                        {unitPrice !== undefined 
+                                                                        {unitPrice !== undefined && typeof unitPrice === 'number'
                                                                             ? `Unit ${option} - €${unitPrice.toFixed(2)}`
                                                                             : `Unit ${option}`
                                                                         }
@@ -3328,11 +3328,11 @@ const ProductDetail: React.FC = () => {
                                         {originalPrice ? (
                                             <div className="flex items-center gap-6">
                                                 <span className="text-5xl font-extrabold text-blue-950">
-                                                    ${displayPrice.toFixed(2)}
+                                                    ${(displayPrice || 0).toFixed(2)}
                                                 </span>
                                                 <div className="flex flex-col">
                                                     <span className="text-xl text-gray-400 line-through font-medium">
-                                                        ${originalPrice.toFixed(2)}
+                                                        ${(originalPrice || 0).toFixed(2)}
                                                     </span>
                                                     <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px]">
                                                         SAVE {Math.round(((originalPrice - displayPrice) / originalPrice) * 100)}%
@@ -3341,7 +3341,7 @@ const ProductDetail: React.FC = () => {
                                             </div>
                                         ) : (
                                             <span className="text-5xl font-extrabold text-blue-950">
-                                                ${displayPrice.toFixed(2)}
+                                                ${(displayPrice || 0).toFixed(2)}
                                             </span>
                                         )}
                                     </div>
