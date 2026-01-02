@@ -2302,7 +2302,8 @@ const ProductDetail: React.FC = () => {
 
                                                 // Use unit images if available, otherwise use color images or product images
                                                 let productImage: string
-                                                if (unitImages.length > 0 && selectedImageIndex < unitImages.length) {
+                                                const isUsingUnitImages = unitImages.length > 0 && selectedImageIndex < unitImages.length
+                                                if (isUsingUnitImages) {
                                                     // Use unit-specific images
                                                     productImage = unitImages[selectedImageIndex]
                                                 } else if (imagesArray.length > 0 && selectedImageIndex < imagesArray.length) {
@@ -2313,20 +2314,34 @@ const ProductDetail: React.FC = () => {
                                                     productImage = getProductImageUrl(product, selectedImageIndex)
                                                 }
 
+                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                                const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
+                                                    ? contactLensFormData.right_qty
+                                                    : leftEyeEnabled && contactLensFormData.left_qty > 0
+                                                    ? contactLensFormData.left_qty
+                                                    : null
+
                                                 return (
-                                                    <img
-                                                        key={`product-${product.id}-${selectedImageIndex}-${unitImages.length > 0 ? 'unit' : 'default'}`}
-                                                        src={productImage}
-                                                        alt={product.name}
-                                                        className="w-full h-full object-contain p-6"
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement
-                                                            if (import.meta.env.DEV) {
-                                                                console.warn('Product image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
-                                                            }
-                                                            target.src = '/assets/images/frame1.png'
-                                                        }}
-                                                    />
+                                                    <>
+                                                        {isUsingUnitImages && selectedQty && (
+                                                            <div className="absolute top-2 left-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10 shadow-lg">
+                                                                Unit {selectedQty} Images
+                                                            </div>
+                                                        )}
+                                                        <img
+                                                            key={`product-${product.id}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
+                                                            src={productImage}
+                                                            alt={product.name}
+                                                            className="w-full h-full object-contain p-6"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                if (import.meta.env.DEV) {
+                                                                    console.warn('Product image failed to load for product:', product.id, product.name, 'Attempted URL:', target.src)
+                                                                }
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }}
+                                                        />
+                                                    </>
                                                 )
                                             })()}
                                             {(() => {
@@ -2358,45 +2373,72 @@ const ProductDetail: React.FC = () => {
                                             <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
                                                 {calculateContactLensTotal > 0 ? 'Total Price' : 'Price'}
                                             </p>
-                                            <div className="flex items-baseline gap-3">
-                                                {calculateContactLensTotal > 0 ? (
+                                            {(() => {
+                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                                const selectedQty = rightEyeEnabled && contactLensFormData.right_qty > 0
+                                                    ? contactLensFormData.right_qty
+                                                    : leftEyeEnabled && contactLensFormData.left_qty > 0
+                                                    ? contactLensFormData.left_qty
+                                                    : null
+                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
+                                                
+                                                return (
                                                     <>
-                                                        <p className="text-3xl font-bold text-blue-950">
-                                                            €{calculateContactLensTotal.toFixed(2)}
-                                                        </p>
-                                                        {unitPrice !== null && (
-                                                            <p className="text-sm text-gray-500">
-                                                                (€{unitPrice.toFixed(2)} per {contactLensFormData.unit === 'unit' ? 'unit' : contactLensFormData.unit === 'box' ? 'box' : 'pack'})
+                                                        {selectedQty && hasUnitPricing && (
+                                                            <p className="text-xs text-blue-600 font-medium mb-2">
+                                                                Selected: Unit {selectedQty}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-baseline gap-3">
+                                                            {calculateContactLensTotal > 0 ? (
+                                                                <>
+                                                                    <p className="text-3xl font-bold text-blue-950">
+                                                                        €{calculateContactLensTotal.toFixed(2)}
+                                                                    </p>
+                                                                    {unitPrice !== null && selectedQty && (
+                                                                        <p className="text-sm text-gray-500">
+                                                                            (€{unitPrice.toFixed(2)} per unit {selectedQty})
+                                                                        </p>
+                                                                    )}
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
+                                                                        <>
+                                                                            <p className="text-3xl font-bold text-blue-950">
+                                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : salePriceNum.toFixed(2)}
+                                                                            </p>
+                                                                            <p className="text-xl text-gray-400 line-through">
+                                                                                €{regularPriceNum.toFixed(2)}
+                                                                            </p>
+                                                                        </>
+                                                                    ) : (
+                                                                        <p className="text-3xl font-bold text-blue-950">
+                                                                            €{unitPrice !== null ? unitPrice.toFixed(2) : regularPriceNum.toFixed(2)}
+                                                                        </p>
+                                                                    )}
+                                                                    {unitPrice !== null && selectedQty && (
+                                                                        <p className="text-sm text-gray-500">
+                                                                            (Unit {selectedQty})
+                                                                        </p>
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        {loadingUnitData && (
+                                                            <div className="flex items-center gap-2 mt-2">
+                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
+                                                                <p className="text-xs text-gray-500">Loading unit price and images...</p>
+                                                            </div>
+                                                        )}
+                                                        {contactLensFormData.unit && calculateContactLensTotal > 0 && !loadingUnitData && (
+                                                            <p className="text-xs text-gray-500 mt-2">
+                                                                Per {contactLensFormData.unit}
                                                             </p>
                                                         )}
                                                     </>
-                                                ) : (
-                                                    <>
-                                                        {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
-                                                            <>
-                                                                <p className="text-3xl font-bold text-blue-950">
-                                                                    €{unitPrice !== null ? unitPrice.toFixed(2) : salePriceNum.toFixed(2)}
-                                                                </p>
-                                                                <p className="text-xl text-gray-400 line-through">
-                                                                    €{regularPriceNum.toFixed(2)}
-                                                                </p>
-                                                            </>
-                                                        ) : (
-                                                            <p className="text-3xl font-bold text-blue-950">
-                                                                €{unitPrice !== null ? unitPrice.toFixed(2) : regularPriceNum.toFixed(2)}
-                                                            </p>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                            {loadingUnitData && (
-                                                <p className="text-xs text-gray-500 mt-2">Loading price...</p>
-                                            )}
-                                            {contactLensFormData.unit && calculateContactLensTotal > 0 && (
-                                                <p className="text-xs text-gray-500 mt-2">
-                                                    Per {contactLensFormData.unit}
-                                                </p>
-                                            )}
+                                                )
+                                            })()}
                                         </div>
                                     </div>
                                 ) : (
@@ -2682,17 +2724,31 @@ const ProductDetail: React.FC = () => {
                                                         </label>
                                                         <select
                                                             value={contactLensFormData.right_qty || '00.00'}
-                                                            onChange={(e) => handleContactLensFieldChange('right_qty', parseInt(e.target.value) || 1)}
+                                                            onChange={(e) => {
+                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                handleContactLensFieldChange('right_qty', selectedValue)
+                                                                // Reset image index when unit changes
+                                                                setSelectedImageIndex(0)
+                                                            }}
                                                             disabled={!rightEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <option value="00.00">00.00</option>
-                                                            {qtyOptions.map((option: number | string) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
+                                                            <option value="00.00">Select Unit</option>
+                                                            {qtyOptions.map((option: number | string) => {
+                                                                const optionValue = typeof option === 'string' ? parseFloat(option) : option
+                                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
+                                                                const unitPrice = hasUnitPricing && (currentConfig as any).unit_prices?.[String(option)]
+                                                                return (
+                                                                    <option key={option} value={option}>
+                                                                        {unitPrice !== undefined 
+                                                                            ? `Unit ${option} - €${unitPrice.toFixed(2)}`
+                                                                            : `Unit ${option}`
+                                                                        }
+                                                                    </option>
+                                                                )
+                                                            })}
                                                         </select>
                                                         {contactLensErrors.right_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
@@ -2869,17 +2925,31 @@ const ProductDetail: React.FC = () => {
                                                         </label>
                                                         <select
                                                             value={contactLensFormData.left_qty || '00.00'}
-                                                            onChange={(e) => handleContactLensFieldChange('left_qty', parseInt(e.target.value) || 1)}
+                                                            onChange={(e) => {
+                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                handleContactLensFieldChange('left_qty', selectedValue)
+                                                                // Reset image index when unit changes
+                                                                setSelectedImageIndex(0)
+                                                            }}
                                                             disabled={!leftEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         >
-                                                            <option value="00.00">00.00</option>
-                                                            {qtyOptions.map((option: number | string) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
+                                                            <option value="00.00">Select Unit</option>
+                                                            {qtyOptions.map((option: number | string) => {
+                                                                const optionValue = typeof option === 'string' ? parseFloat(option) : option
+                                                                const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
+                                                                const unitPrice = hasUnitPricing && (currentConfig as any).unit_prices?.[String(option)]
+                                                                return (
+                                                                    <option key={option} value={option}>
+                                                                        {unitPrice !== undefined 
+                                                                            ? `Unit ${option} - €${unitPrice.toFixed(2)}`
+                                                                            : `Unit ${option}`
+                                                                        }
+                                                                    </option>
+                                                                )
+                                                            })}
                                                         </select>
                                                         {contactLensErrors.left_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
