@@ -100,6 +100,11 @@ function App() {
         <Route path="/job-application/:jobId" element={<JobApplication />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/shop" element={<Products />} />
+        {/* Product Section Routes */}
+        <Route path="/shop/sunglasses" element={<Products />} />
+        <Route path="/shop/eyeglasses" element={<Products />} />
+        <Route path="/shop/contact-lenses" element={<Products />} />
+        <Route path="/shop/eye-hygiene" element={<Products />} />
         <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
         <Route path="/category/:categorySlug/:subcategorySlug/:subSubcategorySlug" element={<CategoryPage />} />

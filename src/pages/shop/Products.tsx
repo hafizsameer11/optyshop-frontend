@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
@@ -7,10 +7,12 @@ import { useWishlist } from '../../context/WishlistContext'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getProducts, 
+    getProductsBySection,
     getProductOptions,
     type Product,
     type ProductFilters,
-    type ProductOptions
+    type ProductOptions,
+    type ProductSection
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
@@ -21,9 +23,22 @@ const Products: React.FC = () => {
     const { translateCategory } = useCategoryTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
     const [searchParams] = useSearchParams()
+    const location = useLocation()
     const [products, setProducts] = useState<Product[]>([])
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [loading, setLoading] = useState(true)
+    
+    // Detect current section from URL path
+    const getCurrentSection = (): ProductSection | null => {
+        const path = location.pathname
+        if (path.includes('/shop/sunglasses')) return 'sunglasses'
+        if (path.includes('/shop/eyeglasses')) return 'eyeglasses'
+        if (path.includes('/shop/contact-lenses')) return 'contact-lenses'
+        if (path.includes('/shop/eye-hygiene')) return 'eye-hygiene'
+        return null
+    }
+    
+    const currentSection = getCurrentSection()
     const [pagination, setPagination] = useState({
         total: 0,
         page: 1,
@@ -276,7 +291,10 @@ const Products: React.FC = () => {
                     filters.sortOrder = 'asc'
                 }
 
-            const result = await getProducts(filters)
+            // Use section-specific endpoint if section is detected, otherwise use regular products endpoint
+            const result = currentSection 
+                ? await getProductsBySection(currentSection, filters)
+                : await getProducts(filters)
             if (isCancelled) return
             
             if (result) {
@@ -416,7 +434,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals])
+    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals, currentSection, location.pathname])
 
 
     const handlePageChange = (newPage: number) => {
@@ -433,19 +451,87 @@ const Products: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="text-center text-white">
                         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                            {categoryInfo.subcategory 
-                                ? translateCategory(categoryInfo.subcategory)
-                                : categoryInfo.category 
-                                    ? translateCategory(categoryInfo.category)
-                                    : t('shop.title')}
+                            {currentSection 
+                                ? (currentSection === 'sunglasses' ? 'Sunglasses' :
+                                   currentSection === 'eyeglasses' ? 'Eyeglasses' :
+                                   currentSection === 'contact-lenses' ? 'Contact Lenses' :
+                                   currentSection === 'eye-hygiene' ? 'Eye Hygiene' : t('shop.title'))
+                                : categoryInfo.subcategory 
+                                    ? translateCategory(categoryInfo.subcategory)
+                                    : categoryInfo.category 
+                                        ? translateCategory(categoryInfo.category)
+                                        : t('shop.title')}
                         </h1>
                         <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            {categoryInfo.subcategory 
-                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
-                                : categoryInfo.category 
-                                    ? t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })
-                                    : t('shop.description')}
+                            {currentSection 
+                                ? (currentSection === 'sunglasses' ? 'Discover our premium collection of sunglasses' :
+                                   currentSection === 'eyeglasses' ? 'Browse our stylish eyeglasses frames' :
+                                   currentSection === 'contact-lenses' ? 'Explore our contact lens options' :
+                                   currentSection === 'eye-hygiene' ? 'Find the perfect eye care products' : t('shop.description'))
+                                : categoryInfo.subcategory 
+                                    ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
+                                    : categoryInfo.category 
+                                        ? t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })
+                                        : t('shop.description')}
                         </p>
+                    </div>
+                </div>
+            </section>
+
+            {/* Section Navigation */}
+            <section className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+                <div className="w-[90%] mx-auto max-w-7xl px-4 sm:px-6">
+                    <div className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto py-4">
+                        <Link
+                            to="/shop"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                                !currentSection
+                                    ? 'bg-blue-950 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            All Products
+                        </Link>
+                        <Link
+                            to="/shop/sunglasses"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                                currentSection === 'sunglasses'
+                                    ? 'bg-blue-950 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Sunglasses
+                        </Link>
+                        <Link
+                            to="/shop/eyeglasses"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                                currentSection === 'eyeglasses'
+                                    ? 'bg-blue-950 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Eyeglasses
+                        </Link>
+                        <Link
+                            to="/shop/contact-lenses"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                                currentSection === 'contact-lenses'
+                                    ? 'bg-blue-950 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Contact Lenses
+                        </Link>
+                        <Link
+                            to="/shop/eye-hygiene"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                                currentSection === 'eye-hygiene'
+                                    ? 'bg-blue-950 text-white'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Eye Hygiene
+                        </Link>
                     </div>
                 </div>
             </section>

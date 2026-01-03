@@ -165,6 +165,9 @@ export interface ProductFilters {
   [key: string]: any; // Allow for additional filter properties
 }
 
+// Product section types
+export type ProductSection = 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene';
+
 // ============================================
 // API Functions
 // ============================================
@@ -430,6 +433,100 @@ export const getRelatedProducts = async (
   } catch (error) {
     console.error('Error fetching related products:', error);
     return [];
+  }
+};
+
+/**
+ * Get products by section
+ * Matches Postman collection structure: GET /api/products/section/:section
+ * 
+ * Sections:
+ * - 'sunglasses' → product_type: 'sunglasses'
+ * - 'eyeglasses' → product_type: 'frame'
+ * - 'contact-lenses' → product_type: 'contact_lens'
+ * - 'eye-hygiene' → product_type: 'eye_hygiene'
+ * 
+ * Supports all standard product filters (category, subCategory, frameShape, frameMaterial, 
+ * minPrice, maxPrice, search, sortBy, sortOrder, isFeatured)
+ * 
+ * ⚠️ Product Deletion Integration:
+ * - Deleted products are automatically excluded from section endpoints
+ * - The backend filters out deleted products automatically
+ * 
+ * @param section - Product section (sunglasses, eyeglasses, contact-lenses, eye-hygiene)
+ * @param filters - Filter parameters matching Postman collection
+ * @returns Products list with pagination or null if error
+ */
+export const getProductsBySection = async (
+  section: ProductSection,
+  filters: ProductFilters = {}
+): Promise<{
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+} | null> => {
+  try {
+    // Map subcategory to subCategory (API expects capital C as per Postman collection)
+    const apiFilters: Record<string, any> = { ...filters };
+    if (apiFilters.subcategory !== undefined) {
+      apiFilters.subCategory = apiFilters.subcategory;
+      delete apiFilters.subcategory;
+    }
+    
+    // Ensure boolean filters are properly formatted
+    if (apiFilters.isFeatured !== undefined) {
+      apiFilters.isFeatured = apiFilters.isFeatured === true || apiFilters.isFeatured === 'true';
+    }
+    
+    const baseEndpoint = API_ROUTES.PRODUCTS.SECTION(section);
+    const endpoint = buildQueryString(baseEndpoint, apiFilters);
+    
+    if (import.meta.env.DEV) {
+      console.log(`🔍 [Section API] GET ${endpoint}`, { section, filters: apiFilters });
+    }
+    
+    const response = await apiClient.get<ProductsListResponse>(
+      endpoint,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      const data = response.data as any;
+      // Handle Postman collection response structure:
+      // { success: true, data: { products: [...], pagination: {...} } }
+      const products = data.products || (data.data && data.data.products) || [];
+      const pagination = data.pagination || (data.data && data.data.pagination) || {
+        total: 0,
+        page: 1,
+        limit: 12,
+        pages: 0
+      };
+      
+      return {
+        products,
+        pagination,
+      };
+    }
+
+    // Log detailed error information for debugging
+    if (import.meta.env.DEV) {
+      console.error(`❌ Failed to fetch ${section} products:`, {
+        message: response.message,
+        error: response.error,
+        filters: filters,
+        endpoint: endpoint
+      });
+    } else {
+      console.error(`Failed to fetch ${section} products:`, response.message || response.error);
+    }
+    return null;
+  } catch (error) {
+    console.error(`Error fetching ${section} products:`, error);
+    return null;
   }
 };
 

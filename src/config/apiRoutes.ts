@@ -39,6 +39,8 @@ export const API_ROUTES = {
     RELATED: (id: number | string) => `/products/${id}/related`,  // PUBLIC
     CONFIGURATION: (id: number | string) => `/products/${id}/configuration`, // PUBLIC - Get product configuration
     CONFIGURATION_LENS_TYPES: `/products/configuration/lens-types`, // PUBLIC - Get all prescription lens types with variants and colors
+    // Section-specific endpoints (filters by product_type)
+    SECTION: (section: 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene') => `/products/section/${section}`, // PUBLIC - Get products by section
   },
 
   // ============================================
