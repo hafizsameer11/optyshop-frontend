@@ -200,7 +200,7 @@ const Navbar: React.FC = () => {
                     style={{
                         flex: '1 1 0%',
                         flexBasis: '0%',
-                        maxWidth: '42rem',
+                        maxWidth: '32rem',
                         minWidth: 0,
                         width: '100%'
                     }}
