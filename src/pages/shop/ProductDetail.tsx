@@ -2728,27 +2728,125 @@ const ProductDetail: React.FC = () => {
 
                                         {/* Unit Selection (Pack Sizes) - Independent from Qty */}
                                         {(() => {
+                                            // Check both selected config and all configs to find units
                                             const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                            if (!currentConfig) return null
+                                            const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
                                             
-                                            // Get available units - check available_units first, then unit_prices keys as fallback
-                                            let availableUnits: number[] = []
-                                            
-                                            // Priority 1: Check available_units array
-                                            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units) && (currentConfig as any).available_units.length > 0) {
-                                                availableUnits = (currentConfig as any).available_units.filter((u: any) => u != null && !isNaN(Number(u))).map((u: any) => Number(u))
+                                            // Debug logging
+                                            if (import.meta.env.DEV) {
+                                                console.log('🔍 Unit Selection Debug:', {
+                                                    hasSelectedConfig: !!currentConfig,
+                                                    selectedConfigId: currentConfig ? (currentConfig as any).id : null,
+                                                    allConfigsCount: allConfigs.length,
+                                                    selectedConfigAvailableUnits: currentConfig ? (currentConfig as any).available_units : null,
+                                                    selectedConfigUnitPrices: currentConfig ? (currentConfig as any).unit_prices : null
+                                                })
                                             }
                                             
-                                            // Priority 2: If no available_units or empty, use unit_prices keys
-                                            if (availableUnits.length === 0 && (currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
-                                                availableUnits = Object.keys((currentConfig as any).unit_prices)
-                                                    .map(k => Number(k))
-                                                    .filter(n => !isNaN(n) && n > 0)
+                                            // Get available units - check selected config first, then all configs
+                                            let availableUnits: number[] = []
+                                            const allUnitPrices: Record<string, number> = {}
+                                            
+                                            // Priority 1: Check selected config first
+                                            if (currentConfig) {
+                                                const configAvailableUnits = (currentConfig as any).available_units
+                                                if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
+                                                    availableUnits = configAvailableUnits
+                                                        .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
+                                                        .map((u: any) => Number(u))
+                                                        .filter((n: number) => !isNaN(n) && n > 0)
+                                                    
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('✅ Found units from selected config available_units:', availableUnits)
+                                                    }
+                                                }
+                                                
+                                                // Also collect unit prices from selected config
+                                                const configUnitPrices = (currentConfig as any).unit_prices
+                                                if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
+                                                    Object.assign(allUnitPrices, configUnitPrices)
+                                                }
+                                                
+                                                // Priority 2: If no available_units, use unit_prices keys from selected config
+                                                if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+                                                    availableUnits = Object.keys(allUnitPrices)
+                                                        .map(k => Number(k))
+                                                        .filter(n => !isNaN(n) && n > 0)
+                                                    
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('✅ Found units from selected config unit_prices keys:', availableUnits)
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Priority 3: If still no units, check all configs
+                                            if (availableUnits.length === 0 && allConfigs && allConfigs.length > 0) {
+                                                if (import.meta.env.DEV) {
+                                                    console.log('🔍 Checking all configs for units. Config count:', allConfigs.length)
+                                                }
+                                                
+                                                for (const config of allConfigs) {
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('🔍 Checking config:', {
+                                                            id: (config as any).id,
+                                                            name: (config as any).name,
+                                                            available_units: (config as any).available_units,
+                                                            unit_prices: (config as any).unit_prices
+                                                        })
+                                                    }
+                                                    
+                                                    const configAvailableUnits = (config as any).available_units
+                                                    if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
+                                                        const units = configAvailableUnits
+                                                            .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
+                                                            .map((u: any) => Number(u))
+                                                            .filter((n: number) => !isNaN(n) && n > 0)
+                                                        availableUnits = [...new Set([...availableUnits, ...units])]
+                                                        
+                                                        if (import.meta.env.DEV && units.length > 0) {
+                                                            console.log('✅ Found units in config:', (config as any).id, units)
+                                                        }
+                                                    }
+                                                    
+                                                    const configUnitPrices = (config as any).unit_prices
+                                                    if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
+                                                        Object.assign(allUnitPrices, configUnitPrices)
+                                                        
+                                                        if (import.meta.env.DEV) {
+                                                            console.log('✅ Found unit_prices in config:', (config as any).id, configUnitPrices)
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // If we have unit_prices but no available_units, use unit_prices keys
+                                                if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+                                                    availableUnits = Object.keys(allUnitPrices)
+                                                        .map(k => Number(k))
+                                                        .filter(n => !isNaN(n) && n > 0)
+                                                    
+                                                    if (import.meta.env.DEV) {
+                                                        console.log('✅ Using unit_prices keys as available units:', availableUnits)
+                                                    }
+                                                }
+                                                
+                                                if (import.meta.env.DEV && availableUnits.length > 0) {
+                                                    console.log('✅ Found units from all configs:', availableUnits)
+                                                }
                                             }
                                             
                                             // Only show if we have units to display
                                             if (availableUnits.length === 0) {
+                                                if (import.meta.env.DEV) {
+                                                    console.log('⚠️ No units found to display after checking all configs')
+                                                }
                                                 return null
+                                            }
+                                            
+                                            // Sort units for consistent display
+                                            availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
+                                            
+                                            if (import.meta.env.DEV) {
+                                                console.log('✅ Displaying unit buttons:', availableUnits, 'with prices:', allUnitPrices)
                                             }
                                             
                                             return (
@@ -2759,8 +2857,8 @@ const ProductDetail: React.FC = () => {
                                                     <div className="flex flex-wrap gap-3">
                                                         {availableUnits.map((unit: number) => {
                                                             const isSelected = selectedUnit === unit
-                                                            // Get unit price from config
-                                                            const unitPrice = (currentConfig as any).unit_prices?.[String(unit)]
+                                                            // Get unit price from collected prices (from selected config or all configs)
+                                                            const unitPrice = allUnitPrices[String(unit)]
                                                             const hasPrice = unitPrice !== undefined && typeof unitPrice === 'number'
                                                             
                                                             return (
