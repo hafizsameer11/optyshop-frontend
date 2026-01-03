@@ -1733,7 +1733,7 @@ const ProductDetail: React.FC = () => {
         }
 
         // Calculate total: unit price (pack price) - quantity does NOT affect price
-        // Example: Unit 30 pack = €9.00 → Total = €9.00 (regardless of qty)
+        // Example: Unit 30 pack = $9.00 → Total = $9.00 (regardless of qty)
         // Note: Price is based on unit selection only, quantity is independent
         return pricePerPack
     }, [
@@ -2458,7 +2458,7 @@ const ProductDetail: React.FC = () => {
                                                                 Selected Pack Size: Unit {selectedUnit}
                                                                 {displayUnitPrice !== null && (
                                                                     <span className="ml-2 text-gray-600">
-                                                                        - €{displayUnitPrice.toFixed(2)} per pack
+                                                                        - ${displayUnitPrice.toFixed(2)} per pack
                                                                     </span>
                                                                 )}
                                                             </p>
@@ -2467,11 +2467,11 @@ const ProductDetail: React.FC = () => {
                                                             {calculateContactLensTotal > 0 ? (
                                                                 <>
                                                                     <p className="text-3xl font-bold text-blue-950">
-                                                                        €{calculateContactLensTotal.toFixed(2)}
+                                                                        ${calculateContactLensTotal.toFixed(2)}
                                                                     </p>
                                                                     {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)})
+                                                                            (Pack Size: Unit {selectedUnit} - ${displayUnitPrice.toFixed(2)})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2480,20 +2480,20 @@ const ProductDetail: React.FC = () => {
                                                                     {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
                                                                         <>
                                                                             <p className="text-3xl font-bold text-blue-950">
-                                                                                €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
+                                                                                ${displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                             <p className="text-xl text-gray-400 line-through">
-                                                                                €{(regularPriceNum || 0).toFixed(2)}
+                                                                                ${(regularPriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                         </>
                                                                     ) : (
                                                                         <p className="text-3xl font-bold text-blue-950">
-                                                                            €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
+                                                                            ${displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
                                                                         </p>
                                                                     )}
                                                                     {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)} per pack)
+                                                                            (Pack Size: Unit {selectedUnit} - ${displayUnitPrice.toFixed(2)} per pack)
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2866,8 +2866,13 @@ const ProductDetail: React.FC = () => {
                                                                     key={unit}
                                                                     type="button"
                                                                     onClick={() => {
-                                                                        setSelectedUnit(unit)
-                                                                        setSelectedImageIndex(0) // Reset to first image when unit changes
+                                                                        // Toggle selection: if already selected, unselect; otherwise select
+                                                                        if (isSelected) {
+                                                                            setSelectedUnit(null)
+                                                                        } else {
+                                                                            setSelectedUnit(unit)
+                                                                            setSelectedImageIndex(0) // Reset to first image when unit changes
+                                                                        }
                                                                     }}
                                                                     className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${
                                                                         isSelected
@@ -2879,7 +2884,7 @@ const ProductDetail: React.FC = () => {
                                                                         <span>Unit {unit}</span>
                                                                         {hasPrice && (
                                                                             <span className="text-xs font-normal mt-1">
-                                                                                €{unitPrice.toFixed(2)}
+                                                                                ${unitPrice.toFixed(2)}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -3401,7 +3406,7 @@ const ProductDetail: React.FC = () => {
                                                                 </span>
                                                                 {variantPrice !== null && variantPrice !== Number(product.price) && (
                                                                     <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
-                                                                        €{variantPrice.toFixed(2)}
+                                                                        ${variantPrice.toFixed(2)}
                                                                     </span>
                                                                 )}
                                                             </div>
