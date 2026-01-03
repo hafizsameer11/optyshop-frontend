@@ -198,11 +198,10 @@ const Navbar: React.FC = () => {
                     className="navbar-search-container relative" 
                     ref={searchRef}
                     style={{
-                        flex: '1 1 0%',
-                        flexBasis: '0%',
+                        flex: '0 1 auto',
                         maxWidth: '32rem',
-                        minWidth: 0,
-                        width: '100%'
+                        width: '100%',
+                        minWidth: 0
                     }}
                 >
                     <div className="relative w-full" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
