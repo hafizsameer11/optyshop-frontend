@@ -1732,26 +1732,19 @@ const ProductDetail: React.FC = () => {
             pricePerPack = getUnitPrice(contactLensFormData.unit)
         }
 
-        // Calculate total: unit price (pack price) * (right_qty + left_qty)
-        // Example: Unit 30 pack = €9.00, right_qty=1, left_qty=1 → Total = €9.00 * (1+1) = €18.00
-        // Note: Price changes when unit is selected, not when qty changes
-        const rightTotal = pricePerPack * (rightEyeEnabled ? contactLensFormData.right_qty : 0)
-        const leftTotal = pricePerPack * (leftEyeEnabled ? contactLensFormData.left_qty : 0)
-
-        return rightTotal + leftTotal
+        // Calculate total: unit price (pack price) - quantity does NOT affect price
+        // Example: Unit 30 pack = €9.00 → Total = €9.00 (regardless of qty)
+        // Note: Price is based on unit selection only, quantity is independent
+        return pricePerPack
     }, [
         productBasePrice,
         contactLensFormData.right_power,
         contactLensFormData.left_power,
-        contactLensFormData.right_qty,
-        contactLensFormData.left_qty,
         contactLensFormData.unit,
         unitPrice,
         selectedUnit,
         selectedConfig,
         selectedAstigmatismConfig,
-        rightEyeEnabled,
-        leftEyeEnabled,
         getUnitPrice
         // Note: Price updates when:
         // 1. Unit is selected (selectedUnit changes) → unit price changes
@@ -1852,8 +1845,22 @@ const ProductDetail: React.FC = () => {
     useEffect(() => {
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         if (currentConfig && isContactLens) {
-            const availableUnits = (currentConfig as any).available_units
-            if (availableUnits && Array.isArray(availableUnits) && availableUnits.length > 0) {
+            // Get available units - check available_units first, then unit_prices keys as fallback
+            let availableUnits: number[] = []
+            
+            // Priority 1: Check available_units array
+            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units) && (currentConfig as any).available_units.length > 0) {
+                availableUnits = (currentConfig as any).available_units.filter((u: any) => u != null && !isNaN(Number(u))).map((u: any) => Number(u))
+            }
+            
+            // Priority 2: If no available_units or empty, use unit_prices keys
+            if (availableUnits.length === 0 && (currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
+                availableUnits = Object.keys((currentConfig as any).unit_prices)
+                    .map(k => Number(k))
+                    .filter(n => !isNaN(n) && n > 0)
+            }
+            
+            if (availableUnits.length > 0) {
                 // If no unit selected, or selected unit is not in available units, select first available
                 if (!selectedUnit || !availableUnits.includes(selectedUnit)) {
                     setSelectedUnit(availableUnits[0])
@@ -2464,7 +2471,7 @@ const ProductDetail: React.FC = () => {
                                                                     </p>
                                                                     {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (€{displayUnitPrice.toFixed(2)} per pack × {contactLensFormData.right_qty + contactLensFormData.left_qty} = €{calculateContactLensTotal.toFixed(2)})
+                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2726,22 +2733,35 @@ const ProductDetail: React.FC = () => {
                                             
                                             // Get available units - check available_units first, then unit_prices keys as fallback
                                             let availableUnits: number[] = []
-                                            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units)) {
-                                                availableUnits = (currentConfig as any).available_units
-                                            } else if ((currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
-                                                // Fallback: use unit_prices keys as available units
-                                                availableUnits = Object.keys((currentConfig as any).unit_prices).map(k => Number(k)).filter(n => !isNaN(n))
+                                            
+                                            // Priority 1: Check available_units array
+                                            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units) && (currentConfig as any).available_units.length > 0) {
+                                                availableUnits = (currentConfig as any).available_units.filter((u: any) => u != null && !isNaN(Number(u))).map((u: any) => Number(u))
                                             }
                                             
+                                            // Priority 2: If no available_units or empty, use unit_prices keys
+                                            if (availableUnits.length === 0 && (currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
+                                                availableUnits = Object.keys((currentConfig as any).unit_prices)
+                                                    .map(k => Number(k))
+                                                    .filter(n => !isNaN(n) && n > 0)
+                                            }
+                                            
+                                            // Only show if we have units to display
                                             if (availableUnits.length === 0) {
-                                                return null // No units available, don't show unit selection
+                                                return null
                                             }
                                             
                                             return (
                                                 <div className="mb-8">
+                                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                        Select Pack Size (Units)
+                                                    </label>
                                                     <div className="flex flex-wrap gap-3">
                                                         {availableUnits.map((unit: number) => {
                                                             const isSelected = selectedUnit === unit
+                                                            // Get unit price from config
+                                                            const unitPrice = (currentConfig as any).unit_prices?.[String(unit)]
+                                                            const hasPrice = unitPrice !== undefined && typeof unitPrice === 'number'
                                                             
                                                             return (
                                                                 <button
@@ -2757,7 +2777,14 @@ const ProductDetail: React.FC = () => {
                                                                             : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                                                                     }`}
                                                                 >
-                                                                    unit {unit}
+                                                                    <div className="flex flex-col items-center">
+                                                                        <span>Unit {unit}</span>
+                                                                        {hasPrice && (
+                                                                            <span className="text-xs font-normal mt-1">
+                                                                                €{unitPrice.toFixed(2)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </button>
                                                             )
                                                         })}
