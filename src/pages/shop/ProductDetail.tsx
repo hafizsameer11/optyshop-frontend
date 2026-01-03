@@ -370,7 +370,9 @@ const ProductDetail: React.FC = () => {
                     setRelatedProducts(related)
                 }
             } else {
-                // Product not found, redirect to shop
+                // Product not found or deleted, redirect to shop
+                // This handles both 404 errors and products deleted from admin panel
+                // Deleted products are automatically excluded from public API endpoints
                 if (!isCancelled) {
                     navigate('/shop')
                 }
@@ -2713,8 +2715,8 @@ const ProductDetail: React.FC = () => {
 
                             {/* Contact Lens Parameter Selection Form - Right Side */}
                             {isContactLens && (
-                                <div>
-                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-6 md:p-10 shadow-xl">
+                                <div className="w-full">
+                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl w-full">
                                         <div className="mb-8 pb-6 border-b-2 border-gray-100">
                                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
                                                 Select the parameters
@@ -2870,8 +2872,8 @@ const ProductDetail: React.FC = () => {
                                                                         if (isSelected) {
                                                                             setSelectedUnit(null)
                                                                         } else {
-                                                                            setSelectedUnit(unit)
-                                                                            setSelectedImageIndex(0) // Reset to first image when unit changes
+                                                                        setSelectedUnit(unit)
+                                                                        setSelectedImageIndex(0) // Reset to first image when unit changes
                                                                         }
                                                                     }}
                                                                     className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${
@@ -2896,9 +2898,9 @@ const ProductDetail: React.FC = () => {
                                             )
                                         })()}
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
                                             {/* Right Eye Section */}
-                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 md:p-8 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-5 md:p-6 lg:p-8 border-2 shadow-sm transition-all ${
                                                 rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
                                             }`}>
                                                 <div className="flex items-center gap-3 mb-6">
@@ -3046,7 +3048,7 @@ const ProductDetail: React.FC = () => {
                                                                     <label className="block text-xs text-gray-500 mb-1">
                                                                         Cylinder & Axis
                                                                     </label>
-                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                                         <div>
                                                                             <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
                                                                             <select
@@ -3088,7 +3090,7 @@ const ProductDetail: React.FC = () => {
                                             </div>
 
                                             {/* Left Eye Section */}
-                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 md:p-8 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-5 md:p-6 lg:p-8 border-2 shadow-sm transition-all ${
                                                 leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
                                             }`}>
                                                 <div className="flex items-center gap-3 mb-6">
@@ -3135,7 +3137,7 @@ const ProductDetail: React.FC = () => {
                                                     </div>
 
                                                     {/* Base Curve and Diameter - Grouped Together */}
-                                                    <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Base Curve (B.C)
@@ -3236,7 +3238,7 @@ const ProductDetail: React.FC = () => {
                                                                     <label className="block text-xs text-gray-500 mb-1">
                                                                         Cylinder & Axis
                                                                     </label>
-                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                                         <div>
                                                                             <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
                                                                             <select
@@ -3842,29 +3844,9 @@ const ProductDetail: React.FC = () => {
                                         })
                                     }
                                     
-                                    // Sleeping with Lenses
-                                    if (product.can_sleep_with !== undefined) {
-                                        specs.push({
-                                            label: 'Sleeping with Lenses',
-                                            value: product.can_sleep_with ? 'si' : 'no'
-                                        })
-                                    }
-                                    
-                                    // Medical Device
-                                    if (product.is_medical_device !== undefined) {
-                                        specs.push({
-                                            label: 'Medical Device',
-                                            value: product.is_medical_device ? 'si' : 'no'
-                                        })
-                                    }
-                                    
-                                    // UV Filter
-                                    if (product.has_uv_filter !== undefined) {
-                                        specs.push({
-                                            label: 'UV Filter',
-                                            value: product.has_uv_filter ? 'si' : 'no'
-                                        })
-                                    }
+                                    // Sleeping with Lenses - HIDDEN
+                                    // Medical Device - HIDDEN
+                                    // UV Filter - HIDDEN
                                     
                                     if (specs.length === 0) return null
                                     

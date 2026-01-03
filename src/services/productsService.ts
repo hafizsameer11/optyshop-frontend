@@ -226,6 +226,11 @@ export const getFeaturedProducts = async (): Promise<Product[]> => {
  * - model_3d_url: URL to 3D model file (null if not available)
  * - color_images: Array of color-specific images
  * 
+ * ⚠️ Product Deletion Integration:
+ * - Deleted products (removed via DELETE /api/admin/products/:id) are automatically excluded
+ * - The backend filters out deleted products from all public endpoints
+ * - No manual refresh needed - deleted products disappear automatically from the website
+ * 
  * @param filters - Filter parameters matching Postman collection
  */
 export const getProducts = async (filters: ProductFilters = {}): Promise<{
@@ -304,7 +309,14 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
 /**
  * Get product by slug
  * Matches Postman collection structure: GET /api/products/slug/:slug
+ * 
+ * ⚠️ Product Deletion Integration:
+ * - Returns null if product is deleted (404 from backend)
+ * - ProductDetail page handles null by redirecting to /shop
+ * - Deleted products cannot be accessed via this endpoint
+ * 
  * @param slug - Product slug
+ * @returns Product object or null if not found/deleted
  */
 export const getProductBySlug = async (slug: string): Promise<Product | null> => {
   try {
@@ -349,7 +361,13 @@ export const getProductBySlug = async (slug: string): Promise<Product | null> =>
  * - Media fields: images, image, model_3d_url, color_images
  * - Contact lens fields: base_curve_options, diameter_options, powers_range, etc.
  * - Frame fields: frameSizes, lensTypes, lensCoatings
+ * 
+ * ⚠️ Product Deletion Integration:
+ * - Returns null if product is deleted (404 from backend)
+ * - Deleted products cannot be accessed via this endpoint
+ * 
  * @param id - Product ID
+ * @returns Product object or null if not found/deleted
  */
 export const getProductById = async (id: number | string): Promise<Product | null> => {
   try {
