@@ -1634,6 +1634,49 @@ const ProductDetail: React.FC = () => {
         return []
     }, [contactLensFormConfig?.formType, sphericalPowerValues, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
+    // Get fixed Base Curve and Diameter values from selected config (first value from arrays)
+    const fixedBaseCurveAndDiameter = useMemo(() => {
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        if (!currentConfig) {
+            return {
+                right_base_curve: '00.00',
+                right_diameter: '00.00',
+                left_base_curve: '00.00',
+                left_diameter: '00.00'
+            }
+        }
+
+        // Get first value from arrays (fixed value from admin panel)
+        const getFirstValue = (arr: any[] | string[] | number[] | null | undefined): string => {
+            if (!arr || !Array.isArray(arr) || arr.length === 0) return '00.00'
+            const firstValue = arr[0]
+            return firstValue != null && firstValue !== '' ? String(firstValue) : '00.00'
+        }
+
+        return {
+            right_base_curve: getFirstValue(currentConfig.right_base_curve),
+            right_diameter: getFirstValue(currentConfig.right_diameter),
+            left_base_curve: getFirstValue(currentConfig.left_base_curve),
+            left_diameter: getFirstValue(currentConfig.left_diameter)
+        }
+    }, [selectedConfig, selectedAstigmatismConfig])
+
+    // Update form data with fixed values when config changes
+    useEffect(() => {
+        if (!isContactLens) return
+        
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        if (currentConfig) {
+            setContactLensFormData(prev => ({
+                ...prev,
+                right_base_curve: fixedBaseCurveAndDiameter.right_base_curve,
+                right_diameter: fixedBaseCurveAndDiameter.right_diameter,
+                left_base_curve: fixedBaseCurveAndDiameter.left_base_curve,
+                left_diameter: fixedBaseCurveAndDiameter.left_diameter
+            }))
+        }
+    }, [fixedBaseCurveAndDiameter, selectedConfig, selectedAstigmatismConfig, isContactLens])
+
     // Initialize contact lens form when product loads
     useEffect(() => {
         if (!product?.id) return
@@ -1823,6 +1866,15 @@ const ProductDetail: React.FC = () => {
 
 
     const handleContactLensFieldChange = (field: keyof ContactLensFormData, value: string | number) => {
+        // Prevent manual changes to fixed Base Curve and Diameter values (set by admin)
+        const fixedFields: (keyof ContactLensFormData)[] = ['right_base_curve', 'right_diameter', 'left_base_curve', 'left_diameter']
+        if (fixedFields.includes(field)) {
+            if (import.meta.env.DEV) {
+                console.warn('⚠️ Attempted to change fixed field:', field, '- This value is set by admin and cannot be changed')
+            }
+            return // Ignore changes to fixed fields
+        }
+
         setContactLensFormData(prev => ({ ...prev, [field]: value }))
 
         // Debug: Log unit changes in development
@@ -2919,13 +2971,15 @@ const ProductDetail: React.FC = () => {
                                                 </div>
                                                 
                                                 <div className={`space-y-5 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                    {/* Qty Dropdown - Full Width */}
+                                                    {/* Qty Number Input with Spinner - Full Width */}
                                                     <div>
                                                         <label className="block text-xs text-gray-500 mb-1">
                                                             Quantity (Qty)
                                                         </label>
-                                                        <select
-                                                            value={contactLensFormData.right_qty || '00.00'}
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={contactLensFormData.right_qty || 1}
                                                             onChange={(e) => {
                                                                 const selectedValue = parseInt(e.target.value) || 1
                                                                 handleContactLensFieldChange('right_qty', selectedValue)
@@ -2933,57 +2987,34 @@ const ProductDetail: React.FC = () => {
                                                             disabled={!rightEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        >
-                                                            <option value="00.00">Select Quantity</option>
-                                                            {qtyOptions.map((option: number | string) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        />
                                                         {contactLensErrors.right_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
                                                         )}
                                                     </div>
 
-                                                    {/* Base Curve and Diameter - Grouped Together */}
+                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Base Curve (B.C)
                                                             </label>
-                                                            <select
-                                                                value={contactLensFormData.right_base_curve || '00.00'}
-                                                                onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
-                                                                disabled={!rightEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <option value="00.00">00.00</option>
-                                                                {baseCurveOptions.map((option) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.right_base_curve}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Diameter (DIA)
                                                             </label>
-                                                            <select
-                                                                value={contactLensFormData.right_diameter || '00.00'}
-                                                                onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
-                                                                disabled={!rightEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <option value="00.00">00.00</option>
-                                                                {diameterOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.right_diameter}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -3109,13 +3140,15 @@ const ProductDetail: React.FC = () => {
                                                 </div>
                                                 
                                                 <div className={`space-y-5 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                    {/* Qty Dropdown - Full Width */}
+                                                    {/* Qty Number Input with Spinner - Full Width */}
                                                     <div>
                                                         <label className="block text-xs text-gray-500 mb-1">
                                                             Quantity (Qty)
                                                         </label>
-                                                        <select
-                                                            value={contactLensFormData.left_qty || '00.00'}
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={contactLensFormData.left_qty || 1}
                                                             onChange={(e) => {
                                                                 const selectedValue = parseInt(e.target.value) || 1
                                                                 handleContactLensFieldChange('left_qty', selectedValue)
@@ -3123,57 +3156,34 @@ const ProductDetail: React.FC = () => {
                                                             disabled={!leftEyeEnabled}
                                                             className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        >
-                                                            <option value="00.00">Select Quantity</option>
-                                                            {qtyOptions.map((option: number | string) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        />
                                                         {contactLensErrors.left_qty && (
                                                             <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
                                                         )}
                                                     </div>
 
-                                                    {/* Base Curve and Diameter - Grouped Together */}
+                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Base Curve (B.C)
                                                             </label>
-                                                            <select
-                                                                value={contactLensFormData.left_base_curve || '00.00'}
-                                                                onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
-                                                                disabled={!leftEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <option value="00.00">00.00</option>
-                                                                {baseCurveOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.left_base_curve}
+                                                                </span>
+                                                            </div>
                                                         </div>
 
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Diameter (DIA)
                                                             </label>
-                                                            <select
-                                                                value={contactLensFormData.left_diameter || '00.00'}
-                                                                onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
-                                                                disabled={!leftEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                            >
-                                                                <option value="00.00">00.00</option>
-                                                                {diameterOptions.map((option: number | string) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.left_diameter}
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
