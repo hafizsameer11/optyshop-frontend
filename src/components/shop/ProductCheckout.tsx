@@ -4621,7 +4621,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
   const [formLoading, setFormLoading] = useState(true)
   const [copyLeftToRight, setCopyLeftToRight] = useState(false)
-  const [showAxisDiagram, setShowAxisDiagram] = useState(false)
+  const [showAxisDiagram, setShowAxisDiagram] = useState(true)
 
   // Fetch form structure from API
   useEffect(() => {
@@ -4903,30 +4903,28 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
       )}
 
       {/* Eyes Section - Horizontal Layout */}
-      <div className="mb-4">
+      <div className="mb-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Eye (OS) */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-medium text-gray-700">Left Eye OS</label>
-                <button
-                  type="button"
-                  className="text-gray-400 hover:text-gray-600"
-                  title="OS = Oculus Sinister (Left Eye)"
-                >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <label className="text-sm font-semibold text-gray-800">Left Eye OS</label>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                title="OS = Oculus Sinister (Left Eye)"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <select
                   value={prescriptionData.os_sphere}
                   onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.os_sphere ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -4943,7 +4941,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <select
                   value={prescriptionData.os_cylinder}
                   onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.os_cylinder ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -4961,7 +4959,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <select
                     value={prescriptionData.os_axis}
                     onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`flex-1 px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                       errors.os_axis ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -4972,9 +4970,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </select>
                   <button
                     type="button"
-                    onClick={() => setShowAxisDiagram(true)}
+                    onClick={() => setShowAxisDiagram(!showAxisDiagram)}
                     className="text-gray-400 hover:text-blue-600 transition-colors"
-                    title="Show Axis Diagram"
+                    title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
@@ -4989,12 +4987,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </div>
 
           {/* Right Eye (OD) */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-sm font-medium text-gray-700">Right Eye OD</label>
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <label className="text-sm font-semibold text-gray-800">Right Eye OD</label>
               <button
                 type="button"
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition-colors"
                 title="OD = Oculus Dexter (Right Eye)"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -5007,7 +5005,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <select
                   value={prescriptionData.od_sphere}
                   onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.od_sphere ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -5024,7 +5022,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <select
                   value={prescriptionData.od_cylinder}
                   onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
                   }`}
                 >
@@ -5042,7 +5040,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <select
                     value={prescriptionData.od_axis}
                     onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`flex-1 px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                       errors.od_axis ? 'border-red-500' : 'border-gray-300'
                     }`}
                   >
@@ -5053,9 +5051,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </select>
                   <button
                     type="button"
-                    onClick={() => setShowAxisDiagram(true)}
+                    onClick={() => setShowAxisDiagram(!showAxisDiagram)}
                     className="text-gray-400 hover:text-blue-600 transition-colors"
-                    title="Show Axis Diagram"
+                    title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
@@ -5069,6 +5067,35 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Axis Diagram - Inline below both sections */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-gray-800">Axis Measurement Guide</h4>
+            <button
+              type="button"
+              onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+              className="text-gray-400 hover:text-blue-600 transition-colors"
+              title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
+            >
+              {showAxisDiagram ? (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              )}
+            </button>
+          </div>
+          <span className="text-xs text-gray-500">For Customer Support</span>
+        </div>
+        {showAxisDiagram && (
+          <AxisDiagram compact={true} />
+        )}
       </div>
 
       {/* Copy Left to Right Button */}
@@ -5144,15 +5171,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
       >
         Continue
       </button>
-
-      {/* Axis Diagram Modal */}
-      {showAxisDiagram && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAxisDiagram(false)}>
-          <div onClick={(e) => e.stopPropagation()}>
-            <AxisDiagram onClose={() => setShowAxisDiagram(false)} />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
