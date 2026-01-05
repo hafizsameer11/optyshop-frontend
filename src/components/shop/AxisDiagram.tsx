@@ -122,6 +122,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
             />
           </svg>
         </div>
+        </div>
         <p className="text-xs text-center text-gray-600 mt-3 font-medium">Current Axis: 90°</p>
       </div>
     )
