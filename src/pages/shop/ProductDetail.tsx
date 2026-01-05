@@ -2400,12 +2400,10 @@ const ProductDetail: React.FC = () => {
             <section className="py-4 md:py-6 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {isContactLens ? (
-                        /* Contact Lens Layout: Images and Form Side by Side */
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                             {/* Product Images - Left Side */}
                             <div>
                                 {isContactLens ? (
-                                    /* Contact Lens - Single Product Image with Price */
                                     <div className="space-y-4">
                                         {/* Single Product Image */}
                                         <div className="relative bg-gray-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
@@ -2567,7 +2565,6 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                     </div>
                                 ) : (
-                                    /* Regular Product - Single Image Display */
                                     <>
                                         <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
                                             {(() => {
@@ -2768,8 +2765,7 @@ const ProductDetail: React.FC = () => {
                             </div>
 
                             {/* Contact Lens Parameter Selection Form - Right Side */}
-                            {isContactLens && (
-                                <div className="w-full">
+                            <div className="w-full">
                                     <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
                                         <div className="mb-4 pb-3 border-b-2 border-gray-100">
                                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -3462,10 +3458,9 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     ) : (
-                        /* Regular Product Layout: Images and Info Side by Side */
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                             {/* Product Images (Left Column) */}
                             <div>
@@ -4066,7 +4061,7 @@ const ProductDetail: React.FC = () => {
                         </div>
                     </div>
                 </section>
-            )}
+                )}
 
             {/* Related Products */}
             {relatedProducts.length > 0 && (
