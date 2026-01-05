@@ -2397,18 +2397,18 @@ const ProductDetail: React.FC = () => {
             </div>
 
             {/* Product Details */}
-            <section className="py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+            <section className="py-4 md:py-6 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {isContactLens ? (
                         /* Contact Lens Layout: Images and Form Side by Side */
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
                             {/* Product Images - Left Side */}
                             <div>
                                 {isContactLens ? (
                                     /* Contact Lens - Single Product Image with Price */
-                                    <div className="space-y-6">
+                                    <div className="space-y-4">
                                         {/* Single Product Image */}
-                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '400px' }}>
+                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
                                                 // Parse images if it's a JSON string
                                                 let imagesArray: string[] = []
@@ -2486,7 +2486,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
 
                                         {/* Price Display */}
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100">
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-100">
                                             <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
                                                 {calculateContactLensTotal > 0 ? 'Total Price' : 'Price'}
                                             </p>
@@ -2770,13 +2770,13 @@ const ProductDetail: React.FC = () => {
                             {/* Contact Lens Parameter Selection Form - Right Side */}
                             {isContactLens && (
                                 <div className="w-full">
-                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl w-full">
-                                        <div className="mb-8 pb-6 border-b-2 border-gray-100">
-                                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
+                                        <div className="mb-4 pb-3 border-b-2 border-gray-100">
+                                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
                                                 Select the parameters
                                             </h2>
                                             {product && (
-                                                <p className="text-lg md:text-xl text-gray-700 font-medium">
+                                                <p className="text-base md:text-lg text-gray-700 font-medium">
                                                     {product.name}
                                                 </p>
                                             )}
