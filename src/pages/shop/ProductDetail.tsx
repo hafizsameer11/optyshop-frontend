@@ -3510,7 +3510,7 @@ const ProductDetail: React.FC = () => {
                                     <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2 px-1">
                                         {product.brand || product.category?.name || 'Brand'}
                                     </p>
-                                    <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-6 leading-tight">
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
                                         {product.name}
                                     </h1>
 
@@ -3661,29 +3661,6 @@ const ProductDetail: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Description Section with Toggle Button */}
-                                    {product.description && (
-                                        <div className="mb-8">
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowDescription(!showDescription)}
-                                                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-all duration-200 mb-3"
-                                            >
-                                                <h2 className="text-lg font-bold text-gray-900">Description</h2>
-                                                <span className="text-blue-950 font-semibold">
-                                                    {showDescription ? 'Hide' : 'Show'}
-                                                </span>
-                                            </button>
-                                            {showDescription && (
-                                                <div className="p-4 bg-white rounded-xl border border-gray-200">
-                                                    <p className="text-gray-600 leading-relaxed text-lg">
-                                                        {product.description}
-                                                    </p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
                                     {/* Actions */}
                                     <div className="space-y-4">
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
@@ -3779,6 +3756,29 @@ const ProductDetail: React.FC = () => {
                                             </>
                                         )}
                                     </div>
+
+                                    {/* Description Section with Toggle Button */}
+                                    {product.description && (
+                                        <div className="mt-6">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowDescription(!showDescription)}
+                                                className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-all duration-200"
+                                            >
+                                                <h2 className="text-lg font-bold text-gray-900">Description</h2>
+                                                <span className="text-blue-950 font-semibold">
+                                                    {showDescription ? 'Hide' : 'Show'}
+                                                </span>
+                                            </button>
+                                            {showDescription && (
+                                                <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200">
+                                                    <p className="text-gray-600 leading-relaxed text-lg">
+                                                        {product.description}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
