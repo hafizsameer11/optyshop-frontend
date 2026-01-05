@@ -60,6 +60,8 @@ import {
   type PrescriptionFormStructure,
   type FormType,
 } from '../../services/prescriptionFormsService'
+import AxisDiagram from './AxisDiagram'
+import { Link } from 'react-router-dom'
 
 // Import test function in dev mode
 if (import.meta.env.DEV) {
@@ -4619,6 +4621,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
   const [formLoading, setFormLoading] = useState(true)
   const [copyLeftToRight, setCopyLeftToRight] = useState(false)
+  const [showAxisDiagram, setShowAxisDiagram] = useState(false)
 
   // Fetch form structure from API
   useEffect(() => {
@@ -4735,6 +4738,19 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         <h3 className="text-xl font-bold text-gray-900">
           {isProgressive ? 'Progressive Vision' : isDistanceVision ? 'Distance Vision' : isNearVision ? 'Near Vision' : 'Prescription'}
         </h3>
+      </div>
+
+      {/* Customer Support Link */}
+      <div className="mb-4 flex justify-end">
+        <Link
+          to="/contact"
+          className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          Need help? Contact Customer Support
+        </Link>
       </div>
 
       {/* General Error Message */}
@@ -4886,73 +4902,171 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </div>
       )}
 
-      {/* Left Eye (OS) */}
+      {/* Eyes Section - Horizontal Layout */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Left Eye OS</label>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-600"
-              title="OS = Oculus Sinister (Left Eye)"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Eye (OS) */}
           <div>
-            <select
-              value={prescriptionData.os_sphere}
-              onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.os_sphere ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">SPH</option>
-              {getOSSphereOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.os_sphere && (
-              <p className="text-xs text-red-500 mt-1">{errors.os_sphere}</p>
-            )}
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700">Left Eye OS</label>
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-600"
+                  title="OS = Oculus Sinister (Left Eye)"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <select
+                  value={prescriptionData.os_sphere}
+                  onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.os_sphere ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">SPH</option>
+                  {getOSSphereOptions().map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.os_sphere && (
+                  <p className="text-xs text-red-500 mt-1">{errors.os_sphere}</p>
+                )}
+              </div>
+              <div>
+                <select
+                  value={prescriptionData.os_cylinder}
+                  onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.os_cylinder ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">CYL</option>
+                  {getOSCylinderOptions().map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.os_cylinder && (
+                  <p className="text-xs text-red-500 mt-1">{errors.os_cylinder}</p>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={prescriptionData.os_axis}
+                    onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
+                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.os_axis ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">AXIS</option>
+                    {getOSAxisOptions().map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAxisDiagram(true)}
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Show Axis Diagram"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                {errors.os_axis && (
+                  <p className="text-xs text-red-500 mt-1">{errors.os_axis}</p>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Right Eye (OD) */}
           <div>
-            <select
-              value={prescriptionData.os_cylinder}
-              onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.os_cylinder ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">CYL</option>
-              {getOSCylinderOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.os_cylinder && (
-              <p className="text-xs text-red-500 mt-1">{errors.os_cylinder}</p>
-            )}
-          </div>
-          <div>
-            <select
-              value={prescriptionData.os_axis}
-              onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.os_axis ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">AXIS</option>
-              {getOSAxisOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.os_axis && (
-              <p className="text-xs text-red-500 mt-1">{errors.os_axis}</p>
-            )}
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium text-gray-700">Right Eye OD</label>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-600"
+                title="OD = Oculus Dexter (Right Eye)"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <select
+                  value={prescriptionData.od_sphere}
+                  onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.od_sphere ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">SPH</option>
+                  {getSphereOptions('right').map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.od_sphere && (
+                  <p className="text-xs text-red-500 mt-1">{errors.od_sphere}</p>
+                )}
+              </div>
+              <div>
+                <select
+                  value={prescriptionData.od_cylinder}
+                  onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">CYL</option>
+                  {getCylinderOptions('right').map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+                {errors.od_cylinder && (
+                  <p className="text-xs text-red-500 mt-1">{errors.od_cylinder}</p>
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-1">
+                  <select
+                    value={prescriptionData.od_axis}
+                    onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
+                    className={`flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      errors.od_axis ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">AXIS</option>
+                    {getAxisOptions('right').map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setShowAxisDiagram(true)}
+                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    title="Show Axis Diagram"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                </div>
+                {errors.od_axis && (
+                  <p className="text-xs text-red-500 mt-1">{errors.od_axis}</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -4973,75 +5087,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         {copyLeftToRight && (
           <p className="text-xs text-green-600 mt-1 text-center">✓ Left eye values copied to right eye</p>
         )}
-      </div>
-
-      {/* Right Eye (OD) */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <label className="text-sm font-medium text-gray-700">Right Eye OD</label>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600"
-            title="OD = Oculus Dexter (Right Eye)"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          <div>
-            <select
-              value={prescriptionData.od_sphere}
-              onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_sphere ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">SPH</option>
-              {getSphereOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_sphere && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_sphere}</p>
-            )}
-          </div>
-          <div>
-            <select
-              value={prescriptionData.od_cylinder}
-              onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">CYL</option>
-              {getCylinderOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_cylinder && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_cylinder}</p>
-            )}
-          </div>
-          <div>
-            <select
-              value={prescriptionData.od_axis}
-              onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.od_axis ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">AXIS</option>
-              {getAxisOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_axis && (
-              <p className="text-xs text-red-500 mt-1">{errors.od_axis}</p>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Select Option (ADD) - Only for Progressive */}
@@ -5099,6 +5144,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
       >
         Continue
       </button>
+
+      {/* Axis Diagram Modal */}
+      {showAxisDiagram && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowAxisDiagram(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
+            <AxisDiagram onClose={() => setShowAxisDiagram(false)} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
