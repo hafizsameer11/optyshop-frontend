@@ -4838,12 +4838,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           )}
         </div>
       ) : (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium text-gray-700">PD</label>
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <label className="text-sm font-bold text-gray-900">Pupillary Distance (PD)</label>
             <button
               type="button"
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
               title="Pupillary Distance is the distance between the centers of your pupils"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -4854,17 +4854,17 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           <select
           value={prescriptionData.pd_binocular}
           onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-            errors.pd_binocular ? 'border-red-500' : 'border-gray-300'
+          className={`w-full px-4 py-3.5 border-2 rounded-xl bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${
+            errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
           }`}
           >
-            <option value="">Enter Your Pupillary distance</option>
+            <option value="">Enter Your Pupillary Distance</option>
             {pdOptions.map(opt => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
         {errors.pd_binocular && (
-          <p className="text-sm text-red-500 mt-1">{errors.pd_binocular}</p>
+          <p className="text-sm text-red-600 mt-2 font-medium">{errors.pd_binocular}</p>
         )}
       </div>
       )}
@@ -4904,14 +4904,17 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
       {/* Eyes Section - Horizontal Layout */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           {/* Left Eye (OS) */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <label className="text-sm font-semibold text-gray-800">Left Eye OS</label>
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm hover:shadow-md transition-shadow h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                <label className="text-base font-bold text-gray-900">Left Eye OS</label>
+              </div>
               <button
                 type="button"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="ml-auto text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
                 title="OS = Oculus Sinister (Left Eye)"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -4919,51 +4922,54 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">SPH</label>
                 <select
                   value={prescriptionData.os_sphere}
                   onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.os_sphere ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${
+                    errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">SPH</option>
+                  <option value="">Select</option>
                   {getOSSphereOptions().map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
                 {errors.os_sphere && (
-                  <p className="text-xs text-red-500 mt-1">{errors.os_sphere}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
                 )}
               </div>
               <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">CYL</label>
                 <select
                   value={prescriptionData.os_cylinder}
                   onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.os_cylinder ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${
+                    errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">CYL</option>
+                  <option value="">Select</option>
                   {getOSCylinderOptions().map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
                 {errors.os_cylinder && (
-                  <p className="text-xs text-red-500 mt-1">{errors.os_cylinder}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-1">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">AXIS</label>
+                <div className="flex items-center gap-2">
                   <select
                     value={prescriptionData.os_axis}
                     onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                    className={`flex-1 px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      errors.os_axis ? 'border-red-500' : 'border-gray-300'
+                    className={`flex-1 px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${
+                      errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                     }`}
                   >
-                    <option value="">AXIS</option>
+                    <option value="">Select</option>
                     {getOSAxisOptions().map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
@@ -4971,28 +4977,31 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg"
                     title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                     </svg>
                   </button>
                 </div>
                 {errors.os_axis && (
-                  <p className="text-xs text-red-500 mt-1">{errors.os_axis}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Right Eye (OD) */}
-          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-            <div className="flex items-center gap-2 mb-3">
-              <label className="text-sm font-semibold text-gray-800">Right Eye OD</label>
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 shadow-sm hover:shadow-md transition-shadow h-full">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                <label className="text-base font-bold text-gray-900">Right Eye OD</label>
+              </div>
               <button
                 type="button"
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="ml-auto text-gray-500 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
                 title="OD = Oculus Dexter (Right Eye)"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -5000,51 +5009,54 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 </svg>
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">SPH</label>
                 <select
                   value={prescriptionData.od_sphere}
                   onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.od_sphere ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 ${
+                    errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">SPH</option>
+                  <option value="">Select</option>
                   {getSphereOptions('right').map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
                 {errors.od_sphere && (
-                  <p className="text-xs text-red-500 mt-1">{errors.od_sphere}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
                 )}
               </div>
               <div>
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">CYL</label>
                 <select
                   value={prescriptionData.od_cylinder}
                   onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                  className={`w-full px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                    errors.od_cylinder ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 ${
+                    errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">CYL</option>
+                  <option value="">Select</option>
                   {getCylinderOptions('right').map(opt => (
                     <option key={opt} value={opt}>{opt}</option>
                   ))}
                 </select>
                 {errors.od_cylinder && (
-                  <p className="text-xs text-red-500 mt-1">{errors.od_cylinder}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-1">
+                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">AXIS</label>
+                <div className="flex items-center gap-2">
                   <select
                     value={prescriptionData.od_axis}
                     onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                    className={`flex-1 px-3 py-2.5 border rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      errors.od_axis ? 'border-red-500' : 'border-gray-300'
+                    className={`flex-1 px-4 py-3 border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 ${
+                      errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                     }`}
                   >
-                    <option value="">AXIS</option>
+                    <option value="">Select</option>
                     {getAxisOptions('right').map(opt => (
                       <option key={opt} value={opt}>{opt}</option>
                     ))}
@@ -5052,68 +5064,84 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                    className="text-gray-400 hover:text-blue-600 transition-colors"
+                    className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all p-2 rounded-lg"
                     title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
                   >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                     </svg>
                   </button>
                 </div>
                 {errors.od_axis && (
-                  <p className="text-xs text-red-500 mt-1">{errors.od_axis}</p>
+                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
                 )}
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Axis Diagram - Inline below both sections */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold text-gray-800">Axis Measurement Guide</h4>
-            <button
-              type="button"
-              onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-              className="text-gray-400 hover:text-blue-600 transition-colors"
-              title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
-            >
-              {showAxisDiagram ? (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              )}
-            </button>
-          </div>
-          <span className="text-xs text-gray-500">For Customer Support</span>
+        {/* Copy Left to Right Button */}
+        <div className="mb-6 mt-6">
+          <button
+            type="button"
+            onClick={handleCopyLeftToRight}
+            disabled={!prescriptionData.os_sphere && !prescriptionData.os_cylinder && !prescriptionData.os_axis}
+            className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+            <span>Copy Left to Right</span>
+          </button>
+          {copyLeftToRight && (
+            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm text-green-700 font-medium">Left eye values copied to right eye successfully</p>
+            </div>
+          )}
         </div>
-        {showAxisDiagram && (
-          <AxisDiagram compact={true} />
-        )}
-      </div>
 
-      {/* Copy Left to Right Button */}
-      <div className="mb-4">
-        <button
-          type="button"
-          onClick={handleCopyLeftToRight}
-          disabled={!prescriptionData.os_sphere && !prescriptionData.os_cylinder && !prescriptionData.os_axis}
-          className="w-full px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-300 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-          </svg>
-          Copy Left to Right
-        </button>
-        {copyLeftToRight && (
-          <p className="text-xs text-green-600 mt-1 text-center">✓ Left eye values copied to right eye</p>
-        )}
+        {/* Axis Diagram - Below both sections */}
+        <div className="mb-6">
+          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
+                  <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+                className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg"
+                title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
+              >
+                {showAxisDiagram ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {showAxisDiagram && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <AxisDiagram compact={true} />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Select Option (ADD) - Only for Progressive */}
