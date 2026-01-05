@@ -181,7 +181,6 @@ const ProductDetail: React.FC = () => {
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
     const salePriceNum = hasValidSale ? displayPrice : null
-    const p = product as any
 
     // Check if product is eye hygiene (check both category and subcategory)
     const isEyeHygiene = useMemo(() => {
@@ -1155,7 +1154,8 @@ const ProductDetail: React.FC = () => {
     // This ensures hooks run in the same order on every render
 
     // Qty Options - ONLY from API configs arrays (sphericalConfigs or astigmatismConfigs)
-    const qtyOptions = useMemo(() => {
+    // Note: Currently unused as qty is a number input, but kept for potential future dropdown use
+    void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
         // ONLY use configs arrays from API - no formFields or dropdownValues
@@ -1241,7 +1241,8 @@ const ProductDetail: React.FC = () => {
         return []
     }, [contactLensFormConfig, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
-    const baseCurveOptions = useMemo(() => {
+    // Base Curve Options - Currently unused as base curve is a fixed value from config
+    void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
         // ONLY use configs arrays from API - no formFields or dropdownValues
@@ -1328,7 +1329,8 @@ const ProductDetail: React.FC = () => {
         return []
     }, [contactLensFormConfig, product, isContactLens, selectedConfig, selectedAstigmatismConfig, sphericalConfigs, astigmatismConfigs, isAstigmatismSubSubcategory])
 
-    const diameterOptions = useMemo(() => {
+    // Diameter Options - Currently unused as diameter is a fixed value from config
+    void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
         
         // ONLY use configs arrays from API - no formFields or dropdownValues
