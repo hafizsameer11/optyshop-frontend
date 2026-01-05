@@ -2767,7 +2767,7 @@ const ProductDetail: React.FC = () => {
                             </div>
 
                             {/* Contact Lens Parameter Selection Form - Right Side */}
-                            <div className="w-full">
+                                <div className="w-full">
                                     <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
                                         <div className="mb-4 pb-3 border-b-2 border-gray-100">
                                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
@@ -4063,7 +4063,7 @@ const ProductDetail: React.FC = () => {
                         </div>
                     </div>
                 </section>
-                )}
+            )}
 
             {/* Related Products */}
             {relatedProducts.length > 0 && (
