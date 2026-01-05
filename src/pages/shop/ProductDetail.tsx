@@ -47,6 +47,7 @@ const ProductDetail: React.FC = () => {
     const [showCheckout, setShowCheckout] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
     const [showDescription, setShowDescription] = useState(false)
+    const [showSpecsDescription, setShowSpecsDescription] = useState(false)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<'distance_vision' | 'near_vision' | 'progressive' | ''>('') // Proper lens type enum
     const lastProductIdRef = useRef<number | null>(null)
@@ -3795,10 +3796,23 @@ const ProductDetail: React.FC = () => {
                             {/* Product Description from Admin */}
                             {product.description && (
                                 <div className="mb-8 pb-8 border-b border-gray-200">
-                                    <h3 className="text-xl font-bold text-gray-900 mb-4">Product Description</h3>
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                        {product.description}
-                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSpecsDescription(!showSpecsDescription)}
+                                        className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 rounded-xl border border-gray-200 transition-all duration-200 mb-3"
+                                    >
+                                        <h3 className="text-xl font-bold text-gray-900">Product Description</h3>
+                                        <span className="text-blue-950 font-semibold">
+                                            {showSpecsDescription ? 'Hide' : 'Show'}
+                                        </span>
+                                    </button>
+                                    {showSpecsDescription && (
+                                        <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200">
+                                            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                                {product.description}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                             
