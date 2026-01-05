@@ -169,7 +169,7 @@ const SearchResults: React.FC = () => {
                                                     )}
                                                     {result.price && (
                                                         <p className="text-lg font-bold text-cyan-300">
-                                                            €{result.price}
+                                                            ${result.price}
                                                         </p>
                                                     )}
                                                     {result.category && (

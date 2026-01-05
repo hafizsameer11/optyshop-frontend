@@ -195,13 +195,13 @@ const Navbar: React.FC = () => {
 
                 {/* Search Bar - Prominent and Centered */}
                 <div 
-                    className="navbar-search-container relative" 
+                    className="navbar-search-container relative flex-shrink" 
                     ref={searchRef}
                     style={{
                         flex: '0 1 auto',
                         maxWidth: '32rem',
                         width: '100%',
-                        minWidth: 0
+                        minWidth: '200px'
                     }}
                 >
                     <div className="relative w-full" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
@@ -255,7 +255,7 @@ const Navbar: React.FC = () => {
                                     setIsSearchOpen(false)
                                 }
                             }}
-                            className="w-full h-8 md:h-9 px-4 py-2 pr-10 text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-colors"
+                            className="w-full h-8 md:h-9 px-3 sm:px-4 py-2 pr-8 sm:pr-10 text-xs sm:text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-colors"
                             style={{
                                 width: '100%',
                                 maxWidth: '100%',

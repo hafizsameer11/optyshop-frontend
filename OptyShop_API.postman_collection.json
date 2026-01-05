@@ -198,7 +198,7 @@
 					  }
 					]
 				  },
-				  "description": "Get all active products with pagination and filters.\n\n**⚠️ Product Deletion Integration:**\n- **Deleted products are automatically excluded** from this endpoint\n- Products deleted via `DELETE /api/admin/products/:id` will not appear in the response\n- The frontend website automatically reflects product deletions - no manual refresh needed\n\n**Response includes for each product:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (null if not available)\n- `color_images`: Raw array of color-specific images from database\n- `colors`: **Formatted array for color swatches** - Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (lowercase, for matching)\n  - `images`: Array of images for this color\n  - `primaryImage`: First image URL for this color\n  - `hexCode`: Hex color code for swatch display\n- `selectedColor`: Default selected color value (first color or null)\n- `currentVariantPrice`: Current variant price (or base product price if variant has no price)\n- Standard product fields (name, price, description, category, etc.)\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 12)\n- `category`: Filter by category slug\n- `subCategory`: Filter by subcategory slug\n- `frameShape`: Filter by frame shape\n- `frameMaterial`: Filter by frame material\n- `lensType`: Filter by lens type\n- `gender`: Filter by gender\n- `minPrice`, `maxPrice`: Price range filter\n- `search`: Search in name, description, SKU\n- `sortBy`: Sort field (default: created_at)\n- `sortOrder`: Sort direction (asc/desc, default: desc)\n- `isFeatured`: Filter featured products (true/false)\n\n**Example Product in Response:**\n```json\n{\n  \"id\": 1,\n  \"name\": \"Classic Round Frame\",\n  \"images\": [\"main1.jpg\"],\n  \"image\": \"black1.jpg\",\n  \"colors\": [\n    {\n      \"name\": \"Black Classic\",\n      \"display_name\": \"Black Classic Premium\",\n      \"price\": 99.99,\n      \"value\": \"black\",\n      \"images\": [\"black1.jpg\"],\n      \"primaryImage\": \"black1.jpg\",\n      \"hexCode\": \"#000000\"\n    },\n    {\n      \"name\": \"Gold Premium\",\n      \"display_name\": \"Gold Premium Edition\",\n      \"price\": 129.99,\n      \"value\": \"gold\",\n      \"images\": [\"gold1.jpg\"],\n      \"primaryImage\": \"gold1.jpg\",\n      \"hexCode\": \"#FFD700\"\n    }\n  ],\n  \"selectedColor\": \"black\",\n  \"currentVariantPrice\": 99.99,\n  \"model_3d_url\": \"https://s3.../model.glb\",\n  \"price\": 25.99\n}\n```\n\n**Note:** When a customer selects a color variant, use `colors[selectedIndex].display_name` for the product name and `colors[selectedIndex].price` (or `currentVariantPrice`) for the price."
+				  "description": "Get all active products with pagination and filters.\n\n**Response includes for each product:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (null if not available)\n- `color_images`: Raw array of color-specific images from database\n- `colors`: **Formatted array for color swatches** - Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (lowercase, for matching)\n  - `images`: Array of images for this color\n  - `primaryImage`: First image URL for this color\n  - `hexCode`: Hex color code for swatch display\n- `selectedColor`: Default selected color value (first color or null)\n- `currentVariantPrice`: Current variant price (or base product price if variant has no price)\n- Standard product fields (name, price, description, category, etc.)\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 12)\n- `category`: Filter by category slug\n- `subCategory`: Filter by subcategory slug\n- `frameShape`: Filter by frame shape\n- `frameMaterial`: Filter by frame material\n- `lensType`: Filter by lens type\n- `gender`: Filter by gender\n- `minPrice`, `maxPrice`: Price range filter\n- `search`: Search in name, description, SKU\n- `sortBy`: Sort field (default: created_at)\n- `sortOrder`: Sort direction (asc/desc, default: desc)\n- `isFeatured`: Filter featured products (true/false)\n\n**Example Product in Response:**\n```json\n{\n  \"id\": 1,\n  \"name\": \"Classic Round Frame\",\n  \"images\": [\"main1.jpg\"],\n  \"image\": \"black1.jpg\",\n  \"colors\": [\n    {\n      \"name\": \"Black Classic\",\n      \"display_name\": \"Black Classic Premium\",\n      \"price\": 99.99,\n      \"value\": \"black\",\n      \"images\": [\"black1.jpg\"],\n      \"primaryImage\": \"black1.jpg\",\n      \"hexCode\": \"#000000\"\n    },\n    {\n      \"name\": \"Gold Premium\",\n      \"display_name\": \"Gold Premium Edition\",\n      \"price\": 129.99,\n      \"value\": \"gold\",\n      \"images\": [\"gold1.jpg\"],\n      \"primaryImage\": \"gold1.jpg\",\n      \"hexCode\": \"#FFD700\"\n    }\n  ],\n  \"selectedColor\": \"black\",\n  \"currentVariantPrice\": 99.99,\n  \"model_3d_url\": \"https://s3.../model.glb\",\n  \"price\": 25.99\n}\n```\n\n**Note:** When a customer selects a color variant, use `colors[selectedIndex].display_name` for the product name and `colors[selectedIndex].price` (or `currentVariantPrice`) for the price."
 				}
 			  },
 			  {
@@ -268,6 +268,126 @@
 				}
 			  },
 			  {
+				"name": "Get Products by Section - Sunglasses",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/products/section/sunglasses?page=1&limit=12",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "products",
+					  "section",
+					  "sunglasses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "12"
+					  }
+					]
+				  },
+				  "description": "Get all sunglasses products. This endpoint filters products by product_type='sunglasses'. All standard product filters (category, subCategory, frameShape, frameMaterial, minPrice, maxPrice, search, sortBy, sortOrder, isFeatured) can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products\" endpoint with products filtered to sunglasses only."
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Eyeglasses",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/products/section/eyeglasses?page=1&limit=12",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "products",
+					  "section",
+					  "eyeglasses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "12"
+					  }
+					]
+				  },
+				  "description": "Get all eyeglasses (frames) products. This endpoint filters products by product_type='frame'. All standard product filters (category, subCategory, frameShape, frameMaterial, minPrice, maxPrice, search, sortBy, sortOrder, isFeatured) can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products\" endpoint with products filtered to eyeglasses only."
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Contact Lenses",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/products/section/contact-lenses?page=1&limit=12",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "products",
+					  "section",
+					  "contact-lenses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "12"
+					  }
+					]
+				  },
+				  "description": "Get all contact lenses products. This endpoint filters products by product_type='contact_lens'. All standard product filters (category, subCategory, minPrice, maxPrice, search, sortBy, sortOrder, isFeatured) can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products\" endpoint with products filtered to contact lenses only.\n\n**Contact Lens Specific Fields:**\n- `contact_lens_brand`: Brand/Producer name\n- `contact_lens_material`: Material\n- `contact_lens_color`: Lens color\n- `contact_lens_type`: Product type (Sferica, Toric, etc.)\n- `replacement_frequency`: Replacement frequency\n- `water_content`: Water content percentage\n- `base_curve_options`: Available base curve options\n- `diameter_options`: Available diameter options\n- `powers_range`: Available power range"
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Eye Hygiene",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/products/section/eye-hygiene?page=1&limit=12",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "products",
+					  "section",
+					  "eye-hygiene"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "12"
+					  }
+					]
+				  },
+				  "description": "Get all eye hygiene products. This endpoint filters products by product_type='eye_hygiene'. All standard product filters (category, subCategory, minPrice, maxPrice, search, sortBy, sortOrder, isFeatured) can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products\" endpoint with products filtered to eye hygiene only.\n\n**Eye Hygiene Specific Fields:**\n- `size_volume`: Size/Volume (e.g., 5ml, 10ml, 30ml)\n- `pack_type`: Pack Type (e.g., Single, Pack of 2)\n- `expiry_date`: Expiry Date"
+				}
+			  },
+			  {
 				"name": "Get Featured Products",
 				"request": {
 				  "method": "GET",
@@ -327,7 +447,7 @@
 					  "1"
 					]
 				  },
-				  "description": "Get single product by ID. Returns full product details including:\n\n**⚠️ Product Deletion Integration:**\n- Returns 404 if product is deleted (removed via DELETE /api/admin/products/:id)\n- Deleted products cannot be accessed via this endpoint\n- Frontend handles 404 by redirecting to product list page\n\n**Media Fields:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (e.g., .glb, .gltf) - null if not available\n- `color_images`: Raw array of color-specific images from database (configured by admin)\n- `colors`: **Formatted array for color swatches** - Configured by admin in product's `color_images` field. Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (hex code like \"#000000\" or color name) - **Use this for matching when adding to cart**\n  - `images`: Array of images for this color variant (shown when color is selected)\n  - `primaryImage`: First image URL for this color (thumbnail/preview)\n  - `hexCode`: Hex color code for swatch display (e.g., \"#000000\") - **Use this for color swatch background**\n- `selectedColor`: Default selected color value (first color's `value` or null)\n\n**Important for Frontend - Color Display:**\n- Display color swatches using the `colors` array - each product can have multiple color variants configured by admin\n- Use `hexCode` to show the color swatch background\n- When user clicks a color swatch, update the product images to show that color's `images` array\n- When adding to cart, send the color's `value` field as `selected_color` parameter\n\n**For Contact Lens Products:**\n- `base_curve_options`: Available base curve options (array) - e.g., [8.70, 8.80, 8.90]\n- `diameter_options`: Available diameter options (array) - e.g., [14.00, 14.20]\n- `powers_range`: Available power range (string or object) - e.g., \"-0.50 to -6.00 in 0.25 steps\"\n- `contact_lens_brand`: Brand/Producer name (e.g., \"Alcon\")\n- `contact_lens_material`: Material (e.g., \"Nelfilcon A\")\n- `contact_lens_color`: Lens color\n- `contact_lens_type`: Product type (e.g., \"Sferica\", \"Toric\")\n- `replacement_frequency`: Replacement frequency (e.g., \"Giornaliera\", \"Settimanale\", \"Mensile\")\n- `water_content`: Water content percentage\n- `can_sleep_with`: Boolean - can sleep with lenses\n- `is_medical_device`: Boolean - is medical device\n- `has_uv_filter`: Boolean - has UV filter\n\n**For Frame Products:**\n- `frameSizes`: Available frame sizes\n- `lensTypes`: Available lens types\n- `lensCoatings`: Available lens coatings\n- Standard product fields (name, price, description, etc.)\n\n**Example Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"product\": {\n      \"id\": 1,\n      \"name\": \"Classic Round Frame\",\n      \"images\": [\"main1.jpg\", \"main2.jpg\"],\n      \"image\": \"black1.jpg\",\n      \"model_3d_url\": \"https://s3.../model.glb\",\n      \"color_images\": [\n        {\"hexCode\": \"#000000\", \"name\": \"Black Classic\", \"images\": [\"black1.jpg\", \"black2.jpg\"]},\n        {\"hexCode\": \"#8B4513\", \"name\": \"Brown Elegant\", \"images\": [\"brown1.jpg\"]}\n      ],\n      \"colors\": [\n        {\n          \"name\": \"Black Classic\",\n          \"display_name\": \"Black Classic Premium\",\n          \"price\": 99.99,\n          \"value\": \"#000000\",\n          \"images\": [\"black1.jpg\", \"black2.jpg\"],\n          \"primaryImage\": \"black1.jpg\",\n          \"hexCode\": \"#000000\"\n        },\n        {\n          \"name\": \"Brown Elegant\",\n          \"display_name\": \"Brown Elegant\",\n          \"price\": 109.99,\n          \"value\": \"#8B4513\",\n          \"images\": [\"brown1.jpg\"],\n          \"primaryImage\": \"brown1.jpg\",\n          \"hexCode\": \"#8B4513\"\n        }\n      ],\n      \"selectedColor\": \"#000000\",\n      \"currentVariantPrice\": 99.99,\n      \"price\": 99.99\n    }\n  }\n}\n```\n\n**Frontend Usage for Color Display:**\n1. **Display Color Swatches:** Loop through `colors` array and render color swatches using `hexCode` for background color\n2. **Color Selection:** When user clicks a color swatch:\n   - Find the color object in `colors` array by matching `value` or `hexCode`\n   - Update product display images to show that color's `images` array\n   - Update price display to show `price` (if not null) or `currentVariantPrice`\n   - Update product name to show `display_name` (optional)\n3. **Add to Cart:** When adding to cart, send the selected color's `value` field as `selected_color` parameter\n4. **3D Try-On:** Use `model_3d_url` for 3D try-on feature"
+				  "description": "Get single product by ID. Returns full product details including:\n\n**Media Fields:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (e.g., .glb, .gltf) - null if not available\n- `color_images`: Raw array of color-specific images from database (configured by admin)\n- `colors`: **Formatted array for color swatches** - Configured by admin in product's `color_images` field. Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (hex code like \"#000000\" or color name) - **Use this for matching when adding to cart**\n  - `images`: Array of images for this color variant (shown when color is selected)\n  - `primaryImage`: First image URL for this color (thumbnail/preview)\n  - `hexCode`: Hex color code for swatch display (e.g., \"#000000\") - **Use this for color swatch background**\n- `selectedColor`: Default selected color value (first color's `value` or null)\n\n**Important for Frontend - Color Display:**\n- Display color swatches using the `colors` array - each product can have multiple color variants configured by admin\n- Use `hexCode` to show the color swatch background\n- When user clicks a color swatch, update the product images to show that color's `images` array\n- When adding to cart, send the color's `value` field as `selected_color` parameter\n\n**For Contact Lens Products:**\n- `base_curve_options`: Available base curve options (array) - e.g., [8.70, 8.80, 8.90]\n- `diameter_options`: Available diameter options (array) - e.g., [14.00, 14.20]\n- `powers_range`: Available power range (string or object) - e.g., \"-0.50 to -6.00 in 0.25 steps\"\n- `contact_lens_brand`: Brand/Producer name (e.g., \"Alcon\")\n- `contact_lens_material`: Material (e.g., \"Nelfilcon A\")\n- `contact_lens_color`: Lens color\n- `contact_lens_type`: Product type (e.g., \"Sferica\", \"Toric\")\n- `replacement_frequency`: Replacement frequency (e.g., \"Giornaliera\", \"Settimanale\", \"Mensile\")\n- `water_content`: Water content percentage\n- `can_sleep_with`: Boolean - can sleep with lenses\n- `is_medical_device`: Boolean - is medical device\n- `has_uv_filter`: Boolean - has UV filter\n\n**For Frame Products:**\n- `frameSizes`: Available frame sizes\n- `lensTypes`: Available lens types\n- `lensCoatings`: Available lens coatings\n- Standard product fields (name, price, description, etc.)\n\n**Example Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"product\": {\n      \"id\": 1,\n      \"name\": \"Classic Round Frame\",\n      \"images\": [\"main1.jpg\", \"main2.jpg\"],\n      \"image\": \"black1.jpg\",\n      \"model_3d_url\": \"https://s3.../model.glb\",\n      \"color_images\": [\n        {\"hexCode\": \"#000000\", \"name\": \"Black Classic\", \"images\": [\"black1.jpg\", \"black2.jpg\"]},\n        {\"hexCode\": \"#8B4513\", \"name\": \"Brown Elegant\", \"images\": [\"brown1.jpg\"]}\n      ],\n      \"colors\": [\n        {\n          \"name\": \"Black Classic\",\n          \"display_name\": \"Black Classic Premium\",\n          \"price\": 99.99,\n          \"value\": \"#000000\",\n          \"images\": [\"black1.jpg\", \"black2.jpg\"],\n          \"primaryImage\": \"black1.jpg\",\n          \"hexCode\": \"#000000\"\n        },\n        {\n          \"name\": \"Brown Elegant\",\n          \"display_name\": \"Brown Elegant\",\n          \"price\": 109.99,\n          \"value\": \"#8B4513\",\n          \"images\": [\"brown1.jpg\"],\n          \"primaryImage\": \"brown1.jpg\",\n          \"hexCode\": \"#8B4513\"\n        }\n      ],\n      \"selectedColor\": \"#000000\",\n      \"currentVariantPrice\": 99.99,\n      \"price\": 99.99\n    }\n  }\n}\n```\n\n**Frontend Usage for Color Display:**\n1. **Display Color Swatches:** Loop through `colors` array and render color swatches using `hexCode` for background color\n2. **Color Selection:** When user clicks a color swatch:\n   - Find the color object in `colors` array by matching `value` or `hexCode`\n   - Update product display images to show that color's `images` array\n   - Update price display to show `price` (if not null) or `currentVariantPrice`\n   - Update product name to show `display_name` (optional)\n3. **Add to Cart:** When adding to cart, send the selected color's `value` field as `selected_color` parameter\n4. **3D Try-On:** Use `model_3d_url` for 3D try-on feature"
 				}
 			  },
 			  {
@@ -347,7 +467,7 @@
 					  "classic-round-frame"
 					]
 				  },
-				  "description": "Get single product by slug. Returns full product details including:\n\n**⚠️ Product Deletion Integration:**\n- Returns 404 if product is deleted (removed via DELETE /api/admin/products/:id)\n- Deleted products cannot be accessed via this endpoint\n- Frontend handles 404 by redirecting to product list page\n\n**Media Fields:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (e.g., .glb, .gltf) - null if not available\n- `color_images`: Raw array of color-specific images from database (configured by admin)\n- `colors`: **Formatted array for color swatches** - Configured by admin in product's `color_images` field. Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (hex code like \"#000000\" or color name) - **Use this for matching when adding to cart**\n  - `images`: Array of images for this color variant (shown when color is selected)\n  - `primaryImage`: First image URL for this color (thumbnail/preview)\n  - `hexCode`: Hex color code for swatch display (e.g., \"#000000\") - **Use this for color swatch background**\n- `selectedColor`: Default selected color value (first color's `value` or null)\n\n**Important for Frontend - Color Display:**\n- Display color swatches using the `colors` array - each product can have multiple color variants configured by admin\n- Use `hexCode` to show the color swatch background\n- When user clicks a color swatch, update the product images to show that color's `images` array\n- When adding to cart, send the color's `value` field as `selected_color` parameter\n\n**For Contact Lens Products:**\n- `base_curve_options`: Available base curve options (array) - e.g., [8.70, 8.80, 8.90]\n- `diameter_options`: Available diameter options (array) - e.g., [14.00, 14.20]\n- `powers_range`: Available power range (string or object) - e.g., \"-0.50 to -6.00 in 0.25 steps\"\n- `contact_lens_brand`: Brand/Producer name (e.g., \"Alcon\")\n- `contact_lens_material`: Material (e.g., \"Nelfilcon A\")\n- `contact_lens_color`: Lens color\n- `contact_lens_type`: Product type (e.g., \"Sferica\", \"Toric\")\n- `replacement_frequency`: Replacement frequency (e.g., \"Giornaliera\", \"Settimanale\", \"Mensile\")\n- `water_content`: Water content percentage\n- `can_sleep_with`: Boolean - can sleep with lenses\n- `is_medical_device`: Boolean - is medical device\n- `has_uv_filter`: Boolean - has UV filter\n\n**For Frame Products:**\n- `frameSizes`: Available frame sizes\n- `lensTypes`: Available lens types\n- `lensCoatings`: Available lens coatings\n- Standard product fields (name, price, description, etc.)\n\n**Example Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"product\": {\n      \"id\": 1,\n      \"name\": \"Classic Round Frame\",\n      \"images\": [\"main1.jpg\", \"main2.jpg\"],\n      \"image\": \"black1.jpg\",\n      \"model_3d_url\": \"https://s3.../model.glb\",\n      \"colors\": [\n        {\n          \"name\": \"Black Classic\",\n          \"display_name\": \"Black Classic Premium\",\n          \"price\": 99.99,\n          \"value\": \"#000000\",\n          \"images\": [\"black1.jpg\", \"black2.jpg\"],\n          \"primaryImage\": \"black1.jpg\",\n          \"hexCode\": \"#000000\"\n        },\n        {\n          \"name\": \"Brown Elegant\",\n          \"display_name\": \"Brown Elegant\",\n          \"price\": 109.99,\n          \"value\": \"#8B4513\",\n          \"images\": [\"brown1.jpg\"],\n          \"primaryImage\": \"brown1.jpg\",\n          \"hexCode\": \"#8B4513\"\n        }\n      ],\n      \"selectedColor\": \"#000000\",\n      \"currentVariantPrice\": 99.99,\n      \"price\": 99.99\n    }\n  }\n}\n```\n\n**Frontend Usage for Color Display:**\n1. **Display Color Swatches:** Loop through `colors` array and render color swatches using `hexCode` for background color\n2. **Color Selection:** When user clicks a color swatch:\n   - Find the color object in `colors` array by matching `value` or `hexCode`\n   - Update product display images to show that color's `images` array\n   - Update price display to show `price` (if not null) or `currentVariantPrice`\n   - Update product name to show `display_name` (optional)\n3. **Add to Cart:** When adding to cart, send the selected color's `value` field as `selected_color` parameter\n4. **3D Try-On:** Use `model_3d_url` for 3D try-on feature"
+				  "description": "Get single product by slug. Returns full product details including:\n\n**Media Fields:**\n- `images`: Array of main product image URLs\n- `image`: First image URL of selected color (or main images if no colors)\n- `model_3d_url`: URL to 3D model file (e.g., .glb, .gltf) - null if not available\n- `color_images`: Raw array of color-specific images from database (configured by admin)\n- `colors`: **Formatted array for color swatches** - Configured by admin in product's `color_images` field. Each object contains:\n  - `name`: Variant name (e.g., \"Black Classic\", \"Gold Premium\")\n  - `display_name`: Display name shown to customers (e.g., \"Black Classic Premium\")\n  - `price`: Variant-specific price (null if using base product price)\n  - `value`: Color value (hex code like \"#000000\" or color name) - **Use this for matching when adding to cart**\n  - `images`: Array of images for this color variant (shown when color is selected)\n  - `primaryImage`: First image URL for this color (thumbnail/preview)\n  - `hexCode`: Hex color code for swatch display (e.g., \"#000000\") - **Use this for color swatch background**\n- `selectedColor`: Default selected color value (first color's `value` or null)\n\n**Important for Frontend - Color Display:**\n- Display color swatches using the `colors` array - each product can have multiple color variants configured by admin\n- Use `hexCode` to show the color swatch background\n- When user clicks a color swatch, update the product images to show that color's `images` array\n- When adding to cart, send the color's `value` field as `selected_color` parameter\n\n**For Contact Lens Products:**\n- `base_curve_options`: Available base curve options (array) - e.g., [8.70, 8.80, 8.90]\n- `diameter_options`: Available diameter options (array) - e.g., [14.00, 14.20]\n- `powers_range`: Available power range (string or object) - e.g., \"-0.50 to -6.00 in 0.25 steps\"\n- `contact_lens_brand`: Brand/Producer name (e.g., \"Alcon\")\n- `contact_lens_material`: Material (e.g., \"Nelfilcon A\")\n- `contact_lens_color`: Lens color\n- `contact_lens_type`: Product type (e.g., \"Sferica\", \"Toric\")\n- `replacement_frequency`: Replacement frequency (e.g., \"Giornaliera\", \"Settimanale\", \"Mensile\")\n- `water_content`: Water content percentage\n- `can_sleep_with`: Boolean - can sleep with lenses\n- `is_medical_device`: Boolean - is medical device\n- `has_uv_filter`: Boolean - has UV filter\n\n**For Frame Products:**\n- `frameSizes`: Available frame sizes\n- `lensTypes`: Available lens types\n- `lensCoatings`: Available lens coatings\n- Standard product fields (name, price, description, etc.)\n\n**Example Response:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"product\": {\n      \"id\": 1,\n      \"name\": \"Classic Round Frame\",\n      \"images\": [\"main1.jpg\", \"main2.jpg\"],\n      \"image\": \"black1.jpg\",\n      \"model_3d_url\": \"https://s3.../model.glb\",\n      \"colors\": [\n        {\n          \"name\": \"Black Classic\",\n          \"display_name\": \"Black Classic Premium\",\n          \"price\": 99.99,\n          \"value\": \"#000000\",\n          \"images\": [\"black1.jpg\", \"black2.jpg\"],\n          \"primaryImage\": \"black1.jpg\",\n          \"hexCode\": \"#000000\"\n        },\n        {\n          \"name\": \"Brown Elegant\",\n          \"display_name\": \"Brown Elegant\",\n          \"price\": 109.99,\n          \"value\": \"#8B4513\",\n          \"images\": [\"brown1.jpg\"],\n          \"primaryImage\": \"brown1.jpg\",\n          \"hexCode\": \"#8B4513\"\n        }\n      ],\n      \"selectedColor\": \"#000000\",\n      \"currentVariantPrice\": 99.99,\n      \"price\": 99.99\n    }\n  }\n}\n```\n\n**Frontend Usage for Color Display:**\n1. **Display Color Swatches:** Loop through `colors` array and render color swatches using `hexCode` for background color\n2. **Color Selection:** When user clicks a color swatch:\n   - Find the color object in `colors` array by matching `value` or `hexCode`\n   - Update product display images to show that color's `images` array\n   - Update price display to show `price` (if not null) or `currentVariantPrice`\n   - Update product name to show `display_name` (optional)\n3. **Add to Cart:** When adding to cart, send the selected color's `value` field as `selected_color` parameter\n4. **3D Try-On:** Use `model_3d_url` for 3D try-on feature"
 				}
 			  },
 			  {
@@ -3764,8 +3884,7 @@
 					  "products",
 					  "1"
 					]
-				  },
-				  "description": "Delete a product permanently from the system. Admin only.\n\n**⚠️ IMPORTANT - Product Removal Behavior:**\n\n**Backend Behavior:**\n- Product is permanently deleted from the database\n- All associated images and files are removed from storage\n- Product cannot be recovered after deletion\n\n**Public API Integration:**\n- **Deleted products are automatically excluded** from all public API endpoints:\n  - `GET /api/products` - Deleted products will NOT appear in the list\n  - `GET /api/products/featured` - Deleted products will NOT appear\n  - `GET /api/products/:id` - Returns 404 if product is deleted\n  - `GET /api/products/slug/:slug` - Returns 404 if product is deleted\n  - `GET /api/products/:id/related` - Deleted products excluded from related products\n  - `GET /api/categories/:id/products` - Deleted products excluded\n  - `GET /api/subcategories/:id/products` - Deleted products excluded\n\n**Frontend Behavior:**\n- When a product is deleted, the frontend website will:\n  - **Product List Pages**: Deleted products automatically disappear (not returned by API)\n  - **Product Detail Page**: If user is viewing a deleted product, they will be redirected to `/shop` (404 handling)\n  - **Search Results**: Deleted products will not appear in search results\n  - **Category/Subcategory Pages**: Deleted products will not appear\n  - **Featured Products**: Deleted products will not appear\n  - **Related Products**: Deleted products will not appear\n\n**Response:**\n- Returns success message confirming deletion\n- Returns 404 if product not found\n\n**Note:** This operation cannot be undone. Make sure to verify the product before deletion."
+				  }
 				}
 			  },
 			  {
@@ -3800,6 +3919,299 @@
 					  "bulk-upload"
 					]
 				  }
+				}
+			  },
+			  {
+				"name": "Get All Products (Admin)",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products?page=1&limit=50&product_type=frame",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "50"
+					  },
+					  {
+						"key": "product_type",
+						"value": "frame",
+						"description": "Optional: Filter by product type. Valid values: frame, sunglasses, contact_lens, eye_hygiene, accessory"
+					  },
+					  {
+						"key": "search",
+						"value": "",
+						"description": "Optional: Search in name, description, SKU"
+					  },
+					  {
+						"key": "category_id",
+						"value": "",
+						"description": "Optional: Filter by category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "",
+						"description": "Optional: Filter by subcategory ID"
+					  },
+					  {
+						"key": "is_active",
+						"value": "",
+						"description": "Optional: Filter by active status (true/false)"
+					  },
+					  {
+						"key": "sortBy",
+						"value": "created_at",
+						"description": "Optional: Sort field (default: created_at)"
+					  },
+					  {
+						"key": "sortOrder",
+						"value": "desc",
+						"description": "Optional: Sort direction (asc/desc, default: desc)"
+					  }
+					]
+				  },
+				  "description": "Get all products with pagination and filters. Admin only.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 50)\n- `product_type`: Filter by product type - frame, sunglasses, contact_lens, eye_hygiene, accessory\n- `search`: Search in name, description, SKU\n- `category_id`: Filter by category ID\n- `sub_category_id`: Filter by subcategory ID\n- `is_active`: Filter by active status (true/false)\n- `sortBy`: Sort field (default: created_at)\n- `sortOrder`: Sort direction (asc/desc, default: desc)\n\n**Response includes:**\n- Products with formatted images and color_images\n- Category and subcategory information\n- Pagination metadata"
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Sunglasses (Admin)",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/section/sunglasses?page=1&limit=50",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "section",
+					  "sunglasses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "50"
+					  },
+					  {
+						"key": "search",
+						"value": "",
+						"description": "Optional: Search in name, description, SKU"
+					  },
+					  {
+						"key": "category_id",
+						"value": "",
+						"description": "Optional: Filter by category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "",
+						"description": "Optional: Filter by subcategory ID"
+					  },
+					  {
+						"key": "is_active",
+						"value": "",
+						"description": "Optional: Filter by active status (true/false)"
+					  }
+					]
+				  },
+				  "description": "Get all sunglasses products. This endpoint automatically filters products by product_type='sunglasses'. All standard admin product filters can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products (Admin)\" endpoint with products filtered to sunglasses only."
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Eyeglasses (Admin)",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/section/eyeglasses?page=1&limit=50",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "section",
+					  "eyeglasses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "50"
+					  },
+					  {
+						"key": "search",
+						"value": "",
+						"description": "Optional: Search in name, description, SKU"
+					  },
+					  {
+						"key": "category_id",
+						"value": "",
+						"description": "Optional: Filter by category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "",
+						"description": "Optional: Filter by subcategory ID"
+					  },
+					  {
+						"key": "is_active",
+						"value": "",
+						"description": "Optional: Filter by active status (true/false)"
+					  }
+					]
+				  },
+				  "description": "Get all eyeglasses (frames) products. This endpoint automatically filters products by product_type='frame'. All standard admin product filters can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products (Admin)\" endpoint with products filtered to eyeglasses only."
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Contact Lenses (Admin)",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/section/contact-lenses?page=1&limit=50",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "section",
+					  "contact-lenses"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "50"
+					  },
+					  {
+						"key": "search",
+						"value": "",
+						"description": "Optional: Search in name, description, SKU"
+					  },
+					  {
+						"key": "category_id",
+						"value": "",
+						"description": "Optional: Filter by category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "",
+						"description": "Optional: Filter by subcategory ID"
+					  },
+					  {
+						"key": "is_active",
+						"value": "",
+						"description": "Optional: Filter by active status (true/false)"
+					  }
+					]
+				  },
+				  "description": "Get all contact lenses products. This endpoint automatically filters products by product_type='contact_lens'. All standard admin product filters can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products (Admin)\" endpoint with products filtered to contact lenses only."
+				}
+			  },
+			  {
+				"name": "Get Products by Section - Eye Hygiene (Admin)",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/section/eye-hygiene?page=1&limit=50",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "section",
+					  "eye-hygiene"
+					],
+					"query": [
+					  {
+						"key": "page",
+						"value": "1"
+					  },
+					  {
+						"key": "limit",
+						"value": "50"
+					  },
+					  {
+						"key": "search",
+						"value": "",
+						"description": "Optional: Search in name, description, SKU"
+					  },
+					  {
+						"key": "category_id",
+						"value": "",
+						"description": "Optional: Filter by category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "",
+						"description": "Optional: Filter by subcategory ID"
+					  },
+					  {
+						"key": "is_active",
+						"value": "",
+						"description": "Optional: Filter by active status (true/false)"
+					  }
+					]
+				  },
+				  "description": "Get all eye hygiene products. This endpoint automatically filters products by product_type='eye_hygiene'. All standard admin product filters can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products (Admin)\" endpoint with products filtered to eye hygiene only."
 				}
 			  },
 			  {

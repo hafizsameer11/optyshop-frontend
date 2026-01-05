@@ -46,6 +46,7 @@ const ProductDetail: React.FC = () => {
     const [quantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
     const [showTryOn, setShowTryOn] = useState(false)
+    const [showDescription, setShowDescription] = useState(false)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<'distance_vision' | 'near_vision' | 'progressive' | ''>('') // Proper lens type enum
     const lastProductIdRef = useRef<number | null>(null)
@@ -3536,16 +3537,6 @@ const ProductDetail: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* Description */}
-                                    {product.description && (
-                                        <div className="mb-8">
-                                            <h2 className="text-lg font-bold text-gray-900 mb-3 border-b border-gray-100 pb-2">Description</h2>
-                                            <p className="text-gray-600 leading-relaxed text-lg">
-                                                {product.description}
-                                            </p>
-                                        </div>
-                                    )}
-
                                     {/* Eye Hygiene Fields Section with Dropdowns */}
                                     {isEyeHygiene && (
                                         <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
@@ -3665,6 +3656,29 @@ const ProductDetail: React.FC = () => {
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-bold text-gray-400 uppercase mb-1">Category</span>
                                                     <span className="text-gray-700 font-semibold">{translateCategory(product.category)}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Description Section with Toggle Button */}
+                                    {product.description && (
+                                        <div className="mb-8">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowDescription(!showDescription)}
+                                                className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl border border-gray-200 transition-all duration-200 mb-3"
+                                            >
+                                                <h2 className="text-lg font-bold text-gray-900">Description</h2>
+                                                <span className="text-blue-950 font-semibold">
+                                                    {showDescription ? 'Hide' : 'Show'}
+                                                </span>
+                                            </button>
+                                            {showDescription && (
+                                                <div className="p-4 bg-white rounded-xl border border-gray-200">
+                                                    <p className="text-gray-600 leading-relaxed text-lg">
+                                                        {product.description}
+                                                    </p>
                                                 </div>
                                             )}
                                         </div>
