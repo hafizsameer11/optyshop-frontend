@@ -2952,27 +2952,27 @@ const ProductDetail: React.FC = () => {
                                             )
                                         })()}
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                                             {/* Right Eye Section */}
-                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 sm:p-5 md:p-6 lg:p-8 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all ${
                                                 rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
                                             }`}>
-                                                <div className="flex items-center gap-3 mb-6">
-                                                    <label className="flex items-center gap-3 cursor-pointer">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
                                                             checked={rightEyeEnabled}
                                                             onChange={(e) => setRightEyeEnabled(e.target.checked)}
-                                                            className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                                                         />
-                                                        <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
-                                                            <span className="text-white font-bold text-lg">R</span>
+                                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+                                                            <span className="text-white font-bold text-sm">R</span>
                                                         </div>
-                                                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">Right Eye</h3>
+                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Right Eye</h3>
                                                     </label>
                                                 </div>
                                                 
-                                                <div className={`space-y-5 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                <div className={`space-y-3 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                     {/* Qty Number Input with Spinner - Full Width */}
                                                     <div>
                                                         <label className="block text-xs text-gray-500 mb-1">
@@ -2987,7 +2987,7 @@ const ProductDetail: React.FC = () => {
                                                                 handleContactLensFieldChange('right_qty', selectedValue)
                                                             }}
                                                             disabled={!rightEyeEnabled}
-                                                            className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         />
                                                         {contactLensErrors.right_qty && (
@@ -2996,12 +2996,12 @@ const ProductDetail: React.FC = () => {
                                                     </div>
 
                                                     {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
-                                                    <div className="grid grid-cols-2 gap-4">
+                                                    <div className="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Base Curve (B.C)
                                                             </label>
-                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
                                                                 <span className="text-gray-700 font-medium">
                                                                     {fixedBaseCurveAndDiameter.right_base_curve}
                                                                 </span>
@@ -3012,7 +3012,7 @@ const ProductDetail: React.FC = () => {
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Diameter (DIA)
                                                             </label>
-                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
                                                                 <span className="text-gray-700 font-medium">
                                                                     {fixedBaseCurveAndDiameter.right_diameter}
                                                                 </span>
@@ -3028,7 +3028,7 @@ const ProductDetail: React.FC = () => {
 
                                                     if (formType === 'spherical') {
                                                         return (
-                                                            <div className={`pt-5 border-t border-blue-200 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <div className={`pt-3 border-t border-blue-200 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                                 <label className="block text-xs text-gray-500 mb-1">
                                                                     * Power (PWR)
                                                                 </label>
@@ -3036,7 +3036,7 @@ const ProductDetail: React.FC = () => {
                                                                     value={contactLensFormData.right_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                     disabled={!rightEyeEnabled}
-                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
                                                                         } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">00.00</option>
@@ -3053,8 +3053,8 @@ const ProductDetail: React.FC = () => {
                                                         )
                                                     } else if (formType === 'astigmatism') {
                                                         return (
-                                                            <div className={`mt-6 space-y-6 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <div className="pt-4 border-t border-blue-200">
+                                                            <div className={`mt-4 space-y-4 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                                <div className="pt-3 border-t border-blue-200">
                                                                     <label className="block text-xs text-gray-500 mb-1">
                                                                         Power Setting
                                                                     </label>
@@ -3062,7 +3062,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
+                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">00.00</option>
@@ -3123,25 +3123,25 @@ const ProductDetail: React.FC = () => {
                                             </div>
 
                                             {/* Left Eye Section */}
-                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-5 md:p-6 lg:p-8 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all ${
                                                 leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
                                             }`}>
-                                                <div className="flex items-center gap-3 mb-6">
-                                                    <label className="flex items-center gap-3 cursor-pointer">
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
                                                         <input
                                                             type="checkbox"
                                                             checked={leftEyeEnabled}
                                                             onChange={(e) => setLeftEyeEnabled(e.target.checked)}
-                                                            className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                                                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
                                                         />
-                                                        <div className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
-                                                            <span className="text-white font-bold text-lg">L</span>
+                                                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
+                                                            <span className="text-white font-bold text-sm">L</span>
                                                         </div>
-                                                        <h3 className="text-xl md:text-2xl font-bold text-gray-900">Left Eye</h3>
+                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye</h3>
                                                     </label>
                                                 </div>
                                                 
-                                                <div className={`space-y-5 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                     {/* Qty Number Input with Spinner - Full Width */}
                                                     <div>
                                                         <label className="block text-xs text-gray-500 mb-1">
@@ -3156,7 +3156,7 @@ const ProductDetail: React.FC = () => {
                                                                 handleContactLensFieldChange('left_qty', selectedValue)
                                                             }}
                                                             disabled={!leftEyeEnabled}
-                                                            className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                 } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                         />
                                                         {contactLensErrors.left_qty && (
@@ -3165,12 +3165,12 @@ const ProductDetail: React.FC = () => {
                                                     </div>
 
                                                     {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                                    <div className="grid grid-cols-2 gap-3">
                                                         <div>
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Base Curve (B.C)
                                                             </label>
-                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
                                                                 <span className="text-gray-700 font-medium">
                                                                     {fixedBaseCurveAndDiameter.left_base_curve}
                                                                 </span>
@@ -3181,7 +3181,7 @@ const ProductDetail: React.FC = () => {
                                                             <label className="block text-xs text-gray-500 mb-1">
                                                                 Diameter (DIA)
                                                             </label>
-                                                            <div className={`w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 transition-all shadow-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
                                                                 <span className="text-gray-700 font-medium">
                                                                     {fixedBaseCurveAndDiameter.left_diameter}
                                                                 </span>
@@ -3197,7 +3197,7 @@ const ProductDetail: React.FC = () => {
 
                                                     if (formType === 'spherical') {
                                                         return (
-                                                            <div className={`pt-5 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <div className={`pt-3 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                                 <label className="block text-xs text-gray-500 mb-1">
                                                                     * Power (PWR)
                                                                 </label>
@@ -3205,7 +3205,7 @@ const ProductDetail: React.FC = () => {
                                                                     value={contactLensFormData.left_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                     disabled={!leftEyeEnabled}
-                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
                                                                         } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">00.00</option>
@@ -3222,8 +3222,8 @@ const ProductDetail: React.FC = () => {
                                                         )
                                                     } else if (formType === 'astigmatism') {
                                                         return (
-                                                            <div className={`mt-6 space-y-6 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <div className="pt-4 border-t border-purple-200">
+                                                            <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                                <div className="pt-3 border-t border-purple-200">
                                                                     <label className="block text-xs text-gray-500 mb-1">
                                                                         Power Setting
                                                                     </label>
@@ -3231,7 +3231,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">00.00</option>
@@ -3293,11 +3293,11 @@ const ProductDetail: React.FC = () => {
                                         </div>
 
                                         {/* Add to Cart Button */}
-                                        <div className="mt-10 pt-6 border-t-2 border-gray-200">
+                                        <div className="mt-6 pt-4 border-t-2 border-gray-200">
                                             <button
                                                 onClick={handleContactLensAddToCart}
                                                 disabled={contactLensLoading || isProductOutOfStock}
-                                                className={`w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg ${contactLensLoading || isProductOutOfStock
+                                                className={`w-full px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-lg ${contactLensLoading || isProductOutOfStock
                                                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                     : 'bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white hover:from-green-700 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0'
                                                     }`}
