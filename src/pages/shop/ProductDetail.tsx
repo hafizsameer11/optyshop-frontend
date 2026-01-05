@@ -3317,12 +3317,19 @@ const ProductDetail: React.FC = () => {
                                                 })()}
                                             </div>
 
-                                        {/* Axis Measurement Diagram for Customer Support */}
+                                        {/* Axis Measurement Diagram for Customer Support - Shows for all forms where axis is used */}
                                         {(() => {
-                                            const formType = contactLensFormConfig?.formType ||
-                                                (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+                                            // Show diagram if axis options exist or axis fields are present
+                                            // This includes: Near Vision, Distance Vision, Astigmatism, and any form with axis fields
+                                            const hasAxisFields = axisOptions.length > 0 || 
+                                                                  contactLensFormData.right_axis !== undefined || 
+                                                                  contactLensFormData.left_axis !== undefined ||
+                                                                  selectedLensType === 'near_vision' ||
+                                                                  selectedLensType === 'distance_vision' ||
+                                                                  (contactLensFormConfig?.formType === 'astigmatism') ||
+                                                                  (isAstigmatismSubSubcategory)
                                             
-                                            if (formType === 'astigmatism') {
+                                            if (hasAxisFields) {
                                                 const selectedAxis = contactLensFormData.right_axis || contactLensFormData.left_axis || '90'
                                                 const axisValue = typeof selectedAxis === 'string' ? parseFloat(selectedAxis) : selectedAxis
                                                 const axisAngle = isNaN(axisValue) ? 90 : axisValue
@@ -3415,7 +3422,8 @@ const ProductDetail: React.FC = () => {
                                                                 <circle cx="100" cy="100" r="4" fill="#3b82f6" />
                                                             </svg>
                                                             <p className="text-xs text-center text-gray-600 mt-2">
-                                                                Current Axis: {axisAngle}°
+                                                                Current Axis: {axisAngle}° {contactLensFormData.right_axis && contactLensFormData.left_axis && contactLensFormData.right_axis !== contactLensFormData.left_axis && 
+                                                                    `(Right: ${contactLensFormData.right_axis}°, Left: ${contactLensFormData.left_axis}°)`}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -3908,7 +3916,7 @@ const ProductDetail: React.FC = () => {
                                                     <p className="text-gray-600 leading-relaxed text-lg">
                                                         {product.description}
                                                     </p>
-                                                </div>
+                                </div>
                                             )}
                                         </div>
                                     )}
@@ -3940,9 +3948,9 @@ const ProductDetail: React.FC = () => {
                                     </button>
                                     {showSpecsDescription && (
                                         <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200">
-                                            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                                {product.description}
-                                            </div>
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {product.description}
+                                    </div>
                                         </div>
                                     )}
                                 </div>
