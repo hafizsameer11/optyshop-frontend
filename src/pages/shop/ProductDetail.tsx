@@ -2401,16 +2401,6 @@ const ProductDetail: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {isContactLens ? (
                         /* Contact Lens Layout: Images and Form Side by Side */
-                        <div className="space-y-4">
-                            {/* Product Name and Category - Above Layout */}
-                            <div className="mb-4">
-                                <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-1 px-1">
-                                    {product.brand || product.category?.name || 'Brand'}
-                                </p>
-                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-                                    {product.name}
-                                </h1>
-                            </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                             {/* Product Images - Left Side */}
                             <div>
@@ -2496,7 +2486,7 @@ const ProductDetail: React.FC = () => {
                                         </div>
 
                                         {/* Price Display */}
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-100">
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100">
                                             <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
                                                 {calculateContactLensTotal > 0 ? 'Total Price' : 'Price'}
                                             </p>
@@ -2779,13 +2769,18 @@ const ProductDetail: React.FC = () => {
 
                             {/* Contact Lens Parameter Selection Form - Right Side */}
                             {isContactLens && (
-                                <div className="w-full -mt-4">
+                                <div className="w-full">
                                     <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-6 md:p-8 lg:p-10 shadow-xl w-full">
-                                    <div className="mb-6 pb-4 border-b-2 border-gray-100">
-                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-                                            Select the parameters
-                                        </h2>
-                                    </div>
+                                        <div className="mb-8 pb-6 border-b-2 border-gray-100">
+                                            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                                                Select the parameters
+                                            </h2>
+                                            {product && (
+                                                <p className="text-lg md:text-xl text-gray-700 font-medium">
+                                                    {product.name}
+                                                </p>
+                                            )}
+                                        </div>
 
                                         {/* Unit Selection (Pack Sizes) - Independent from Qty */}
                                         {(() => {
@@ -3329,7 +3324,6 @@ const ProductDetail: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        </div>
                     ) : (
                         /* Regular Product Layout: Images and Info Side by Side */
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -3517,12 +3511,12 @@ const ProductDetail: React.FC = () => {
                                     <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2 px-1">
                                         {product.brand || product.category?.name || 'Brand'}
                                     </p>
-                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
                                         {product.name}
                                     </h1>
 
                                     {/* Price */}
-                                    <div className="mb-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
+                                    <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
                                         {originalPrice ? (
                                             <div className="flex items-center gap-6">
                                                 <span className="text-5xl font-extrabold text-blue-950">
