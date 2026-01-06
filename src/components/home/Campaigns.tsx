@@ -18,10 +18,18 @@ const CampaignsComponent: React.FC = () => {
                 
                 if (isCancelled) return
                 
+                // Log for debugging
+                if (data.length > 0) {
+                    console.log(`✅ Loaded ${data.length} active campaign(s) from API`)
+                    console.log('Campaigns data:', data)
+                } else {
+                    console.warn('⚠️ No active campaigns found. Make sure admin has created campaigns with is_active=true')
+                }
+                
                 setCampaigns(data)
             } catch (error) {
                 if (!isCancelled) {
-                    console.error('Error loading campaigns:', error)
+                    console.error('❌ Error loading campaigns:', error)
                     setCampaigns([])
                 }
             } finally {
@@ -289,7 +297,7 @@ const CampaignsComponent: React.FC = () => {
                                         ) : (
                                             <div className="relative h-48 bg-slate-700 flex items-center justify-center">
                                                 <span className="text-slate-400 text-sm">No Image</span>
-                                            </div>
+                                </div>
                             )}
                             
                             <div className="p-6">

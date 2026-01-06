@@ -27,7 +27,9 @@ export interface Campaign {
 }
 
 export interface CampaignsResponse {
-  campaigns: Campaign[];
+  // Backend may return either `campaigns` array or a plain array
+  campaigns?: Campaign[];
+  data?: Campaign[];
 }
 
 /**
@@ -40,19 +42,40 @@ export const getCampaigns = async (activeOnly: boolean = true): Promise<Campaign
       ? buildQueryString(API_ROUTES.CAMPAIGNS.LIST, { activeOnly: 'true' })
       : API_ROUTES.CAMPAIGNS.LIST;
 
-    const response = await apiClient.get<CampaignsResponse>(
+    const response = await apiClient.get<CampaignsResponse | Campaign[]>(
       endpoint,
       false // PUBLIC endpoint
     );
 
     if (response.success && response.data) {
-      const campaigns = response.data.campaigns || [];
-      // Filter active campaigns if needed and sort by sort_order
-      const filtered = activeOnly 
-        ? campaigns.filter((campaign) => campaign.is_active)
-        : campaigns;
+      // Handle different response structures
+      let campaigns: Campaign[] = [];
       
-      return filtered.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      // Check if response.data is an array directly
+      if (Array.isArray(response.data)) {
+        campaigns = response.data;
+      } 
+      // Check if response.data has a campaigns property
+      else if ('campaigns' in response.data && Array.isArray((response.data as CampaignsResponse).campaigns)) {
+        campaigns = (response.data as CampaignsResponse).campaigns as Campaign[];
+      }
+      // Check if response.data has a data property with campaigns
+      else if ('data' in response.data && Array.isArray((response.data as any).data)) {
+        campaigns = (response.data as any).data;
+      }
+      // Check if response.data is a single campaign object
+      else if ('id' in response.data && 'name' in response.data) {
+        campaigns = [response.data as Campaign];
+      }
+
+      // Filter active campaigns if needed
+      let filteredCampaigns = campaigns;
+      if (activeOnly) {
+        filteredCampaigns = campaigns.filter((campaign) => campaign.is_active);
+      }
+      
+      // Sort by sort_order
+      return filteredCampaigns.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
     }
 
     console.error('Failed to fetch campaigns:', response.message);
