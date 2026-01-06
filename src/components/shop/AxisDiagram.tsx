@@ -77,13 +77,11 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
             
             {/* Angle labels on outer arc */}
             {[
-              { angle: 0, label: '0°', x: 20, y: 200 },
               { angle: 30, label: '30°', x: 95, y: 44 },
               { angle: 60, label: '60°', x: 246, y: 44 },
               { angle: 90, label: '90°', x: 200, y: 20 },
               { angle: 120, label: '120°', x: 154, y: 44 },
               { angle: 150, label: '150°', x: 305, y: 44 },
-              { angle: 180, label: '180°', x: 380, y: 200 },
             ].map(({ label, x, y }) => (
               <text
                 key={label}
@@ -98,7 +96,13 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
               </text>
             ))}
             
-            {/* Example arrow pointing to ~90 degrees */}
+            {/* Baseline labels with dual notation (like first image) */}
+            <text x="20" y="215" textAnchor="middle" fontSize="12" fill="#000" fontWeight="bold">180°</text>
+            <text x="20" y="230" textAnchor="middle" fontSize="11" fill="#000">0°int</text>
+            <text x="380" y="215" textAnchor="middle" fontSize="12" fill="#000" fontWeight="bold">180°</text>
+            <text x="380" y="230" textAnchor="middle" fontSize="11" fill="#000">0°tabo</text>
+            
+            {/* Example arrow pointing at an angle (like first image) */}
             <defs>
               <marker
                 id="arrowhead-compact"
@@ -108,22 +112,22 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
                 refY="2.5"
                 orient="auto"
               >
-                <polygon points="0 0, 8 2.5, 0 5" fill="#3b82f6" />
+                <polygon points="0 0, 8 2.5, 0 5" fill="#60a5fa" />
               </marker>
             </defs>
+            {/* Arrow pointing at approximately 18 degrees (angled, not vertical) */}
             <line
               x1="200"
               y1="200"
-              x2="200"
-              y2="20"
-              stroke="#3b82f6"
+              x2="255"
+              y2="28"
+              stroke="#60a5fa"
               strokeWidth="2.5"
               markerEnd="url(#arrowhead-compact)"
             />
           </svg>
         </div>
         </div>
-        <p className="text-xs text-center text-gray-600 mt-3 font-medium">Current Axis: 90°</p>
       </div>
     )
   }
