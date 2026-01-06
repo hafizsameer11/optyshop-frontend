@@ -14,6 +14,7 @@ import { addItemToCart, type AddToCartRequest } from '../../services/cartService
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
+import AxisDiagram from '../../components/shop/AxisDiagram'
 import { useAuth } from '../../context/AuthContext'
 import {
     getContactLensFormConfig,
@@ -2950,9 +2951,10 @@ const ProductDetail: React.FC = () => {
                                             )
                                         })()}
 
-                                        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                                        {/* Eyes Section - Horizontal Layout */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
                                             {/* Left Eye Section */}
-                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
                                                 leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
                                             }`}>
                                                 <div className="flex items-center gap-2 mb-4">
@@ -3120,34 +3122,8 @@ const ProductDetail: React.FC = () => {
                                                 })()}
                                             </div>
 
-                                            {/* Copy Button */}
-                                            <div className="flex items-center justify-center">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setContactLensFormData(prev => ({
-                                                            ...prev,
-                                                            right_qty: prev.left_qty,
-                                                            right_base_curve: prev.left_base_curve,
-                                                            right_diameter: prev.left_diameter,
-                                                            right_power: prev.left_power,
-                                                            right_cylinder: prev.left_cylinder,
-                                                            right_axis: prev.left_axis
-                                                        }))
-                                                        setRightEyeEnabled(leftEyeEnabled)
-                                                    }}
-                                                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                                                    title="Copy Left Eye settings to Right Eye"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                                    </svg>
-                                                    Copy Left to Right
-                                                </button>
-                                            </div>
-
                                             {/* Right Eye Section */}
-                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all ${
+                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
                                                 rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
                                             }`}>
                                                 <div className="flex items-center gap-2 mb-4">
@@ -3314,8 +3290,35 @@ const ProductDetail: React.FC = () => {
                                                     return null
                                                 })()}
                                             </div>
+                                            </div>
 
-                                        {/* Axis Measurement Diagram for Customer Support - Shows for all forms where axis is used */}
+                                        {/* Copy Left to Right Button */}
+                                        <div className="mt-4 mb-4">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setContactLensFormData(prev => ({
+                                                        ...prev,
+                                                        right_qty: prev.left_qty,
+                                                        right_base_curve: prev.left_base_curve,
+                                                        right_diameter: prev.left_diameter,
+                                                        right_power: prev.left_power,
+                                                        right_cylinder: prev.left_cylinder,
+                                                        right_axis: prev.left_axis
+                                                    }))
+                                                    setRightEyeEnabled(leftEyeEnabled)
+                                                }}
+                                                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                                title="Copy Left Eye settings to Right Eye"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                                </svg>
+                                                Copy Left to Right
+                                            </button>
+                                        </div>
+
+                                        {/* Axis Diagram - Below both sections */}
                                         {(() => {
                                             // Show diagram if axis options exist or axis fields are present
                                             // This includes: Near Vision, Distance Vision, Astigmatism, and any form with axis fields
@@ -3328,101 +3331,25 @@ const ProductDetail: React.FC = () => {
                                                                   (isAstigmatismSubSubcategory)
                                             
                                             if (hasAxisFields) {
-                                                const selectedAxis = contactLensFormData.right_axis || contactLensFormData.left_axis || '90'
-                                                const axisValue = typeof selectedAxis === 'string' ? parseFloat(selectedAxis) : selectedAxis
-                                                const axisAngle = isNaN(axisValue) ? 90 : axisValue
-                                                
                                                 return (
-                                                    <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                                                    <div className="mb-6">
+                                                        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
                                                         <div className="flex items-center justify-between mb-3">
-                                                            <h4 className="text-sm font-semibold text-gray-700">Axis Measurement Guide</h4>
-                                                            <span className="text-xs text-gray-500">For Customer Support</span>
-                                                        </div>
-                                                        <div className="relative w-full max-w-md mx-auto">
-                                                            <svg viewBox="0 0 200 120" className="w-full h-auto">
-                                                                {/* Semi-circle background */}
-                                                                <path
-                                                                    d="M 100 100 A 80 80 0 0 1 20 20 L 100 100 Z"
-                                                                    fill="white"
-                                                                    stroke="#e5e7eb"
-                                                                    strokeWidth="2"
-                                                                />
-                                                                
-                                                                {/* Radial lines for major angles */}
-                                                                {[0, 30, 60, 90, 120, 150, 180].map((angle) => {
-                                                                    const rad = (angle - 90) * (Math.PI / 180)
-                                                                    const x1 = 100 + 70 * Math.cos(rad)
-                                                                    const y1 = 100 + 70 * Math.sin(rad)
-                                                                    const x2 = 100 + 80 * Math.cos(rad)
-                                                                    const y2 = 100 + 80 * Math.sin(rad)
-                                                                    return (
-                                                                        <line
-                                                                            key={angle}
-                                                                            x1={x1}
-                                                                            y1={y1}
-                                                                            x2={x2}
-                                                                            y2={y2}
-                                                                            stroke={angle === axisAngle ? "#3b82f6" : "#d1d5db"}
-                                                                            strokeWidth={angle === axisAngle ? "2" : "1"}
-                                                                        />
-                                                                    )
-                                                                })}
-                                                                
-                                                                {/* Selected axis arrow */}
-                                                                {!isNaN(axisAngle) && (
-                                                                    <>
-                                                                        <line
-                                                                            x1={100}
-                                                                            y1={100}
-                                                                            x2={100 + 60 * Math.cos((axisAngle - 90) * (Math.PI / 180))}
-                                                                            y2={100 + 60 * Math.sin((axisAngle - 90) * (Math.PI / 180))}
-                                                                            stroke="#3b82f6"
-                                                                            strokeWidth="3"
-                                                                            markerEnd="url(#arrowhead)"
-                                                                        />
-                                                                        <defs>
-                                                                            <marker
-                                                                                id="arrowhead"
-                                                                                markerWidth="10"
-                                                                                markerHeight="10"
-                                                                                refX="9"
-                                                                                refY="3"
-                                                                                orient="auto"
-                                                                            >
-                                                                                <polygon points="0 0, 10 3, 0 6" fill="#3b82f6" />
-                                                                            </marker>
-                                                                        </defs>
-                                                                    </>
-                                                                )}
-                                                                
-                                                                {/* Angle labels */}
-                                                                {[0, 30, 60, 90, 120, 150, 180].map((angle) => {
-                                                                    const rad = (angle - 90) * (Math.PI / 180)
-                                                                    const x = 100 + 90 * Math.cos(rad)
-                                                                    const y = 100 + 90 * Math.sin(rad)
-                                                                    return (
-                                                                        <text
-                                                                            key={angle}
-                                                                            x={x}
-                                                                            y={y}
-                                                                            textAnchor="middle"
-                                                                            dominantBaseline="middle"
-                                                                            fontSize="10"
-                                                                            fontWeight="500"
-                                                                            fill={angle === axisAngle ? "#3b82f6" : "#6b7280"}
-                                                                        >
-                                                                            {angle}°
-                                                                        </text>
-                                                                    )
-                                                                })}
-                                                                
-                                                                {/* Center point */}
-                                                                <circle cx="100" cy="100" r="4" fill="#3b82f6" />
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-blue-100 rounded-lg">
+                                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                             </svg>
-                                                            <p className="text-xs text-center text-gray-600 mt-2">
-                                                                Current Axis: {axisAngle}° {contactLensFormData.right_axis && contactLensFormData.left_axis && contactLensFormData.right_axis !== contactLensFormData.left_axis && 
-                                                                    `(Right: ${contactLensFormData.right_axis}°, Left: ${contactLensFormData.left_axis}°)`}
-                                                            </p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
+                                                                        <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="mt-4 pt-4 border-t border-gray-200">
+                                                                <AxisDiagram compact={true} />
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )
