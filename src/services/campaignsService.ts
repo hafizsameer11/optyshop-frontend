@@ -10,12 +10,14 @@ import { buildQueryString } from '../config/apiRoutes';
 // Type definitions for campaign data
 export interface Campaign {
   id: number;
-  title: string;
+  name: string;
+  slug?: string;
   description?: string;
-  image_url?: string;
+  image_url?: string | null;
   link_url?: string | null;
-  start_date?: string;
-  end_date?: string;
+  campaign_type?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
   is_active: boolean;
   position?: string | null;
   sort_order?: number;
