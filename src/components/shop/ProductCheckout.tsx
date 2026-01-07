@@ -4990,7 +4990,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         )}
               </div>
             </div>
-      </div>
+          </div>
 
       {/* Right Eye (OD) */}
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 shadow-sm hover:shadow-md transition-shadow h-full">
@@ -5077,7 +5077,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 )}
               </div>
             </div>
-          </div>
+      </div>
         </div>
 
         {/* Copy Left to Right Button */}
