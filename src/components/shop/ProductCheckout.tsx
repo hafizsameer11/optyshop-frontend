@@ -342,11 +342,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 prescription_lens_type_id: type.id,
                 name: variant.name || 'Unknown',
                 slug: variant.slug || '',
-                description: variant.description || null,
+                description: variant.description ?? undefined,
                 price: variant.price || 0,
                 is_recommended: variant.isRecommended || false,
                 viewing_range: variant.viewingRange || null,
-                use_cases: variant.useCases || null,
+                use_cases: variant.useCases ?? undefined,
                 is_active: true,
                 sort_order: 0,
                 colors: []
@@ -3383,10 +3383,13 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
               const isGlass = material.slug === 'minerals-glass' || (material.name && material.name.toLowerCase().includes('glass'))
               // Check if this specific material is selected
               // Priority: match by material ID if set, otherwise match by type
-              const isSelected = lensSelection.lensThicknessMaterialId !== undefined
-                ? lensSelection.lensThicknessMaterialId === material.id
-                : ((isPlastic && lensSelection.lensThickness === 'plastic') ||
-                   (isGlass && lensSelection.lensThickness === 'glass'))
+              let isSelected: boolean
+              if (lensSelection.lensThicknessMaterialId !== undefined) {
+                isSelected = lensSelection.lensThicknessMaterialId === material.id
+              } else {
+                isSelected = (isPlastic && lensSelection.lensThickness === 'plastic') ||
+                             (isGlass && lensSelection.lensThickness === 'glass')
+              }
               
               return (
                 <label
@@ -3400,7 +3403,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
                   <input
                     type="radio"
                     name="lensThickness"
-                    checked={isSelected}
+                    checked={!!isSelected}
                     onChange={() => {
                       // Toggle: if already selected, deselect; otherwise select
                       if (isSelected) {
