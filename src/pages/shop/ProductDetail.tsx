@@ -2953,175 +2953,6 @@ const ProductDetail: React.FC = () => {
 
                                         {/* Eyes Section - Horizontal Layout */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
-                                            {/* Left Eye Section */}
-                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
-                                                leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
-                                            }`}>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={leftEyeEnabled}
-                                                            onChange={(e) => setLeftEyeEnabled(e.target.checked)}
-                                                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
-                                                        />
-                                                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
-                                                            <span className="text-white font-bold text-sm">L</span>
-                                                        </div>
-                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye OS</h3>
-                                                    </label>
-                                                </div>
-                                                
-                                                <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                    {/* Qty Number Input with Spinner - Full Width */}
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
-                                                            Quantity (Qty)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={contactLensFormData.left_qty || 1}
-                                                            onChange={(e) => {
-                                                                const selectedValue = parseInt(e.target.value) || 1
-                                                                handleContactLensFieldChange('left_qty', selectedValue)
-                                                            }}
-                                                            disabled={!leftEyeEnabled}
-                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
-                                                                } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        />
-                                                        {contactLensErrors.left_qty && (
-                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Base Curve (B.C)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.left_base_curve}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Diameter (DIA)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.left_diameter}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Left Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
-                                                {(() => {
-                                                    const formType = contactLensFormConfig?.formType ||
-                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-
-                                                    if (formType === 'spherical') {
-                                                        return (
-                                                            <div className={`pt-3 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <label className="block text-xs text-gray-500 mb-1">
-                                                                    * Power (PWR)
-                                                                </label>
-                                                                <select
-                                                                    value={contactLensFormData.left_power || '00.00'}
-                                                                    onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
-                                                                    disabled={!leftEyeEnabled}
-                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                                        } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <option value="00.00">00.00</option>
-                                                                    {powerOptions.map((option: string | number) => (
-                                                                        <option key={option} value={option}>
-                                                                            {option}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                                {contactLensErrors.left_power && (
-                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    } else if (formType === 'astigmatism') {
-                                                        return (
-                                                            <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <div className="pt-3 border-t border-purple-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Power Setting
-                                                                    </label>
-                                                                    <select
-                                                                        value={contactLensFormData.left_power || '00.00'}
-                                                                        onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
-                                                                        disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                    >
-                                                                        <option value="00.00">00.00</option>
-                                                                        {powerOptions.map((option: string | number) => (
-                                                                            <option key={option} value={option}>
-                                                                                {option}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {contactLensErrors.left_power && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="pt-4 border-t border-purple-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Cylinder & Axis
-                                                                    </label>
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.left_cylinder || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {cylinderOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Axis (AX)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.left_axis || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {axisOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null
-                                                })()}
-                                            </div>
-
                                             {/* Right Eye Section */}
                                             <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
                                                 rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
@@ -3281,6 +3112,175 @@ const ProductDetail: React.FC = () => {
                                                                         </div>
                                                                     </div>
                                                                     {(contactLensErrors.right_cylinder || contactLensErrors.right_axis) && (
+                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    }
+                                                    return null
+                                                })()}
+                                            </div>
+
+                                            {/* Left Eye Section */}
+                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
+                                                leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
+                                            }`}>
+                                                <div className="flex items-center gap-2 mb-4">
+                                                    <label className="flex items-center gap-2 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={leftEyeEnabled}
+                                                            onChange={(e) => setLeftEyeEnabled(e.target.checked)}
+                                                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                                                        />
+                                                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
+                                                            <span className="text-white font-bold text-sm">L</span>
+                                                        </div>
+                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye OS</h3>
+                                                    </label>
+                                                </div>
+                                                
+                                                <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                    {/* Qty Number Input with Spinner - Full Width */}
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                            Quantity (Qty)
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={contactLensFormData.left_qty || 1}
+                                                            onChange={(e) => {
+                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                handleContactLensFieldChange('left_qty', selectedValue)
+                                                            }}
+                                                            disabled={!leftEyeEnabled}
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                                } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        />
+                                                        {contactLensErrors.left_qty && (
+                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
+                                                    <div className="grid grid-cols-2 gap-3">
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">
+                                                                Base Curve (B.C)
+                                                            </label>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.left_base_curve}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">
+                                                                Diameter (DIA)
+                                                            </label>
+                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                                <span className="text-gray-700 font-medium">
+                                                                    {fixedBaseCurveAndDiameter.left_diameter}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Left Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
+                                                {(() => {
+                                                    const formType = contactLensFormConfig?.formType ||
+                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+                                                    if (formType === 'spherical') {
+                                                        return (
+                                                            <div className={`pt-3 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                                <label className="block text-xs text-gray-500 mb-1">
+                                                                    * Power (PWR)
+                                                                </label>
+                                                                <select
+                                                                    value={contactLensFormData.left_power || '00.00'}
+                                                                    onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                                    disabled={!leftEyeEnabled}
+                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                                        } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                >
+                                                                    <option value="00.00">00.00</option>
+                                                                    {powerOptions.map((option: string | number) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {contactLensErrors.left_power && (
+                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    } else if (formType === 'astigmatism') {
+                                                        return (
+                                                            <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                                <div className="pt-3 border-t border-purple-200">
+                                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                                        Power Setting
+                                                                    </label>
+                                                                    <select
+                                                                        value={contactLensFormData.left_power || '00.00'}
+                                                                        onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
+                                                                        disabled={!leftEyeEnabled}
+                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
+                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <option value="00.00">00.00</option>
+                                                                        {powerOptions.map((option: string | number) => (
+                                                                            <option key={option} value={option}>
+                                                                                {option}
+                                                                            </option>
+                                                                        ))}
+                                                                    </select>
+                                                                    {contactLensErrors.left_power && (
+                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
+                                                                    )}
+                                                                </div>
+
+                                                                <div className="pt-4 border-t border-purple-200">
+                                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                                        Cylinder & Axis
+                                                                    </label>
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                        <div>
+                                                                            <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
+                                                                            <select
+                                                                                value={contactLensFormData.left_cylinder || '00.00'}
+                                                                                onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
+                                                                                disabled={!leftEyeEnabled}
+                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                            >
+                                                                                <option value="00.00">00.00</option>
+                                                                                {cylinderOptions.map((option: number | string) => (
+                                                                                    <option key={option} value={option}>{option}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-xs text-gray-500 mb-1">Axis (AX)</label>
+                                                                            <select
+                                                                                value={contactLensFormData.left_axis || '00.00'}
+                                                                                onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
+                                                                                disabled={!leftEyeEnabled}
+                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                            >
+                                                                                <option value="00.00">00.00</option>
+                                                                                {axisOptions.map((option: number | string) => (
+                                                                                    <option key={option} value={option}>{option}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
                                                                         <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
                                                                     )}
                                                                 </div>
