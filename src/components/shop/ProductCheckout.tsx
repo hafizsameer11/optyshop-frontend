@@ -4936,10 +4936,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.od_sphere || ''}
               onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
-                    errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.od_sphere ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                    errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                    prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.od_sphere 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                   <option value="">Select</option>
               {getSphereOptions('right').map(opt => (
@@ -4962,10 +4967,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.od_cylinder || ''}
               onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
-                    errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                    errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                    prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.od_cylinder 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                   <option value="">Select</option>
               {getCylinderOptions('right').map(opt => (
@@ -4989,10 +4999,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.od_axis || ''}
               onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
-                      errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                      prescriptionData.od_axis ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                      errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                      prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.od_axis 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                     <option value="">Select</option>
               {getAxisOptions('right').map(opt => (
@@ -5047,10 +5062,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.os_sphere || ''}
               onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
-                    errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.os_sphere ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                    errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                    prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.os_sphere 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                   <option value="">Select</option>
               {getOSSphereOptions().map(opt => (
@@ -5073,10 +5093,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.os_cylinder || ''}
               onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
-                    errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                    errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                    prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.os_cylinder 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                   <option value="">Select</option>
               {getOSCylinderOptions().map(opt => (
@@ -5100,10 +5125,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.os_axis || ''}
               onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
-                      errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                      prescriptionData.os_axis ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
+                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
+                      errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
+                      prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
               }`}
+              style={{
+                backgroundImage: prescriptionData.os_axis 
+                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+              }}
             >
                     <option value="">Select</option>
               {getOSAxisOptions().map(opt => (
