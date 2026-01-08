@@ -2618,10 +2618,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         
         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start">
           {/* Left: Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4">
+          <div className="lg:col-span-1 flex flex-col">
+            <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
               <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
                 {orderSummary.length === 0 ? (
@@ -2807,7 +2807,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           </div>
 
           {/* Middle: Product Image */}
-          <div className="lg:col-span-1 flex flex-col">
+          <div className="lg:col-span-1 flex flex-col flex-shrink-0">
             <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}>
               <img
                 key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
@@ -2888,7 +2888,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           </div>
 
           {/* Right: Customization Options */}
-          <div className="lg:col-span-1 flex flex-col">
+          <div className="lg:col-span-1 flex flex-col overflow-hidden min-h-0">
             {currentStep === 'lens_type' && (
               <LensTypeSelectionStep
                 lensSelection={lensSelection}
@@ -4725,8 +4725,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   }, [getFieldOptions])
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
+    <div className="h-full flex flex-col min-h-0">
+      <div className="flex items-center gap-2 mb-4 flex-shrink-0">
         <button
           onClick={onBack}
           className="text-gray-500 hover:text-gray-700"
@@ -4740,6 +4740,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </h3>
       </div>
 
+      <div className="flex-1 overflow-y-auto pr-2">
       {/* Customer Support Link */}
       <div className="mb-4 flex justify-end">
         <Link
@@ -5195,10 +5196,11 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
       <button
         onClick={onNext}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors"
+        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
       >
         Continue
       </button>
+      </div>
     </div>
   )
 }
