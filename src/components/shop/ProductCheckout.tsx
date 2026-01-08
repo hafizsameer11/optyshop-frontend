@@ -4925,13 +4925,20 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </div>
             <div className="grid grid-cols-3 gap-2 md:gap-3">
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">SPH</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
+                  {prescriptionData.od_sphere && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                      {prescriptionData.od_sphere}
+                    </span>
+                  )}
+                </div>
             <select
               value={prescriptionData.od_sphere || ''}
               onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
                   className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
                     errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.od_sphere ? 'border-purple-500 bg-purple-50 text-purple-900' : 'border-gray-300 bg-white text-gray-900'
+                    prescriptionData.od_sphere ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                   <option value="">Select</option>
@@ -4939,21 +4946,25 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {prescriptionData.od_sphere && (
-              <p className="text-xs text-purple-600 mt-1 font-medium">Selected: {prescriptionData.od_sphere}</p>
-            )}
             {errors.od_sphere && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
             )}
           </div>
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">CYL</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
+                  {prescriptionData.od_cylinder && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                      {prescriptionData.od_cylinder}
+                    </span>
+                  )}
+                </div>
             <select
               value={prescriptionData.od_cylinder || ''}
               onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
                   className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
                     errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-50 text-purple-900' : 'border-gray-300 bg-white text-gray-900'
+                    prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                   <option value="">Select</option>
@@ -4961,22 +4972,26 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {prescriptionData.od_cylinder && (
-              <p className="text-xs text-purple-600 mt-1 font-medium">Selected: {prescriptionData.od_cylinder}</p>
-            )}
             {errors.od_cylinder && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
             )}
           </div>
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">AXIS</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
+                  {prescriptionData.od_axis && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
+                      {prescriptionData.od_axis}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1 md:gap-2">
             <select
               value={prescriptionData.od_axis || ''}
               onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
                     className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm ${
                       errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                      prescriptionData.od_axis ? 'border-purple-500 bg-purple-50 text-purple-900' : 'border-gray-300 bg-white text-gray-900'
+                      prescriptionData.od_axis ? 'border-purple-500 bg-purple-50 text-purple-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                     <option value="">Select</option>
@@ -4995,9 +5010,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     </svg>
                   </button>
                 </div>
-            {prescriptionData.od_axis && (
-              <p className="text-xs text-purple-600 mt-1 font-medium">Selected: {prescriptionData.od_axis}</p>
-            )}
             {errors.od_axis && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
                 )}
@@ -5024,13 +5036,20 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </div>
             <div className="grid grid-cols-3 gap-2 md:gap-3">
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">SPH</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
+                  {prescriptionData.os_sphere && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                      {prescriptionData.os_sphere}
+                    </span>
+                  )}
+                </div>
             <select
               value={prescriptionData.os_sphere || ''}
               onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
                   className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
                     errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.os_sphere ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-gray-300 bg-white text-gray-900'
+                    prescriptionData.os_sphere ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                   <option value="">Select</option>
@@ -5038,21 +5057,25 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {prescriptionData.os_sphere && (
-              <p className="text-xs text-blue-600 mt-1 font-medium">Selected: {prescriptionData.os_sphere}</p>
-            )}
             {errors.os_sphere && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
             )}
           </div>
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">CYL</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
+                  {prescriptionData.os_cylinder && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                      {prescriptionData.os_cylinder}
+                    </span>
+                  )}
+                </div>
             <select
               value={prescriptionData.os_cylinder || ''}
               onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
                   className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
                     errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                    prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-gray-300 bg-white text-gray-900'
+                    prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                   <option value="">Select</option>
@@ -5060,22 +5083,26 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
-            {prescriptionData.os_cylinder && (
-              <p className="text-xs text-blue-600 mt-1 font-medium">Selected: {prescriptionData.os_cylinder}</p>
-            )}
             {errors.os_cylinder && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
             )}
           </div>
           <div className="min-w-0">
-                <label className="block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wide">AXIS</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
+                  {prescriptionData.os_axis && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                      {prescriptionData.os_axis}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-1 md:gap-2">
             <select
               value={prescriptionData.os_axis || ''}
               onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
                     className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm ${
                       errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50' : 
-                      prescriptionData.os_axis ? 'border-blue-500 bg-blue-50 text-blue-900' : 'border-gray-300 bg-white text-gray-900'
+                      prescriptionData.os_axis ? 'border-blue-500 bg-blue-50 text-blue-900 font-semibold' : 'border-gray-300 bg-white text-gray-900'
               }`}
             >
                     <option value="">Select</option>
@@ -5094,9 +5121,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </svg>
         </button>
                 </div>
-            {prescriptionData.os_axis && (
-              <p className="text-xs text-blue-600 mt-1 font-medium">Selected: {prescriptionData.os_axis}</p>
-            )}
                 {errors.os_axis && (
                   <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
         )}
