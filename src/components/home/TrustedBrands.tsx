@@ -131,8 +131,8 @@ const TrustedBrands: React.FC = () => {
         return null // Don't render anything if no brands
     }
 
-    // Duplicate the array for seamless infinite scroll
-    const track = [...brands, ...brands]
+    // Duplicate the array for seamless infinite scroll (only if we have brands)
+    const track = brands.length > 0 ? [...brands, ...brands] : brands
 
     return (
         <section className="bg-white text-slate-900">

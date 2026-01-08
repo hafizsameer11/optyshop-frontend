@@ -4,10 +4,11 @@
     }
 
     100% {
-        transform: translateX(-50%);
+        transform: translateX(50%);
     }
 }
 
 .marquee-track {
     animation: marquee 25s linear infinite;
+    will-change: transform;
 }
