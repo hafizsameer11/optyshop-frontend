@@ -69,6 +69,21 @@ export interface ColorImage {
   images: string[];
 }
 
+export interface SizeVolumeVariant {
+  id: number;
+  size_volume: string; // e.g., "5ml", "10ml", "30ml"
+  pack_type?: string | null; // e.g., "Single", "Pack of 2"
+  price: number; // Price for this variant
+  compare_at_price?: number | null; // Compare at price (for showing discounts)
+  cost_price?: number | null; // Cost price (internal use)
+  stock_quantity: number; // Available quantity for this variant
+  stock_status: 'in_stock' | 'out_of_stock' | 'backorder'; // Stock status
+  sku?: string | null; // SKU for this variant
+  expiry_date?: string | null; // Expiry date (ISO 8601 format)
+  is_active: boolean; // Whether variant is active
+  sort_order: number; // Display order (lower = first)
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -103,10 +118,13 @@ export interface Product {
   lensTypes?: LensType[];
   lensCoatings?: LensCoating[];
   
-  // Eye Hygiene specific fields (only present for Eye Hygiene category/subcategory)
+  // Eye Hygiene specific fields (legacy - for backward compatibility)
   size_volume?: string | null; // e.g., "5ml", "10ml", "30ml"
   pack_type?: string | null; // e.g., "Single", "Pack of 2", "Pack of 3"
   expiry_date?: string | null; // ISO 8601 format date string
+  
+  // Size/Volume Variants (new - only for Eye Hygiene products with variants)
+  size_volume_variants?: SizeVolumeVariant[]; // Array of size/volume variants (only active variants in public endpoints)
   
   [key: string]: any; // Allow for additional product properties
 }
@@ -385,11 +403,12 @@ export const getProductById = async (id: number | string): Promise<Product | nul
       const product = (response.data as any).product || response.data;
       
       // Log Eye Hygiene fields if present (for debugging)
-      if (import.meta.env.DEV && ((product as any).size_volume || (product as any).pack_type || (product as any).expiry_date)) {
+      if (import.meta.env.DEV && ((product as any).size_volume || (product as any).pack_type || (product as any).expiry_date || (product as any).size_volume_variants)) {
         console.log('[Product Service] Eye Hygiene fields detected:', {
           size_volume: (product as any).size_volume,
           pack_type: (product as any).pack_type,
           expiry_date: (product as any).expiry_date,
+          variants_count: (product as any).size_volume_variants?.length || 0,
           category: product.category?.name,
           subcategory: (product as any).subCategory?.name || (product as any).sub_category?.name
         });

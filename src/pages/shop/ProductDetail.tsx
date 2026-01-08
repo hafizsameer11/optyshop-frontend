@@ -104,7 +104,7 @@ const ProductDetail: React.FC = () => {
     const [unitImages, setUnitImages] = useState<string[]>([])
     const [loadingUnitData, setLoadingUnitData] = useState(false)
 
-    // Eye Hygiene Form Data State
+    // Eye Hygiene Form Data State (legacy - for backward compatibility with products without variants)
     interface EyeHygieneFormData {
         size_volume: string
         pack_type: string
@@ -122,6 +122,18 @@ const ProductDetail: React.FC = () => {
         size_volume: [],
         pack_type: []
     })
+    
+    // Size/Volume Variant Selection State (new - for products with variants)
+    const [selectedSizeVolumeVariant, setSelectedSizeVolumeVariant] = useState<{
+        id: number;
+        size_volume: string;
+        pack_type?: string | null;
+        price: number;
+        compare_at_price?: number | null;
+        stock_quantity: number;
+        stock_status: string;
+        expiry_date?: string | null;
+    } | null>(null)
 
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
@@ -154,21 +166,31 @@ const ProductDetail: React.FC = () => {
         return null
     }, [product, selectedColor])
 
-    // Price calculation - uses variant price if color is selected (supports both 'colors' array and 'color_images' array)
+    // Price calculation - uses variant price if color is selected OR size/volume variant is selected
+    // Priority: size_volume_variant price > color variant price > product price
     const { displayPrice, originalPrice, hasValidSale } = useMemo(() => {
         if (!product) return { displayPrice: 0, originalPrice: null, hasValidSale: false }
 
-        // Use variant price if color is selected and variant has a price
+        // Priority 1: Use size/volume variant price if selected
         let basePrice = Number(product.price || 0)
-        if (selectedColorVariant) {
-            // Check if variant has a price (from 'colors' array or 'color_images' array)
+        if (selectedSizeVolumeVariant) {
+            basePrice = Number(selectedSizeVolumeVariant.price || 0)
+        } else if (selectedColorVariant) {
+            // Priority 2: Use color variant price if selected
             const variantPrice = (selectedColorVariant as any).price
             if (variantPrice !== undefined && variantPrice !== null) {
                 basePrice = Number(variantPrice)
             }
         }
 
-        const salePrice = product.sale_price ? Number(product.sale_price) : null
+        // For size/volume variants, use compare_at_price if available for sale display
+        let salePrice: number | null = null
+        if (selectedSizeVolumeVariant && selectedSizeVolumeVariant.compare_at_price) {
+            salePrice = Number(selectedSizeVolumeVariant.compare_at_price)
+        } else {
+            salePrice = product.sale_price ? Number(product.sale_price) : null
+        }
+        
         const isValidSale = !!(salePrice && salePrice < basePrice)
         const finalPrice = isValidSale ? salePrice : basePrice
 
@@ -177,7 +199,7 @@ const ProductDetail: React.FC = () => {
             originalPrice: isValidSale ? basePrice : null,
             hasValidSale: isValidSale
         }
-    }, [product, selectedColorVariant])
+    }, [product, selectedColorVariant, selectedSizeVolumeVariant])
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -294,18 +316,39 @@ const ProductDetail: React.FC = () => {
                 
                 // Log Eye Hygiene fields if present
                 const p = productData as any
-                if (import.meta.env.DEV && (p.size_volume || p.pack_type || p.expiry_date)) {
+                if (import.meta.env.DEV && (p.size_volume || p.pack_type || p.expiry_date || p.size_volume_variants)) {
                     console.log('👁️ Eye Hygiene Product Detected:', {
                         name: productData.name,
                         size_volume: p.size_volume,
                         pack_type: p.pack_type,
                         expiry_date: p.expiry_date,
+                        variants_count: p.size_volume_variants?.length || 0,
                         stock_quantity: productData.stock_quantity,
                         category: productData.category?.name,
                         categorySlug: productData.category?.slug,
                         subCategory: p.subCategory?.name || p.sub_category?.name,
                         subCategorySlug: p.subCategory?.slug || p.sub_category?.slug
                     });
+                }
+                
+                // Auto-select first variant if product has variants
+                if (p.size_volume_variants && Array.isArray(p.size_volume_variants) && p.size_volume_variants.length > 0) {
+                    const firstVariant = p.size_volume_variants[0]
+                    if (firstVariant && firstVariant.is_active !== false) {
+                        setSelectedSizeVolumeVariant({
+                            id: firstVariant.id,
+                            size_volume: firstVariant.size_volume,
+                            pack_type: firstVariant.pack_type || null,
+                            price: Number(firstVariant.price || 0),
+                            compare_at_price: firstVariant.compare_at_price ? Number(firstVariant.compare_at_price) : null,
+                            stock_quantity: Number(firstVariant.stock_quantity || 0),
+                            stock_status: firstVariant.stock_status || 'in_stock',
+                            expiry_date: firstVariant.expiry_date || null
+                        })
+                    }
+                } else {
+                    // Reset variant selection if no variants
+                    setSelectedSizeVolumeVariant(null)
                 }
                 
                 // Check URL parameters for color selection
@@ -2103,28 +2146,48 @@ const ProductDetail: React.FC = () => {
     const handleAddToCart = () => {
         if (!product) return
 
+        // Check if product has variants (new approach)
+        const p = product as any
+        const hasVariants = p.size_volume_variants && Array.isArray(p.size_volume_variants) && p.size_volume_variants.length > 0
+
         // Validate Eye Hygiene form if it's an Eye Hygiene product
         if (isEyeHygiene) {
-            if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                alert('Please select Size/Volume')
-                return
-            }
-            if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
-                alert('Please select Pack Type')
-                return
-            }
-            if (eyeHygieneFormData.quantity < 1) {
-                alert('Please enter a valid quantity')
-                return
+            // New variant-based validation
+            if (hasVariants) {
+                if (!selectedSizeVolumeVariant) {
+                    alert('Please select a Size/Volume option')
+                    return
+                }
+                if (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0) {
+                    alert('Selected variant is out of stock')
+                    return
+                }
+            } else {
+                // Legacy form-based validation (for products without variants)
+                if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
+                    alert('Please select Size/Volume')
+                    return
+                }
+                if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
+                    alert('Please select Pack Type')
+                    return
+                }
+                if (eyeHygieneFormData.quantity < 1) {
+                    alert('Please enter a valid quantity')
+                    return
+                }
             }
         }
 
         try {
             // Convert API product to cart-compatible format
-
-            const salePrice = product.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product.price ? Number(product.price) : 0
-            const finalPrice = salePrice && regularPrice && salePrice < regularPrice ? salePrice : regularPrice
+            // Determine quantity and stock based on variant or legacy form
+            const p = product as any
+            const hasVariants = p.size_volume_variants && Array.isArray(p.size_volume_variants) && p.size_volume_variants.length > 0
+            const productQuantity = hasVariants && selectedSizeVolumeVariant ? quantity : (isEyeHygiene ? eyeHygieneFormData.quantity : quantity)
+            const productInStock = hasVariants && selectedSizeVolumeVariant 
+                ? (selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0)
+                : (product.in_stock || false)
 
             const cartProduct = {
                 id: product.id || 0,
@@ -2134,16 +2197,22 @@ const ProductDetail: React.FC = () => {
                 price: finalPrice,
                 image: getColorSpecificImageUrl(product, selectedImageIndex), // Use the color-specific image if color is selected
                 description: product.description || '',
-                inStock: product.in_stock || false,
+                inStock: productInStock,
                 rating: product.rating ? Number(product.rating) : undefined,
-                quantity: isEyeHygiene ? eyeHygieneFormData.quantity : quantity, // Use Eye Hygiene quantity if applicable
+                quantity: productQuantity,
                 frame_material: selectedFrameMaterial || undefined, // Include selected frame material (single)
                 lens_type: selectedLensType || undefined, // Include selected lens type (single)
                 selectedColor: selectedColor || undefined, // Store selected color for reference
-                // Eye Hygiene specific fields
-                ...(isEyeHygiene && {
+                // Eye Hygiene specific fields (legacy - for backward compatibility)
+                ...(isEyeHygiene && !hasVariants && {
                     size_volume: eyeHygieneFormData.size_volume || undefined,
                     pack_type: eyeHygieneFormData.pack_type || undefined
+                }),
+                // Variant-specific fields (new)
+                ...(hasVariants && selectedSizeVolumeVariant && {
+                    size_volume: selectedSizeVolumeVariant.size_volume,
+                    pack_type: selectedSizeVolumeVariant.pack_type || undefined,
+                    size_volume_variant_id: selectedSizeVolumeVariant.id
                 })
             }
 
@@ -2158,8 +2227,9 @@ const ProductDetail: React.FC = () => {
                 
                 const cartRequest: AddToCartRequest = {
                     product_id: cartProduct.id,
-                    quantity: isEyeHygiene ? eyeHygieneFormData.quantity : quantity,
+                    quantity: productQuantity,
                     selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
+                    size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // New: variant ID for Eye Hygiene products
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
@@ -2170,10 +2240,16 @@ const ProductDetail: React.FC = () => {
                             variant_price: (selectedColorVariant as any).price,
                             variant_images: (selectedColorVariant as any).images || []
                         } : {}),
-                        // Eye Hygiene specific customization
-                        ...(isEyeHygiene && {
+                        // Eye Hygiene specific customization (legacy - for backward compatibility)
+                        ...(isEyeHygiene && !hasVariants && {
                             size_volume: eyeHygieneFormData.size_volume || undefined,
                             pack_type: eyeHygieneFormData.pack_type || undefined
+                        }),
+                        // Variant-specific customization (new)
+                        ...(hasVariants && selectedSizeVolumeVariant && {
+                            size_volume: selectedSizeVolumeVariant.size_volume,
+                            pack_type: selectedSizeVolumeVariant.pack_type || undefined,
+                            size_volume_variant_id: selectedSizeVolumeVariant.id
                         })
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
@@ -2182,8 +2258,7 @@ const ProductDetail: React.FC = () => {
             }
 
             // Always add to local cart context
-            const qtyToAdd = isEyeHygiene ? eyeHygieneFormData.quantity : quantity
-            for (let i = 0; i < qtyToAdd; i++) {
+            for (let i = 0; i < productQuantity; i++) {
                 addToCart(cartProduct)
             }
 
@@ -3601,99 +3676,231 @@ const ProductDetail: React.FC = () => {
                                         )}
                                     </div>
 
-                                    {/* Eye Hygiene Fields Section with Dropdowns */}
-                                    {isEyeHygiene && (
-                                        <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                                            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
-                                                Select Options
-                                            </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* Size/Volume Dropdown */}
-                                                {eyeHygieneOptions.size_volume.length > 0 && (
-                                                    <div className="flex flex-col">
-                                                        <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                            Size / Volume <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <select
-                                                            value={eyeHygieneFormData.size_volume}
-                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
-                                                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                            required
-                                                        >
-                                                            <option value="">Select Size/Volume</option>
-                                                            {eyeHygieneOptions.size_volume.map((option) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                    {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
+                                    {isEyeHygiene && (() => {
+                                        const p = product as any
+                                        const hasVariants = p.size_volume_variants && Array.isArray(p.size_volume_variants) && p.size_volume_variants.length > 0
+                                        
+                                        // New: Show variant selector if variants exist
+                                        if (hasVariants) {
+                                            // Sort variants by sort_order, then size_volume, then pack_type
+                                            const sortedVariants = [...p.size_volume_variants].sort((a: any, b: any) => {
+                                                if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
+                                                if (a.size_volume !== b.size_volume) return a.size_volume.localeCompare(b.size_volume)
+                                                return (a.pack_type || '').localeCompare(b.pack_type || '')
+                                            })
+                                            
+                                            return (
+                                                <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                                    <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                        Select Size/Volume
+                                                    </h2>
+                                                    
+                                                    {/* Variant Selector Buttons */}
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
+                                                        {sortedVariants.map((variant: any) => {
+                                                            const isSelected = selectedSizeVolumeVariant?.id === variant.id
+                                                            const isOutOfStock = variant.stock_status !== 'in_stock' || variant.stock_quantity <= 0
+                                                            
+                                                            return (
+                                                                <button
+                                                                    key={variant.id}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        if (!isOutOfStock) {
+                                                                            setSelectedSizeVolumeVariant({
+                                                                                id: variant.id,
+                                                                                size_volume: variant.size_volume,
+                                                                                pack_type: variant.pack_type || null,
+                                                                                price: Number(variant.price || 0),
+                                                                                compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
+                                                                                stock_quantity: Number(variant.stock_quantity || 0),
+                                                                                stock_status: variant.stock_status || 'in_stock',
+                                                                                expiry_date: variant.expiry_date || null
+                                                                            })
+                                                                        }
+                                                                    }}
+                                                                    disabled={isOutOfStock}
+                                                                    className={`px-6 py-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                                                        isSelected
+                                                                            ? 'bg-white border-blue-950 shadow-md ring-2 ring-blue-100'
+                                                                            : isOutOfStock
+                                                                            ? 'bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed'
+                                                                            : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-md'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex flex-col">
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <span className="font-bold text-gray-900 text-lg">
+                                                                                {variant.size_volume}
+                                                                            </span>
+                                                                            {isOutOfStock && (
+                                                                                <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
+                                                                                    Out of Stock
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {variant.pack_type && (
+                                                                            <span className="text-sm text-gray-600 mb-2">
+                                                                                {variant.pack_type}
+                                                                            </span>
+                                                                        )}
+                                                                        <div className="flex items-center gap-2 mt-2">
+                                                                            <span className="text-xl font-extrabold text-blue-950">
+                                                                                ${Number(variant.price || 0).toFixed(2)}
+                                                                            </span>
+                                                                            {variant.compare_at_price && Number(variant.compare_at_price) > Number(variant.price) && (
+                                                                                <span className="text-sm text-gray-400 line-through">
+                                                                                    ${Number(variant.compare_at_price).toFixed(2)}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        {variant.stock_quantity > 0 && (
+                                                                            <span className="text-xs text-gray-500 mt-1">
+                                                                                {variant.stock_quantity} available
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </button>
+                                                            )
+                                                        })}
                                                     </div>
-                                                )}
-
-                                                {/* Pack Type Dropdown */}
-                                                {eyeHygieneOptions.pack_type.length > 0 && (
-                                                    <div className="flex flex-col">
-                                                        <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                            Pack Type <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <select
-                                                            value={eyeHygieneFormData.pack_type}
-                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
-                                                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                            required
-                                                        >
-                                                            <option value="">Select Pack Type</option>
-                                                            {eyeHygieneOptions.pack_type.map((option) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                )}
-
-                                                {/* Quantity Input */}
-                                                <div className="flex flex-col">
-                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                        Quantity <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={product.stock_quantity || 999}
-                                                        value={eyeHygieneFormData.quantity}
-                                                        onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                                                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                        required
-                                                    />
+                                                    
+                                                    {/* Selected Variant Details */}
+                                                    {selectedSizeVolumeVariant && (
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
+                                                            {/* Quantity Input */}
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Quantity <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
+                                                                    <span className="text-lg">{quantity}</span>
+                                                                    <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {/* Stock Quantity Display */}
+                                                            <div className="flex flex-col justify-end">
+                                                                <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                                <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            {/* Expiry Date Display (if available) */}
+                                                            {selectedSizeVolumeVariant.expiry_date && (
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                                    <span className="text-gray-900 font-semibold text-lg">
+                                                                        {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
+                                                                            year: 'numeric',
+                                                                            month: 'long',
+                                                                            day: 'numeric'
+                                                                        })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
                                                 </div>
+                                            )
+                                        }
+                                        
+                                        // Legacy: Show dropdown form for products without variants
+                                        return (
+                                            <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                                <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                    Select Options
+                                                </h2>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* Size/Volume Dropdown */}
+                                                    {eyeHygieneOptions.size_volume.length > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                Size / Volume <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={eyeHygieneFormData.size_volume}
+                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
+                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                required
+                                                            >
+                                                                <option value="">Select Size/Volume</option>
+                                                                {eyeHygieneOptions.size_volume.map((option) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
 
-                                                {/* Stock Quantity Display */}
-                                                {product.stock_quantity !== undefined && (
-                                                    <div className="flex flex-col justify-end">
-                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                        <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
-                                                        </span>
-                                                    </div>
-                                                )}
+                                                    {/* Pack Type Dropdown */}
+                                                    {eyeHygieneOptions.pack_type.length > 0 && (
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                Pack Type <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={eyeHygieneFormData.pack_type}
+                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
+                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                required
+                                                            >
+                                                                <option value="">Select Pack Type</option>
+                                                                {eyeHygieneOptions.pack_type.map((option) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    )}
 
-                                                {/* Expiry Date Display (if available) */}
-                                                {(product as any).expiry_date && (
+                                                    {/* Quantity Input */}
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                        <span className="text-gray-900 font-semibold text-lg">
-                                                            {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
-                                                                year: 'numeric',
-                                                                month: 'long',
-                                                                day: 'numeric'
-                                                            })}
-                                                        </span>
+                                                        <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                            Quantity <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max={product.stock_quantity || 999}
+                                                            value={eyeHygieneFormData.quantity}
+                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                            required
+                                                        />
                                                     </div>
-                                                )}
+
+                                                    {/* Stock Quantity Display */}
+                                                    {product.stock_quantity !== undefined && (
+                                                        <div className="flex flex-col justify-end">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                            <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Expiry Date Display (if available) */}
+                                                    {(product as any).expiry_date && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                            <span className="text-gray-900 font-semibold text-lg">
+                                                                {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
+                                                                    year: 'numeric',
+                                                                    month: 'long',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        )
+                                    })()}
 
                                     {/* Product Details Grid (for non-Eye Hygiene products or additional details) */}
                                     {(!isEyeHygiene || (product.frame_shape || product.frame_material || product.gender)) && (
@@ -3749,7 +3956,11 @@ const ProductDetail: React.FC = () => {
                                                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                         }`}
                                                 >
-                                                    {isProductOutOfStock ? 'Out of Stock' : !isFormValid ? 'Please Select All Options' : 'Add to Cart'}
+                                                    {variantOutOfStock || isProductOutOfStock 
+                                                        ? 'Out of Stock' 
+                                                        : !isFormValid 
+                                                        ? (hasVariants ? 'Please Select a Size/Volume Option' : 'Please Select All Options') 
+                                                        : 'Add to Cart'}
                                                 </button>
                                             )
                                         })() : (
