@@ -3,139 +3,158 @@ import React from 'react'
 interface AxisDiagramProps {
   onClose?: () => void
   compact?: boolean
+  eyeType?: 'left' | 'right' | 'both'
+  axisValue?: number
 }
 
-const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) => {
+const AxisDiagram: React.FC<AxisDiagramProps> = ({ 
+  onClose, 
+  compact = false,
+  eyeType = 'left',
+  axisValue = 35
+}) => {
+  // Calculate pointer position based on axis value
+  const pointerAngle = axisValue
+  const pointerRadians = (pointerAngle * Math.PI) / 180
+  const pointerLength = 170
+  const pointerX = 200 + pointerLength * Math.sin(pointerRadians)
+  const pointerY = 200 - pointerLength * Math.cos(pointerRadians)
+
+  const eyeTypeLabel = eyeType === 'left' ? 'Occhio Sinistro' : eyeType === 'right' ? 'Occhio Destro' : 'Occhio'
+
   if (compact) {
     return (
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+      <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm">
+        {/* Title */}
+        <div className="text-left mb-3">
+          <h3 className="text-base font-bold text-gray-900">{eyeTypeLabel}</h3>
+        </div>
+        
         <div className="flex justify-center items-center">
-          <div className="relative" style={{ width: '280px', height: '140px' }}>
-            {/* SVG Protractor Diagram */}
+          <div className="relative" style={{ width: '400px', height: '200px' }}>
+            {/* SVG Gauge Diagram */}
             <svg
               viewBox="0 0 400 200"
               className="w-full h-full"
               style={{ maxWidth: '100%', height: 'auto' }}
             >
-            {/* Semi-circle base line */}
-            <line
-              x1="0"
-              y1="200"
-              x2="400"
-              y2="200"
-              stroke="#000"
-              strokeWidth="2"
-            />
-            
-            {/* Center point */}
-            <circle cx="200" cy="200" r="3" fill="#000" />
-            
-            {/* Radial lines */}
-            {[0, 30, 60, 90, 120, 150, 180].map((angle, index) => {
-              const radians = (angle * Math.PI) / 180
-              const x = 200 + 180 * Math.sin(radians)
-              const y = 200 - 180 * Math.cos(radians)
-              return (
-                <line
-                  key={angle}
-                  x1="200"
-                  y1="200"
-                  x2={x}
-                  y2={y}
-                  stroke="#000"
-                  strokeWidth="1"
-                />
-              )
-            })}
-            
-            {/* Additional radial lines for more detail */}
-            {[15, 45, 75, 105, 135, 165].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              const x = 200 + 180 * Math.sin(radians)
-              const y = 200 - 180 * Math.cos(radians)
-              return (
-                <line
-                  key={angle}
-                  x1="200"
-                  y1="200"
-                  x2={x}
-                  y2={y}
-                  stroke="#ccc"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
-                />
-              )
-            })}
-            
-            {/* Outer arc with angle labels */}
-            <path
-              d="M 20 200 A 180 180 0 0 1 380 200"
-              fill="none"
-              stroke="#000"
-              strokeWidth="2"
-            />
-            
-            {/* Angle labels on outer arc */}
-            {[
-              { angle: 30, label: '30°', x: 95, y: 44 },
-              { angle: 60, label: '60°', x: 246, y: 44 },
-              { angle: 90, label: '90°', x: 200, y: 20 },
-              { angle: 120, label: '120°', x: 154, y: 44 },
-              { angle: 150, label: '150°', x: 305, y: 44 },
-            ].map(({ label, x, y }) => (
-              <text
-                key={label}
-                x={x}
-                y={y + 5}
-                textAnchor="middle"
-                fontSize="14"
-                fill="#000"
-                fontWeight="bold"
-              >
-                {label}
-              </text>
-            ))}
-            
-            {/* Baseline labels with dual notation (like first image) */}
-            <text x="20" y="215" textAnchor="middle" fontSize="12" fill="#000" fontWeight="bold">180°</text>
-            <text x="20" y="230" textAnchor="middle" fontSize="11" fill="#000">0°int</text>
-            <text x="380" y="215" textAnchor="middle" fontSize="12" fill="#000" fontWeight="bold">180°</text>
-            <text x="380" y="230" textAnchor="middle" fontSize="11" fill="#000">0°tabo</text>
-            
-            {/* Example arrow pointing at an angle (like first image) */}
-            <defs>
-              <marker
-                id="arrowhead-compact"
-                markerWidth="8"
-                markerHeight="8"
-                refX="7"
-                refY="2.5"
-                orient="auto"
-              >
-                <polygon points="0 0, 8 2.5, 0 5" fill="#60a5fa" />
-              </marker>
-            </defs>
-            {/* Arrow pointing at approximately 18 degrees (angled, not vertical) */}
-            <line
-              x1="200"
-              y1="200"
-              x2="255"
-              y2="28"
-              stroke="#60a5fa"
-              strokeWidth="2.5"
-              markerEnd="url(#arrowhead-compact)"
-            />
-          </svg>
-        </div>
+              {/* Semi-circle base line */}
+              <line
+                x1="0"
+                y1="200"
+                x2="400"
+                y2="200"
+                stroke="#000"
+                strokeWidth="2"
+              />
+              
+              {/* Outer arc */}
+              <path
+                d="M 20 200 A 180 180 0 0 1 380 200"
+                fill="none"
+                stroke="#000"
+                strokeWidth="2"
+              />
+              
+              {/* Major tick marks at 20-unit intervals (0, 20, 40, 60, 80, 100, 120, 140, 160, 180) */}
+              {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
+                const radians = (angle * Math.PI) / 180
+                const outerX = 200 + 180 * Math.sin(radians)
+                const outerY = 200 - 180 * Math.cos(radians)
+                const innerX = 200 + 165 * Math.sin(radians)
+                const innerY = 200 - 165 * Math.cos(radians)
+                return (
+                  <line
+                    key={`major-${angle}`}
+                    x1={outerX}
+                    y1={outerY}
+                    x2={innerX}
+                    y2={innerY}
+                    stroke="#000"
+                    strokeWidth="2"
+                  />
+                )
+              })}
+              
+              {/* Minor tick marks at 10-unit intervals */}
+              {[10, 30, 50, 70, 90, 110, 130, 150, 170].map((angle) => {
+                const radians = (angle * Math.PI) / 180
+                const outerX = 200 + 180 * Math.sin(radians)
+                const outerY = 200 - 180 * Math.cos(radians)
+                const innerX = 200 + 172 * Math.sin(radians)
+                const innerY = 200 - 172 * Math.cos(radians)
+                return (
+                  <line
+                    key={`minor-${angle}`}
+                    x1={outerX}
+                    y1={outerY}
+                    x2={innerX}
+                    y2={innerY}
+                    stroke="#000"
+                    strokeWidth="1"
+                  />
+                )
+              })}
+              
+              {/* Number labels at 20-unit intervals */}
+              {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
+                const radians = (angle * Math.PI) / 180
+                const labelRadius = 155
+                const labelX = 200 + labelRadius * Math.sin(radians)
+                const labelY = 200 - labelRadius * Math.cos(radians)
+                return (
+                  <text
+                    key={`label-${angle}`}
+                    x={labelX}
+                    y={labelY}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="12"
+                    fill="#000"
+                    fontWeight="500"
+                  >
+                    {angle}
+                  </text>
+                )
+              })}
+              
+              {/* Red triangular pointer */}
+              <defs>
+                <marker
+                  id="pointer-compact"
+                  markerWidth="12"
+                  markerHeight="12"
+                  refX="10"
+                  refY="3"
+                  orient="auto"
+                >
+                  <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
+                </marker>
+              </defs>
+              
+              <line
+                x1="200"
+                y1="200"
+                x2={pointerX}
+                y2={pointerY}
+                stroke="#dc2626"
+                strokeWidth="3"
+                markerEnd="url(#pointer-compact)"
+              />
+              
+              {/* Center point */}
+              <circle cx="200" cy="200" r="4" fill="#dc2626" />
+            </svg>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg p-6 max-w-2xl mx-auto">
+    <div className="bg-gray-100 rounded-lg p-6 max-w-2xl mx-auto border border-gray-300 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-gray-900">Axis of Astigmatism</h3>
+        <h3 className="text-xl font-bold text-gray-900">{eyeTypeLabel}</h3>
         {onClose && (
           <button
             onClick={onClose}
@@ -148,16 +167,10 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
           </button>
         )}
       </div>
-      
-      <div className="mb-4">
-        <p className="text-sm text-gray-600 mb-4">
-          The axis indicates the orientation of astigmatism in your eye. Use this diagram to find the correct axis value from your prescription.
-        </p>
-      </div>
 
       <div className="flex justify-center items-center mb-4">
         <div className="relative" style={{ width: '400px', height: '200px' }}>
-          {/* SVG Protractor Diagram */}
+          {/* SVG Gauge Diagram */}
           <svg
             viewBox="0 0 400 200"
             className="w-full h-full"
@@ -173,47 +186,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
               strokeWidth="2"
             />
             
-            {/* Center point */}
-            <circle cx="200" cy="200" r="3" fill="#000" />
-            
-            {/* Radial lines */}
-            {[0, 30, 60, 90, 120, 150, 180].map((angle, index) => {
-              const radians = (angle * Math.PI) / 180
-              const x = 200 + 180 * Math.sin(radians)
-              const y = 200 - 180 * Math.cos(radians)
-              return (
-                <line
-                  key={angle}
-                  x1="200"
-                  y1="200"
-                  x2={x}
-                  y2={y}
-                  stroke="#000"
-                  strokeWidth="1"
-                />
-              )
-            })}
-            
-            {/* Additional radial lines for more detail */}
-            {[15, 45, 75, 105, 135, 165].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              const x = 200 + 180 * Math.sin(radians)
-              const y = 200 - 180 * Math.cos(radians)
-              return (
-                <line
-                  key={angle}
-                  x1="200"
-                  y1="200"
-                  x2={x}
-                  y2={y}
-                  stroke="#ccc"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
-                />
-              )
-            })}
-            
-            {/* Outer arc with angle labels */}
+            {/* Outer arc */}
             <path
               d="M 20 200 A 180 180 0 0 1 380 200"
               fill="none"
@@ -221,51 +194,94 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({ onClose, compact = false }) =
               strokeWidth="2"
             />
             
-            {/* Angle labels on outer arc */}
-            {[
-              { angle: 0, label: '0°', x: 20, y: 200 },
-              { angle: 30, label: '30°', x: 95, y: 44 },
-              { angle: 60, label: '60°', x: 246, y: 44 },
-              { angle: 90, label: '90°', x: 200, y: 20 },
-              { angle: 120, label: '120°', x: 154, y: 44 },
-              { angle: 150, label: '150°', x: 305, y: 44 },
-              { angle: 180, label: '180°', x: 380, y: 200 },
-            ].map(({ label, x, y }) => (
-              <text
-                key={label}
-                x={x}
-                y={y + 5}
-                textAnchor="middle"
-                fontSize="14"
-                fill="#000"
-                fontWeight="bold"
-              >
-                {label}
-              </text>
-            ))}
+            {/* Major tick marks at 20-unit intervals (0, 20, 40, 60, 80, 100, 120, 140, 160, 180) */}
+            {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
+              const radians = (angle * Math.PI) / 180
+              const outerX = 200 + 180 * Math.sin(radians)
+              const outerY = 200 - 180 * Math.cos(radians)
+              const innerX = 200 + 165 * Math.sin(radians)
+              const innerY = 200 - 165 * Math.cos(radians)
+              return (
+                <line
+                  key={`major-${angle}`}
+                  x1={outerX}
+                  y1={outerY}
+                  x2={innerX}
+                  y2={innerY}
+                  stroke="#000"
+                  strokeWidth="2"
+                />
+              )
+            })}
             
-            {/* Example arrow pointing to ~20-25 degrees */}
+            {/* Minor tick marks at 10-unit intervals */}
+            {[10, 30, 50, 70, 90, 110, 130, 150, 170].map((angle) => {
+              const radians = (angle * Math.PI) / 180
+              const outerX = 200 + 180 * Math.sin(radians)
+              const outerY = 200 - 180 * Math.cos(radians)
+              const innerX = 200 + 172 * Math.sin(radians)
+              const innerY = 200 - 172 * Math.cos(radians)
+              return (
+                <line
+                  key={`minor-${angle}`}
+                  x1={outerX}
+                  y1={outerY}
+                  x2={innerX}
+                  y2={innerY}
+                  stroke="#000"
+                  strokeWidth="1"
+                />
+              )
+            })}
+            
+            {/* Number labels at 20-unit intervals */}
+            {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
+              const radians = (angle * Math.PI) / 180
+              const labelRadius = 155
+              const labelX = 200 + labelRadius * Math.sin(radians)
+              const labelY = 200 - labelRadius * Math.cos(radians)
+              return (
+                <text
+                  key={`label-${angle}`}
+                  x={labelX}
+                  y={labelY}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  fontSize="12"
+                  fill="#000"
+                  fontWeight="500"
+                >
+                  {angle}
+                </text>
+              )
+            })}
+            
+            {/* Red triangular pointer */}
             <defs>
               <marker
-                id="arrowhead"
-                markerWidth="10"
-                markerHeight="10"
-                refX="9"
+                id="pointer-full"
+                markerWidth="12"
+                markerHeight="12"
+                refX="10"
                 refY="3"
                 orient="auto"
               >
-                <polygon points="0 0, 10 3, 0 6" fill="#3b82f6" />
+                <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
               </marker>
             </defs>
+            
             <line
               x1="200"
               y1="200"
-              x2="270"
-              y2="60"
-              stroke="#3b82f6"
+              x2={pointerX}
+              y2={pointerY}
+              stroke="#dc2626"
               strokeWidth="3"
-              markerEnd="url(#arrowhead)"
+              markerEnd="url(#pointer-full)"
             />
+            
+            {/* Center point */}
+            <circle cx="200" cy="200" r="4" fill="#dc2626" />
           </svg>
         </div>
       </div>
