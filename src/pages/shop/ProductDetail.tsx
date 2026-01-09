@@ -3691,124 +3691,223 @@ const ProductDetail: React.FC = () => {
                                         
                                         // New: Show variant selector if variants exist
                                         if (hasVariants) {
-                                            // Sort variants by sort_order, then size_volume, then pack_type
-                                            const sortedVariants = [...p.size_volume_variants].sort((a: any, b: any) => {
-                                                if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order
-                                                if (a.size_volume !== b.size_volume) return a.size_volume.localeCompare(b.size_volume)
-                                                return (a.pack_type || '').localeCompare(b.pack_type || '')
-                                            })
+                                            // Extract unique size_volume options
+                                            const sizeVolumeOptions = Array.from(new Set(p.size_volume_variants.map((v: any) => v.size_volume).filter(Boolean))).sort()
+                                            
+                                            // Get selected values from current variant
+                                            const selectedSizeVolume = selectedSizeVolumeVariant?.size_volume || ''
+                                            
+                                            // Filter pack_type options based on selected size_volume
+                                            // Include variants with and without pack_type
+                                            const variantsForSize = selectedSizeVolume
+                                                ? p.size_volume_variants.filter((v: any) => v.size_volume === selectedSizeVolume)
+                                                : []
+                                            
+                                            // Check if there are variants without pack_type
+                                            const hasVariantsWithoutPackType = variantsForSize.some((v: any) => !v.pack_type)
+                                            
+                                            // Get pack_type options (excluding null/empty)
+                                            const availablePackTypes = selectedSizeVolume && variantsForSize.length > 0
+                                                ? Array.from(new Set(
+                                                    variantsForSize
+                                                        .map((v: any) => v.pack_type)
+                                                        .filter(Boolean)
+                                                )).sort()
+                                                : Array.from(new Set(p.size_volume_variants.map((v: any) => v.pack_type).filter(Boolean))).sort()
+                                            
+                                            const selectedPackType = selectedSizeVolumeVariant?.pack_type || ''
+                                            
+                                            // Find matching variant when both are selected
+                                            const findMatchingVariant = (sizeVol: string, packType: string | null) => {
+                                                if (!sizeVol) return null
+                                                
+                                                // If pack_type is selected, find exact match
+                                                if (packType) {
+                                                    return p.size_volume_variants.find((v: any) => 
+                                                        v.size_volume === sizeVol && v.pack_type === packType
+                                                    ) || null
+                                                }
+                                                
+                                                // If no pack_type selected, find variant without pack_type or first available
+                                                const variantWithoutPackType = p.size_volume_variants.find((v: any) => 
+                                                    v.size_volume === sizeVol && !v.pack_type
+                                                )
+                                                
+                                                // If no variant without pack_type, use first variant with this size_volume
+                                                return variantWithoutPackType || p.size_volume_variants.find((v: any) => v.size_volume === sizeVol) || null
+                                            }
+                                            
+                                            // Handler for size/volume change
+                                            const handleSizeVolumeChange = (sizeVol: string) => {
+                                                if (!sizeVol) {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                    return
+                                                }
+                                                
+                                                // Try to find a variant with current pack_type first, or any variant with this size_volume
+                                                let matchingVariant = selectedPackType 
+                                                    ? findMatchingVariant(sizeVol, selectedPackType)
+                                                    : findMatchingVariant(sizeVol, null)
+                                                
+                                                if (matchingVariant) {
+                                                    setSelectedSizeVolumeVariant({
+                                                        id: matchingVariant.id,
+                                                        size_volume: matchingVariant.size_volume,
+                                                        pack_type: matchingVariant.pack_type || null,
+                                                        price: Number(matchingVariant.price || 0),
+                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
+                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
+                                                        stock_status: matchingVariant.stock_status || 'in_stock',
+                                                        expiry_date: matchingVariant.expiry_date || null
+                                                    })
+                                                } else {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                }
+                                            }
+                                            
+                                            // Handler for pack type change
+                                            const handlePackTypeChange = (packType: string) => {
+                                                if (!selectedSizeVolume) return
+                                                
+                                                const matchingVariant = findMatchingVariant(selectedSizeVolume, packType || null)
+                                                if (matchingVariant) {
+                                                    setSelectedSizeVolumeVariant({
+                                                        id: matchingVariant.id,
+                                                        size_volume: matchingVariant.size_volume,
+                                                        pack_type: matchingVariant.pack_type || null,
+                                                        price: Number(matchingVariant.price || 0),
+                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
+                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
+                                                        stock_status: matchingVariant.stock_status || 'in_stock',
+                                                        expiry_date: matchingVariant.expiry_date || null
+                                                    })
+                                                } else {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                }
+                                            }
                                             
                                             return (
                                                 <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
                                                     <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
-                                                        Select Size/Volume
+                                                        Select Options
                                                     </h2>
                                                     
-                                                    {/* Variant Selector Buttons */}
-                                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-                                                        {sortedVariants.map((variant: any) => {
-                                                            const isSelected = selectedSizeVolumeVariant?.id === variant.id
-                                                            const isOutOfStock = variant.stock_status !== 'in_stock' || variant.stock_quantity <= 0
-                                                            
-                                                            return (
-                                                                <button
-                                                                    key={variant.id}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        if (!isOutOfStock) {
-                                                                            setSelectedSizeVolumeVariant({
-                                                                                id: variant.id,
-                                                                                size_volume: variant.size_volume,
-                                                                                pack_type: variant.pack_type || null,
-                                                                                price: Number(variant.price || 0),
-                                                                                compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
-                                                                                stock_quantity: Number(variant.stock_quantity || 0),
-                                                                                stock_status: variant.stock_status || 'in_stock',
-                                                                                expiry_date: variant.expiry_date || null
-                                                                            })
-                                                                        }
-                                                                    }}
-                                                                    disabled={isOutOfStock}
-                                                                    className={`px-6 py-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                                                                        isSelected
-                                                                            ? 'bg-white border-blue-950 shadow-md ring-2 ring-blue-100'
-                                                                            : isOutOfStock
-                                                                            ? 'bg-gray-100 border-gray-300 opacity-50 cursor-not-allowed'
-                                                                            : 'bg-white border-gray-200 hover:border-blue-400 hover:shadow-md'
-                                                                    }`}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                                        {/* Size/Volume Dropdown */}
+                                                        {sizeVolumeOptions.length > 0 && (
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Size / Volume <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={selectedSizeVolume}
+                                                                    onChange={(e) => handleSizeVolumeChange(e.target.value)}
+                                                                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                    required
                                                                 >
-                                                                    <div className="flex flex-col">
-                                                                        <div className="flex items-center justify-between mb-2">
-                                                                            <span className="font-bold text-gray-900 text-lg">
-                                                                                {variant.size_volume}
-                                                                            </span>
-                                                                            {isOutOfStock && (
-                                                                                <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
-                                                                                    Out of Stock
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        {variant.pack_type && (
-                                                                            <span className="text-sm text-gray-600 mb-2">
-                                                                                {variant.pack_type}
-                                                                            </span>
-                                                                        )}
-                                                                        <div className="flex items-center gap-2 mt-2">
-                                                                            <span className="text-xl font-extrabold text-blue-950">
-                                                                                ${Number(variant.price || 0).toFixed(2)}
-                                                                            </span>
-                                                                            {variant.compare_at_price && Number(variant.compare_at_price) > Number(variant.price) && (
-                                                                                <span className="text-sm text-gray-400 line-through">
-                                                                                    ${Number(variant.compare_at_price).toFixed(2)}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                        {variant.stock_quantity > 0 && (
-                                                                            <span className="text-xs text-gray-500 mt-1">
-                                                                                {variant.stock_quantity} available
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </button>
-                                                            )
-                                                        })}
+                                                                    <option value="">Select Size/Volume</option>
+                                                                    {sizeVolumeOptions.map((option) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Pack Type Dropdown */}
+                                                        {(availablePackTypes.length > 0 || hasVariantsWithoutPackType) && (
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Pack Type {availablePackTypes.length > 0 ? <span className="text-red-500">*</span> : null}
+                                                                </label>
+                                                                <select
+                                                                    value={selectedPackType}
+                                                                    onChange={(e) => handlePackTypeChange(e.target.value)}
+                                                                    disabled={!selectedSizeVolume}
+                                                                    className={`w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium ${
+                                                                        !selectedSizeVolume ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+                                                                    }`}
+                                                                    required={availablePackTypes.length > 0}
+                                                                >
+                                                                    <option value="">{hasVariantsWithoutPackType && availablePackTypes.length > 0 ? 'No Pack Type' : 'Select Pack Type'}</option>
+                                                                    {availablePackTypes.map((option) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {!selectedSizeVolume && (
+                                                                    <p className="text-xs text-gray-500 mt-1">Please select Size/Volume first</p>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     
                                                     {/* Selected Variant Details */}
                                                     {selectedSizeVolumeVariant && (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
-                                                            {/* Quantity Input */}
-                                                            <div className="flex flex-col">
-                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                    Quantity <span className="text-red-500">*</span>
-                                                                </label>
-                                                                <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
-                                                                    <span className="text-lg">{quantity}</span>
-                                                                    <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
+                                                        <div className="pt-4 border-t border-blue-200">
+                                                            {/* Variant Price Display */}
+                                                            <div className="mb-4 p-4 bg-white rounded-lg border-2 border-blue-200">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-sm font-bold text-gray-700 uppercase">Price</span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        {selectedSizeVolumeVariant.compare_at_price && 
+                                                                         Number(selectedSizeVolumeVariant.compare_at_price) > Number(selectedSizeVolumeVariant.price) ? (
+                                                                            <>
+                                                                                <span className="text-2xl font-extrabold text-blue-950">
+                                                                                    ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
+                                                                                </span>
+                                                                                <span className="text-lg text-gray-400 line-through">
+                                                                                    ${Number(selectedSizeVolumeVariant.compare_at_price).toFixed(2)}
+                                                                                </span>
+                                                                                <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
+                                                                                    SAVE {Math.round(((Number(selectedSizeVolumeVariant.compare_at_price) - Number(selectedSizeVolumeVariant.price)) / Number(selectedSizeVolumeVariant.compare_at_price)) * 100)}%
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className="text-2xl font-extrabold text-blue-950">
+                                                                                ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                             
-                                                            {/* Stock Quantity Display */}
-                                                            <div className="flex flex-col justify-end">
-                                                                <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                                <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                    {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
-                                                                </span>
-                                                            </div>
-                                                            
-                                                            {/* Expiry Date Display (if available) */}
-                                                            {selectedSizeVolumeVariant.expiry_date && (
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Quantity Input */}
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                                    <span className="text-gray-900 font-semibold text-lg">
-                                                                        {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
-                                                                            year: 'numeric',
-                                                                            month: 'long',
-                                                                            day: 'numeric'
-                                                                        })}
+                                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                        Quantity <span className="text-red-500">*</span>
+                                                                    </label>
+                                                                    <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
+                                                                        <span className="text-lg">{quantity}</span>
+                                                                        <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Stock Quantity Display */}
+                                                                <div className="flex flex-col justify-end">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                                    <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
                                                                     </span>
                                                                 </div>
-                                                            )}
+                                                                
+                                                                {/* Expiry Date Display (if available) */}
+                                                                {selectedSizeVolumeVariant.expiry_date && (
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                                        <span className="text-gray-900 font-semibold text-lg">
+                                                                            {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
+                                                                                year: 'numeric',
+                                                                                month: 'long',
+                                                                                day: 'numeric'
+                                                                            })}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
