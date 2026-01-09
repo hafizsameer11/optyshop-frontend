@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     return (
         <div className="bg-slate-950 text-white">
             <Banner />
-            <Campaigns />
+            <Campaigns position="home" variant="full" />
             <TrustedBrands />
             <StatsHighlight />
             <ShopCategories />

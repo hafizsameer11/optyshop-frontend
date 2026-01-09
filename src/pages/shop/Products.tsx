@@ -17,6 +17,7 @@ import {
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../services/categoriesService'
+import Campaigns from '../../components/home/Campaigns'
 
 const Products: React.FC = () => {
     const { t } = useTranslation()
@@ -445,6 +446,9 @@ const Products: React.FC = () => {
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
+
+            {/* Campaigns Section - Show before hero section */}
+            <Campaigns position="shop" variant="compact" />
 
             {/* Hero Section */}
             <section className="bg-gradient-to-r from-blue-950 to-blue-800 py-12 md:py-16 lg:py-20 px-4 sm:px-6">

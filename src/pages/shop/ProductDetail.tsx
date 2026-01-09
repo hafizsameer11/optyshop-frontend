@@ -409,8 +409,16 @@ const ProductDetail: React.FC = () => {
                 }
                 setProduct(productData)
 
-                // Fetch related products
-                const related = await getRelatedProducts(productData.id, 4)
+                // Fetch related products - more for Eye Hygiene products
+                // Reuse 'p' variable that was already declared above
+                const isEyeHygieneProduct = productData.category?.slug?.toLowerCase().includes('eye-hygiene') || 
+                                           productData.category?.slug?.toLowerCase().includes('hygiene') ||
+                                           productData.category?.name?.toLowerCase().includes('eye hygiene') ||
+                                           p.size_volume_variants?.length > 0
+                
+                // Fetch more related products for Eye Hygiene (8 instead of 4)
+                const relatedLimit = isEyeHygieneProduct ? 8 : 6
+                const related = await getRelatedProducts(productData.id, relatedLimit)
                 if (!isCancelled) {
                     setRelatedProducts(related)
                 }
@@ -2164,17 +2172,17 @@ const ProductDetail: React.FC = () => {
                 }
             } else {
                 // Legacy form-based validation (for products without variants)
-                if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                    alert('Please select Size/Volume')
-                    return
-                }
-                if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
-                    alert('Please select Pack Type')
-                    return
-                }
-                if (eyeHygieneFormData.quantity < 1) {
-                    alert('Please enter a valid quantity')
-                    return
+            if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
+                alert('Please select Size/Volume')
+                return
+            }
+            if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
+                alert('Please select Pack Type')
+                return
+            }
+            if (eyeHygieneFormData.quantity < 1) {
+                alert('Please enter a valid quantity')
+                return
                 }
             }
         }
@@ -3809,96 +3817,96 @@ const ProductDetail: React.FC = () => {
                                         
                                         // Legacy: Show dropdown form for products without variants
                                         return (
-                                            <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                                                <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
-                                                    Select Options
-                                                </h2>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {/* Size/Volume Dropdown */}
-                                                    {eyeHygieneOptions.size_volume.length > 0 && (
-                                                        <div className="flex flex-col">
-                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                Size / Volume <span className="text-red-500">*</span>
-                                                            </label>
-                                                            <select
-                                                                value={eyeHygieneFormData.size_volume}
-                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
-                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                                required
-                                                            >
-                                                                <option value="">Select Size/Volume</option>
-                                                                {eyeHygieneOptions.size_volume.map((option) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Pack Type Dropdown */}
-                                                    {eyeHygieneOptions.pack_type.length > 0 && (
-                                                        <div className="flex flex-col">
-                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                Pack Type <span className="text-red-500">*</span>
-                                                            </label>
-                                                            <select
-                                                                value={eyeHygieneFormData.pack_type}
-                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
-                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                                required
-                                                            >
-                                                                <option value="">Select Pack Type</option>
-                                                                {eyeHygieneOptions.pack_type.map((option) => (
-                                                                    <option key={option} value={option}>
-                                                                        {option}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Quantity Input */}
+                                        <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                Select Options
+                                            </h2>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Size/Volume Dropdown */}
+                                                {eyeHygieneOptions.size_volume.length > 0 && (
                                                     <div className="flex flex-col">
                                                         <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                            Quantity <span className="text-red-500">*</span>
+                                                            Size / Volume <span className="text-red-500">*</span>
                                                         </label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max={product.stock_quantity || 999}
-                                                            value={eyeHygieneFormData.quantity}
-                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                                        <select
+                                                            value={eyeHygieneFormData.size_volume}
+                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
                                                             className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
                                                             required
-                                                        />
+                                                        >
+                                                            <option value="">Select Size/Volume</option>
+                                                            {eyeHygieneOptions.size_volume.map((option) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     </div>
+                                                )}
 
-                                                    {/* Stock Quantity Display */}
-                                                    {product.stock_quantity !== undefined && (
-                                                        <div className="flex flex-col justify-end">
-                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                            <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                                {/* Pack Type Dropdown */}
+                                                {eyeHygieneOptions.pack_type.length > 0 && (
+                                                    <div className="flex flex-col">
+                                                        <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                            Pack Type <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <select
+                                                            value={eyeHygieneFormData.pack_type}
+                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
+                                                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                            required
+                                                        >
+                                                            <option value="">Select Pack Type</option>
+                                                            {eyeHygieneOptions.pack_type.map((option) => (
+                                                                <option key={option} value={option}>
+                                                                    {option}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                )}
 
-                                                    {/* Expiry Date Display (if available) */}
-                                                    {(product as any).expiry_date && (
-                                                        <div className="flex flex-col">
-                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                            <span className="text-gray-900 font-semibold text-lg">
-                                                                {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
-                                                                    year: 'numeric',
-                                                                    month: 'long',
-                                                                    day: 'numeric'
-                                                                })}
-                                                            </span>
-                                                        </div>
-                                                    )}
+                                                {/* Quantity Input */}
+                                                <div className="flex flex-col">
+                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                        Quantity <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max={product.stock_quantity || 999}
+                                                        value={eyeHygieneFormData.quantity}
+                                                        onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                        required
+                                                    />
                                                 </div>
+
+                                                {/* Stock Quantity Display */}
+                                                {product.stock_quantity !== undefined && (
+                                                    <div className="flex flex-col justify-end">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                        <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Expiry Date Display (if available) */}
+                                                {(product as any).expiry_date && (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                        <span className="text-gray-900 font-semibold text-lg">
+                                                            {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'long',
+                                                                day: 'numeric'
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
+                                        </div>
                                         )
                                     })()}
 
@@ -3936,11 +3944,24 @@ const ProductDetail: React.FC = () => {
                                     <div className="space-y-4">
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
                                         {isEyeHygiene ? (() => {
-                                            const isFormValid = 
+                                            const p = product as any
+                                            const hasVariants = p.size_volume_variants && Array.isArray(p.size_volume_variants) && p.size_volume_variants.length > 0
+                                            
+                                            // Validation for variant-based or legacy form-based
+                                            const isFormValid = hasVariants
+                                                ? !!selectedSizeVolumeVariant && selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0
+                                                : (
                                                 (eyeHygieneOptions.size_volume.length === 0 || eyeHygieneFormData.size_volume) &&
                                                 (eyeHygieneOptions.pack_type.length === 0 || eyeHygieneFormData.pack_type) &&
                                                 eyeHygieneFormData.quantity >= 1
-                                            const isDisabled = isProductOutOfStock || !isFormValid
+                                                )
+                                            
+                                            // Stock check for variant or product
+                                            const variantOutOfStock = hasVariants && selectedSizeVolumeVariant
+                                                ? (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0)
+                                                : false
+                                            
+                                            const isDisabled = variantOutOfStock || isProductOutOfStock || !isFormValid
                                             
                                             return (
                                                 <button
@@ -4206,33 +4227,76 @@ const ProductDetail: React.FC = () => {
             {relatedProducts.length > 0 && (
                 <section className="py-12 md:py-16 bg-gray-50 px-4 sm:px-6">
                     <div className="w-[90%] mx-auto max-w-7xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Related Products</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="flex items-center justify-between mb-8">
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                                {isEyeHygiene ? 'More Eye Hygiene Products' : 'Related Products'}
+                            </h2>
+                            {isEyeHygiene && (
+                                <Link
+                                    to="/shop?category=eye-hygiene"
+                                    className="text-blue-600 hover:text-blue-800 font-semibold text-sm md:text-base transition-colors"
+                                >
+                                    View All Eye Hygiene →
+                                </Link>
+                            )}
+                        </div>
+                        <div className={`grid grid-cols-1 sm:grid-cols-2 ${isEyeHygiene ? 'lg:grid-cols-4 xl:grid-cols-4' : 'lg:grid-cols-4'} gap-6`}>
                             {relatedProducts.map((relatedProduct) => (
                                 <Link
                                     key={relatedProduct.id}
                                     to={`/shop/product/${relatedProduct.slug}`}
-                                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 flex flex-col"
+                                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1"
                                 >
                                     <div className="relative h-64 bg-gray-100 overflow-hidden">
                                         <img
                                             src={getProductImageUrl(relatedProduct)}
                                             alt={relatedProduct.name}
-                                            className="w-full h-full object-contain p-4"
+                                            className="w-full h-full object-contain p-4 transition-transform duration-300 hover:scale-105"
                                             onError={(e) => {
                                                 const target = e.target as HTMLImageElement
                                                 target.src = '/assets/images/frame1.png'
                                             }}
                                         />
+                                        {/* Show variant badge for Eye Hygiene products */}
+                                        {(relatedProduct as any).size_volume_variants && Array.isArray((relatedProduct as any).size_volume_variants) && (relatedProduct as any).size_volume_variants.length > 0 && (
+                                            <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                                {(relatedProduct as any).size_volume_variants.length} sizes
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="p-4 flex-grow flex flex-col">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
                                             {relatedProduct.name}
                                         </h3>
+                                        {relatedProduct.brand && (
+                                            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+                                                {relatedProduct.brand}
+                                            </p>
+                                        )}
                                         <div className="mt-auto pt-4">
+                                            {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
+                                                <div className="flex items-center gap-2">
                                             <span className="text-xl font-bold text-blue-950">
-                                                ${Number(relatedProduct.sale_price || relatedProduct.price || 0).toFixed(2)}
+                                                        ${Number(relatedProduct.sale_price).toFixed(2)}
+                                                    </span>
+                                                    <span className="text-sm text-gray-400 line-through">
+                                                        ${Number(relatedProduct.price).toFixed(2)}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                                        {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
                                             </span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xl font-bold text-blue-950">
+                                                    ${Number(relatedProduct.price || 0).toFixed(2)}
+                                                </span>
+                                            )}
+                                            {/* Show stock status */}
+                                            {relatedProduct.stock_quantity !== undefined && (
+                                                <p className={`text-xs mt-1 font-medium ${relatedProduct.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {relatedProduct.stock_quantity > 0 ? `${relatedProduct.stock_quantity} in stock` : 'Out of stock'}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </Link>
