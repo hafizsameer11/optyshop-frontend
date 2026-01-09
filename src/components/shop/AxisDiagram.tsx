@@ -96,18 +96,37 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
               
-              {/* Number labels at 20-unit intervals */}
+              {/* Number labels at 20-unit intervals - positioned around the arc */}
               {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
                 const radians = (angle * Math.PI) / 180
-                const labelRadius = 155
-                const labelX = 200 + labelRadius * Math.sin(radians)
-                const labelY = 200 - labelRadius * Math.cos(radians)
+                let labelRadius = 145
+                let labelX: number
+                let labelY: number
+                let textAnchor: "start" | "middle" | "end" = "middle"
+                
+                // Adjust positioning for edge cases (0° and 180° at base line)
+                if (angle === 0) {
+                  // 0° on the right side - position at right end of base line, slightly above
+                  labelX = 380
+                  labelY = 190
+                  textAnchor = "middle"
+                } else if (angle === 180) {
+                  // 180° on the left side - position at left end of base line, slightly above
+                  labelX = 20
+                  labelY = 190
+                  textAnchor = "middle"
+                } else {
+                  // All other angles - position on the arc
+                  labelX = 200 + labelRadius * Math.sin(radians)
+                  labelY = 200 - labelRadius * Math.cos(radians)
+                }
+                
                 return (
                   <text
                     key={`label-${angle}`}
                     x={labelX}
                     y={labelY}
-                    textAnchor="middle"
+                    textAnchor={textAnchor}
                     dominantBaseline="middle"
                     fontSize="12"
                     fill="#000"
@@ -234,18 +253,37 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
             
-            {/* Number labels at 20-unit intervals */}
+            {/* Number labels at 20-unit intervals - positioned around the arc */}
             {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
               const radians = (angle * Math.PI) / 180
-              const labelRadius = 155
-              const labelX = 200 + labelRadius * Math.sin(radians)
-              const labelY = 200 - labelRadius * Math.cos(radians)
+              let labelRadius = 145
+              let labelX: number
+              let labelY: number
+              let textAnchor: "start" | "middle" | "end" = "middle"
+              
+              // Adjust positioning for edge cases (0° and 180° at base line)
+              if (angle === 0) {
+                // 0° on the right side - position at right end of base line, slightly above
+                labelX = 380
+                labelY = 190
+                textAnchor = "middle"
+              } else if (angle === 180) {
+                // 180° on the left side - position at left end of base line, slightly above
+                labelX = 20
+                labelY = 190
+                textAnchor = "middle"
+              } else {
+                // All other angles - position on the arc
+                labelX = 200 + labelRadius * Math.sin(radians)
+                labelY = 200 - labelRadius * Math.cos(radians)
+              }
+              
               return (
                 <text
                   key={`label-${angle}`}
                   x={labelX}
                   y={labelY}
-                  textAnchor="middle"
+                  textAnchor={textAnchor}
                   dominantBaseline="middle"
                   fontSize="12"
                   fill="#000"
