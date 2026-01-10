@@ -478,8 +478,8 @@ const LatestArrivals: React.FC = () => {
                                     </button>
                                 </div>
 
-                                {/* Try On Button - Only for Glasses */}
-                                {isGlassesProduct(product) && (
+                                {/* Try On Button - Only for Glasses - HIDDEN */}
+                                {false && isGlassesProduct(product) && (
                                     <button
                                         onClick={(e) => {
                                             e.preventDefault()

@@ -127,6 +127,18 @@ const ProductDetail: React.FC = () => {
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
 
+    // Size/Volume Variant Selection State (for products with sizeVolumeVariants from API)
+    const [selectedSizeVolumeVariant, setSelectedSizeVolumeVariant] = useState<{
+        id: number;
+        size_volume: string;
+        pack_type?: string | null;
+        price: number;
+        compare_at_price?: number | null;
+        stock_quantity: number;
+        stock_status: string;
+        expiry_date?: string | null;
+    } | null>(null)
+
     // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
     const selectedColorVariant = useMemo(() => {
         if (!product || !selectedColor) return null
@@ -155,13 +167,16 @@ const ProductDetail: React.FC = () => {
         return null
     }, [product, selectedColor])
 
-    // Price calculation - uses variant price if color is selected
-    // Priority: color variant price > product price
+    // Price calculation - uses variant price if size/volume variant or color is selected
+    // Priority: size/volume variant price > color variant price > product price
     const { displayPrice, originalPrice, hasValidSale } = useMemo(() => {
         if (!product) return { displayPrice: 0, originalPrice: null, hasValidSale: false }
 
+        // Priority 1: Use size/volume variant price if selected
         let basePrice = Number(product.price || 0)
-        if (selectedColorVariant) {
+        if (selectedSizeVolumeVariant) {
+            basePrice = Number(selectedSizeVolumeVariant.price || 0)
+        } else if (selectedColorVariant) {
             // Priority 2: Use color variant price if selected
             const variantPrice = (selectedColorVariant as any).price
             if (variantPrice !== undefined && variantPrice !== null) {
@@ -169,7 +184,13 @@ const ProductDetail: React.FC = () => {
             }
         }
 
-        let salePrice: number | null = product.sale_price ? Number(product.sale_price) : null
+        // For size/volume variants, use compare_at_price if available for sale display
+        let salePrice: number | null = null
+        if (selectedSizeVolumeVariant && selectedSizeVolumeVariant.compare_at_price) {
+            salePrice = Number(selectedSizeVolumeVariant.compare_at_price)
+        } else {
+            salePrice = product.sale_price ? Number(product.sale_price) : null
+        }
         
         const isValidSale = !!(salePrice && salePrice < basePrice)
         const finalPrice = isValidSale ? salePrice : basePrice
@@ -179,7 +200,7 @@ const ProductDetail: React.FC = () => {
             originalPrice: isValidSale ? basePrice : null,
             hasValidSale: isValidSale
         }
-    }, [product, selectedColorVariant])
+    }, [product, selectedColorVariant, selectedSizeVolumeVariant])
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -311,6 +332,23 @@ const ProductDetail: React.FC = () => {
                 }
                 
                 // Auto-select first variant if product has variants
+                if (p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0) {
+                    const firstActiveVariant = p.sizeVolumeVariants.find((v: any) => v.is_active !== false)
+                    if (firstActiveVariant) {
+                        setSelectedSizeVolumeVariant({
+                            id: firstActiveVariant.id,
+                            size_volume: firstActiveVariant.size_volume,
+                            pack_type: firstActiveVariant.pack_type || null,
+                            price: Number(firstActiveVariant.price || 0),
+                            compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
+                            stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
+                            stock_status: firstActiveVariant.stock_status || 'in_stock',
+                            expiry_date: firstActiveVariant.expiry_date || null
+                        })
+                    }
+                } else {
+                    setSelectedSizeVolumeVariant(null)
+                }
                 
                 // Check URL parameters for color selection
                 const urlParams = new URLSearchParams(window.location.search)
@@ -2117,32 +2155,44 @@ false
 
         // Check if product has variants (new approach)
         const p = product as any
-        const hasVariants = false
+        const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
 
         // Validate Eye Hygiene form if it's an Eye Hygiene product
         if (isEyeHygiene) {
-            {
+            if (hasVariants) {
+                // Variant-based validation
+                if (!selectedSizeVolumeVariant) {
+                    alert('Please select a Size/Volume option')
+                    return
+                }
+                if (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0) {
+                    alert('Selected variant is out of stock')
+                    return
+                }
+            } else {
                 // Legacy form-based validation (for products without variants)
-            if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                alert('Please select Size/Volume')
-                return
-            }
-            if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
-                alert('Please select Pack Type')
-                return
-            }
-            if (eyeHygieneFormData.quantity < 1) {
-                alert('Please enter a valid quantity')
-                return
+                if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
+                    alert('Please select Size/Volume')
+                    return
+                }
+                if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
+                    alert('Please select Pack Type')
+                    return
+                }
+                if (eyeHygieneFormData.quantity < 1) {
+                    alert('Please enter a valid quantity')
+                    return
                 }
             }
         }
 
         try {
             // Convert API product to cart-compatible format
-            // Determine quantity and stock
-            const productQuantity = isEyeHygiene ? eyeHygieneFormData.quantity : quantity
-            const productInStock = product.in_stock || false
+            // Determine quantity and stock based on variant or legacy form
+            const productQuantity = hasVariants && selectedSizeVolumeVariant ? quantity : (isEyeHygiene ? eyeHygieneFormData.quantity : quantity)
+            const productInStock = hasVariants && selectedSizeVolumeVariant 
+                ? (selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0)
+                : (product.in_stock || false)
 
             const cartProduct = {
                 id: product.id || 0,
@@ -2159,9 +2209,15 @@ false
                 lens_type: selectedLensType || undefined, // Include selected lens type (single)
                 selectedColor: selectedColor || undefined, // Store selected color for reference
                 // Eye Hygiene specific fields (legacy - for backward compatibility)
-                ...(isEyeHygiene && {
+                ...(isEyeHygiene && !hasVariants && {
                     size_volume: eyeHygieneFormData.size_volume || undefined,
                     pack_type: eyeHygieneFormData.pack_type || undefined
+                }),
+                // Variant-specific fields (new)
+                ...(hasVariants && selectedSizeVolumeVariant && {
+                    size_volume: selectedSizeVolumeVariant.size_volume,
+                    pack_type: selectedSizeVolumeVariant.pack_type || undefined,
+                    size_volume_variant_id: selectedSizeVolumeVariant.id
                 })
             }
 
@@ -2178,6 +2234,7 @@ false
                     product_id: cartProduct.id,
                     quantity: productQuantity,
                     selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
+                    size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // Variant ID for Eye Hygiene products
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
@@ -2189,9 +2246,15 @@ false
                             variant_images: (selectedColorVariant as any).images || []
                         } : {}),
                         // Eye Hygiene specific customization (legacy - for backward compatibility)
-                        ...(isEyeHygiene && {
+                        ...(isEyeHygiene && !hasVariants && {
                             size_volume: eyeHygieneFormData.size_volume || undefined,
                             pack_type: eyeHygieneFormData.pack_type || undefined
+                        }),
+                        // Variant-specific customization (new)
+                        ...(hasVariants && selectedSizeVolumeVariant && {
+                            size_volume: selectedSizeVolumeVariant.size_volume,
+                            pack_type: selectedSizeVolumeVariant.pack_type || undefined,
+                            size_volume_variant_id: selectedSizeVolumeVariant.id
                         })
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
@@ -3620,7 +3683,238 @@ false
 
                                     {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
                                     {isEyeHygiene && (() => {
-                                        // Show dropdown form for Eye Hygiene products
+                                        const p = product as any
+                                        const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+                                        
+                                        // If product has variants from API, use variant selector
+                                        if (hasVariants) {
+                                            // Extract unique size_volume and pack_type options from variants
+                                            const sizeVolumeOptions = Array.from(new Set(
+                                                p.sizeVolumeVariants
+                                                    .filter((v: any) => v.is_active !== false)
+                                                    .map((v: any) => v.size_volume)
+                                                    .filter(Boolean)
+                                            )).sort()
+                                            
+                                            const selectedSizeVolume = selectedSizeVolumeVariant?.size_volume || ''
+                                            
+                                            // Filter pack_type options based on selected size_volume
+                                            const variantsForSize = selectedSizeVolume
+                                                ? p.sizeVolumeVariants.filter((v: any) => 
+                                                    v.size_volume === selectedSizeVolume && v.is_active !== false
+                                                )
+                                                : []
+                                            
+                                            const packTypeOptions = selectedSizeVolume && variantsForSize.length > 0
+                                                ? Array.from(new Set(
+                                                    variantsForSize
+                                                        .map((v: any) => v.pack_type)
+                                                        .filter(Boolean)
+                                                )).sort()
+                                                : []
+                                            
+                                            const hasVariantsWithoutPackType = variantsForSize.some((v: any) => !v.pack_type)
+                                            const selectedPackType = selectedSizeVolumeVariant?.pack_type || ''
+                                            
+                                            // Find matching variant
+                                            const findMatchingVariant = (sizeVol: string, packType: string | null) => {
+                                                if (!sizeVol) return null
+                                                
+                                                if (packType) {
+                                                    return p.sizeVolumeVariants.find((v: any) => 
+                                                        v.size_volume === sizeVol && 
+                                                        v.pack_type === packType &&
+                                                        v.is_active !== false
+                                                    ) || null
+                                                }
+                                                
+                                                // If no pack_type, find variant without pack_type or first available
+                                                const variantWithoutPackType = p.sizeVolumeVariants.find((v: any) => 
+                                                    v.size_volume === sizeVol && !v.pack_type && v.is_active !== false
+                                                )
+                                                
+                                                return variantWithoutPackType || p.sizeVolumeVariants.find((v: any) => 
+                                                    v.size_volume === sizeVol && v.is_active !== false
+                                                ) || null
+                                            }
+                                            
+                                            // Handler for size/volume change
+                                            const handleSizeVolumeChange = (sizeVol: string) => {
+                                                if (!sizeVol) {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                    return
+                                                }
+                                                
+                                                let matchingVariant = selectedPackType 
+                                                    ? findMatchingVariant(sizeVol, selectedPackType)
+                                                    : findMatchingVariant(sizeVol, null)
+                                                
+                                                if (matchingVariant) {
+                                                    setSelectedSizeVolumeVariant({
+                                                        id: matchingVariant.id,
+                                                        size_volume: matchingVariant.size_volume,
+                                                        pack_type: matchingVariant.pack_type || null,
+                                                        price: Number(matchingVariant.price || 0),
+                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
+                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
+                                                        stock_status: matchingVariant.stock_status || 'in_stock',
+                                                        expiry_date: matchingVariant.expiry_date || null
+                                                    })
+                                                } else {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                }
+                                            }
+                                            
+                                            // Handler for pack type change
+                                            const handlePackTypeChange = (packType: string) => {
+                                                if (!selectedSizeVolume) return
+                                                
+                                                const matchingVariant = findMatchingVariant(selectedSizeVolume, packType || null)
+                                                if (matchingVariant) {
+                                                    setSelectedSizeVolumeVariant({
+                                                        id: matchingVariant.id,
+                                                        size_volume: matchingVariant.size_volume,
+                                                        pack_type: matchingVariant.pack_type || null,
+                                                        price: Number(matchingVariant.price || 0),
+                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
+                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
+                                                        stock_status: matchingVariant.stock_status || 'in_stock',
+                                                        expiry_date: matchingVariant.expiry_date || null
+                                                    })
+                                                } else {
+                                                    setSelectedSizeVolumeVariant(null)
+                                                }
+                                            }
+                                            
+                                            return (
+                                                <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                                    <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                        Select Options
+                                                    </h2>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                                        {/* Size/Volume Dropdown */}
+                                                        {sizeVolumeOptions.length > 0 && (
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Size / Volume <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={selectedSizeVolume}
+                                                                    onChange={(e) => handleSizeVolumeChange(e.target.value)}
+                                                                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                    required
+                                                                >
+                                                                    <option value="">Select Size/Volume</option>
+                                                                    {sizeVolumeOptions.map((option) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Pack Type Dropdown */}
+                                                        {(packTypeOptions.length > 0 || hasVariantsWithoutPackType) && (
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Pack Type {packTypeOptions.length > 0 ? <span className="text-red-500">*</span> : null}
+                                                                </label>
+                                                                <select
+                                                                    value={selectedPackType}
+                                                                    onChange={(e) => handlePackTypeChange(e.target.value)}
+                                                                    disabled={!selectedSizeVolume}
+                                                                    className={`w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium ${
+                                                                        !selectedSizeVolume ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+                                                                    }`}
+                                                                    required={packTypeOptions.length > 0}
+                                                                >
+                                                                    <option value="">{hasVariantsWithoutPackType && packTypeOptions.length > 0 ? 'No Pack Type' : 'Select Pack Type'}</option>
+                                                                    {packTypeOptions.map((option) => (
+                                                                        <option key={option} value={option}>
+                                                                            {option}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                {!selectedSizeVolume && (
+                                                                    <p className="text-xs text-gray-500 mt-1">Please select Size/Volume first</p>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Selected Variant Details */}
+                                                    {selectedSizeVolumeVariant && (
+                                                        <div className="pt-4 border-t border-blue-200">
+                                                            {/* Variant Price Display */}
+                                                            <div className="mb-4 p-4 bg-white rounded-lg border-2 border-blue-200">
+                                                                <div className="flex items-center justify-between">
+                                                                    <span className="text-sm font-bold text-gray-700 uppercase">Price</span>
+                                                                    <div className="flex items-center gap-3">
+                                                                        {selectedSizeVolumeVariant.compare_at_price && 
+                                                                         Number(selectedSizeVolumeVariant.compare_at_price) > Number(selectedSizeVolumeVariant.price) ? (
+                                                                            <>
+                                                                                <span className="text-2xl font-extrabold text-blue-950">
+                                                                                    ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
+                                                                                </span>
+                                                                                <span className="text-lg text-gray-400 line-through">
+                                                                                    ${Number(selectedSizeVolumeVariant.compare_at_price).toFixed(2)}
+                                                                                </span>
+                                                                                <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded">
+                                                                                    SAVE {Math.round(((Number(selectedSizeVolumeVariant.compare_at_price) - Number(selectedSizeVolumeVariant.price)) / Number(selectedSizeVolumeVariant.compare_at_price)) * 100)}%
+                                                                                </span>
+                                                                            </>
+                                                                        ) : (
+                                                                            <span className="text-2xl font-extrabold text-blue-950">
+                                                                                ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Quantity Input */}
+                                                                <div className="flex flex-col">
+                                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                        Quantity <span className="text-red-500">*</span>
+                                                                    </label>
+                                                                    <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
+                                                                        <span className="text-lg">{quantity}</span>
+                                                                        <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                                {/* Stock Quantity Display */}
+                                                                <div className="flex flex-col justify-end">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                                    <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                {/* Expiry Date Display (if available) */}
+                                                                {selectedSizeVolumeVariant.expiry_date && (
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                                        <span className="text-gray-900 font-semibold text-lg">
+                                                                            {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
+                                                                                year: 'numeric',
+                                                                                month: 'long',
+                                                                                day: 'numeric'
+                                                                            })}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        }
+                                        
+                                        // Legacy: Show dropdown form for products without variants
                                         return (
                                         <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
                                             <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
@@ -3751,15 +4045,23 @@ false
                                         {isEyeHygiene ? (() => {
                                             const p = product as any
                                             
-                                            // Validation for form-based
-                                            const isFormValid = (
+                                            // Check if product has variants
+                                            const p = product as any
+                                            const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+                                            
+                                            // Validation for variant-based or legacy form-based
+                                            const isFormValid = hasVariants
+                                                ? !!selectedSizeVolumeVariant && selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0
+                                                : (
                                                 (eyeHygieneOptions.size_volume.length === 0 || eyeHygieneFormData.size_volume) &&
                                                 (eyeHygieneOptions.pack_type.length === 0 || eyeHygieneFormData.pack_type) &&
                                                 eyeHygieneFormData.quantity >= 1
-                                            )
+                                                )
                                             
-                                            // Stock check for product
-                                            const variantOutOfStock = false
+                                            // Stock check for variant or product
+                                            const variantOutOfStock = hasVariants && selectedSizeVolumeVariant
+                                                ? (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0)
+                                                : false
                                             
                                             const isDisabled = variantOutOfStock || isProductOutOfStock || !isFormValid
                                             
@@ -3822,6 +4124,8 @@ false
                                         </div>
 
                                         <div className="flex gap-3">
+                                            {/* Try on button hidden */}
+                                            {false && (
                                             <button
                                                 type="button"
                                                 onClick={(e) => {
@@ -3837,6 +4141,7 @@ false
                                                 </svg>
                                                 Virtual Try-on
                                             </button>
+                                            )}
 
                                             <a
                                                 href={`https://wa.me/3912345678?text=I'm interested in ${encodeURIComponent(product.name)}`}
