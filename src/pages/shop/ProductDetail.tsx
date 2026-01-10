@@ -206,13 +206,17 @@ const ProductDetail: React.FC = () => {
     const regularPriceNum = originalPrice || displayPrice
     const salePriceNum = hasValidSale ? displayPrice : null
 
-    // Check if product is eye hygiene (check both category and subcategory)
+    // Check if product is eye hygiene (check category, subcategory, product_type, and variants)
     const isEyeHygiene = useMemo(() => {
         if (!product) return false
+        const p = product as any
         const categorySlug = product.category?.slug || ''
         const categoryName = product.category?.name || ''
-        const subCategorySlug = (product as any).subCategory?.slug || (product as any).sub_category?.slug || ''
-        const subCategoryName = (product as any).subCategory?.name || (product as any).sub_category?.name || ''
+        const subCategorySlug = p.subCategory?.slug || p.sub_category?.slug || ''
+        const subCategoryName = p.subCategory?.name || p.sub_category?.name || ''
+        
+        // Check product_type
+        const isEyeHygieneType = p.product_type === 'eye_hygiene'
         
         // Check if category or subcategory contains "eye hygiene" or "hygiene"
         const categoryMatch = categorySlug.toLowerCase().includes('eye-hygiene') || 
@@ -225,10 +229,13 @@ const ProductDetail: React.FC = () => {
                                 subCategoryName.toLowerCase().includes('eye hygiene') ||
                                 subCategoryName.toLowerCase().includes('hygiene')
         
-        // Also check if product has Eye Hygiene fields
-        const hasEyeHygieneFields = !!(product as any).size_volume || !!(product as any).pack_type || !!(product as any).expiry_date
+        // Check if product has Eye Hygiene fields
+        const hasEyeHygieneFields = !!(p.size_volume || p.pack_type || p.expiry_date)
         
-        return categoryMatch || subCategoryMatch || hasEyeHygieneFields
+        // Check if product has sizeVolumeVariants (indicates it's an eye hygiene product)
+        const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+        
+        return isEyeHygieneType || categoryMatch || subCategoryMatch || hasEyeHygieneFields || hasVariants
     }, [product])
 
     const isContactLens = useMemo(() => {
@@ -331,9 +338,10 @@ const ProductDetail: React.FC = () => {
                     });
                 }
                 
-                // Auto-select first variant if product has variants
-                if (p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0) {
-                    const firstActiveVariant = p.sizeVolumeVariants.find((v: any) => v.is_active !== false)
+                // Auto-select first variant if product has variants (handle both property names)
+                const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                if (variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0) {
+                    const firstActiveVariant = variantsArray.find((v: any) => v.is_active !== false)
                     if (firstActiveVariant) {
                         setSelectedSizeVolumeVariant({
                             id: firstActiveVariant.id,
@@ -345,6 +353,8 @@ const ProductDetail: React.FC = () => {
                             stock_status: firstActiveVariant.stock_status || 'in_stock',
                             expiry_date: firstActiveVariant.expiry_date || null
                         })
+                    } else {
+                        setSelectedSizeVolumeVariant(null)
                     }
                 } else {
                     setSelectedSizeVolumeVariant(null)
@@ -833,7 +843,7 @@ false
         fetchFormConfig()
     }, [product?.id, isContactLens])
 
-    // Fetch Eye Hygiene Options
+    // Fetch Eye Hygiene Options (only for legacy products without variants)
     useEffect(() => {
         const fetchEyeHygieneOptions = async () => {
             if (!product || !isEyeHygiene) {
@@ -844,9 +854,22 @@ false
 
             try {
                 const p = product as any
+                
+                // Skip API call if product has variants - use variants instead (handle both property names)
+                const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
+                
+                if (hasVariants) {
+                    // Products with variants don't need options from API
+                    setEyeHygieneOptions({ size_volume: [], pack_type: [] })
+                    return
+                }
+                
+                // Only fetch options for products without variants (legacy support)
                 const subCategoryId = p.subCategory?.id || p.sub_category?.id || p.subcategory?.id || p.sub_category_id
 
                 if (subCategoryId) {
+                    try {
                     const options = await getEyeHygieneOptions(subCategoryId)
                     if (options) {
                         setEyeHygieneOptions(options)
@@ -855,6 +878,30 @@ false
                         }
                     } else {
                         // If API returns null, try to use product's own data as fallback
+                            const fallbackOptions: EyeHygieneOptions = {
+                                size_volume: p.size_volume ? [p.size_volume] : [],
+                                pack_type: p.pack_type ? [p.pack_type] : []
+                            }
+                            setEyeHygieneOptions(fallbackOptions)
+                            // Auto-select if only one option
+                            if (fallbackOptions.size_volume.length === 1) {
+                                setEyeHygieneFormData(prev => ({
+                                    ...prev,
+                                    size_volume: fallbackOptions.size_volume[0]
+                                }))
+                            }
+                            if (fallbackOptions.pack_type.length === 1) {
+                                setEyeHygieneFormData(prev => ({
+                                    ...prev,
+                                    pack_type: fallbackOptions.pack_type[0]
+                                }))
+                            }
+                        }
+                    } catch (apiError: any) {
+                        // API call failed (404 or other error) - use product's own data as fallback
+                        if (import.meta.env.DEV) {
+                            console.warn('⚠️ Eye Hygiene Options API not available, using product data:', apiError.message)
+                        }
                         const fallbackOptions: EyeHygieneOptions = {
                             size_volume: p.size_volume ? [p.size_volume] : [],
                             pack_type: p.pack_type ? [p.pack_type] : []
@@ -896,8 +943,16 @@ false
                     }
                 }
             } catch (error) {
-                console.error('Error fetching Eye Hygiene options:', error)
-                setEyeHygieneOptions({ size_volume: [], pack_type: [] })
+                // Final fallback - use product's own data
+                const p = product as any
+                const fallbackOptions: EyeHygieneOptions = {
+                    size_volume: p.size_volume ? [p.size_volume] : [],
+                    pack_type: p.pack_type ? [p.pack_type] : []
+                }
+                setEyeHygieneOptions(fallbackOptions)
+                if (import.meta.env.DEV) {
+                    console.warn('⚠️ Error fetching Eye Hygiene options, using fallback:', error)
+                }
             }
         }
 
@@ -2153,9 +2208,10 @@ false
     const handleAddToCart = () => {
         if (!product) return
 
-        // Check if product has variants (new approach)
+        // Check if product has variants (new approach) - handle both property names
         const p = product as any
-        const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+        const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+        const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
         // Validate Eye Hygiene form if it's an Eye Hygiene product
         if (isEyeHygiene) {
@@ -2171,17 +2227,17 @@ false
                 }
             } else {
                 // Legacy form-based validation (for products without variants)
-                if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                    alert('Please select Size/Volume')
-                    return
-                }
-                if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
-                    alert('Please select Pack Type')
-                    return
-                }
-                if (eyeHygieneFormData.quantity < 1) {
-                    alert('Please enter a valid quantity')
-                    return
+            if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
+                alert('Please select Size/Volume')
+                return
+            }
+            if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
+                alert('Please select Pack Type')
+                return
+            }
+            if (eyeHygieneFormData.quantity < 1) {
+                alert('Please enter a valid quantity')
+                return
                 }
             }
         }
@@ -3684,13 +3740,15 @@ false
                                     {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
                                     {isEyeHygiene && (() => {
                                         const p = product as any
-                                        const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+                                        // Check for variants - handle both sizeVolumeVariants and size_volume_variants
+                                        const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                                        const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
                                         
                                         // If product has variants from API, use variant selector
                                         if (hasVariants) {
                                             // Extract unique size_volume and pack_type options from variants
                                             const sizeVolumeOptions = Array.from(new Set(
-                                                p.sizeVolumeVariants
+                                                variantsArray
                                                     .filter((v: any) => v.is_active !== false)
                                                     .map((v: any) => v.size_volume)
                                                     .filter(Boolean)
@@ -3700,7 +3758,7 @@ false
                                             
                                             // Filter pack_type options based on selected size_volume
                                             const variantsForSize = selectedSizeVolume
-                                                ? p.sizeVolumeVariants.filter((v: any) => 
+                                                ? variantsArray.filter((v: any) => 
                                                     v.size_volume === selectedSizeVolume && v.is_active !== false
                                                 )
                                                 : []
@@ -3721,7 +3779,7 @@ false
                                                 if (!sizeVol) return null
                                                 
                                                 if (packType) {
-                                                    return p.sizeVolumeVariants.find((v: any) => 
+                                                    return variantsArray.find((v: any) => 
                                                         v.size_volume === sizeVol && 
                                                         v.pack_type === packType &&
                                                         v.is_active !== false
@@ -3729,11 +3787,11 @@ false
                                                 }
                                                 
                                                 // If no pack_type, find variant without pack_type or first available
-                                                const variantWithoutPackType = p.sizeVolumeVariants.find((v: any) => 
+                                                const variantWithoutPackType = variantsArray.find((v: any) => 
                                                     v.size_volume === sizeVol && !v.pack_type && v.is_active !== false
                                                 )
                                                 
-                                                return variantWithoutPackType || p.sizeVolumeVariants.find((v: any) => 
+                                                return variantWithoutPackType || variantsArray.find((v: any) => 
                                                     v.size_volume === sizeVol && v.is_active !== false
                                                 ) || null
                                             }
@@ -3839,8 +3897,8 @@ false
                                                                 </select>
                                                                 {!selectedSizeVolume && (
                                                                     <p className="text-xs text-gray-500 mt-1">Please select Size/Volume first</p>
-                                                                )}
-                                                            </div>
+                                                                            )}
+                                                                        </div>
                                                         )}
                                                     </div>
                                                     
@@ -3857,7 +3915,7 @@ false
                                                                             <>
                                                                                 <span className="text-2xl font-extrabold text-blue-950">
                                                                                     ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
-                                                                                </span>
+                                                                            </span>
                                                                                 <span className="text-lg text-gray-400 line-through">
                                                                                     ${Number(selectedSizeVolumeVariant.compare_at_price).toFixed(2)}
                                                                                 </span>
@@ -3875,38 +3933,38 @@ false
                                                             </div>
                                                             
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {/* Quantity Input */}
-                                                                <div className="flex flex-col">
-                                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                        Quantity <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
-                                                                        <span className="text-lg">{quantity}</span>
-                                                                        <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
-                                                                    </div>
+                                                            {/* Quantity Input */}
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Quantity <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
+                                                                    <span className="text-lg">{quantity}</span>
+                                                                    <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
                                                                 </div>
-                                                                
-                                                                {/* Stock Quantity Display */}
-                                                                <div className="flex flex-col justify-end">
-                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                                    <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                        {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
+                                                            </div>
+                                                            
+                                                            {/* Stock Quantity Display */}
+                                                            <div className="flex flex-col justify-end">
+                                                                <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                                <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                    {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
+                                                                </span>
+                                                            </div>
+                                                            
+                                                            {/* Expiry Date Display (if available) */}
+                                                            {selectedSizeVolumeVariant.expiry_date && (
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                                    <span className="text-gray-900 font-semibold text-lg">
+                                                                        {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
+                                                                            year: 'numeric',
+                                                                            month: 'long',
+                                                                            day: 'numeric'
+                                                                        })}
                                                                     </span>
                                                                 </div>
-                                                                
-                                                                {/* Expiry Date Display (if available) */}
-                                                                {selectedSizeVolumeVariant.expiry_date && (
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                                        <span className="text-gray-900 font-semibold text-lg">
-                                                                            {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
-                                                                                year: 'numeric',
-                                                                                month: 'long',
-                                                                                day: 'numeric'
-                                                                            })}
-                                                                        </span>
-                                                                    </div>
-                                                                )}
+                                                            )}
                                                             </div>
                                                         </div>
                                                     )}
@@ -3922,7 +3980,7 @@ false
                                             </h2>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {/* Size/Volume Dropdown */}
-                                                {eyeHygieneOptions.size_volume.length > 0 && (
+                                                {eyeHygieneOptions.size_volume.length > 0 ? (
                                                     <div className="flex flex-col">
                                                         <label className="text-xs font-bold text-gray-700 uppercase mb-2">
                                                             Size / Volume <span className="text-red-500">*</span>
@@ -3941,10 +3999,10 @@ false
                                                             ))}
                                                         </select>
                                                     </div>
-                                                )}
+                                                ) : null}
 
                                                 {/* Pack Type Dropdown */}
-                                                {eyeHygieneOptions.pack_type.length > 0 && (
+                                                {eyeHygieneOptions.pack_type.length > 0 ? (
                                                     <div className="flex flex-col">
                                                         <label className="text-xs font-bold text-gray-700 uppercase mb-2">
                                                             Pack Type <span className="text-red-500">*</span>
@@ -3963,9 +4021,9 @@ false
                                                             ))}
                                                         </select>
                                                     </div>
-                                                )}
+                                                ) : null}
 
-                                                {/* Quantity Input */}
+                                                {/* Quantity Input - Always show for Eye Hygiene products */}
                                                 <div className="flex flex-col">
                                                     <label className="text-xs font-bold text-gray-700 uppercase mb-2">
                                                         Quantity <span className="text-red-500">*</span>
@@ -4045,9 +4103,10 @@ false
                                         {isEyeHygiene ? (() => {
                                             const p = product as any
                                             
-                                            // Check if product has variants
+                                            // Check if product has variants - handle both property names
                                             const p = product as any
-                                            const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
+                                            const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                                            const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
                                             
                                             // Validation for variant-based or legacy form-based
                                             const isFormValid = hasVariants
