@@ -377,6 +377,7 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/eye-hygiene-forms/options${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get dropdown options (size_volume, pack_type)
+    GET_VARIANTS: (productId: number | string) => `/products/${productId}/size-volume-variants`, // PUBLIC - Get size/volume variants for a product
   },
 
   // ============================================

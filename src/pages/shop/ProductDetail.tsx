@@ -30,7 +30,9 @@ import {
 } from '../../services/contactLensFormsService'
 import {
     getEyeHygieneOptions,
-    type EyeHygieneOptions
+    getSizeVolumeVariants,
+    type EyeHygieneOptions,
+    type SizeVolumeVariant
 } from '../../services/eyeHygieneFormsService'
 
 const ProductDetail: React.FC = () => {
@@ -127,6 +129,10 @@ const ProductDetail: React.FC = () => {
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
 
+    // Fetched variants from API
+    const [fetchedVariants, setFetchedVariants] = useState<SizeVolumeVariant[]>([])
+    const [variantsLoading, setVariantsLoading] = useState(false)
+    
     // Size/Volume Variant Selection State (for products with sizeVolumeVariants from API)
     const [selectedSizeVolumeVariant, setSelectedSizeVolumeVariant] = useState<{
         id: number;
@@ -338,27 +344,10 @@ const ProductDetail: React.FC = () => {
                     });
                 }
                 
-                // Auto-select first variant if product has variants (handle both property names)
-                const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
-                if (variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0) {
-                    const firstActiveVariant = variantsArray.find((v: any) => v.is_active !== false)
-                    if (firstActiveVariant) {
-                        setSelectedSizeVolumeVariant({
-                            id: firstActiveVariant.id,
-                            size_volume: firstActiveVariant.size_volume,
-                            pack_type: firstActiveVariant.pack_type || null,
-                            price: Number(firstActiveVariant.price || 0),
-                            compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
-                            stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
-                            stock_status: firstActiveVariant.stock_status || 'in_stock',
-                            expiry_date: firstActiveVariant.expiry_date || null
-                        })
-                    } else {
-                        setSelectedSizeVolumeVariant(null)
-                    }
-                } else {
-                    setSelectedSizeVolumeVariant(null)
-                }
+                // Variant selection is now handled by the fetchVariants useEffect
+                // This section just resets if product changes
+                setSelectedSizeVolumeVariant(null)
+                setFetchedVariants([])
                 
                 // Check URL parameters for color selection
                 const urlParams = new URLSearchParams(window.location.search)
@@ -957,6 +946,50 @@ false
         }
 
         fetchEyeHygieneOptions()
+    }, [product?.id, isEyeHygiene])
+
+    // Fetch Size/Volume Variants from API for Eye Hygiene products
+    useEffect(() => {
+        const fetchVariants = async () => {
+            if (!product || !isEyeHygiene || !product.id) {
+                setFetchedVariants([])
+                setSelectedSizeVolumeVariant(null)
+                return
+            }
+
+            setVariantsLoading(true)
+            try {
+                const variants = await getSizeVolumeVariants(product.id)
+                if (variants && variants.length > 0) {
+                    setFetchedVariants(variants)
+                    // Auto-select first active variant
+                    const firstActiveVariant = variants.find((v) => v.is_active !== false)
+                    if (firstActiveVariant) {
+                        setSelectedSizeVolumeVariant({
+                            id: firstActiveVariant.id,
+                            size_volume: firstActiveVariant.size_volume,
+                            pack_type: firstActiveVariant.pack_type || null,
+                            price: Number(firstActiveVariant.price || 0),
+                            compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
+                            stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
+                            stock_status: firstActiveVariant.stock_status || 'in_stock',
+                            expiry_date: firstActiveVariant.expiry_date || null
+                        })
+                    }
+                } else {
+                    setFetchedVariants([])
+                    setSelectedSizeVolumeVariant(null)
+                }
+            } catch (error) {
+                console.error('Error fetching variants:', error)
+                setFetchedVariants([])
+                setSelectedSizeVolumeVariant(null)
+            } finally {
+                setVariantsLoading(false)
+            }
+        }
+
+        fetchVariants()
     }, [product?.id, isEyeHygiene])
 
     // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
@@ -2208,9 +2241,11 @@ false
     const handleAddToCart = () => {
         if (!product) return
 
-        // Check if product has variants (new approach) - handle both property names
+        // Check if product has variants (new approach) - prioritize fetched variants, then check product object
         const p = product as any
-        const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+        const variantsArray = fetchedVariants.length > 0 
+            ? fetchedVariants 
+            : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
         // Validate Eye Hygiene form if it's an Eye Hygiene product
@@ -3740,17 +3775,36 @@ false
                                     {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
                                     {isEyeHygiene && (() => {
                                         const p = product as any
-                                        // Check for variants - handle both sizeVolumeVariants and size_volume_variants
-                                        const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                                        // Check for variants - prioritize fetched variants, then check product object
+                                        const variantsArray = fetchedVariants.length > 0 
+                                            ? fetchedVariants 
+                                            : (p.sizeVolumeVariants || p.size_volume_variants || [])
                                         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
+                                        
+                                        // Show loading state while fetching variants
+                                        if (variantsLoading) {
+                                            return (
+                                                <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                                    <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                        Select Options
+                                                    </h2>
+                                                    <div className="flex items-center justify-center py-8">
+                                                        <div className="text-gray-500">Loading variants...</div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        }
                                         
                                         // If product has variants from API, use variant selector
                                         if (hasVariants) {
                                             // Extract unique size_volume and pack_type options from variants
+                                            const activeVariants = variantsArray.filter((v: SizeVolumeVariant | any) => 
+                                                (v.is_active !== false && v.is_active !== undefined) || v.is_active === true
+                                            )
+                                            
                                             const sizeVolumeOptions = Array.from(new Set(
-                                                variantsArray
-                                                    .filter((v: any) => v.is_active !== false)
-                                                    .map((v: any) => v.size_volume)
+                                                activeVariants
+                                                    .map((v: SizeVolumeVariant | any) => v.size_volume)
                                                     .filter(Boolean)
                                             )).sort()
                                             
@@ -3758,8 +3812,8 @@ false
                                             
                                             // Filter pack_type options based on selected size_volume
                                             const variantsForSize = selectedSizeVolume
-                                                ? variantsArray.filter((v: any) => 
-                                                    v.size_volume === selectedSizeVolume && v.is_active !== false
+                                                ? activeVariants.filter((v: SizeVolumeVariant | any) => 
+                                                    v.size_volume === selectedSizeVolume
                                                 )
                                                 : []
                                             
@@ -3779,20 +3833,18 @@ false
                                                 if (!sizeVol) return null
                                                 
                                                 if (packType) {
-                                                    return variantsArray.find((v: any) => 
-                                                        v.size_volume === sizeVol && 
-                                                        v.pack_type === packType &&
-                                                        v.is_active !== false
+                                                    return activeVariants.find((v: SizeVolumeVariant | any) => 
+                                                        v.size_volume === sizeVol && v.pack_type === packType
                                                     ) || null
                                                 }
                                                 
                                                 // If no pack_type, find variant without pack_type or first available
-                                                const variantWithoutPackType = variantsArray.find((v: any) => 
-                                                    v.size_volume === sizeVol && !v.pack_type && v.is_active !== false
+                                                const variantWithoutPackType = activeVariants.find((v: SizeVolumeVariant | any) => 
+                                                    v.size_volume === sizeVol && !v.pack_type
                                                 )
                                                 
-                                                return variantWithoutPackType || variantsArray.find((v: any) => 
-                                                    v.size_volume === sizeVol && v.is_active !== false
+                                                return variantWithoutPackType || activeVariants.find((v: SizeVolumeVariant | any) => 
+                                                    v.size_volume === sizeVol
                                                 ) || null
                                             }
                                             
@@ -3808,15 +3860,16 @@ false
                                                     : findMatchingVariant(sizeVol, null)
                                                 
                                                 if (matchingVariant) {
+                                                    const variant = matchingVariant as SizeVolumeVariant
                                                     setSelectedSizeVolumeVariant({
-                                                        id: matchingVariant.id,
-                                                        size_volume: matchingVariant.size_volume,
-                                                        pack_type: matchingVariant.pack_type || null,
-                                                        price: Number(matchingVariant.price || 0),
-                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
-                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
-                                                        stock_status: matchingVariant.stock_status || 'in_stock',
-                                                        expiry_date: matchingVariant.expiry_date || null
+                                                        id: variant.id,
+                                                        size_volume: variant.size_volume,
+                                                        pack_type: variant.pack_type || null,
+                                                        price: Number(variant.price || 0),
+                                                        compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
+                                                        stock_quantity: Number(variant.stock_quantity || 0),
+                                                        stock_status: variant.stock_status || 'in_stock',
+                                                        expiry_date: variant.expiry_date || null
                                                     })
                                                 } else {
                                                     setSelectedSizeVolumeVariant(null)
@@ -3829,15 +3882,16 @@ false
                                                 
                                                 const matchingVariant = findMatchingVariant(selectedSizeVolume, packType || null)
                                                 if (matchingVariant) {
+                                                    const variant = matchingVariant as SizeVolumeVariant
                                                     setSelectedSizeVolumeVariant({
-                                                        id: matchingVariant.id,
-                                                        size_volume: matchingVariant.size_volume,
-                                                        pack_type: matchingVariant.pack_type || null,
-                                                        price: Number(matchingVariant.price || 0),
-                                                        compare_at_price: matchingVariant.compare_at_price ? Number(matchingVariant.compare_at_price) : null,
-                                                        stock_quantity: Number(matchingVariant.stock_quantity || 0),
-                                                        stock_status: matchingVariant.stock_status || 'in_stock',
-                                                        expiry_date: matchingVariant.expiry_date || null
+                                                        id: variant.id,
+                                                        size_volume: variant.size_volume,
+                                                        pack_type: variant.pack_type || null,
+                                                        price: Number(variant.price || 0),
+                                                        compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
+                                                        stock_quantity: Number(variant.stock_quantity || 0),
+                                                        stock_status: variant.stock_status || 'in_stock',
+                                                        expiry_date: variant.expiry_date || null
                                                     })
                                                 } else {
                                                     setSelectedSizeVolumeVariant(null)
@@ -4103,9 +4157,11 @@ false
                                         {isEyeHygiene ? (() => {
                                             const p = product as any
                                             
-                                            // Check if product has variants - handle both property names
+                                            // Check if product has variants - prioritize fetched variants, then check product object
                                             const p = product as any
-                                            const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
+                                            const variantsArray = fetchedVariants.length > 0 
+                                                ? fetchedVariants 
+                                                : (p.sizeVolumeVariants || p.size_volume_variants || [])
                                             const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
                                             
                                             // Validation for variant-based or legacy form-based
