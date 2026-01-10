@@ -4158,7 +4158,6 @@ false
                                             const p = product as any
                                             
                                             // Check if product has variants - prioritize fetched variants, then check product object
-                                            const p = product as any
                                             const variantsArray = fetchedVariants.length > 0 
                                                 ? fetchedVariants 
                                                 : (p.sizeVolumeVariants || p.size_volume_variants || [])
