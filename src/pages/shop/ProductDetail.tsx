@@ -2290,7 +2290,7 @@ false
                 name: product.name || '',
                 brand: product.brand || '',
                 category: product.category?.slug || 'eyeglasses',
-                price: finalPrice,
+                price: displayPrice || 0,
                 image: getColorSpecificImageUrl(product, selectedImageIndex), // Use the color-specific image if color is selected
                 description: product.description || '',
                 inStock: productInStock,
@@ -2350,7 +2350,17 @@ false
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
                 }
-                addItemToCart(cartRequest).catch(err => console.error('API cart error:', err))
+                
+                // Try to add to cart via API, but don't block local cart if it fails
+                addItemToCart(cartRequest).then(result => {
+                    if (!result.success) {
+                        console.error('Failed to add to cart via API:', result.message)
+                        // Still add to local cart as fallback
+                    }
+                }).catch(err => {
+                    console.error('API cart error:', err)
+                    // Still add to local cart as fallback
+                })
             }
 
             // Always add to local cart context
