@@ -53,6 +53,7 @@ import CustomerTransactions from './pages/customer/Transactions'
 import TransactionDetail from './pages/customer/TransactionDetail'
 import PageDetail from './pages/cms/PageDetail'
 import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
+import ScrollToTop from './components/ScrollToTop'
 
 // Redirect component for old /product/:slug URLs
 const ProductRedirect = () => {
@@ -64,6 +65,7 @@ function App() {
   return (
     <ErrorBoundary>
       <Router>
+        <ScrollToTop />
         <FloatingLanguageSwitcher />
         <Routes>
         <Route path="/" element={<Home />} />
