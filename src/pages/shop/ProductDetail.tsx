@@ -2253,7 +2253,7 @@ false
             if (hasVariants) {
                 // Variant-based validation
                 if (!selectedSizeVolumeVariant) {
-                    alert('Please select a Size/Volume option')
+                    alert('Please select a Capacity option')
                     return
                 }
                 if (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0) {
@@ -2263,7 +2263,7 @@ false
             } else {
                 // Legacy form-based validation (for products without variants)
             if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                alert('Please select Size/Volume')
+                alert('Please select Capacity')
                 return
             }
             if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
@@ -3919,7 +3919,7 @@ false
                                                         {sizeVolumeOptions.length > 0 && (
                                                             <div className="flex flex-col">
                                                                 <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                    Size / Volume <span className="text-red-500">*</span>
+                                                                    Capacity in ML <span className="text-red-500">*</span>
                                                                 </label>
                                                                 <select
                                                                     value={selectedSizeVolume}
@@ -3927,7 +3927,7 @@ false
                                                                     className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
                                                                     required
                                                                 >
-                                                                    <option value="">Select Size/Volume</option>
+                                                                    <option value="">Select Capacity</option>
                                                                     {sizeVolumeOptions.map((option) => (
                                                                         <option key={option} value={option}>
                                                                             {option}
@@ -3960,7 +3960,7 @@ false
                                                                     ))}
                                                                 </select>
                                                                 {!selectedSizeVolume && (
-                                                                    <p className="text-xs text-gray-500 mt-1">Please select Size/Volume first</p>
+                                                                    <p className="text-xs text-gray-500 mt-1">Please select Capacity first</p>
                                                                             )}
                                                                         </div>
                                                         )}
