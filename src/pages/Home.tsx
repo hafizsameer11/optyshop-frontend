@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import Banner from '../components/home/Banner'
-import Campaigns from '../components/home/Campaigns'
+import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import TrustedBrands from '../components/home/TrustedBrands'
 import StatsHighlight from '../components/home/StatsHighlight'
 import ShopCategories from '../components/home/ShopCategories'
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     return (
         <div className="bg-slate-950 text-white">
             <Banner />
-            <Campaigns position="home" variant="full" />
+            <SmallSlidingBanners />
             <TrustedBrands />
             <StatsHighlight />
             <ShopCategories />
