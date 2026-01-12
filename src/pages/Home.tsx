@@ -40,7 +40,12 @@ const Home: React.FC = () => {
 
     return (
         <div className="bg-slate-950 text-white">
-            <Banner />
+            <Banner 
+                pageType="home"
+                showNavbar={true}
+                autoSlideInterval={5000}
+                height="200px"
+            />
             <SmallSlidingBanners />
             <TrustedBrands />
             <StatsHighlight />

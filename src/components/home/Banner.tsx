@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { getBanners } from '../../services/bannersService'
+import { getBanners, type GetBannersOptions } from '../../services/bannersService'
 import type { Banner } from '../../services/bannersService'
 import Navbar from '../Navbar'
 
@@ -19,7 +19,23 @@ interface BannerMeta {
     }
 }
 
-const BannerComponent: React.FC = () => {
+interface BannerComponentProps {
+    pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
+    categoryId?: number | null;
+    subCategoryId?: number | null;
+    showNavbar?: boolean; // Whether to show navbar (default: true for home page)
+    autoSlideInterval?: number; // Auto-slide interval in milliseconds (default: 5000)
+    height?: string; // Banner height (default: '200px')
+}
+
+const BannerComponent: React.FC<BannerComponentProps> = ({
+    pageType = 'home',
+    categoryId = null,
+    subCategoryId = null,
+    showNavbar = false,
+    autoSlideInterval = 5000,
+    height = '200px'
+}) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const [banners, setBanners] = useState<Banner[]>([])
@@ -33,23 +49,35 @@ const BannerComponent: React.FC = () => {
         const fetchBanners = async () => {
             try {
                 setLoading(true)
-                // Fetch all active banners from admin panel
-                // Pass undefined to get all active banners regardless of position
-                const data = await getBanners(undefined)
+                
+                // Build fetch options based on props
+                const options: GetBannersOptions = {
+                    page_type: pageType || null,
+                    category_id: categoryId || null,
+                    sub_category_id: subCategoryId || null
+                }
+                
+                // Fetch banners based on page context
+                const data = await getBanners(options)
                 
                 if (isCancelled) return
                 
                 setBanners(data)
                 
+                // Reset to first banner when banners change
+                setCurrentIndex(0)
+                
                 // Log for debugging
                 if (data.length > 0) {
-                    console.log(`Loaded ${data.length} banner(s) from admin panel`)
+                    console.log(`Loaded ${data.length} banner(s) for page_type=${pageType}, category_id=${categoryId}, sub_category_id=${subCategoryId}`)
                 } else {
-                    console.warn('No active banners found in admin panel')
+                    if (import.meta.env.DEV) {
+                        console.warn(`No active banners found for page_type=${pageType}, category_id=${categoryId}, sub_category_id=${subCategoryId}`)
+                    }
                 }
             } catch (error) {
                 if (!isCancelled) {
-                    console.error('Error loading banners from admin panel:', error)
+                    console.error('Error loading banners:', error)
                     setBanners([])
                 }
             } finally {
@@ -64,7 +92,7 @@ const BannerComponent: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [])
+    }, [pageType, categoryId, subCategoryId])
 
     // Auto-rotate banners if there are multiple
     useEffect(() => {
@@ -72,17 +100,21 @@ const BannerComponent: React.FC = () => {
 
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % banners.length)
-        }, 5000) // Change banner every 5 seconds
+        }, autoSlideInterval) // Auto-slide interval
 
         return () => clearInterval(interval)
-    }, [banners.length, isAutoPlaying])
+    }, [banners.length, isAutoPlaying, autoSlideInterval])
 
     if (loading) {
         return (
-            <div className="relative text-white" style={{ height: '200px' }}>
-                <Navbar />
-                <div className="w-full bg-gray-200 animate-pulse flex items-center justify-center" style={{ height: '200px' }}>
-                <div className="text-gray-400">{t('home.banner.loading')}</div>
+            <div className="relative text-white" style={{ height }}>
+                {showNavbar && (
+                    <div className="absolute top-0 left-0 right-0 z-30">
+                        <Navbar />
+                    </div>
+                )}
+                <div className="w-full bg-gray-200 animate-pulse flex items-center justify-center" style={{ height }}>
+                    <div className="text-gray-400">{t('home.banner.loading')}</div>
                 </div>
             </div>
         )
@@ -231,13 +263,15 @@ const BannerComponent: React.FC = () => {
     }
 
     return (
-        <div className="relative text-white w-full" style={{ height: '200px', maxWidth: '1400px', margin: '0 auto' }}>
+        <div className="relative text-white w-full" style={{ height, maxWidth: '1400px', margin: '0 auto' }}>
             {/* Banner Slider Container - Full height */}
-            <div className="relative overflow-hidden w-full" style={{ height: '200px' }}>
-            {/* Navbar - Absolute positioned to overlay banner */}
-            <div className="absolute top-0 left-0 right-0 z-30">
-                <Navbar />
-            </div>
+            <div className="relative overflow-hidden w-full" style={{ height }}>
+            {/* Navbar - Absolute positioned to overlay banner (only if showNavbar is true) */}
+            {showNavbar && (
+                <div className="absolute top-0 left-0 right-0 z-30">
+                    <Navbar />
+                </div>
+            )}
 
             {/* Slides Container */}
             <div
@@ -266,7 +300,7 @@ const BannerComponent: React.FC = () => {
                             }
                         }}
                         style={{
-                            height: '200px',
+                            height,
                             width: '100%',
                             maxWidth: '1400px',
                             margin: '0 auto',
@@ -303,7 +337,7 @@ const BannerComponent: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 z-10" />
 
                         {/* Banner Content */}
-                        <main className="relative z-20 flex items-center justify-center px-6 lg:px-20 h-full" style={{ height: '200px' }}>
+                        <main className="relative z-20 flex items-center justify-center px-6 lg:px-20 h-full" style={{ height }}>
                                         <div className="max-w-3xl text-center">
                             {banner.title && (
                                                 <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold leading-tight">
