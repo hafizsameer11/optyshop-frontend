@@ -843,34 +843,29 @@ const CategoryPage: React.FC = () => {
             </div>
 
             {/* Products Grid */}
-            <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+            <section className="bg-gray-50 py-8 md:py-10 lg:py-12 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                        <div className="mb-6 bg-white rounded-lg shadow-md p-4 border-l-2 border-blue-600">
-                            <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="mb-4 bg-white rounded-lg shadow-md py-2 px-3 border-l-2 border-blue-600">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div>
-                                    <p className="text-xs text-gray-600 mb-1">
+                                    <p className="text-xs text-gray-600 mb-0.5">
                                         {categoryInfo.subSubcategory ? 'Viewing sub-subcategory:' : 'Viewing subcategory:'}
                                     </p>
-                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+                                    <h2 className="text-lg md:text-xl font-bold text-gray-900">
                                         {categoryInfo.subSubcategory 
                                             ? translateCategory(categoryInfo.subSubcategory)
                                             : translateCategory(categoryInfo.subcategory)}
                                     </h2>
-                                    {(categoryInfo.subSubcategory?.description || categoryInfo.subcategory?.description) && (
-                                        <p className="text-gray-600 mt-2 max-w-2xl">
-                                            {categoryInfo.subSubcategory?.description || categoryInfo.subcategory?.description}
-                                        </p>
-                                    )}
                                 </div>
                                 <Link
                                     to={categoryInfo.subSubcategory 
                                         ? `/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`
                                         : `/category/${categoryInfo.category.slug}`}
-                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-2 transition-colors"
+                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-1.5 transition-colors"
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
                                     {categoryInfo.subSubcategory 
@@ -1411,38 +1406,38 @@ const CategoryPage: React.FC = () => {
 
             {/* Sub-subcategories Section - Show when viewing subcategory (not sub-subcategory) */}
             {categoryInfo.subcategory && !categoryInfo.subSubcategory && subSubcategories.length > 0 && (
-                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
+                <section className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
                     <div className="w-[90%] mx-auto max-w-7xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                        <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-3">
                             Browse by Sub-subcategory
                         </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        <div className={`grid ${subSubcategories.length === 2 ? 'grid-cols-2 max-w-2xl mx-auto' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6'} gap-3`}>
                             {subSubcategories.map((subSubcategory) => (
                                 <Link
                                     key={subSubcategory.id}
                                     to={`/category/${categoryInfo.category!.slug}/${categoryInfo.subcategory!.slug}/${subSubcategory.slug}`}
-                                    className="group bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-cyan-200 hover:border-cyan-300"
+                                    className="group bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 rounded-lg py-3 px-3 text-center transition-all duration-300 hover:shadow-md border border-cyan-200 hover:border-cyan-300"
                                 >
-                                    <div className="mb-2">
+                                    <div className="mb-1.5">
                                         {subSubcategory.image ? (
                                             <img
                                                 src={subSubcategory.image}
                                                 alt={translateCategory(subSubcategory)}
-                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
+                                                className="w-12 h-12 mx-auto object-contain rounded-lg"
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement
                                                     target.style.display = 'none'
                                                 }}
                                             />
                                         ) : (
-                                            <div className="w-16 h-16 mx-auto bg-cyan-200 rounded-lg flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <div className="w-12 h-12 mx-auto bg-cyan-200 rounded-lg flex items-center justify-center">
+                                                <svg className="w-6 h-6 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                                 </svg>
                                             </div>
                                         )}
                                     </div>
-                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
+                                    <h3 className="text-xs md:text-sm font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
                                         {translateCategory(subSubcategory)}
                                     </h3>
                                 </Link>
