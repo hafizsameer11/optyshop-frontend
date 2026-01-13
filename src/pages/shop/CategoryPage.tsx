@@ -774,73 +774,41 @@ const CategoryPage: React.FC = () => {
                 />
             )}
 
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-blue-950 to-blue-800 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
-                <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="text-center text-white">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                            {categoryInfo.subSubcategory 
-                                ? translateCategory(categoryInfo.subSubcategory)
-                                : categoryInfo.subcategory 
-                                ? translateCategory(categoryInfo.subcategory)
-                                : translateCategory(categoryInfo.category)}
-                        </h1>
-                        <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            {categoryInfo.subSubcategory 
-                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subSubcategory) })
-                                : categoryInfo.subcategory 
-                                ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
-                                : t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })}
-                        </p>
+            {/* Hero Section - Show for subcategories and sub-subcategories */}
+            {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
+                <section className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 py-16 md:py-20 lg:py-24 px-4 sm:px-6">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <div className="text-center text-white">
+                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4">
+                                {categoryInfo.subSubcategory 
+                                    ? translateCategory(categoryInfo.subSubcategory)
+                                    : translateCategory(categoryInfo.subcategory)}
+                            </h1>
+                            <p className="text-lg md:text-xl lg:text-2xl text-white/95 max-w-2xl mx-auto">
+                                {categoryInfo.subSubcategory 
+                                    ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subSubcategory) })
+                                    : t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
+            )}
 
-            {/* Breadcrumbs */}
-            <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
-                <div className="w-[90%] mx-auto max-w-7xl">
-                    <nav className="flex items-center gap-2 text-sm text-gray-900 flex-wrap">
-                        <Link to="/" className="flex items-center gap-2 hover:text-gray-700 transition-colors">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                            <span>HOME</span>
-                        </Link>
-                        <span className="text-gray-500">&gt;</span>
-                        <Link to="/shop" className="hover:text-gray-700 transition-colors">
-                            <span>SHOP</span>
-                        </Link>
-                        <span className="text-gray-500">&gt;</span>
-                        <Link 
-                            to={`/category/${categoryInfo.category.slug}`}
-                            className="hover:text-gray-700 transition-colors"
-                        >
-                            <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.category)}</span>
-                        </Link>
-                        {categoryInfo.subcategory && (
-                            <>
-                                <span className="text-gray-500">&gt;</span>
-                                {categoryInfo.subSubcategory ? (
-                                    <Link 
-                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
-                                        className="hover:text-gray-700 transition-colors"
-                                    >
-                                        <span className="text-gray-700 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
-                                    </Link>
-                                ) : (
-                                    <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
-                                )}
-                            </>
-                        )}
-                        {categoryInfo.subSubcategory && (
-                            <>
-                                <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subSubcategory)}</span>
-                            </>
-                        )}
-                    </nav>
-                </div>
-            </div>
+            {/* Hero Section for main categories */}
+            {categoryInfo.category && !categoryInfo.subcategory && !categoryInfo.subSubcategory && (
+                <section className="bg-gradient-to-r from-blue-950 to-blue-800 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <div className="text-center text-white">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
+                                {translateCategory(categoryInfo.category)}
+                            </h1>
+                            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+                                {t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })}
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            )}
 
             {/* Products Grid */}
             <section className="bg-gray-50 py-8 md:py-10 lg:py-12 px-4 sm:px-6">
@@ -863,14 +831,16 @@ const CategoryPage: React.FC = () => {
                                     to={categoryInfo.subSubcategory 
                                         ? `/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`
                                         : `/category/${categoryInfo.category.slug}`}
-                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-1.5 transition-colors"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md font-medium text-xs transition-all duration-200"
                                 >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                                     </svg>
-                                    {categoryInfo.subSubcategory 
-                                        ? `${t('common.back')} ${translateCategory(categoryInfo.subcategory)}`
-                                        : `${t('common.back')} ${translateCategory(categoryInfo.category)}`}
+                                    <span>
+                                        {categoryInfo.subSubcategory 
+                                            ? `${t('common.back')} ${translateCategory(categoryInfo.subcategory)}`
+                                            : `${t('common.back')} ${translateCategory(categoryInfo.category)}`}
+                                    </span>
                                 </Link>
                             </div>
                         </div>
@@ -926,7 +896,7 @@ const CategoryPage: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 mb-8">
                                 {products.map((product) => {
                                     const p = product as any
                                     // Get available colors - prefer 'colors' array, fallback to 'color_images'
@@ -1072,13 +1042,13 @@ const CategoryPage: React.FC = () => {
                                         onMouseLeave={handleMouseLeave}
                                     >
                                         {/* Product Image */}
-                                        <div className="relative h-64 md:h-72 bg-white overflow-hidden">
+                                        <div className="relative h-40 md:h-48 bg-white overflow-hidden">
                                             <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                                                 <img
                                                     src={productImageUrl}
                                                     alt={product.name}
                                                     key={`${product.id}-${displayColor || 'default'}`}
-                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                    className="w-full h-full object-contain p-2 md:p-3 group-hover:scale-105 transition-all duration-300"
                                                     style={{ 
                                                         opacity: imageOpacity[product.id] ?? 1,
                                                         transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'
@@ -1106,14 +1076,14 @@ const CategoryPage: React.FC = () => {
                                                     e.preventDefault()
                                                     toggleWishlist(product)
                                                 }}
-                                                className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 z-10 ${
+                                                className={`absolute top-2 right-2 p-1.5 rounded-full transition-all duration-200 z-10 ${
                                                     isInWishlist(product.id)
                                                         ? 'bg-red-500 text-white shadow-lg'
                                                         : 'bg-white/90 text-gray-600 hover:bg-white hover:shadow-md'
                                                 }`}
                                                 aria-label={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                                             >
-                                                <svg className="w-5 h-5" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                <svg className="w-4 h-4" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                                 </svg>
                                             </button>
@@ -1132,29 +1102,29 @@ const CategoryPage: React.FC = () => {
                                                     (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
 
                                                 return isOutOfStock ? (
-                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                    <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold z-10">
                                                         {t('shop.outOfStock')}
                                                     </div>
                                                 ) : null
                                             })()}
                                             {product.sale_price && Number(product.sale_price) < Number(product.price) && (
-                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold z-10">
                                                     Sale
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Product Info */}
-                                        <div className="p-4 flex-1 flex flex-col">
+                                        <div className="p-2 md:p-3 flex-1 flex flex-col">
                                             <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1">
-                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-950 transition-colors">
+                                                <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-1.5 line-clamp-2 group-hover:text-blue-950 transition-colors">
                                                     {product.name}
                                                 </h3>
                                             </Link>
                                             
                                             {/* Color Selection */}
                                             {colorsArray.length > 1 && (
-                                                <div className="mb-3 flex items-center gap-2 flex-wrap">
+                                                <div className="mb-2 flex items-center gap-1.5 flex-wrap">
                                                     {colorsArray.map((colorData: any, index: number) => {
                                                         const colorValue = colorData.value || colorData.hexCode || colorData.color || colorData.name
                                                         const hexCode = colorData.hexCode || '#E5E5E5'
@@ -1183,7 +1153,7 @@ const CategoryPage: React.FC = () => {
                                                                         [product.id]: colorValue
                                                                     }))
                                                                 }}
-                                                                className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${
+                                                                className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${
                                                                     isSelected
                                                                         ? 'border-blue-600 scale-110 ring-2 ring-blue-200 shadow-md'
                                                                         : 'border-gray-300 hover:border-gray-400'
@@ -1198,7 +1168,7 @@ const CategoryPage: React.FC = () => {
                                                                 aria-label={`Select color ${displayName}`}
                                                             >
                                                                 {isSelected && (
-                                                                    <svg className="w-4 h-4 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <svg className="w-3 h-3 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 20 20">
                                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                     </svg>
                                                                 )}
@@ -1209,20 +1179,20 @@ const CategoryPage: React.FC = () => {
                                             )}
 
                                             {/* Price and Actions */}
-                                            <div className="mt-auto pt-3 border-t border-gray-100">
-                                                <div className="flex items-center justify-between mb-3">
+                                            <div className="mt-auto pt-2 border-t border-gray-100">
+                                                <div className="flex items-center justify-between mb-2">
                                                     <div>
                                                         {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-xl font-bold text-blue-950">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className="text-base md:text-lg font-bold text-blue-950">
                                                                     ${Number(product.sale_price).toFixed(2)}
                                                                 </span>
-                                                                <span className="text-sm text-gray-500 line-through">
+                                                                <span className="text-xs text-gray-500 line-through">
                                                                     ${Number(product.price).toFixed(2)}
                                                                 </span>
                                                             </div>
                                                         ) : (
-                                                            <span className="text-xl font-bold text-blue-950">
+                                                            <span className="text-base md:text-lg font-bold text-blue-950">
                                                                 ${Number(product.price).toFixed(2)}
                                                             </span>
                                                         )}
@@ -1235,7 +1205,7 @@ const CategoryPage: React.FC = () => {
                                                             e.preventDefault()
                                                             handleAddToCart(product)
                                                         }}
-                                                        className="flex-1 bg-blue-950 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-900 transition-colors text-sm"
+                                                        className="flex-1 bg-blue-950 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg font-semibold hover:bg-blue-900 transition-colors text-xs md:text-sm"
                                                     >
                                                         {t('shop.addToCart')}
                                                     </button>
@@ -1261,13 +1231,13 @@ const CategoryPage: React.FC = () => {
                                             )}
                                             
                                             {/* Rating */}
-                                            <div className="flex items-center gap-2 mt-2">
+                                            <div className="flex items-center gap-1.5 mt-1.5">
                                                 {product.rating !== undefined && product.rating > 0 ? (
                                                     <>
                                                         {[...Array(5)].map((_, i) => (
                                                             <svg
                                                                 key={i}
-                                                                className={`w-4 h-4 ${
+                                                                className={`w-3 h-3 ${
                                                                     i < Math.round(Number(product.rating))
                                                                         ? 'text-yellow-400 fill-current'
                                                                         : 'text-gray-300'
@@ -1278,7 +1248,7 @@ const CategoryPage: React.FC = () => {
                                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                                                             </svg>
                                                         ))}
-                                                        <span className="text-sm text-gray-600">
+                                                        <span className="text-xs text-gray-600">
                                                             {Number(product.rating).toFixed(1)}
                                                         </span>
                                                     </>
