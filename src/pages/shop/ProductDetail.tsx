@@ -3628,197 +3628,146 @@ false
                                         }
                                     }
 
-                                    // Limit to 4 images or show all if less than 4
-                                    const displayImages = imagesArray.slice(0, 4)
+                                    // Ensure selectedImageIndex is within bounds
+                                    const safeSelectedIndex = Math.min(selectedImageIndex, imagesArray.length - 1)
+                                    const selectedImage = imagesArray[safeSelectedIndex]
 
                                     return (
-                                        <div className="flex flex-col gap-3 mb-6">
-                                            {displayImages.map((image, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => setSelectedImageIndex(index)}
-                                                    className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${
-                                                        selectedImageIndex === index
-                                                            ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
-                                                            : 'border-gray-200 hover:border-blue-200'
-                                                    }`}
-                                                >
+                                        <div className="flex gap-4 mb-6">
+                                            {/* Left: Small thumbnails stacked vertically */}
+                                            <div className="flex flex-col gap-3">
+                                                {imagesArray.map((image, index) => (
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => setSelectedImageIndex(index)}
+                                                        className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${
+                                                            index === safeSelectedIndex
+                                                                ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
+                                                                : 'border-gray-200 hover:border-blue-200'
+                                                        }`}
+                                                    >
+                                                        <img
+                                                            src={image}
+                                                            alt={`${product.name} view ${index + 1}`}
+                                                            className="w-full h-full object-contain p-2"
+                                                            onError={(e) => {
+                                                                const target = e.target as HTMLImageElement
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }}
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Right: Large main image display area */}
+                                            <div className="flex-1">
+                                                <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center">
                                                     <img
-                                                        src={image}
-                                                        alt={`${product.name} view ${index + 1}`}
-                                                        className="w-full h-full object-contain p-2"
+                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}`}
+                                                        src={selectedImage}
+                                                        alt={product.name}
+                                                        className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
                                                         onError={(e) => {
                                                             const target = e.target as HTMLImageElement
                                                             target.src = '/assets/images/frame1.png'
                                                         }}
                                                     />
-                                                    {hasValidSale && index === 0 && (
-                                                        <div className="absolute top-1 right-1 bg-red-600 text-white px-2 py-0.5 rounded-full text-xs font-bold shadow-lg">
+                                                    {hasValidSale && (
+                                                        <div className="absolute top-6 left-6 bg-red-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg transform -rotate-2">
                                                             Sale
                                                         </div>
                                                     )}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )
-                                })()}
+                                                </div>
 
-                                {/* Color Selection - supports both 'colors' array (preferred) and 'color_images' array (fallback) */}
-                                {(() => {
-                                    const p = product as any
-                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
-                                        ? p.colors 
-                                        : (product.color_images && product.color_images.length > 0 
-                                            ? product.color_images.map((ci: any) => ({
-                                                name: ci.name || ci.color,
-                                                display_name: ci.display_name || ci.name || ci.color,
-                                                value: ci.value || ci.color,
-                                                hexCode: ci.hexCode || '#E5E5E5',
-                                                price: ci.price,
-                                                images: ci.images || []
-                                            }))
-                                            : [])
-                                    
-                                    if (colorsArray.length === 0) return null
-                                    
-                                    return (
-                                        <div className="mb-6">
-                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                                {t('shop.selectColor', 'Select Color')}
-                                            </label>
-                                            <div className="flex gap-3 flex-wrap">
-                                                {colorsArray.map((color: any, index: number) => {
-                                                    const colorValue = color.value || color.hexCode || color.color || color.name
-                                                    const hexCode = color.hexCode || '#E5E5E5'
-                                                    const displayName = color.display_name || color.name || color.color || 'Color'
-                                                    const variantPrice = color.price !== undefined && color.price !== null
-                                                        ? Number(color.price)
-                                                        : null
-                                                    const isSelected = selectedColor && (
-                                                        (color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                        (color.hexCode && color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                        (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                        (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
-                                                    )
+                                                {/* Color Selection below the large image */}
+                                                {(() => {
+                                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
+                                                        ? p.colors 
+                                                        : (product.color_images && product.color_images.length > 0 
+                                                            ? product.color_images.map((ci: any) => ({
+                                                                name: ci.name || ci.color,
+                                                                display_name: ci.display_name || ci.name || ci.color,
+                                                                value: ci.value || ci.color,
+                                                                hexCode: ci.hexCode || '#E5E5E5',
+                                                                price: ci.price,
+                                                                images: ci.images || []
+                                                            }))
+                                                            : [])
+                                                    
+                                                    if (colorsArray.length === 0) return null
                                                     
                                                     return (
-                                                        <button
-                                                            key={index}
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.preventDefault()
-                                                                e.stopPropagation()
-                                                                const newColor = colorValue
-                                                                setSelectedColor(newColor)
-                                                                setSelectedImageIndex(0) // Reset to first image of selected color
-                                                                
-                                                                // Update URL without page reload
-                                                                const url = new URL(window.location.href)
-                                                                url.searchParams.set('color', newColor)
-                                                                window.history.pushState({}, '', url)
-                                                            }}
-                                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 ${
-                                                                isSelected
-                                                                    ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
-                                                                    : 'border-gray-200 hover:border-blue-200 hover:bg-white'
-                                                            }`}
-                                                            title={displayName}
-                                                        >
-                                                            {/* Color Swatch */}
-                                                            <span
-                                                                className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
-                                                                style={{ backgroundColor: hexCode }}
-                                                            />
-                                                            <div className="flex flex-col items-start gap-1">
-                                                                <span className={`text-sm font-semibold capitalize ${isSelected ? 'text-blue-950' : 'text-gray-700'
-                                                                    }`}>
-                                                                    {displayName}
-                                                                </span>
-                                                                {variantPrice !== null && variantPrice !== Number(product.price) && (
-                                                                    <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
-                                                                        ${variantPrice.toFixed(2)}
-                                                                    </span>
-                                                                )}
+                                                        <div className="mt-6">
+                                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                                {t('shop.selectColor', 'Select Color')}
+                                                            </label>
+                                                            <div className="flex gap-3 flex-wrap">
+                                                                {colorsArray.map((color: any, index: number) => {
+                                                                    const colorValue = color.value || color.hexCode || color.color || color.name
+                                                                    const hexCode = color.hexCode || '#E5E5E5'
+                                                                    const displayName = color.display_name || color.name || color.color || 'Color'
+                                                                    const variantPrice = color.price !== undefined && color.price !== null
+                                                                        ? Number(color.price)
+                                                                        : null
+                                                                    const isSelected = selectedColor && (
+                                                                        (color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                        (color.hexCode && color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                        (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                        (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
+                                                                    )
+                                                                    
+                                                                    return (
+                                                                        <button
+                                                                            key={index}
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault()
+                                                                                e.stopPropagation()
+                                                                                const newColor = colorValue
+                                                                                setSelectedColor(newColor)
+                                                                                setSelectedImageIndex(0) // Reset to first image of selected color
+                                                                                
+                                                                                // Update URL without page reload
+                                                                                const url = new URL(window.location.href)
+                                                                                url.searchParams.set('color', newColor)
+                                                                                window.history.pushState({}, '', url)
+                                                                            }}
+                                                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 ${
+                                                                                isSelected
+                                                                                    ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
+                                                                                    : 'border-gray-200 hover:border-blue-200 hover:bg-white'
+                                                                            }`}
+                                                                            title={displayName}
+                                                                        >
+                                                                            {/* Color Swatch */}
+                                                                            <span
+                                                                                className="w-6 h-6 rounded-full border border-gray-300 flex-shrink-0"
+                                                                                style={{ backgroundColor: hexCode }}
+                                                                            />
+                                                                            <div className="flex flex-col items-start gap-1">
+                                                                                <span className={`text-sm font-semibold capitalize ${isSelected ? 'text-blue-950' : 'text-gray-700'
+                                                                                    }`}>
+                                                                                    {displayName}
+                                                                                </span>
+                                                                                {variantPrice !== null && variantPrice !== Number(product.price) && (
+                                                                                    <span className={`text-xs ${isSelected ? 'text-blue-700' : 'text-gray-500'}`}>
+                                                                                        ${variantPrice.toFixed(2)}
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </button>
+                                                                    )
+                                                                })}
                                                             </div>
-                                                        </button>
+                                                        </div>
                                                     )
-                                                })}
+                                                })()}
                                             </div>
                                         </div>
                                     )
                                 })()}
+                            </div>
 
-                                {/* Thumbnail Images */}
-                                {(() => {
-                                    // Get images for selected color - supports both 'colors' array and 'color_images' array
-                                    let imagesArray: string[] = []
-                                    const p = product as any
-
-                                    if (selectedColor) {
-                                        // First try 'colors' array (preferred)
-                                        if (p.colors && Array.isArray(p.colors)) {
-                                            const selectedColorLower = (selectedColor || '').toLowerCase()
-                                            const colorData = p.colors.find((c: any) => 
-                                                (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
-                                                (c.name && c.name.toLowerCase() === selectedColorLower)
-                                            )
-                                            if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                imagesArray = colorData.images
-                                            }
-                                        }
-                                        
-                                        // Fallback to 'color_images' array
-                                        if (imagesArray.length === 0 && product.color_images) {
-                                            const selectedColorLower = (selectedColor || '').toLowerCase()
-                                            const colorImage = product.color_images.find(ci =>
-                                                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                (ci.name && ci.name.toLowerCase() === selectedColorLower)
-                                            )
-                                            if (colorImage && colorImage.images) {
-                                                imagesArray = colorImage.images
-                                            }
-                                        }
-                                    }
-
-                                    // Fallback to regular images if no color images or no color selected
-                                    if (imagesArray.length === 0 && product.images) {
-                                        if (typeof product.images === 'string') {
-                                            try {
-                                                imagesArray = JSON.parse(product.images)
-                                            } catch (e) {
-                                                imagesArray = [product.images]
-                                            }
-                                        } else if (Array.isArray(product.images)) {
-                                            imagesArray = product.images
-                                        }
-                                    }
-
-                                    return imagesArray.length > 1 ? (
-                                        <div className="flex flex-col gap-3 pb-4">
-                                            {imagesArray.map((image, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => setSelectedImageIndex(index)}
-                                                    className={`flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 ${selectedImageIndex === index
-                                                        ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
-                                                        : 'border-gray-200 hover:border-blue-200'
-                                                        }`}
-                                                >
-                                                    <img
-                                                        src={image}
-                                                        alt={`${product.name} view ${index + 1}`}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement
-                                                            target.src = '/assets/images/frame1.png'
-                                                        }}
-                                                    />
-                                                </button>
-                                            ))}
-                                        </div>
-                                    ) : null
-                                })()}
                             </div>
 
                             {/* Product Info (Right Column) */}
