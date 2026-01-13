@@ -2920,7 +2920,7 @@ false
                                             }
 
                                             return imagesArray.length > 1 ? (
-                                                <div className="flex gap-2 overflow-x-auto">
+                                                <div className="flex flex-col gap-2">
                                                     {imagesArray.map((image, index) => (
                                                         <button
                                                             key={index}
