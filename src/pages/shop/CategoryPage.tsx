@@ -1292,7 +1292,6 @@ const CategoryPage: React.FC = () => {
                                                         No rating
                                                     </span>
                                                 )}
-                                                </div>
                                                 {/* Reviews Count */}
                                                 {product.review_count !== undefined && product.review_count > 0 && (
                                                     <span className="text-xs text-gray-500">
