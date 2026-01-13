@@ -842,92 +842,6 @@ const CategoryPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Subcategories Section - Show when viewing category (not subcategory or sub-subcategory) */}
-            {!categoryInfo.subcategory && !categoryInfo.subSubcategory && subcategories.length > 0 && (
-                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
-                    <div className="w-[90%] mx-auto max-w-7xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-                            Browse by Subcategory
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {subcategories.map((subcategory) => (
-                                <Link
-                                    key={subcategory.id}
-                                    to={`/category/${categoryInfo.category!.slug}/${subcategory.slug}`}
-                                    className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-blue-200 hover:border-blue-300"
-                                >
-                                    <div className="mb-2">
-                                        {subcategory.image ? (
-                                            <img
-                                                src={subcategory.image}
-                                                alt={translateCategory(subcategory)}
-                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement
-                                                    target.style.display = 'none'
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-16 mx-auto bg-blue-200 rounded-lg flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                                </svg>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
-                                        {translateCategory(subcategory)}
-                                    </h3>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            {/* Sub-subcategories Section - Show when viewing subcategory (not sub-subcategory) */}
-            {categoryInfo.subcategory && !categoryInfo.subSubcategory && subSubcategories.length > 0 && (
-                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
-                    <div className="w-[90%] mx-auto max-w-7xl">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-                            Browse by Sub-subcategory
-                        </h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {subSubcategories.map((subSubcategory) => (
-                                <Link
-                                    key={subSubcategory.id}
-                                    to={`/category/${categoryInfo.category!.slug}/${categoryInfo.subcategory!.slug}/${subSubcategory.slug}`}
-                                    className="group bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-cyan-200 hover:border-cyan-300"
-                                >
-                                    <div className="mb-2">
-                                        {subSubcategory.image ? (
-                                            <img
-                                                src={subSubcategory.image}
-                                                alt={translateCategory(subSubcategory)}
-                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement
-                                                    target.style.display = 'none'
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="w-16 h-16 mx-auto bg-cyan-200 rounded-lg flex items-center justify-center">
-                                                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                                </svg>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
-                                        {translateCategory(subSubcategory)}
-                                    </h3>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-            )}
-
             {/* Products Grid */}
             <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
@@ -1131,21 +1045,30 @@ const CategoryPage: React.FC = () => {
                                             delete hoverIntervals.current[product.id]
                                         }
                                         
-                                        // Smooth fade back to selected color
-                                        setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
-                                        setTimeout(() => {
-                                            setHoverColorCycles(prev => {
-                                                const newState = { ...prev }
-                                                delete newState[product.id]
-                                                return newState
-                                            })
-                                            setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
-                                        }, 200)
+                                        setHoverColorCycles(prev => {
+                                            const newState = { ...prev }
+                                            delete newState[product.id]
+                                            return newState
+                                        })
+                                        
+                                        // Reset opacity
+                                        setImageOpacity(prev => {
+                                            const newState = { ...prev }
+                                            delete newState[product.id]
+                                            return newState
+                                        })
                                     }
-                                    
-                                    // All products (including contact lenses) navigate to ProductDetail page
-                                    // Contact lens forms are handled in ProductDetail page
-                                    
+
+                                    const isGlassesProduct = 
+                                        product.category?.name?.toLowerCase().includes('eyeglasses') ||
+                                        product.category?.name?.toLowerCase().includes('sunglasses') ||
+                                        product.category?.slug?.toLowerCase().includes('eyeglasses') ||
+                                        product.category?.slug?.toLowerCase().includes('sunglasses') ||
+                                        (product.category?.parent_category && (
+                                            product.category.parent_category.name?.toLowerCase().includes('eyeglasses') ||
+                                            product.category.parent_category.name?.toLowerCase().includes('sunglasses')
+                                        ))
+
                                     return (
                                     <div
                                         key={product.id}
@@ -1174,53 +1097,52 @@ const CategoryPage: React.FC = () => {
                                             
                                             {/* Next Color Indicator - Shows when hovering and multiple colors available */}
                                             {isHovering[product.id] && colorsArray.length > 1 && (
-                                                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse z-30">
-                                                    <span>Next Color</span>
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 z-10">
+                                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                     </svg>
+                                                    <span>Viewing colors</span>
                                                 </div>
                                             )}
                                             
-                                            {/* Favorite/Wishlist Icon - Always Visible */}
+                                            {/* Wishlist Button */}
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault()
-                                                    e.stopPropagation()
                                                     toggleWishlist(product)
                                                 }}
-                                                className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 z-20 transition-all"
-                                                title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
+                                                className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 z-10 ${
+                                                    isInWishlist(product.id)
+                                                        ? 'bg-red-500 text-white shadow-lg'
+                                                        : 'bg-white/90 text-gray-600 hover:bg-white hover:shadow-md'
+                                                }`}
+                                                aria-label={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                                             >
-                                                {isInWishlist(product.id) ? (
-                                                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                )}
+                                                <svg className="w-5 h-5" fill={isInWishlist(product.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                </svg>
                                             </button>
+                                            
+                                            {/* Out of Stock Badge */}
                                             {(() => {
                                                 const p = product as any
                                                 const stockStatus = p.stock_status
                                                 const stockQty = product.stock_quantity
-                                                
-                                                // Check if out of stock - comprehensive check
-                                                const isOutOfStock = 
+
+                                                // Check if out of stock
+                                                const isOutOfStock =
                                                     stockStatus === 'out_of_stock' ||
-                                                    (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
                                                     (stockStatus === undefined && product.in_stock === false) ||
                                                     (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                
+
                                                 return isOutOfStock ? (
                                                     <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
                                                         {t('shop.outOfStock')}
                                                     </div>
                                                 ) : null
                                             })()}
-                                            {product.sale_price && product.price && product.sale_price < product.price && (
+                                            {product.sale_price && Number(product.sale_price) < Number(product.price) && (
                                                 <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
                                                     Sale
                                                 </div>
@@ -1228,51 +1150,36 @@ const CategoryPage: React.FC = () => {
                                         </div>
 
                                         {/* Product Info */}
-                                        <div className="p-4 flex-grow flex flex-col">
-                                            {/* Color Swatches - Below Image - Only for Glasses */}
-                                            {isGlassesProduct(product) && colorsArray.length > 0 && (
-                                                <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
+                                        <div className="p-4 flex-1 flex flex-col">
+                                            <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1">
+                                                <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-950 transition-colors">
+                                                    {product.name}
+                                                </h3>
+                                            </Link>
+                                            
+                                            {/* Color Selection */}
+                                            {colorsArray.length > 1 && (
+                                                <div className="mb-3 flex items-center gap-2 flex-wrap">
                                                     {colorsArray.map((colorData: any, index: number) => {
-                                                        const colorValue = colorData.value || colorData.color || colorData.hexCode
+                                                        const colorValue = colorData.value || colorData.hexCode || colorData.color || colorData.name
                                                         const hexCode = colorData.hexCode || '#E5E5E5'
                                                         const displayName = colorData.display_name || colorData.name || colorData.color || 'Color'
-                                                        
-                                                        // Check if it's a pattern (tortoiseshell, gradient, etc.)
-                                                        const colorName = (displayName || '').toLowerCase()
-                                                        const isPattern = colorName.includes('tortoise') || 
-                                                                         colorName.includes('tortoiseshell') ||
-                                                                         colorName.includes('gradient') ||
-                                                                         colorName.includes('rainbow') ||
-                                                                         colorName.includes('pattern')
-                                                        
-                                                        // Get gradient style for patterns
-                                                        const getGradientStyle = () => {
-                                                            if (colorName.includes('tortoise') || colorName.includes('tortoiseshell')) {
-                                                                return 'linear-gradient(135deg, #8B4513 0%, #D2691E 25%, #CD853F 50%, #8B4513 75%, #654321 100%)'
-                                                            }
-                                                            if (colorName.includes('pink') && colorName.includes('gradient')) {
-                                                                return 'linear-gradient(135deg, #FFC0CB 0%, #FF69B4 50%, #FF1493 100%)'
-                                                            }
-                                                            if (colorName.includes('purple') && colorName.includes('gradient')) {
-                                                                return 'linear-gradient(135deg, #9370DB 0%, #8A2BE2 50%, #4B0082 100%)'
-                                                            }
-                                                            if (colorName.includes('rainbow')) {
-                                                                return 'linear-gradient(90deg, #FF0000 0%, #FF7F00 14%, #FFFF00 28%, #00FF00 42%, #0000FF 57%, #4B0082 71%, #9400D3 85%, #FF0000 100%)'
-                                                            }
-                                                            return null
-                                                        }
-                                                        
-                                                        const gradientStyle = isPattern ? getGradientStyle() : null
                                                         const isSelected = selectedColor && (
-                                                            (colorValue && colorValue.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                            (colorData.value && colorData.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                            (colorData.hexCode && colorData.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
                                                             (colorData.color && colorData.color.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                            (hexCode && hexCode.toLowerCase() === selectedColor.toLowerCase())
+                                                            (colorData.name && colorData.name.toLowerCase() === selectedColor.toLowerCase())
                                                         )
-                                                        
+
+                                                        // Check for gradient
+                                                        const hasGradient = colorData.gradient || colorData.hexCode2
+                                                        const gradientStyle = hasGradient
+                                                            ? `linear-gradient(135deg, ${hexCode} 0%, ${colorData.hexCode2 || hexCode} 100%)`
+                                                            : null
+
                                                         return (
                                                             <button
-                                                                key={`${product.id}-${index}-${colorValue}`}
-                                                                type="button"
+                                                                key={index}
                                                                 onClick={(e) => {
                                                                     e.preventDefault()
                                                                     e.stopPropagation()
@@ -1296,7 +1203,7 @@ const CategoryPage: React.FC = () => {
                                                                 aria-label={`Select color ${displayName}`}
                                                             >
                                                                 {isSelected && (
-                                                                    <svg className="w-3 h-3 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <svg className="w-4 h-4 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 20 20">
                                                                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                                                     </svg>
                                                                 )}
@@ -1306,67 +1213,85 @@ const CategoryPage: React.FC = () => {
                                                 </div>
                                             )}
 
-                                            {/* Model Number and Heart Icon - Same Row */}
-                                            <div className="flex items-center justify-between mb-2">
-                                                {product.sku && (
-                                                    <p className="text-xs text-gray-500 font-semibold">
-                                                        {product.sku}
-                                                    </p>
-                                                )}
-                                                {!product.sku && <div />}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault()
-                                                        e.stopPropagation()
-                                                        toggleWishlist(product)
-                                                    }}
-                                                    className="w-6 h-6 flex items-center justify-center hover:text-red-500 transition-colors"
-                                                    title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
-                                                >
-                                                    {isInWishlist(product.id) ? (
-                                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                        </svg>
-                                                    ) : (
-                                                        <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                        </svg>
-                                                    )}
-                                                </button>
+                                            {/* Price and Actions */}
+                                            <div className="mt-auto pt-3 border-t border-gray-100">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-xl font-bold text-blue-950">
+                                                                    ${Number(product.sale_price).toFixed(2)}
+                                                                </span>
+                                                                <span className="text-sm text-gray-500 line-through">
+                                                                    ${Number(product.price).toFixed(2)}
+                                                                </span>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-xl font-bold text-blue-950">
+                                                                ${Number(product.price).toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            handleAddToCart(product)
+                                                        }}
+                                                        className="flex-1 bg-blue-950 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-900 transition-colors text-sm"
+                                                    >
+                                                        {t('shop.addToCart')}
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Try On Button - Only for Glasses - HIDDEN */}
-                                            {false && isGlassesProduct(product) && (
+                                            {false && isGlassesProduct && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.preventDefault()
-                                                        e.stopPropagation()
                                                         setSelectedProductForTryOn(product)
                                                         setShowTryOnModal(true)
                                                     }}
-                                                    className="mb-3 w-full border-2 border-blue-500 bg-white hover:bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                                                    className="w-full mt-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all text-sm flex items-center justify-center gap-2"
                                                 >
-                                                    {t('shop.tryOn', 'Try on')}
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    Try On
                                                 </button>
                                             )}
-
-                                            {/* Price and Reviews - Same Row */}
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex flex-col">
-                                                    {product.sale_price && product.price && Number(product.sale_price) < Number(product.price) ? (
-                                                        <>
-                                                            <span className="text-base font-bold text-gray-900">
-                                                                €{Number(product.sale_price || 0).toFixed(2)}
-                                                            </span>
-                                                            <span className="text-xs text-gray-400 line-through">
-                                                                €{Number(product.price || 0).toFixed(2)}
-                                                            </span>
-                                                        </>
-                                                    ) : (
-                                                        <span className="text-base font-bold text-gray-900">
-                                                            €{Number(product.price || 0).toFixed(2)}
+                                            
+                                            {/* Rating */}
+                                            <div className="flex items-center gap-2 mt-2">
+                                                {product.rating !== undefined && product.rating > 0 ? (
+                                                    <>
+                                                        {[...Array(5)].map((_, i) => (
+                                                            <svg
+                                                                key={i}
+                                                                className={`w-4 h-4 ${
+                                                                    i < Math.round(Number(product.rating))
+                                                                        ? 'text-yellow-400 fill-current'
+                                                                        : 'text-gray-300'
+                                                                }`}
+                                                                fill="currentColor"
+                                                                viewBox="0 0 20 20"
+                                                            >
+                                                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                            </svg>
+                                                        ))}
+                                                        <span className="text-sm text-gray-600">
+                                                            {Number(product.rating).toFixed(1)}
                                                         </span>
-                                                    )}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-xs text-gray-400">
+                                                        No rating
+                                                    </span>
+                                                )}
                                                 </div>
                                                 {/* Reviews Count */}
                                                 {product.review_count !== undefined && product.review_count > 0 && (
@@ -1390,19 +1315,15 @@ const CategoryPage: React.FC = () => {
                                         className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                                             currentPage === 1
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         }`}
                                     >
                                         Previous
                                     </button>
                                     
-                                    {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
-                                        const page = i + 1
-                                        if (
-                                            page === 1 ||
-                                            page === pagination.pages ||
-                                            (page >= currentPage - 1 && page <= currentPage + 1)
-                                        ) {
+                                    {[...Array(pagination.pages)].map((_, index) => {
+                                        const page = index + 1
+                                        if (page === 1 || page === pagination.pages || (page >= currentPage - 1 && page <= currentPage + 1)) {
                                             return (
                                                 <button
                                                     key={page}
@@ -1428,7 +1349,7 @@ const CategoryPage: React.FC = () => {
                                         className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                                             currentPage === pagination.pages
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                         }`}
                                     >
                                         Next
@@ -1436,8 +1357,7 @@ const CategoryPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Results count */}
-                            {pagination && (
+                            {pagination && pagination.total > 0 && (
                                 <div className="text-center mt-4 text-gray-600">
                                     Showing {products.length} of {pagination.total || 0} products
                                 </div>
@@ -1446,6 +1366,92 @@ const CategoryPage: React.FC = () => {
                     )}
                 </div>
             </section>
+
+            {/* Subcategories Section - Show when viewing category (not subcategory or sub-subcategory) */}
+            {!categoryInfo.subcategory && !categoryInfo.subSubcategory && subcategories.length > 0 && (
+                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                            Browse by Subcategory
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {subcategories.map((subcategory) => (
+                                <Link
+                                    key={subcategory.id}
+                                    to={`/category/${categoryInfo.category!.slug}/${subcategory.slug}`}
+                                    className="group bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-blue-200 hover:border-blue-300"
+                                >
+                                    <div className="mb-2">
+                                        {subcategory.image ? (
+                                            <img
+                                                src={subcategory.image}
+                                                alt={translateCategory(subcategory)}
+                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement
+                                                    target.style.display = 'none'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 mx-auto bg-blue-200 rounded-lg flex items-center justify-center">
+                                                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-blue-900 transition-colors">
+                                        {translateCategory(subcategory)}
+                                    </h3>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Sub-subcategories Section - Show when viewing subcategory (not sub-subcategory) */}
+            {categoryInfo.subcategory && !categoryInfo.subSubcategory && subSubcategories.length > 0 && (
+                <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
+                    <div className="w-[90%] mx-auto max-w-7xl">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+                            Browse by Sub-subcategory
+                        </h2>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {subSubcategories.map((subSubcategory) => (
+                                <Link
+                                    key={subSubcategory.id}
+                                    to={`/category/${categoryInfo.category!.slug}/${categoryInfo.subcategory!.slug}/${subSubcategory.slug}`}
+                                    className="group bg-gradient-to-br from-cyan-50 to-cyan-100 hover:from-cyan-100 hover:to-cyan-200 rounded-lg p-4 md:p-6 text-center transition-all duration-300 hover:shadow-lg border border-cyan-200 hover:border-cyan-300"
+                                >
+                                    <div className="mb-2">
+                                        {subSubcategory.image ? (
+                                            <img
+                                                src={subSubcategory.image}
+                                                alt={translateCategory(subSubcategory)}
+                                                className="w-16 h-16 mx-auto object-contain rounded-lg"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement
+                                                    target.style.display = 'none'
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-16 h-16 mx-auto bg-cyan-200 rounded-lg flex items-center justify-center">
+                                                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3 className="text-sm md:text-base font-semibold text-gray-900 group-hover:text-cyan-900 transition-colors">
+                                        {translateCategory(subSubcategory)}
+                                    </h3>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )}
 
             <Footer />
             
