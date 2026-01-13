@@ -3768,8 +3768,6 @@ false
                                 })()}
                             </div>
 
-                            </div>
-
                             {/* Product Info (Right Column) */}
                             <div>
                                 <div className="mb-6">
