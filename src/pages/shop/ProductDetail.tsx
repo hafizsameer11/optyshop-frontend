@@ -3573,23 +3573,92 @@ false
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                             {/* Product Images (Left Column) */}
                             <div>
-                                <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center mb-6">
-                                    <img
-                                        key={`product-${product.id}-img-${selectedImageIndex}-${selectedColor || 'default'}`}
-                                        src={getColorSpecificImageUrl(product, selectedImageIndex)}
-                                        alt={product.name}
-                                        className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement
-                                            target.src = '/assets/images/frame1.png'
-                                        }}
-                                    />
-                                    {hasValidSale && (
-                                        <div className="absolute top-6 left-6 bg-red-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg transform -rotate-2">
-                                            Sale
+                                {(() => {
+                                    // Get all images for the selected color
+                                    let imagesArray: string[] = []
+                                    const p = product as any
+
+                                    // First priority: Use unit-specific images
+                                    if (unitImages.length > 0) {
+                                        imagesArray = unitImages
+                                    } else {
+                                        if (selectedColor) {
+                                            // First try 'colors' array (preferred)
+                                            if (p.colors && Array.isArray(p.colors)) {
+                                                const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                const colorData = p.colors.find((c: any) => 
+                                                    (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                                                    (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                    (c.name && c.name.toLowerCase() === selectedColorLower)
+                                                )
+                                                if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                    imagesArray = colorData.images
+                                                }
+                                            }
+                                            
+                                            // Fallback to 'color_images' array
+                                            if (imagesArray.length === 0 && product.color_images) {
+                                                const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                const colorImage = product.color_images.find((ci: any) =>
+                                                    (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                                                    (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                                )
+                                                if (colorImage && colorImage.images) {
+                                                    imagesArray = colorImage.images
+                                                }
+                                            }
+                                        }
+
+                                        // Fallback to regular images if no color images or no color selected
+                                        if (imagesArray.length === 0 && product.images) {
+                                            if (typeof product.images === 'string') {
+                                                try {
+                                                    imagesArray = JSON.parse(product.images)
+                                                } catch (e) {
+                                                    imagesArray = [product.images]
+                                                }
+                                            } else if (Array.isArray(product.images)) {
+                                                imagesArray = product.images
+                                            }
+                                        }
+
+                                        // Ensure at least one image
+                                        if (imagesArray.length === 0) {
+                                            imagesArray = [getColorSpecificImageUrl(product, 0)]
+                                        }
+                                    }
+
+                                    return (
+                                        <div className="flex flex-col gap-4 mb-6">
+                                            {imagesArray.map((image, index) => (
+                                                <div 
+                                                    key={index}
+                                                    className={`relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border-2 flex items-center justify-center cursor-pointer transition-all duration-200 ${
+                                                        selectedImageIndex === index
+                                                            ? 'border-blue-950 ring-2 ring-blue-100'
+                                                            : 'border-gray-100 hover:border-blue-200'
+                                                    }`}
+                                                    onClick={() => setSelectedImageIndex(index)}
+                                                >
+                                                    <img
+                                                        src={image}
+                                                        alt={`${product.name} view ${index + 1}`}
+                                                        className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            target.src = '/assets/images/frame1.png'
+                                                        }}
+                                                    />
+                                                    {hasValidSale && index === 0 && (
+                                                        <div className="absolute top-6 left-6 bg-red-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg transform -rotate-2">
+                                                            Sale
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
+                                    )
+                                })()}
 
                                 {/* Color Selection - supports both 'colors' array (preferred) and 'color_images' array (fallback) */}
                                 {(() => {
