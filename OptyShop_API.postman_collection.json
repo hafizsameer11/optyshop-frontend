@@ -2476,7 +2476,7 @@
 			"name": "Banners (Public)",
 			"item": [
 			  {
-				"name": "Get Banners",
+				"name": "Get Banners (All)",
 				"request": {
 				  "method": "GET",
 				  "header": [],
@@ -2489,7 +2489,129 @@
 					  "api",
 					  "banners"
 					]
-				  }
+				  },
+				  "description": "Get all active banners. Can be filtered by page_type, category_id, and sub_category_id.\n\n**Query Parameters:**\n- `page_type` (optional): Filter by page type - `home`, `category`, `subcategory`, or `sub_subcategory`\n- `category_id` (optional): Filter by category ID\n- `sub_category_id` (optional): Filter by subcategory ID\n\n**Example Queries:**\n- Get home page banners: `{{base_url}}/api/banners?page_type=home`\n- Get category banners: `{{base_url}}/api/banners?page_type=category&category_id=1`\n- Get subcategory banners: `{{base_url}}/api/banners?page_type=subcategory&category_id=1&sub_category_id=2`\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Banners retrieved\",\n  \"data\": {\n    \"banners\": [\n      {\n        \"id\": 1,\n        \"title\": \"Welcome Banner\",\n        \"image_url\": \"https://...\",\n        \"link_url\": \"https://example.com\",\n        \"position\": \"header\",\n        \"page_type\": \"home\",\n        \"category_id\": null,\n        \"sub_category_id\": null,\n        \"sort_order\": 0,\n        \"is_active\": true,\n        \"category\": null,\n        \"subCategory\": null\n      },\n      {\n        \"id\": 2,\n        \"title\": \"Category Banner\",\n        \"page_type\": \"category\",\n        \"category_id\": 1,\n        \"sub_category_id\": null,\n        \"category\": {\n          \"id\": 1,\n          \"name\": \"Eyeglasses\",\n          \"slug\": \"eyeglasses\"\n        },\n        \"subCategory\": null\n      }\n    ]\n  }\n}\n```"
+				}
+			  },
+			  {
+				"name": "Get Banners - Home Page",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/banners?page_type=home",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "banners"
+					],
+					"query": [
+					  {
+						"key": "page_type",
+						"value": "home"
+					  }
+					]
+				  },
+				  "description": "Get all active banners for the home page."
+				}
+			  },
+			  {
+				"name": "Get Banners - By Category",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/banners?page_type=category&category_id=1",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "banners"
+					],
+					"query": [
+					  {
+						"key": "page_type",
+						"value": "category"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"description": "Category ID"
+					  }
+					]
+				  },
+				  "description": "Get all active banners for a specific category page."
+				}
+			  },
+			  {
+				"name": "Get Banners - By Subcategory",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/banners?page_type=subcategory&category_id=1&sub_category_id=2",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "banners"
+					],
+					"query": [
+					  {
+						"key": "page_type",
+						"value": "subcategory"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"description": "Category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "2",
+						"description": "Subcategory ID"
+					  }
+					]
+				  },
+				  "description": "Get all active banners for a specific subcategory page."
+				}
+			  },
+			  {
+				"name": "Get Banners - By Sub-subcategory",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/banners?page_type=sub_subcategory&category_id=1&sub_category_id=2",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "banners"
+					],
+					"query": [
+					  {
+						"key": "page_type",
+						"value": "sub_subcategory"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"description": "Category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "2",
+						"description": "Sub-subcategory ID"
+					  }
+					]
+				  },
+				  "description": "Get all active banners for a specific sub-subcategory page."
 				}
 			  }
 			]
@@ -3736,10 +3858,40 @@
 						"value": "",
 						"type": "text",
 						"description": "Optional: JSON array of objects with image URLs and their hex color codes. Format: [{\"hexCode\": \"#000000\", \"imageUrl\": \"url1\", \"name\": \"Black\", \"price\": 99.99}, {\"hexCode\": \"#FFD700\", \"imageUrl\": \"url2\"}]. Fields: hexCode (required, format: #RRGGBB), imageUrl (required), name (optional), price (optional)."
+					  },
+					  {
+						"key": "product_type",
+						"value": "eye_hygiene",
+						"type": "text",
+						"description": "Optional: Product type. Valid values: frame, sunglasses, contact_lens, eye_hygiene (default: frame)"
+					  },
+					  {
+						"key": "meta_title",
+						"value": "SEO Title for Product",
+						"type": "text",
+						"description": "Optional: SEO meta title (max 255 characters). Used for search engine optimization."
+					  },
+					  {
+						"key": "meta_description",
+						"value": "SEO description for the product",
+						"type": "text",
+						"description": "Optional: SEO meta description. Used for search engine optimization."
+					  },
+					  {
+						"key": "meta_keywords",
+						"value": "keyword1, keyword2, keyword3",
+						"type": "text",
+						"description": "Optional: SEO meta keywords (comma-separated, max 255 characters). Used for search engine optimization."
+					  },
+					  {
+						"key": "sizeVolumeVariants",
+						"value": "[{\"size_volume\": \"5ml\", \"pack_type\": \"Single\", \"price\": 8.00, \"compare_at_price\": 10.00, \"stock_quantity\": 50, \"stock_status\": \"in_stock\", \"sku\": \"SKU-5ML\", \"is_active\": true, \"sort_order\": 1}, {\"size_volume\": \"10ml\", \"pack_type\": \"Single\", \"price\": 14.00, \"compare_at_price\": 16.00, \"stock_quantity\": 75, \"stock_status\": \"in_stock\", \"sku\": \"SKU-10ML\", \"is_active\": true, \"sort_order\": 2}]",
+						"type": "text",
+						"description": "Optional: JSON array of size/volume variants for Eye Hygiene products. Each variant can have: size_volume (required), pack_type, price (required), compare_at_price, cost_price, stock_quantity, stock_status, sku, expiry_date, is_active, sort_order. Example: [{\"size_volume\": \"5ml\", \"price\": 8.00, \"stock_quantity\": 50}]"
 					  }
 					]
 				  },
-				  "description": "Create a new product with images, 3D model, and images with color codes.\n\n**Product Information:**\n- `name` (required): Product name\n- `sku` (required): Unique SKU\n- `category_id` (required): Category ID\n- `sub_category_id` (optional): Subcategory ID (can be top-level or sub-subcategory)\n- `price` (required): Product price\n- `description` (optional): Full product description\n- `short_description` (optional): Short description (max 500 chars)\n- `stock_quantity` (optional): Stock quantity (default: 0)\n- `stock_status` (optional): in_stock, out_of_stock, backorder, preorder (default: in_stock)\n\n**Frame Properties:**\n- `frame_shape` (optional): round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric\n- `frame_material` (optional): plastic, metal, acetate, titanium, wood, mixed\n- `frame_color` (optional): Frame color (e.g., Black, Gold, Brown)\n- `gender` (optional): men, women, unisex, kids (default: unisex)\n\n**Lens Type:** Optional field for lens type. Valid values:\n- `prescription` - Prescription lenses\n- `sunglasses` - Sunglasses\n- `reading` - Reading glasses\n- `computer` - Computer glasses\n- `photochromic` - Photochromic lenses\n- `plastic` - Plastic lenses\n- `glass` - Glass lenses\n- `polycarbonate` - Polycarbonate lenses\n- `trivex` - Trivex lenses\n- `high_index` - High index lenses\n\n**3D Model:** Upload a 3D model file using the `model_3d` field.\n\n**Images with Color Codes:** Upload multiple images, each associated with a hex color code. Three methods:\n\n1. **Method 1 - Parallel Arrays (Recommended):**\n   - Upload multiple images in the `images` field\n   - Provide `image_colors` as JSON array: `[\"#000000\", \"#FFD700\", \"#8B4513\"]`\n   - Each hex code maps to the image at the same index\n   - Example: `images[0]` → `image_colors[0]` = `\"#000000\"`\n   - Images without a color code will be added to general product images\n\n2. **Method 2 - Individual Color Fields:**\n   - Upload images with field names: `image_#000000`, `image_#FFD700`, etc.\n   - Format: `image_#RRGGBB` (e.g., `image_#000000` for black, `image_#8B4513` for brown)\n   - Multiple files per color are supported\n   - Example: `image_#000000` → Upload 3 files for black color\n\n3. **Method 3 - JSON with URLs:**\n   - Send `images_with_colors` as JSON array:\n   ```json\n   [{\n     \"hexCode\": \"#000000\",\n     \"imageUrl\": \"https://example.com/image1.jpg\",\n     \"name\": \"Black\",\n     \"price\": 99.99\n   }]\n   ```\n\n**General Images:**\n- Upload images in the `images` field without providing `image_colors`\n- These will be used as default product images (not color-specific)\n\n**Example:**\n- Upload 5 images in `images` field\n- Provide `image_colors`: `[\"#000000\", \"#000000\", \"#FFD700\", \"#FFD700\", \"#8B4513\"]`\n- Result: 2 black images, 2 gold images, 1 brown image\n- When customer selects a color by hex code, the associated images will be shown",
+				  "description": "Create a new product with images, 3D model, images with color codes, and size/volume variants.\n\n**Size/Volume Variants (for Eye Hygiene products):**\nUse the `sizeVolumeVariants` field to add multiple volume options with individual prices. This is especially useful for Eye Hygiene products that come in different sizes (e.g., 5ml, 10ml, 30ml).\n\n**Format:**\n```json\n[\n  {\n    \"size_volume\": \"5ml\",\n    \"pack_type\": \"Single\",\n    \"price\": 8.00,\n    \"compare_at_price\": 10.00,\n    \"cost_price\": 5.00,\n    \"stock_quantity\": 50,\n    \"stock_status\": \"in_stock\",\n    \"sku\": \"SKU-5ML\",\n    \"expiry_date\": \"2025-12-31\",\n    \"is_active\": true,\n    \"sort_order\": 1\n  },\n  {\n    \"size_volume\": \"10ml\",\n    \"pack_type\": \"Single\",\n    \"price\": 14.00,\n    \"stock_quantity\": 75\n  }\n]\n```\n\n**Fields:**\n- `size_volume` (required): Volume/size (e.g., \"5ml\", \"10ml\", \"30ml\")\n- `price` (required): Price for this variant\n- `pack_type` (optional): Pack type (e.g., \"Single\", \"Pack of 2\")\n- `compare_at_price` (optional): Compare at price\n- `cost_price` (optional): Cost price\n- `stock_quantity` (optional): Stock quantity (default: 0)\n- `stock_status` (optional): in_stock, out_of_stock, backorder (default: in_stock)\n- `sku` (optional): SKU for this variant\n- `expiry_date` (optional): Expiry date (YYYY-MM-DD format)\n- `is_active` (optional): true/false (default: true)\n- `sort_order` (optional): Sort order (default: 0)\n\n**Note:** Variants are automatically created when the product is created. You can also manage them separately using the Size/Volume Variants endpoints.\n\n**Response includes:**\n- Created product with all fields\n- Formatted images and color_images\n\n**Product Information:**\n- `name` (required): Product name\n- `sku` (required): Unique SKU\n- `category_id` (required): Category ID\n- `sub_category_id` (optional): Subcategory ID (can be top-level or sub-subcategory)\n- `price` (required): Product price\n- `description` (optional): Full product description\n- `short_description` (optional): Short description (max 500 chars)\n- `stock_quantity` (optional): Stock quantity (default: 0)\n- `stock_status` (optional): in_stock, out_of_stock, backorder, preorder (default: in_stock)\n\n**Frame Properties:**\n- `frame_shape` (optional): round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric\n- `frame_material` (optional): plastic, metal, acetate, titanium, wood, mixed\n- `frame_color` (optional): Frame color (e.g., Black, Gold, Brown)\n- `gender` (optional): men, women, unisex, kids (default: unisex)\n\n**Lens Type:** Optional field for lens type. Valid values:\n- `prescription` - Prescription lenses\n- `sunglasses` - Sunglasses\n- `reading` - Reading glasses\n- `computer` - Computer glasses\n- `photochromic` - Photochromic lenses\n- `plastic` - Plastic lenses\n- `glass` - Glass lenses\n- `polycarbonate` - Polycarbonate lenses\n- `trivex` - Trivex lenses\n- `high_index` - High index lenses\n\n**3D Model:** Upload a 3D model file using the `model_3d` field.\n\n**Images with Color Codes:** Upload multiple images, each associated with a hex color code. Three methods:\n\n1. **Method 1 - Parallel Arrays (Recommended):**\n   - Upload multiple images in the `images` field\n   - Provide `image_colors` as JSON array: `[\"#000000\", \"#FFD700\", \"#8B4513\"]`\n   - Each hex code maps to the image at the same index\n   - Example: `images[0]` → `image_colors[0]` = `\"#000000\"`\n   - Images without a color code will be added to general product images\n\n2. **Method 2 - Individual Color Fields:**\n   - Upload images with field names: `image_#000000`, `image_#FFD700`, etc.\n   - Format: `image_#RRGGBB` (e.g., `image_#000000` for black, `image_#8B4513` for brown)\n   - Multiple files per color are supported\n   - Example: `image_#000000` → Upload 3 files for black color\n\n3. **Method 3 - JSON with URLs:**\n   - Send `images_with_colors` as JSON array:\n   ```json\n   [{\n     \"hexCode\": \"#000000\",\n     \"imageUrl\": \"https://example.com/image1.jpg\",\n     \"name\": \"Black\",\n     \"price\": 99.99\n   }]\n   ```\n\n**General Images:**\n- Upload images in the `images` field without providing `image_colors`\n- These will be used as default product images (not color-specific)\n\n**Example:**\n- Upload 5 images in `images` field\n- Provide `image_colors`: `[\"#000000\", \"#000000\", \"#FFD700\", \"#FFD700\", \"#8B4513\"]`\n- Result: 2 black images, 2 gold images, 1 brown image\n- When customer selects a color by hex code, the associated images will be shown",
 				  "url": {
 					"raw": "{{base_url}}/api/admin/products",
 					"host": [
@@ -3876,10 +4028,34 @@
 						"value": "",
 						"type": "text",
 						"description": "⚠️ REPLACES all existing color images (does NOT merge). Send complete list of color image objects that should remain. Format: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"price\\\": null, \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\". Color images NOT in this list will be DELETED from storage and database. To clear all: \"[]\" or null. Example: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"http://localhost:5000/uploads/products/colors/000000/black1.jpg\\\"]}]\""
+					  },
+					  {
+						"key": "meta_title",
+						"value": "Updated SEO Title",
+						"type": "text",
+						"description": "Optional: SEO meta title (max 255 characters). Used for search engine optimization."
+					  },
+					  {
+						"key": "meta_description",
+						"value": "Updated SEO description",
+						"type": "text",
+						"description": "Optional: SEO meta description. Used for search engine optimization."
+					  },
+					  {
+						"key": "meta_keywords",
+						"value": "updated, keywords, seo",
+						"type": "text",
+						"description": "Optional: SEO meta keywords (comma-separated, max 255 characters). Used for search engine optimization."
+					  },
+					  {
+						"key": "sizeVolumeVariants",
+						"value": "[{\"id\": 1, \"size_volume\": \"5ml\", \"price\": 9.00, \"stock_quantity\": 60}, {\"size_volume\": \"30ml\", \"pack_type\": \"Single\", \"price\": 20.00, \"stock_quantity\": 40, \"stock_status\": \"in_stock\", \"is_active\": true, \"sort_order\": 3}]",
+						"type": "text",
+						"description": "Optional: JSON array to UPDATE size/volume variants. ⚠️ IMPORTANT: This REPLACES all existing variants. Variants with `id` will be updated, variants without `id` will be created, and variants not in the array will be DELETED. To skip variant updates, omit this field. Example: [{\"id\": 1, \"price\": 9.00}, {\"size_volume\": \"30ml\", \"price\": 20.00}]"
 					  }
 					]
 				  },
-				  "description": "Update product details. Supports both JSON and form-data.\n\n**3-Level Hierarchy Support:**\n- You can update `sub_category_id` - it must belong to the product's category\n- Products can be assigned to either top-level subcategories or sub-subcategories\n- Use `GET /api/subcategories/by-category/:category_id` to get top-level subcategories\n- Use `GET /api/subcategories/by-parent/:parent_id` to get sub-subcategories for a parent\n- Use `GET /api/products/options` to get all subcategories with hierarchy structure\n\n**Product Information:**\n- `name` (optional): Product name\n- `price` (optional): Product price\n- `description` (optional): Full product description\n- `short_description` (optional): Short description (max 500 chars)\n- `stock_quantity` (optional): Stock quantity\n- `stock_status` (optional): in_stock, out_of_stock, backorder, preorder\n\n**Frame Properties:**\n- `frame_shape` (optional): round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric\n- `frame_material` (optional): plastic, metal, acetate, titanium, wood, mixed\n- `frame_color` (optional): Frame color (e.g., Black, Gold, Brown)\n- `gender` (optional): men, women, unisex, kids\n\n**Lens Type:** Optional field to update lens type. Valid values:\n- `prescription` - Prescription lenses\n- `sunglasses` - Sunglasses\n- `reading` - Reading glasses\n- `computer` - Computer glasses\n- `photochromic` - Photochromic lenses\n- `plastic` - Plastic lenses\n- `glass` - Glass lenses\n- `polycarbonate` - Polycarbonate lenses\n- `trivex` - Trivex lenses\n- `high_index` - High index lenses\n\n**3D Model:** Upload a new 3D model file using the `model_3d` field.\n\n**🔄 IMAGE UPDATE FLOW (How It Works):**\n\n**Step-by-Step Process:**\n1. **Frontend sends request** with `images` field (either as file uploads or JSON array)\n2. **Backend receives request** and parses existing product images from database\n3. **Backend compares** existing images vs. new images list\n4. **Backend deletes** images that exist in old list but NOT in new list (from local storage)\n5. **Backend uploads** any new files via multer (saves to local `uploads/` folder)\n6. **Backend updates** database with final image list\n7. **Backend returns** updated product with new image URLs\n\n**📋 IMAGE MANAGEMENT SCENARIOS:**\n\n**Scenario 1: Clear All Images**\n- Send: `images: \"[]\"` (empty JSON array)\n- Flow: Backend deletes ALL existing images from storage, sets database field to `null`\n- Result: Product has no images\n\n**Scenario 2: Replace Images**\n- Send: `images: \"[\\\"url1\\\", \\\"url2\\\"]\"` (list of URLs to keep)\n- Flow: Backend keeps only these images, deletes all others from storage\n- Result: Product has only the specified images\n\n**Scenario 3: Add New Images (Keep Existing)**\n- Send: Upload files via `images` file field (no JSON array)\n- Flow: Backend adds new images to existing ones\n- Result: Product has both old and new images\n\n**Scenario 4: Replace + Add New Images**\n- Send: `images: \"[\\\"url1\\\"]\"` (text field) + upload new files via `images` (file field)\n- Flow: Backend keeps specified URLs, adds new uploaded files, deletes rest\n- Result: Product has specified URLs + newly uploaded images\n\n**General Images (without color codes):**\n- **To REPLACE/DELETE images:** Send `images` as a JSON array string with the complete list of image URLs that should remain.\n  - Images NOT in this list will be automatically DELETED from storage (local filesystem) and database\n  - Format: `images: \"[\\\"url1\\\", \\\"url2\\\"]\"`\n  - To delete all images: `images: \"[]\"`\n  - Example: `images: \"[\\\"http://localhost:5000/uploads/products/img1.jpg\\\", \\\"http://localhost:5000/uploads/products/img2.jpg\\\"]\"`\n\n- **To ADD new images:** Upload files using the `images` file field. New images will be added to existing ones.\n  - If you also send `images` as JSON array, new uploaded files will be added to that list\n\n**Images with Color Codes:** Upload multiple images, each associated with a hex color code. Three methods:\n\n1. **Method 1 - Parallel Arrays (Recommended):**\n   - Upload multiple images in the `images` field\n   - Provide `image_colors` as JSON array: `[\"#000000\", \"#FFD700\"]`\n   - Each hex code maps to the image at the same index\n   - New images will be merged with existing images for each color\n\n2. **Method 2 - Individual Color Fields:**\n   - Upload images with field names: `image_#000000`, `image_#FFD700`, etc.\n   - Format: `image_#RRGGBB`\n   - Multiple files per color are supported\n   - New images will be merged with existing images for each color\n\n3. **Method 3 - JSON with URLs:**\n   - Send `images_with_colors` as JSON array with image URLs and hex codes\n   - Will be merged with existing color images\n   - To replace/delete color images, send the complete list of color images that should remain\n   - Removed color images will be automatically deleted from storage\n\n**🎨 COLOR IMAGES DELETION (IMPORTANT):**\n\n**How Color Images Deletion Works:**\n- When `color_images` is sent, it **REPLACES** existing color images (does NOT merge)\n- Send the **complete list** of color image objects that should remain\n- Color images NOT in this list will be **automatically DELETED** from storage and database\n- Individual images within a color can be removed by excluding them from the `images` array\n\n**Color Images Scenarios:**\n\n**Scenario 1: Clear All Color Images**\n- Send: `color_images: \"[]\"` or `color_images: null`\n- Flow: Backend deletes ALL existing color images from storage, sets database field to `null`\n- Result: Product has no color images ✅\n\n**Scenario 2: Replace Color Images**\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"url1\\\"]}]\"`\n- Flow: Backend keeps only this color/image, deletes all other color images from storage\n- Result: Product has only the specified color images ✅\n\n**Scenario 3: Remove Individual Image from Color**\n- Previously: `{\"hexCode\": \"#000000\", \"images\": [\"url1\", \"url2\", \"url3\"]}`\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"`\n- Flow: Backend keeps url1 and url2, deletes url3 from storage\n- Result: Color #000000 has only url1 and url2 ✅\n\n**Scenario 4: Remove Entire Color**\n- Previously: Colors #000000 and #FFD700\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"images\\\": [\\\"url1\\\"]}]\"`\n- Flow: Backend keeps #000000, deletes ALL images for #FFD700 from storage\n- Result: Only #000000 remains ✅\n\n**Format for color_images:**\n```json\n\"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"price\\\": null, \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"\n```\n\n**To clear all color images:**\n- `color_images: \"[]\"`\n- `color_images: null`\n- `color_images: \"\"`\n\n**⚠️ CRITICAL:** When you send `color_images`, it **REPLACES** all existing color images. Images not included will be **DELETED** from storage automatically.\n\n**⚠️ IMPORTANT NOTES:**\n- **Storage:** Files are stored locally using multer (NOT S3) in the `uploads/` directory\n- **File URLs:** Returned URLs are local (e.g., `http://localhost:5000/uploads/products/filename.jpg`)\n- **Automatic Deletion:** When you clear/replace images, old files are automatically deleted from local storage\n- **Database Update:** Image field is set to `null` when all images are cleared\n- **No Separate Delete Call:** Image deletion happens automatically during update - no separate API call needed\n\n**Example - Clear All Images:**\n```json\n{\n  \"images\": \"[]\"\n}\n```\nResult: All existing images deleted from storage, database field set to `null`\n\n**Example - Replace Images:**\n```json\n{\n  \"name\": \"Updated Product\",\n  \"images\": \"[\\\"http://localhost:5000/uploads/products/keep1.jpg\\\", \\\"http://localhost:5000/uploads/products/keep2.jpg\\\"]\"\n}\n```\nResult: Only these two images remain, all others deleted from storage\n\n**Example - Add Images (without replacing):**\n```json\n{\n  \"sub_category_id\": 10,\n  \"lens_type\": \"plastic\",\n  \"frame_material\": \"plastic\",\n  \"frame_shape\": \"round\",\n  \"gender\": \"unisex\"\n}\n```\nThen upload files via `images` file field - new images added to existing ones\n\n**Example - Clear All Color Images:**\n```json\n{\n  \"color_images\": \"[]\"\n}\n```\nResult: All color images deleted from storage, database field set to `null`\n\n**Example - Replace Color Images (Keep Only Black):**\n```json\n{\n  \"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"http://localhost:5000/uploads/products/colors/000000/black1.jpg\\\"]}]\"\n}\n```\nResult: Only Black color images remain, all other colors deleted from storage\n\n**Example - Remove Individual Image from Color:**\nPreviously had: `{\"hexCode\": \"#000000\", \"images\": [\"url1\", \"url2\", \"url3\"]}`\n```json\n{\n  \"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"\n}\n```\nResult: url3 deleted from storage, only url1 and url2 remain\n\n**File Upload Example:**\n- Use field name: `image_#000000` to upload images for black color\n- Use field name: `image_#FFD700` to upload images for gold color\n- Multiple files per hex color are supported\n\n**⚠️ REMEMBER:**\n- `images` field: Controls general images (without color codes)\n- `color_images` field: Controls images with color codes\n- Both fields work independently\n- Deleted images are removed from storage AND database\n- Deleted images will NOT appear in the product table after update",
+				  "description": "Update product details. Supports both JSON and form-data.\n\n**Size/Volume Variants Update:**\nUse the `sizeVolumeVariants` field to update variants. ⚠️ **IMPORTANT:** This field REPLACES all existing variants:\n- Variants with `id` in the array will be UPDATED\n- Variants without `id` in the array will be CREATED\n- Variants NOT in the array will be DELETED\n\n**Example - Update existing and add new:**\n```json\n[\n  {\n    \"id\": 1,\n    \"size_volume\": \"5ml\",\n    \"price\": 9.00,\n    \"stock_quantity\": 60\n  },\n  {\n    \"size_volume\": \"30ml\",\n    \"pack_type\": \"Single\",\n    \"price\": 20.00,\n    \"stock_quantity\": 40\n  }\n]\n```\n**Result:** Variant with id=1 is updated, new 30ml variant is created, all other variants are deleted.\n\n**To skip variant updates:** Simply omit the `sizeVolumeVariants` field - existing variants will remain unchanged.\n\n**Response includes:**\n- Updated product with all fields\n- Formatted images and color_images\n\n**3-Level Hierarchy Support:**\n- You can update `sub_category_id` - it must belong to the product's category\n- Products can be assigned to either top-level subcategories or sub-subcategories\n- Use `GET /api/subcategories/by-category/:category_id` to get top-level subcategories\n- Use `GET /api/subcategories/by-parent/:parent_id` to get sub-subcategories for a parent\n- Use `GET /api/products/options` to get all subcategories with hierarchy structure\n\n**Product Information:**\n- `name` (optional): Product name\n- `price` (optional): Product price\n- `description` (optional): Full product description\n- `short_description` (optional): Short description (max 500 chars)\n- `stock_quantity` (optional): Stock quantity\n- `stock_status` (optional): in_stock, out_of_stock, backorder, preorder\n\n**Frame Properties:**\n- `frame_shape` (optional): round, square, rectangle, oval, cat_eye, aviator, wayfarer, browline, geometric\n- `frame_material` (optional): plastic, metal, acetate, titanium, wood, mixed\n- `frame_color` (optional): Frame color (e.g., Black, Gold, Brown)\n- `gender` (optional): men, women, unisex, kids\n\n**Lens Type:** Optional field to update lens type. Valid values:\n- `prescription` - Prescription lenses\n- `sunglasses` - Sunglasses\n- `reading` - Reading glasses\n- `computer` - Computer glasses\n- `photochromic` - Photochromic lenses\n- `plastic` - Plastic lenses\n- `glass` - Glass lenses\n- `polycarbonate` - Polycarbonate lenses\n- `trivex` - Trivex lenses\n- `high_index` - High index lenses\n\n**3D Model:** Upload a new 3D model file using the `model_3d` field.\n\n**🔄 IMAGE UPDATE FLOW (How It Works):**\n\n**Step-by-Step Process:**\n1. **Frontend sends request** with `images` field (either as file uploads or JSON array)\n2. **Backend receives request** and parses existing product images from database\n3. **Backend compares** existing images vs. new images list\n4. **Backend deletes** images that exist in old list but NOT in new list (from local storage)\n5. **Backend uploads** any new files via multer (saves to local `uploads/` folder)\n6. **Backend updates** database with final image list\n7. **Backend returns** updated product with new image URLs\n\n**📋 IMAGE MANAGEMENT SCENARIOS:**\n\n**Scenario 1: Clear All Images**\n- Send: `images: \"[]\"` (empty JSON array)\n- Flow: Backend deletes ALL existing images from storage, sets database field to `null`\n- Result: Product has no images\n\n**Scenario 2: Replace Images**\n- Send: `images: \"[\\\"url1\\\", \\\"url2\\\"]\"` (list of URLs to keep)\n- Flow: Backend keeps only these images, deletes all others from storage\n- Result: Product has only the specified images\n\n**Scenario 3: Add New Images (Keep Existing)**\n- Send: Upload files via `images` file field (no JSON array)\n- Flow: Backend adds new images to existing ones\n- Result: Product has both old and new images\n\n**Scenario 4: Replace + Add New Images**\n- Send: `images: \"[\\\"url1\\\"]\"` (text field) + upload new files via `images` (file field)\n- Flow: Backend keeps specified URLs, adds new uploaded files, deletes rest\n- Result: Product has specified URLs + newly uploaded images\n\n**General Images (without color codes):**\n- **To REPLACE/DELETE images:** Send `images` as a JSON array string with the complete list of image URLs that should remain.\n  - Images NOT in this list will be automatically DELETED from storage (local filesystem) and database\n  - Format: `images: \"[\\\"url1\\\", \\\"url2\\\"]\"`\n  - To delete all images: `images: \"[]\"`\n  - Example: `images: \"[\\\"http://localhost:5000/uploads/products/img1.jpg\\\", \\\"http://localhost:5000/uploads/products/img2.jpg\\\"]\"`\n\n- **To ADD new images:** Upload files using the `images` file field. New images will be added to existing ones.\n  - If you also send `images` as JSON array, new uploaded files will be added to that list\n\n**Images with Color Codes:** Upload multiple images, each associated with a hex color code. Three methods:\n\n1. **Method 1 - Parallel Arrays (Recommended):**\n   - Upload multiple images in the `images` field\n   - Provide `image_colors` as JSON array: `[\"#000000\", \"#FFD700\"]`\n   - Each hex code maps to the image at the same index\n   - New images will be merged with existing images for each color\n\n2. **Method 2 - Individual Color Fields:**\n   - Upload images with field names: `image_#000000`, `image_#FFD700`, etc.\n   - Format: `image_#RRGGBB`\n   - Multiple files per color are supported\n   - New images will be merged with existing images for each color\n\n3. **Method 3 - JSON with URLs:**\n   - Send `images_with_colors` as JSON array with image URLs and hex codes\n   - Will be merged with existing color images\n   - To replace/delete color images, send the complete list of color images that should remain\n   - Removed color images will be automatically deleted from storage\n\n**🎨 COLOR IMAGES DELETION (IMPORTANT):**\n\n**How Color Images Deletion Works:**\n- When `color_images` is sent, it **REPLACES** existing color images (does NOT merge)\n- Send the **complete list** of color image objects that should remain\n- Color images NOT in this list will be **automatically DELETED** from storage and database\n- Individual images within a color can be removed by excluding them from the `images` array\n\n**Color Images Scenarios:**\n\n**Scenario 1: Clear All Color Images**\n- Send: `color_images: \"[]\"` or `color_images: null`\n- Flow: Backend deletes ALL existing color images from storage, sets database field to `null`\n- Result: Product has no color images ✅\n\n**Scenario 2: Replace Color Images**\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"url1\\\"]}]\"`\n- Flow: Backend keeps only this color/image, deletes all other color images from storage\n- Result: Product has only the specified color images ✅\n\n**Scenario 3: Remove Individual Image from Color**\n- Previously: `{\"hexCode\": \"#000000\", \"images\": [\"url1\", \"url2\", \"url3\"]}`\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"`\n- Flow: Backend keeps url1 and url2, deletes url3 from storage\n- Result: Color #000000 has only url1 and url2 ✅\n\n**Scenario 4: Remove Entire Color**\n- Previously: Colors #000000 and #FFD700\n- Send: `color_images: \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"images\\\": [\\\"url1\\\"]}]\"`\n- Flow: Backend keeps #000000, deletes ALL images for #FFD700 from storage\n- Result: Only #000000 remains ✅\n\n**Format for color_images:**\n```json\n\"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"price\\\": null, \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"\n```\n\n**To clear all color images:**\n- `color_images: \"[]\"`\n- `color_images: null`\n- `color_images: \"\"`\n\n**⚠️ CRITICAL:** When you send `color_images`, it **REPLACES** all existing color images. Images not included will be **DELETED** from storage automatically.\n\n**⚠️ IMPORTANT NOTES:**\n- **Storage:** Files are stored locally using multer (NOT S3) in the `uploads/` directory\n- **File URLs:** Returned URLs are local (e.g., `http://localhost:5000/uploads/products/filename.jpg`)\n- **Automatic Deletion:** When you clear/replace images, old files are automatically deleted from local storage\n- **Database Update:** Image field is set to `null` when all images are cleared\n- **No Separate Delete Call:** Image deletion happens automatically during update - no separate API call needed\n\n**Example - Clear All Images:**\n```json\n{\n  \"images\": \"[]\"\n}\n```\nResult: All existing images deleted from storage, database field set to `null`\n\n**Example - Replace Images:**\n```json\n{\n  \"name\": \"Updated Product\",\n  \"images\": \"[\\\"http://localhost:5000/uploads/products/keep1.jpg\\\", \\\"http://localhost:5000/uploads/products/keep2.jpg\\\"]\"\n}\n```\nResult: Only these two images remain, all others deleted from storage\n\n**Example - Add Images (without replacing):**\n```json\n{\n  \"sub_category_id\": 10,\n  \"lens_type\": \"plastic\",\n  \"frame_material\": \"plastic\",\n  \"frame_shape\": \"round\",\n  \"gender\": \"unisex\"\n}\n```\nThen upload files via `images` file field - new images added to existing ones\n\n**Example - Clear All Color Images:**\n```json\n{\n  \"color_images\": \"[]\"\n}\n```\nResult: All color images deleted from storage, database field set to `null`\n\n**Example - Replace Color Images (Keep Only Black):**\n```json\n{\n  \"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"http://localhost:5000/uploads/products/colors/000000/black1.jpg\\\"]}]\"\n}\n```\nResult: Only Black color images remain, all other colors deleted from storage\n\n**Example - Remove Individual Image from Color:**\nPreviously had: `{\"hexCode\": \"#000000\", \"images\": [\"url1\", \"url2\", \"url3\"]}`\n```json\n{\n  \"color_images\": \"[{\\\"hexCode\\\": \\\"#000000\\\", \\\"name\\\": \\\"Black\\\", \\\"images\\\": [\\\"url1\\\", \\\"url2\\\"]}]\"\n}\n```\nResult: url3 deleted from storage, only url1 and url2 remain\n\n**File Upload Example:**\n- Use field name: `image_#000000` to upload images for black color\n- Use field name: `image_#FFD700` to upload images for gold color\n- Multiple files per hex color are supported\n\n**⚠️ REMEMBER:**\n- `images` field: Controls general images (without color codes)\n- `color_images` field: Controls images with color codes\n- Both fields work independently\n- Deleted images are removed from storage AND database\n- Deleted images will NOT appear in the product table after update",
 				  "url": {
 					"raw": "{{base_url}}/api/admin/products/1",
 					"host": [
@@ -3984,7 +4160,7 @@
 					  {
 						"key": "product_type",
 						"value": "frame",
-						"description": "Optional: Filter by product type. Valid values: frame, sunglasses, contact_lens, eye_hygiene, accessory"
+						"description": "Optional: Filter by product type. Valid values: frame, sunglasses, contact_lens, eye_hygiene"
 					  },
 					  {
 						"key": "search",
@@ -4018,7 +4194,7 @@
 					  }
 					]
 				  },
-				  "description": "Get all products with pagination and filters. Admin only.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 50)\n- `product_type`: Filter by product type - frame, sunglasses, contact_lens, eye_hygiene, accessory\n- `search`: Search in name, description, SKU\n- `category_id`: Filter by category ID\n- `sub_category_id`: Filter by subcategory ID\n- `is_active`: Filter by active status (true/false)\n- `sortBy`: Sort field (default: created_at)\n- `sortOrder`: Sort direction (asc/desc, default: desc)\n\n**Response includes:**\n- Products with formatted images and color_images\n- Category and subcategory information\n- Pagination metadata"
+				  "description": "Get all products with pagination and filters. Admin only.\n\n**Query Parameters:**\n- `page`: Page number (default: 1)\n- `limit`: Items per page (default: 50)\n- `product_type`: Filter by product type - frame, sunglasses, contact_lens, eye_hygiene\n- `search`: Search in name, description, SKU\n- `category_id`: Filter by category ID\n- `sub_category_id`: Filter by subcategory ID\n- `is_active`: Filter by active status (true/false)\n- `sortBy`: Sort field (default: created_at)\n- `sortOrder`: Sort direction (asc/desc, default: desc)\n\n**Response includes:**\n- Products with formatted images and color_images\n- Category and subcategory information\n- Pagination metadata"
 				}
 			  },
 			  {
@@ -4243,6 +4419,190 @@
 					]
 				  },
 				  "description": "Get all eye hygiene products. This endpoint automatically filters products by product_type='eye_hygiene'. All standard admin product filters can be combined with this endpoint.\n\n**Response format:** Same as \"Get All Products (Admin)\" endpoint with products filtered to eye hygiene only."
+				}
+			  },
+			  {
+				"name": "Get All Size/Volume Variants",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants"
+					]
+				  },
+				  "description": "Get all size/volume variants for a product. Used for Eye Hygiene products that have multiple volume options (e.g., 5ml, 10ml, 30ml) with individual prices.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variants retrieved successfully\",\n  \"data\": {\n    \"product_id\": 1,\n    \"variants\": [\n      {\n        \"id\": 1,\n        \"product_id\": 1,\n        \"size_volume\": \"5ml\",\n        \"pack_type\": \"Single\",\n        \"price\": 8.00,\n        \"compare_at_price\": 10.00,\n        \"cost_price\": 5.00,\n        \"stock_quantity\": 50,\n        \"stock_status\": \"in_stock\",\n        \"sku\": \"SKU-5ML\",\n        \"expiry_date\": \"2025-12-31T00:00:00.000Z\",\n        \"is_active\": true,\n        \"sort_order\": 1\n      },\n      {\n        \"id\": 2,\n        \"product_id\": 1,\n        \"size_volume\": \"10ml\",\n        \"pack_type\": \"Single\",\n        \"price\": 14.00,\n        \"compare_at_price\": 16.00,\n        \"cost_price\": 8.00,\n        \"stock_quantity\": 75,\n        \"stock_status\": \"in_stock\",\n        \"sku\": \"SKU-10ML\",\n        \"expiry_date\": null,\n        \"is_active\": true,\n        \"sort_order\": 2\n      }\n    ]\n  }\n}\n```"
+				}
+			  },
+			  {
+				"name": "Get Single Size/Volume Variant",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants/1",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants",
+					  "1"
+					]
+				  },
+				  "description": "Get a single size/volume variant by ID.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variant retrieved successfully\",\n  \"data\": {\n    \"variant\": {\n      \"id\": 1,\n      \"product_id\": 1,\n      \"size_volume\": \"5ml\",\n      \"pack_type\": \"Single\",\n      \"price\": 8.00,\n      \"compare_at_price\": 10.00,\n      \"cost_price\": 5.00,\n      \"stock_quantity\": 50,\n      \"stock_status\": \"in_stock\",\n      \"sku\": \"SKU-5ML\",\n      \"expiry_date\": \"2025-12-31T00:00:00.000Z\",\n      \"is_active\": true,\n      \"sort_order\": 1\n    }\n  }\n}\n```"
+				}
+			  },
+			  {
+				"name": "Create Size/Volume Variant",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					},
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"size_volume\": \"5ml\",\n  \"pack_type\": \"Single\",\n  \"price\": 8.00,\n  \"compare_at_price\": 10.00,\n  \"cost_price\": 5.00,\n  \"stock_quantity\": 50,\n  \"stock_status\": \"in_stock\",\n  \"sku\": \"SKU-5ML\",\n  \"expiry_date\": \"2025-12-31\",\n  \"is_active\": true,\n  \"sort_order\": 1\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants"
+					]
+				  },
+				  "description": "Create a new size/volume variant for a product. Used for Eye Hygiene products.\n\n**Required Fields:**\n- `size_volume`: Volume/size (e.g., \"5ml\", \"10ml\", \"30ml\")\n- `price`: Price for this variant\n\n**Optional Fields:**\n- `pack_type`: Pack type (e.g., \"Single\", \"Pack of 2\", \"Pack of 3\")\n- `compare_at_price`: Compare at price (for showing discounts)\n- `cost_price`: Cost price (wholesale cost)\n- `stock_quantity`: Stock quantity (default: 0)\n- `stock_status`: in_stock, out_of_stock, backorder (default: in_stock)\n- `sku`: SKU for this variant\n- `expiry_date`: Expiry date (ISO format: YYYY-MM-DD)\n- `is_active`: true/false (default: true)\n- `sort_order`: Sort order (default: 0)\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variant created successfully\",\n  \"data\": {\n    \"variant\": {\n      \"id\": 1,\n      \"product_id\": 1,\n      \"size_volume\": \"5ml\",\n      \"pack_type\": \"Single\",\n      \"price\": 8.00,\n      \"compare_at_price\": 10.00,\n      \"cost_price\": 5.00,\n      \"stock_quantity\": 50,\n      \"stock_status\": \"in_stock\",\n      \"sku\": \"SKU-5ML\",\n      \"expiry_date\": \"2025-12-31T00:00:00.000Z\",\n      \"is_active\": true,\n      \"sort_order\": 1\n    }\n  }\n}\n```"
+				}
+			  },
+			  {
+				"name": "Update Size/Volume Variant",
+				"request": {
+				  "method": "PUT",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					},
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"size_volume\": \"5ml\",\n  \"price\": 9.00,\n  \"stock_quantity\": 60,\n  \"is_active\": true\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants/1",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants",
+					  "1"
+					]
+				  },
+				  "description": "Update an existing size/volume variant. All fields are optional - only send the fields you want to update.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variant updated successfully\",\n  \"data\": {\n    \"variant\": {\n      \"id\": 1,\n      \"product_id\": 1,\n      \"size_volume\": \"5ml\",\n      \"pack_type\": \"Single\",\n      \"price\": 9.00,\n      \"compare_at_price\": 10.00,\n      \"cost_price\": 5.00,\n      \"stock_quantity\": 60,\n      \"stock_status\": \"in_stock\",\n      \"sku\": \"SKU-5ML\",\n      \"expiry_date\": \"2025-12-31T00:00:00.000Z\",\n      \"is_active\": true,\n      \"sort_order\": 1\n    }\n  }\n}\n```"
+				}
+			  },
+			  {
+				"name": "Delete Size/Volume Variant",
+				"request": {
+				  "method": "DELETE",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants/1",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants",
+					  "1"
+					]
+				  },
+				  "description": "Delete a size/volume variant.\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variant deleted successfully\"\n}\n```"
+				}
+			  },
+			  {
+				"name": "Bulk Update Size/Volume Variants",
+				"request": {
+				  "method": "PUT",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					},
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"variants\": [\n    {\n      \"id\": 1,\n      \"size_volume\": \"5ml\",\n      \"pack_type\": \"Single\",\n      \"price\": 9.00,\n      \"stock_quantity\": 60\n    },\n    {\n      \"size_volume\": \"30ml\",\n      \"pack_type\": \"Single\",\n      \"price\": 20.00,\n      \"stock_quantity\": 40,\n      \"stock_status\": \"in_stock\",\n      \"is_active\": true,\n      \"sort_order\": 3\n    }\n  ]\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/products/1/size-volume-variants/bulk",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "products",
+					  "1",
+					  "size-volume-variants",
+					  "bulk"
+					]
+				  },
+				  "description": "Bulk update size/volume variants for a product. This endpoint allows you to update multiple variants at once.\n\n**How it works:**\n- Variants with `id` will be updated\n- Variants without `id` will be created as new variants\n- Variants not included in the array will be deleted\n\n**Example:**\n- Existing variants: [id=1 (5ml), id=2 (10ml)]\n- Send: [{id: 1, price: 9.00}, {size_volume: \"30ml\", price: 20.00}]\n- Result: id=1 updated, id=2 deleted, new 30ml variant created\n\n**Response:**\n```json\n{\n  \"success\": true,\n  \"message\": \"Size/volume variants updated successfully\",\n  \"data\": {\n    \"product_id\": 1,\n    \"variants\": [\n      {\n        \"id\": 1,\n        \"product_id\": 1,\n        \"size_volume\": \"5ml\",\n        \"pack_type\": \"Single\",\n        \"price\": 9.00,\n        \"stock_quantity\": 60,\n        \"is_active\": true,\n        \"sort_order\": 1\n      },\n      {\n        \"id\": 3,\n        \"product_id\": 1,\n        \"size_volume\": \"30ml\",\n        \"pack_type\": \"Single\",\n        \"price\": 20.00,\n        \"stock_quantity\": 40,\n        \"is_active\": true,\n        \"sort_order\": 3\n      }\n    ]\n  }\n}\n```"
 				}
 			  },
 			  {
@@ -6652,11 +7012,12 @@
 					  "admin",
 					  "banners"
 					]
-				  }
+				  },
+				  "description": "Get all banners (active and inactive). Can be filtered by page_type, category_id, and sub_category_id using query parameters."
 				}
 			  },
 			  {
-				"name": "Create Banner (Admin)",
+				"name": "Create Banner - Home Page",
 				"request": {
 				  "method": "POST",
 				  "header": [
@@ -6679,8 +7040,29 @@
 						"type": "text"
 					  },
 					  {
+						"key": "page_type",
+						"value": "home",
+						"type": "text",
+						"description": "Must be: home, category, subcategory, or sub_subcategory"
+					  },
+					  {
+						"key": "link_url",
+						"value": "https://example.com",
+						"type": "text"
+					  },
+					  {
+						"key": "position",
+						"value": "header",
+						"type": "text"
+					  },
+					  {
 						"key": "sort_order",
 						"value": "0",
+						"type": "text"
+					  },
+					  {
+						"key": "is_active",
+						"value": "true",
 						"type": "text"
 					  }
 					]
@@ -6695,7 +7077,215 @@
 					  "admin",
 					  "banners"
 					]
-				  }
+				  },
+				  "description": "Create a banner for the home page. For home page, category_id and sub_category_id are automatically set to null."
+				}
+			  },
+			  {
+				"name": "Create Banner - Category Page",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "body": {
+					"mode": "formdata",
+					"formdata": [
+					  {
+						"key": "image",
+						"type": "file",
+						"src": []
+					  },
+					  {
+						"key": "title",
+						"value": "Category Banner",
+						"type": "text"
+					  },
+					  {
+						"key": "page_type",
+						"value": "category",
+						"type": "text"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"type": "text",
+						"description": "Required for category, subcategory, and sub_subcategory page types"
+					  },
+					  {
+						"key": "link_url",
+						"value": "https://example.com/category",
+						"type": "text"
+					  },
+					  {
+						"key": "sort_order",
+						"value": "0",
+						"type": "text"
+					  },
+					  {
+						"key": "is_active",
+						"value": "true",
+						"type": "text"
+					  }
+					]
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/banners",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "banners"
+					]
+				  },
+				  "description": "Create a banner for a specific category page. category_id is required."
+				}
+			  },
+			  {
+				"name": "Create Banner - Subcategory Page",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "body": {
+					"mode": "formdata",
+					"formdata": [
+					  {
+						"key": "image",
+						"type": "file",
+						"src": []
+					  },
+					  {
+						"key": "title",
+						"value": "Subcategory Banner",
+						"type": "text"
+					  },
+					  {
+						"key": "page_type",
+						"value": "subcategory",
+						"type": "text"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"type": "text",
+						"description": "Required - Parent category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "2",
+						"type": "text",
+						"description": "Required for subcategory and sub_subcategory page types"
+					  },
+					  {
+						"key": "link_url",
+						"value": "https://example.com/subcategory",
+						"type": "text"
+					  },
+					  {
+						"key": "sort_order",
+						"value": "0",
+						"type": "text"
+					  },
+					  {
+						"key": "is_active",
+						"value": "true",
+						"type": "text"
+					  }
+					]
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/banners",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "banners"
+					]
+				  },
+				  "description": "Create a banner for a specific subcategory page. Both category_id and sub_category_id are required. The subcategory must belong to the specified category."
+				}
+			  },
+			  {
+				"name": "Create Banner - Sub-subcategory Page",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "body": {
+					"mode": "formdata",
+					"formdata": [
+					  {
+						"key": "image",
+						"type": "file",
+						"src": []
+					  },
+					  {
+						"key": "title",
+						"value": "Sub-subcategory Banner",
+						"type": "text"
+					  },
+					  {
+						"key": "page_type",
+						"value": "sub_subcategory",
+						"type": "text"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"type": "text",
+						"description": "Required - Parent category ID"
+					  },
+					  {
+						"key": "sub_category_id",
+						"value": "3",
+						"type": "text",
+						"description": "Required - The sub-subcategory ID (which is a subcategory with a parent_id)"
+					  },
+					  {
+						"key": "link_url",
+						"value": "https://example.com/sub-subcategory",
+						"type": "text"
+					  },
+					  {
+						"key": "sort_order",
+						"value": "0",
+						"type": "text"
+					  },
+					  {
+						"key": "is_active",
+						"value": "true",
+						"type": "text"
+					  }
+					]
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/banners",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "banners"
+					]
+				  },
+				  "description": "Create a banner for a specific sub-subcategory page. Both category_id and sub_category_id are required. The sub-subcategory must belong to the specified category."
 				}
 			  },
 			  {
@@ -6715,6 +7305,21 @@
 						"key": "title",
 						"value": "Updated Banner",
 						"type": "text"
+					  },
+					  {
+						"key": "page_type",
+						"value": "category",
+						"type": "text"
+					  },
+					  {
+						"key": "category_id",
+						"value": "1",
+						"type": "text"
+					  },
+					  {
+						"key": "is_active",
+						"value": "true",
+						"type": "text"
 					  }
 					]
 				  },
@@ -6729,7 +7334,8 @@
 					  "banners",
 					  "1"
 					]
-				  }
+				  },
+				  "description": "Update a banner. You can update any field including page_type, category_id, and sub_category_id. Image is optional - only include if you want to update it."
 				}
 			  },
 			  {
@@ -6753,7 +7359,8 @@
 					  "banners",
 					  "1"
 					]
-				  }
+				  },
+				  "description": "Delete a banner. This action cannot be undone and will also delete the associated image from S3."
 				}
 			  }
 			]

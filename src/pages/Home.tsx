@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import Navbar from '../components/Navbar'
 import Banner from '../components/home/Banner'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import TrustedBrands from '../components/home/TrustedBrands'
@@ -40,9 +41,13 @@ const Home: React.FC = () => {
 
     return (
         <div className="bg-slate-950 text-white">
+            {/* Navbar - Always shown (navbar itself is fixed positioned) */}
+            <Navbar />
+            
+            {/* Banner Section - Only shows if there are banners */}
             <Banner 
                 pageType="home"
-                showNavbar={true}
+                showNavbar={false}
                 autoSlideInterval={5000}
                 height="200px"
             />

@@ -847,13 +847,13 @@ const CategoryPage: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                        <div className="mb-8 bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-600">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="mb-6 bg-white rounded-lg shadow-md p-4 border-l-2 border-blue-600">
+                            <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div>
-                                    <p className="text-sm text-gray-600 mb-1">
+                                    <p className="text-xs text-gray-600 mb-1">
                                         {categoryInfo.subSubcategory ? 'Viewing sub-subcategory:' : 'Viewing subcategory:'}
                                     </p>
-                                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">
                                         {categoryInfo.subSubcategory 
                                             ? translateCategory(categoryInfo.subSubcategory)
                                             : translateCategory(categoryInfo.subcategory)}
@@ -868,7 +868,7 @@ const CategoryPage: React.FC = () => {
                                     to={categoryInfo.subSubcategory 
                                         ? `/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`
                                         : `/category/${categoryInfo.category.slug}`}
-                                    className="text-blue-600 hover:text-blue-800 font-medium text-sm flex items-center gap-2 transition-colors"
+                                    className="text-blue-600 hover:text-blue-800 font-medium text-xs flex items-center gap-2 transition-colors"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
