@@ -11,12 +11,7 @@ const categorySlugToTranslationKey: Record<string, string> = {
   'sunglasses': 'navbar.sunglasses',
   'contact-lenses': 'navbar.contactLenses',
   'eye-hygiene': 'navbar.eyeHygiene',
-  'opty-kids': 'navbar.optyKids',
-  'optykids': 'navbar.optyKids',
-  'opty_kids': 'navbar.optyKids',
-  'optykids-kids': 'navbar.optyKids',
-  'optikids': 'navbar.optyKids',
-}
+  }
 
 /**
  * Common subcategory slug mappings - these are known subcategory slugs that should map to translation keys

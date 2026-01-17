@@ -3,7 +3,6 @@ import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import Banner from '../../components/home/Banner'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getProducts, 
@@ -723,56 +722,13 @@ const CategoryPage: React.FC = () => {
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
                     <p className="mt-4 text-lg text-gray-600">Loading...</p>
                 </div>
-                <Footer />
             </div>
         )
     }
 
-    // Determine page type and IDs for banner
-    const getBannerProps = () => {
-        if (categoryInfo.subSubcategory && categoryInfo.subcategory) {
-            return {
-                pageType: 'sub_subcategory' as const,
-                categoryId: categoryInfo.category?.id || null,
-                subCategoryId: categoryInfo.subSubcategory.id
-            }
-        } else if (categoryInfo.subcategory) {
-            return {
-                pageType: 'subcategory' as const,
-                categoryId: categoryInfo.category?.id || null,
-                subCategoryId: categoryInfo.subcategory.id
-            }
-        } else if (categoryInfo.category) {
-            return {
-                pageType: 'category' as const,
-                categoryId: categoryInfo.category.id,
-                subCategoryId: null
-            }
-        }
-        return {
-            pageType: null as const,
-            categoryId: null,
-            subCategoryId: null
-        }
-    }
-
-    const bannerProps = getBannerProps()
-
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
-
-            {/* Banner Section - Show banners specific to this page type */}
-            {categoryInfo.category && (
-                <Banner
-                    pageType={bannerProps.pageType}
-                    categoryId={bannerProps.categoryId}
-                    subCategoryId={bannerProps.subCategoryId}
-                    showNavbar={false}
-                    autoSlideInterval={5000}
-                    height="300px"
-                />
-            )}
 
             {/* Hero Section - Show for subcategories and sub-subcategories */}
             {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
