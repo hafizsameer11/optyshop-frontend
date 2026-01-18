@@ -5,8 +5,8 @@ import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
-import { 
-    getProducts, 
+import {
+    getProducts,
     getProductsBySection,
     getProductOptions,
     type Product,
@@ -28,7 +28,7 @@ const Products: React.FC = () => {
     const [products, setProducts] = useState<Product[]>([])
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [loading, setLoading] = useState(true)
-    
+
     // Detect current section from URL path
     const getCurrentSection = (): ProductSection | null => {
         const path = location.pathname
@@ -38,7 +38,7 @@ const Products: React.FC = () => {
         if (path.includes('/shop/eye-hygiene')) return 'eye-hygiene'
         return null
     }
-    
+
     const currentSection = getCurrentSection()
     const [pagination, setPagination] = useState({
         total: 0,
@@ -46,13 +46,13 @@ const Products: React.FC = () => {
         limit: 12,
         pages: 0
     })
-    
+
     // Category and subcategory from URL
     const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
         category: null,
         subcategory: null
     })
-    
+
     // Filters
     const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
     const [selectedSubcategory, setSelectedSubcategory] = useState<string | number | null>(null)
@@ -83,62 +83,62 @@ const Products: React.FC = () => {
         const categorySlug = product.category?.slug?.toLowerCase() || ''
         const productName = product.name?.toLowerCase() || ''
         const productImage = getProductImageUrl(product).toLowerCase()
-        
+
         // Check for Opty Kids category (kids glasses)
-        const isOptyKids = categoryName.includes('opty kids') || 
-                          categorySlug.includes('opty-kids') ||
-                          categorySlug.includes('optykids') ||
-                          categorySlug.includes('opty_kids') ||
-                          categoryName.includes('optykids')
-        
+        const isOptyKids = categoryName.includes('opty kids') ||
+            categorySlug.includes('opty-kids') ||
+            categorySlug.includes('optykids') ||
+            categorySlug.includes('opty_kids') ||
+            categoryName.includes('optykids')
+
         // Check if "glasses" appears anywhere in the name or category (includes sunglasses, optyglasses, kids glasses, etc.)
-        const hasGlassesKeyword = categoryName.includes('glasses') || 
-                                  categorySlug.includes('glasses') ||
-                                  productName.includes('glasses') ||
-                                  categoryName.includes('occhiali') || 
-                                  categorySlug.includes('occhiali') ||
-                                  productName.includes('occhiali') ||
-                                  categoryName.includes('frame') || 
-                                  categorySlug.includes('frame') ||
-                                  productName.includes('frame') ||
-                                  categoryName.includes('eyewear') || 
-                                  categorySlug.includes('eyewear') ||
-                                  productName.includes('eyewear')
-        
+        const hasGlassesKeyword = categoryName.includes('glasses') ||
+            categorySlug.includes('glasses') ||
+            productName.includes('glasses') ||
+            categoryName.includes('occhiali') ||
+            categorySlug.includes('occhiali') ||
+            productName.includes('occhiali') ||
+            categoryName.includes('frame') ||
+            categorySlug.includes('frame') ||
+            productName.includes('frame') ||
+            categoryName.includes('eyewear') ||
+            categorySlug.includes('eyewear') ||
+            productName.includes('eyewear')
+
         // Check for kids glasses (kids + glasses keywords)
         const isKidsGlasses = (categoryName.includes('kids') || categorySlug.includes('kids') || productName.includes('kids')) &&
-                             (hasGlassesKeyword || categoryName.includes('occhiali') || categorySlug.includes('occhiali'))
-        
+            (hasGlassesKeyword || categoryName.includes('occhiali') || categorySlug.includes('occhiali'))
+
         // Check if product has color_images (glasses typically have multiple color options)
         const hasColorImages = Boolean(product.color_images && product.color_images.length > 0)
-        
+
         // Check if image URL suggests glasses (contains "frame" or "glasses" in path)
-        const imageSuggestsGlasses = productImage.includes('frame') || 
-                                     productImage.includes('glasses') ||
-                                     productImage.includes('occhiali')
-        
+        const imageSuggestsGlasses = productImage.includes('frame') ||
+            productImage.includes('glasses') ||
+            productImage.includes('occhiali')
+
         // If product has color images, it's likely glasses (glasses have color variations)
         // OR if it has glasses keywords in name/category
         // OR if image URL suggests glasses
         // OR if it's Opty Kids or kids glasses
-        return hasGlassesKeyword || 
-               isOptyKids || 
-               isKidsGlasses ||
-               (hasColorImages && imageSuggestsGlasses) || 
-               (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
+        return hasGlassesKeyword ||
+            isOptyKids ||
+            isKidsGlasses ||
+            (hasColorImages && imageSuggestsGlasses) ||
+            (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
     }
 
     // Read URL parameters and fetch category/subcategory info
     useEffect(() => {
         let isCancelled = false
-        
+
         const categorySlug = searchParams.get('category')
         const subcategorySlug = searchParams.get('subcategory')
-        
+
         const fetchCategoryInfo = async () => {
             let category: Category | null = null
             let subcategory: Category | null = null
-            
+
             if (categorySlug) {
                 try {
                     category = await getCategoryBySlug(categorySlug)
@@ -153,7 +153,7 @@ const Products: React.FC = () => {
                     }
                 }
             }
-            
+
             if (subcategorySlug) {
                 try {
                     // Pass categoryId if available to narrow the search
@@ -174,30 +174,30 @@ const Products: React.FC = () => {
                     setSelectedSubcategory(null)
                 }
             }
-            
+
             // Reset category if not in URL
             if (!categorySlug) {
                 if (!isCancelled) {
                     setSelectedCategory('all')
                 }
             }
-            
+
             if (!isCancelled) {
                 setCategoryInfo({ category, subcategory })
             }
         }
-        
+
         fetchCategoryInfo()
-        
+
         return () => {
             isCancelled = true
         }
     }, [searchParams])
-    
+
     // Fetch product options on mount
     useEffect(() => {
         let isCancelled = false
-        
+
         const fetchOptions = async () => {
             try {
                 const options = await getProductOptions()
@@ -212,7 +212,7 @@ const Products: React.FC = () => {
             }
         }
         fetchOptions()
-        
+
         return () => {
             isCancelled = true
         }
@@ -226,11 +226,11 @@ const Products: React.FC = () => {
             })
         }
     }, [])
-    
+
     // Fetch products when filters change
     useEffect(() => {
         let isCancelled = false
-        
+
         const fetchProducts = async () => {
             try {
                 setLoading(true)
@@ -292,122 +292,122 @@ const Products: React.FC = () => {
                     filters.sortOrder = 'asc'
                 }
 
-            // Use section-specific endpoint if section is detected, otherwise use regular products endpoint
-            const result = currentSection 
-                ? await getProductsBySection(currentSection, filters)
-                : await getProducts(filters)
-            if (isCancelled) return
-            
-            if (result) {
-                // Extract unique colors from all products for color filter dropdown
-                if (result.products && result.products.length > 0) {
-                    const colorSet = new Set<string>()
-                    result.products.forEach((product: Product) => {
-                        const p = product as any
-                        // Extract colors from 'colors' array
-                        if (p.colors && Array.isArray(p.colors)) {
-                            p.colors.forEach((c: any) => {
-                                const colorName = c.display_name || c.name || c.value || c.color
-                                if (colorName) {
-                                    colorSet.add(colorName)
-                                }
-                            })
+                // Use section-specific endpoint if section is detected, otherwise use regular products endpoint
+                const result = currentSection
+                    ? await getProductsBySection(currentSection, filters)
+                    : await getProducts(filters)
+                if (isCancelled) return
+
+                if (result) {
+                    // Extract unique colors from all products for color filter dropdown
+                    if (result.products && result.products.length > 0) {
+                        const colorSet = new Set<string>()
+                        result.products.forEach((product: Product) => {
+                            const p = product as any
+                            // Extract colors from 'colors' array
+                            if (p.colors && Array.isArray(p.colors)) {
+                                p.colors.forEach((c: any) => {
+                                    const colorName = c.display_name || c.name || c.value || c.color
+                                    if (colorName) {
+                                        colorSet.add(colorName)
+                                    }
+                                })
+                            }
+                            // Extract colors from 'color_images' array
+                            if (product.color_images && Array.isArray(product.color_images)) {
+                                product.color_images.forEach((ci: any) => {
+                                    const colorName = ci.display_name || ci.name || ci.color
+                                    if (colorName) {
+                                        colorSet.add(colorName)
+                                    }
+                                })
+                            }
+                        })
+                        if (!isCancelled) {
+                            setAvailableColors(Array.from(colorSet).sort())
                         }
-                        // Extract colors from 'color_images' array
-                        if (product.color_images && Array.isArray(product.color_images)) {
-                            product.color_images.forEach((ci: any) => {
-                                const colorName = ci.display_name || ci.name || ci.color
-                                if (colorName) {
-                                    colorSet.add(colorName)
-                                }
-                            })
-                        }
-                    })
+                    }
+
+                    // Filter products by color if color is selected (client-side filtering)
+                    let filteredProducts = result.products || []
+                    if (selectedColor && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const p = product as any
+                            const selectedColorLower = selectedColor.toLowerCase()
+
+                            // Check in 'colors' array
+                            if (p.colors && Array.isArray(p.colors)) {
+                                const hasColor = p.colors.some((c: any) => {
+                                    const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
+                                    return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                })
+                                if (hasColor) return true
+                            }
+
+                            // Check in 'color_images' array
+                            if (product.color_images && Array.isArray(product.color_images)) {
+                                const hasColor = product.color_images.some((ci: any) => {
+                                    const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
+                                    return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                })
+                                if (hasColor) return true
+                            }
+
+                            return false
+                        })
+                    }
+
+                    // Log first product to debug image and stock data - show ALL image-related fields
+                    if (filteredProducts.length > 0 && import.meta.env.DEV) {
+                        const sampleProduct = filteredProducts[0]
+                        const selectedImageUrl = getProductImageUrl(sampleProduct)
+                        console.log('🔍 API Product List - Sample Product Data:', {
+                            id: sampleProduct.id,
+                            name: sampleProduct.name,
+                            'All Image Fields': {
+                                images: sampleProduct.images,
+                                image: sampleProduct.image,
+                                image_url: sampleProduct.image_url,
+                                thumbnail: sampleProduct.thumbnail,
+                                primary_image: (sampleProduct as any).primary_image,
+                                main_image: (sampleProduct as any).main_image,
+                                product_image: (sampleProduct as any).product_image,
+                                photo: (sampleProduct as any).photo,
+                                photo_url: (sampleProduct as any).photo_url,
+                            },
+                            'Selected Image URL': selectedImageUrl,
+                            'Stock Fields': {
+                                in_stock: sampleProduct.in_stock,
+                                stock_quantity: sampleProduct.stock_quantity,
+                                stock_status: (sampleProduct as any).stock_status,
+                            },
+                            'Price Fields': {
+                                price: sampleProduct.price,
+                                sale_price: sampleProduct.sale_price,
+                            },
+                        })
+                    }
                     if (!isCancelled) {
-                        setAvailableColors(Array.from(colorSet).sort())
+                        setProducts(filteredProducts)
+                        // Update pagination total if we filtered client-side
+                        const updatedPagination = { ...result.pagination }
+                        if (selectedColor && filteredProducts.length !== (result.products || []).length) {
+                            updatedPagination.total = filteredProducts.length
+                            updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                        }
+                        setPagination(updatedPagination)
+                    }
+                } else {
+                    if (!isCancelled) {
+                        setProducts([])
+                        setPagination({
+                            total: 0,
+                            page: 1,
+                            limit: 12,
+                            pages: 0
+                        })
                     }
                 }
-
-                // Filter products by color if color is selected (client-side filtering)
-                let filteredProducts = result.products || []
-                if (selectedColor && filteredProducts.length > 0) {
-                    filteredProducts = filteredProducts.filter((product: Product) => {
-                        const p = product as any
-                        const selectedColorLower = selectedColor.toLowerCase()
-                        
-                        // Check in 'colors' array
-                        if (p.colors && Array.isArray(p.colors)) {
-                            const hasColor = p.colors.some((c: any) => {
-                                const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
-                                return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
-                            })
-                            if (hasColor) return true
-                        }
-                        
-                        // Check in 'color_images' array
-                        if (product.color_images && Array.isArray(product.color_images)) {
-                            const hasColor = product.color_images.some((ci: any) => {
-                                const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
-                                return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
-                            })
-                            if (hasColor) return true
-                        }
-                        
-                        return false
-                    })
-                }
-
-                // Log first product to debug image and stock data - show ALL image-related fields
-                if (filteredProducts.length > 0 && import.meta.env.DEV) {
-                    const sampleProduct = filteredProducts[0]
-                    const selectedImageUrl = getProductImageUrl(sampleProduct)
-                    console.log('🔍 API Product List - Sample Product Data:', {
-                        id: sampleProduct.id,
-                        name: sampleProduct.name,
-                        'All Image Fields': {
-                            images: sampleProduct.images,
-                            image: sampleProduct.image,
-                            image_url: sampleProduct.image_url,
-                            thumbnail: sampleProduct.thumbnail,
-                            primary_image: (sampleProduct as any).primary_image,
-                            main_image: (sampleProduct as any).main_image,
-                            product_image: (sampleProduct as any).product_image,
-                            photo: (sampleProduct as any).photo,
-                            photo_url: (sampleProduct as any).photo_url,
-                        },
-                        'Selected Image URL': selectedImageUrl,
-                        'Stock Fields': {
-                            in_stock: sampleProduct.in_stock,
-                            stock_quantity: sampleProduct.stock_quantity,
-                            stock_status: (sampleProduct as any).stock_status,
-                        },
-                        'Price Fields': {
-                            price: sampleProduct.price,
-                            sale_price: sampleProduct.sale_price,
-                        },
-                    })
-                }
-                if (!isCancelled) {
-                    setProducts(filteredProducts)
-                    // Update pagination total if we filtered client-side
-                    const updatedPagination = { ...result.pagination }
-                    if (selectedColor && filteredProducts.length !== (result.products || []).length) {
-                        updatedPagination.total = filteredProducts.length
-                        updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
-                    }
-                    setPagination(updatedPagination)
-                }
-            } else {
-                if (!isCancelled) {
-                    setProducts([])
-                    setPagination({
-                        total: 0,
-                        page: 1,
-                        limit: 12,
-                        pages: 0
-                    })
-                }
-            }
             } catch (error) {
                 if (!isCancelled) {
                     console.error('Error fetching products:', error)
@@ -450,37 +450,6 @@ const Products: React.FC = () => {
             {/* Campaigns Section - Show before hero section */}
             <Campaigns position="shop" variant="compact" />
 
-            {/* Hero Section */}
-            <section className="bg-gradient-to-r from-blue-950 to-blue-800 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
-                <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="text-center text-white">
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                            {currentSection 
-                                ? (currentSection === 'sunglasses' ? 'Sunglasses' :
-                                   currentSection === 'eyeglasses' ? 'Eyeglasses' :
-                                   currentSection === 'contact-lenses' ? 'Contact Lenses' :
-                                   currentSection === 'eye-hygiene' ? 'Eye Hygiene' : t('shop.title'))
-                                : categoryInfo.subcategory 
-                                    ? translateCategory(categoryInfo.subcategory)
-                                    : categoryInfo.category 
-                                        ? translateCategory(categoryInfo.category)
-                                        : t('shop.title')}
-                        </h1>
-                        <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                            {currentSection 
-                                ? (currentSection === 'sunglasses' ? 'Discover our premium collection of sunglasses' :
-                                   currentSection === 'eyeglasses' ? 'Browse our stylish eyeglasses frames' :
-                                   currentSection === 'contact-lenses' ? 'Explore our contact lens options' :
-                                   currentSection === 'eye-hygiene' ? 'Find the perfect eye care products' : t('shop.description'))
-                                : categoryInfo.subcategory 
-                                    ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })
-                                    : categoryInfo.category 
-                                        ? t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })
-                                        : t('shop.description')}
-                        </p>
-                    </div>
-                </div>
-            </section>
 
             {/* Section Navigation */}
             <section className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
@@ -488,51 +457,46 @@ const Products: React.FC = () => {
                     <div className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto py-4">
                         <Link
                             to="/shop"
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                                !currentSection
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${!currentSection
                                     ? 'bg-blue-950 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                                }`}
                         >
                             All Products
                         </Link>
                         <Link
                             to="/shop/sunglasses"
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                                currentSection === 'sunglasses'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'sunglasses'
                                     ? 'bg-blue-950 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                                }`}
                         >
                             Sunglasses
                         </Link>
                         <Link
                             to="/shop/eyeglasses"
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                                currentSection === 'eyeglasses'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'eyeglasses'
                                     ? 'bg-blue-950 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                                }`}
                         >
                             Eyeglasses
                         </Link>
                         <Link
                             to="/shop/contact-lenses"
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                                currentSection === 'contact-lenses'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'contact-lenses'
                                     ? 'bg-blue-950 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                                }`}
                         >
                             Contact Lenses
                         </Link>
                         <Link
                             to="/shop/eye-hygiene"
-                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${
-                                currentSection === 'eye-hygiene'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'eye-hygiene'
                                     ? 'bg-blue-950 text-white'
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                                }`}
                         >
                             Eye Hygiene
                         </Link>
@@ -585,15 +549,14 @@ const Products: React.FC = () => {
                                         }
                                         setCurrentPage(1)
                                     }}
-                                    className={`px-8 py-3 rounded-xl font-bold transition-colors ${
-                                        showNewArrivals
+                                    className={`px-8 py-3 rounded-xl font-bold transition-colors ${showNewArrivals
                                             ? 'bg-blue-950 text-white'
                                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
+                                        }`}
                                 >
                                     {showNewArrivals ? '✓ New Arrivals' : 'New Arrivals'}
                                 </button>
-                                
+
                                 {/* Quick Gender Filters */}
                                 {productOptions?.genders && productOptions.genders.length > 0 && (
                                     <div className="flex gap-3 flex-wrap">
@@ -604,11 +567,10 @@ const Products: React.FC = () => {
                                                     setGender(gender === g ? '' : g)
                                                     setCurrentPage(1)
                                                 }}
-                                                className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${
-                                                    gender === g
+                                                className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${gender === g
                                                         ? 'bg-blue-950 text-white'
                                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                }`}
+                                                    }`}
                                             >
                                                 {g.charAt(0).toUpperCase() + g.slice(1)}
                                             </button>
@@ -616,7 +578,7 @@ const Products: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            
+
                             {/* Sort Dropdown */}
                             <div className="flex items-center gap-4">
                                 <label className="text-sm font-medium text-gray-700">Sort by:</label>
@@ -636,7 +598,7 @@ const Products: React.FC = () => {
                                 </select>
                             </div>
                         </div>
-                        
+
                         {/* Search */}
                         <div className="flex-1 lg:max-w-md">
                             <input
@@ -651,7 +613,7 @@ const Products: React.FC = () => {
                             />
                         </div>
                     </div>
-                    
+
                     {/* Filter Options Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                         {/* Category Filter */}
@@ -673,7 +635,7 @@ const Products: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Frame Shape Filter */}
                         <div className="space-y-4">
                             <label className="block text-base font-semibold text-gray-800 mb-3">Frame Shape</label>
@@ -693,7 +655,7 @@ const Products: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Frame Material Filter */}
                         <div className="space-y-4">
                             <label className="block text-base font-semibold text-gray-800 mb-3">Frame Material</label>
@@ -713,7 +675,7 @@ const Products: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Gender Filter */}
                         <div className="space-y-4">
                             <label className="block text-base font-semibold text-gray-800 mb-3">Gender</label>
@@ -733,7 +695,7 @@ const Products: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        
+
                         {/* Price Range and Color Filter */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -838,23 +800,23 @@ const Products: React.FC = () => {
                                                 images: ci.images || []
                                             }))
                                             : [])
-                                    
+
                                     // Get selected color or default to first color if available
-                                    const selectedColor = productColorSelections[product.id] || 
-                                        (colorsArray.length > 0 
+                                    const selectedColor = productColorSelections[product.id] ||
+                                        (colorsArray.length > 0
                                             ? (colorsArray[0].value || colorsArray[0].color || colorsArray[0].hexCode)
                                             : null)
-                                    
+
                                     // Find current selected color index
                                     const selectedColorIndex = colorsArray.length > 0 && selectedColor
-                                        ? colorsArray.findIndex((c: any) => 
+                                        ? colorsArray.findIndex((c: any) =>
                                             (c.value && c.value.toLowerCase() === selectedColor.toLowerCase()) ||
                                             (c.color && c.color.toLowerCase() === selectedColor.toLowerCase()) ||
                                             (c.hexCode && c.hexCode.toLowerCase() === selectedColor.toLowerCase())
                                         )
                                         : -1
                                     const startIndex = selectedColorIndex >= 0 ? selectedColorIndex : 0
-                                    
+
                                     // Get hover color index (for auto-cycling on hover) - cycle continuously
                                     const hoverColorIndex = hoverColorCycles[product.id] ?? startIndex
                                     const currentIndex = isHovering[product.id] && colorsArray.length > 0
@@ -863,12 +825,12 @@ const Products: React.FC = () => {
                                     const displayColor = colorsArray.length > 0 && colorsArray[currentIndex]
                                         ? (colorsArray[currentIndex].value || colorsArray[currentIndex].color || colorsArray[currentIndex].hexCode)
                                         : selectedColor
-                                    
+
                                     // Get image URL based on display color (hover or selected)
                                     const productImageUrl = displayColor && colorsArray.length > 0
                                         ? (() => {
                                             const displayColorLower = (displayColor || '').toLowerCase()
-                                            const colorData = colorsArray.find((c: any) => 
+                                            const colorData = colorsArray.find((c: any) =>
                                                 (c.value && c.value.toLowerCase() === displayColorLower) ||
                                                 (c.color && c.color.toLowerCase() === displayColorLower) ||
                                                 (c.hexCode && c.hexCode.toLowerCase() === displayColorLower)
@@ -887,29 +849,29 @@ const Products: React.FC = () => {
                                             return getProductImageUrl(product)
                                         })()
                                         : getProductImageUrl(product)
-                                    
+
                                     // Handle hover color cycling with smooth transitions
                                     const handleMouseEnter = () => {
                                         if (colorsArray.length <= 1) return // No need to cycle if only one color
-                                        
+
                                         setIsHovering(prev => ({ ...prev, [product.id]: true }))
-                                        
+
                                         // Clear any existing interval for this product
                                         if (hoverIntervals.current[product.id]) {
                                             clearInterval(hoverIntervals.current[product.id])
                                         }
-                                        
+
                                         // Start from selected color index
                                         const startIdx = selectedColorIndex >= 0 ? selectedColorIndex : 0
                                         setHoverColorCycles(prev => ({ ...prev, [product.id]: startIdx }))
                                         setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
-                                        
+
                                         // Start cycling through colors with smooth fade transitions
                                         let currentIndex = startIdx
                                         hoverIntervals.current[product.id] = setInterval(() => {
                                             // Fade out
                                             setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
-                                            
+
                                             setTimeout(() => {
                                                 // Move to next color (cycle back to 0 after last)
                                                 currentIndex = (currentIndex + 1) % colorsArray.length
@@ -917,26 +879,26 @@ const Products: React.FC = () => {
                                                     ...prev,
                                                     [product.id]: currentIndex
                                                 }))
-                                                
+
                                                 // Fade in
                                                 setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
                                             }, 200) // Half of transition time
                                         }, 1500) // Change color every 1.5 seconds
                                     }
-                                    
+
                                     const handleMouseLeave = () => {
                                         setIsHovering(prev => {
                                             const newState = { ...prev }
                                             delete newState[product.id]
                                             return newState
                                         })
-                                        
+
                                         // Clear interval and reset to selected color
                                         if (hoverIntervals.current[product.id]) {
                                             clearInterval(hoverIntervals.current[product.id])
                                             delete hoverIntervals.current[product.id]
                                         }
-                                        
+
                                         // Smooth fade back to selected color
                                         setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
                                         setTimeout(() => {
@@ -948,244 +910,243 @@ const Products: React.FC = () => {
                                             setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
                                         }, 200)
                                     }
-                                    
+
                                     return (
-                                    <div
-                                        key={product.id}
-                                        className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all duration-300 flex flex-col group"
-                                        onMouseEnter={handleMouseEnter}
-                                        onMouseLeave={handleMouseLeave}
-                                    >
-                                        {/* Product Image */}
-                                        <div className="relative h-64 md:h-72 bg-white overflow-hidden">
-                                            <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                                                <img
-                                                    src={productImageUrl}
-                                                    alt={product.name}
-                                                    key={`${product.id}-${displayColor || 'default'}`}
-                                                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                                    style={{ 
-                                                        opacity: imageOpacity[product.id] ?? 1,
-                                                        transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'
-                                                    }}
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        if (import.meta.env.DEV) {
-                                                            console.warn('Image failed to load for product:', product.id, product.name, 'Tried URL:', target.src)
-                                                        }
-                                                        target.src = '/assets/images/frame1.png'
-                                                    }}
-                                                />
-                                            </Link>
-                                            
-                                            {/* Next Color Indicator - Shows when hovering and multiple colors available */}
-                                            {isHovering[product.id] && colorsArray.length > 1 && (
-                                                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse z-30">
-                                                    <span>Next Color</span>
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </div>
-                                            )}
-                                            
-                                            {/* Favorite/Wishlist Icon - Always Visible */}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    toggleWishlist(product)
-                                                }}
-                                                className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 z-20 transition-all"
-                                                title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
-                                            >
-                                                {isInWishlist(product.id) ? (
-                                                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                ) : (
-                                                <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                </svg>
-                                                )}
-                                            </button>
-                                            {(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-                                                
-                                                // Check if out of stock - comprehensive check
-                                                const isOutOfStock = 
-                                                    stockStatus === 'out_of_stock' ||
-                                                    (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
-                                                    (stockStatus === undefined && product.in_stock === false) ||
-                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-                                                
-                                                return isOutOfStock ? (
-                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
-                                                        {t('shop.outOfStock')}
+                                        <div
+                                            key={product.id}
+                                            className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all duration-300 flex flex-col group"
+                                            onMouseEnter={handleMouseEnter}
+                                            onMouseLeave={handleMouseLeave}
+                                        >
+                                            {/* Product Image */}
+                                            <div className="relative h-64 md:h-72 bg-white overflow-hidden">
+                                                <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
+                                                    <img
+                                                        src={productImageUrl}
+                                                        alt={product.name}
+                                                        key={`${product.id}-${displayColor || 'default'}`}
+                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                        style={{
+                                                            opacity: imageOpacity[product.id] ?? 1,
+                                                            transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'
+                                                        }}
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement
+                                                            if (import.meta.env.DEV) {
+                                                                console.warn('Image failed to load for product:', product.id, product.name, 'Tried URL:', target.src)
+                                                            }
+                                                            target.src = '/assets/images/frame1.png'
+                                                        }}
+                                                    />
+                                                </Link>
+
+                                                {/* Next Color Indicator - Shows when hovering and multiple colors available */}
+                                                {isHovering[product.id] && colorsArray.length > 1 && (
+                                                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse z-30">
+                                                        <span>Next Color</span>
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
                                                     </div>
-                                                ) : null
-                                            })()}
-                                            {product.sale_price && product.price && product.sale_price < product.price && (
-                                                <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
-                                                    Sale
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Product Info */}
-                                    <div className="p-4 flex-grow flex flex-col">
-                                        {/* Color Swatches - Below Image - Only for Glasses */}
-                                        {isGlassesProduct(product) && colorsArray.length > 0 && (
-                                            <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
-                                                {colorsArray.map((colorData: any, index: number) => {
-                                                    const colorValue = colorData.value || colorData.color || colorData.hexCode
-                                                    const hexCode = colorData.hexCode || '#E5E5E5'
-                                                    const displayName = colorData.display_name || colorData.name || colorData.color || 'Color'
-                                                    
-                                                    // Check if it's a pattern (tortoiseshell, gradient, etc.)
-                                                    const colorName = (displayName || '').toLowerCase()
-                                                    const isPattern = colorName.includes('tortoise') || 
-                                                                     colorName.includes('tortoiseshell') ||
-                                                                     colorName.includes('gradient') ||
-                                                                     colorName.includes('rainbow') ||
-                                                                     colorName.includes('pattern')
-                                                    
-                                                    // Get gradient style for patterns
-                                                    const getGradientStyle = () => {
-                                                        if (colorName.includes('tortoise') || colorName.includes('tortoiseshell')) {
-                                                            return 'linear-gradient(135deg, #8B4513 0%, #D2691E 25%, #CD853F 50%, #8B4513 75%, #654321 100%)'
-                                                        }
-                                                        if (colorName.includes('pink') && colorName.includes('gradient')) {
-                                                            return 'linear-gradient(135deg, #FFC0CB 0%, #FF69B4 50%, #FF1493 100%)'
-                                                        }
-                                                        if (colorName.includes('purple') && colorName.includes('gradient')) {
-                                                            return 'linear-gradient(135deg, #9370DB 0%, #8A2BE2 50%, #4B0082 100%)'
-                                                        }
-                                                        if (colorName.includes('rainbow')) {
-                                                            return 'linear-gradient(90deg, #FF0000 0%, #FF7F00 14%, #FFFF00 28%, #00FF00 42%, #0000FF 57%, #4B0082 71%, #9400D3 85%, #FF0000 100%)'
-                                                        }
-                                                        return null
-                                                    }
-                                                    
-                                                    const gradientStyle = isPattern ? getGradientStyle() : null
-                                                    const isSelected = selectedColor && (
-                                                        (colorValue && colorValue.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                        (colorData.color && colorData.color.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                        (hexCode && hexCode.toLowerCase() === selectedColor.toLowerCase())
-                                                    )
-                                                    
-                                                    return (
-                                                        <button
-                                                            key={`${product.id}-${index}-${colorValue}`}
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.preventDefault()
-                                                                e.stopPropagation()
-                                                                setProductColorSelections(prev => ({
-                                                                    ...prev,
-                                                                    [product.id]: colorValue
-                                                                }))
-                                                            }}
-                                                            className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${
-                                                                isSelected
-                                                                    ? 'border-blue-600 scale-110 ring-2 ring-blue-200 shadow-md'
-                                                                    : 'border-gray-300 hover:border-gray-400'
-                                                            }`}
-                                                            style={{
-                                                                backgroundColor: gradientStyle ? 'transparent' : hexCode,
-                                                                backgroundImage: gradientStyle || undefined,
-                                                                borderColor: isSelected ? '#2563EB' : undefined,
-                                                                backgroundSize: gradientStyle ? 'cover' : undefined,
-                                                            }}
-                                                            title={displayName}
-                                                            aria-label={`Select color ${displayName}`}
-                                                        >
-                                                            {isSelected && (
-                                                                <svg className="w-3 h-3 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
-                                                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                                                </svg>
-                                                            )}
-                                                        </button>
-                                                    )
-                                                })}
-                                            </div>
-                                        )}
-
-                                        {/* Model Number and Heart Icon - Same Row */}
-                                        <div className="flex items-center justify-between mb-2">
-                                            {product.sku && (
-                                                <p className="text-xs text-gray-500 font-semibold">
-                                                    {product.sku}
-                                                </p>
-                                            )}
-                                            {!product.sku && <div />}
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    toggleWishlist(product)
-                                                }}
-                                                className="w-6 h-6 flex items-center justify-center hover:text-red-500 transition-colors"
-                                                title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
-                                            >
-                                                {isInWishlist(product.id) ? (
-                                                    <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                        <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                ) : (
-                                                    <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
                                                 )}
-                                            </button>
-                                        </div>
 
-                                        {/* Try On Button - Only for Glasses - HIDDEN */}
-                                        {false && isGlassesProduct(product) && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    setSelectedProductForTryOn(product)
-                                                    setShowTryOnModal(true)
-                                                }}
-                                                className="mb-3 w-full border-2 border-blue-500 bg-white hover:bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
-                                            >
-                                                {t('shop.tryOn', 'Try on')}
-                                            </button>
-                                        )}
+                                                {/* Favorite/Wishlist Icon - Always Visible */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault()
+                                                        e.stopPropagation()
+                                                        toggleWishlist(product)
+                                                    }}
+                                                    className="absolute top-2 right-2 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center hover:bg-red-50 z-20 transition-all"
+                                                    title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
+                                                >
+                                                    {isInWishlist(product.id) ? (
+                                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                        </svg>
+                                                    )}
+                                                </button>
+                                                {(() => {
+                                                    const p = product as any
+                                                    const stockStatus = p.stock_status
+                                                    const stockQty = product.stock_quantity
 
-                                        {/* Price and Reviews - Same Row */}
-                                        <div className="flex items-center justify-between mb-2">
-                                                <div className="flex flex-col">
-                                                    {product.sale_price && product.price && Number(product.sale_price) < Number(product.price) ? (
-                                                        <>
-                                                        <span className="text-base font-bold text-gray-900">
-                                                                €{Number(product.sale_price || 0).toFixed(2)}
-                                                            </span>
-                                                            <span className="text-xs text-gray-400 line-through">
+                                                    // Check if out of stock - comprehensive check
+                                                    const isOutOfStock =
+                                                        stockStatus === 'out_of_stock' ||
+                                                        (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
+                                                        (stockStatus === undefined && product.in_stock === false) ||
+                                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+
+                                                    return isOutOfStock ? (
+                                                        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                            {t('shop.outOfStock')}
+                                                        </div>
+                                                    ) : null
+                                                })()}
+                                                {product.sale_price && product.price && product.sale_price < product.price && (
+                                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                                                        Sale
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Product Info */}
+                                            <div className="p-4 flex-grow flex flex-col">
+                                                {/* Color Swatches - Below Image - Only for Glasses */}
+                                                {isGlassesProduct(product) && colorsArray.length > 0 && (
+                                                    <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
+                                                        {colorsArray.map((colorData: any, index: number) => {
+                                                            const colorValue = colorData.value || colorData.color || colorData.hexCode
+                                                            const hexCode = colorData.hexCode || '#E5E5E5'
+                                                            const displayName = colorData.display_name || colorData.name || colorData.color || 'Color'
+
+                                                            // Check if it's a pattern (tortoiseshell, gradient, etc.)
+                                                            const colorName = (displayName || '').toLowerCase()
+                                                            const isPattern = colorName.includes('tortoise') ||
+                                                                colorName.includes('tortoiseshell') ||
+                                                                colorName.includes('gradient') ||
+                                                                colorName.includes('rainbow') ||
+                                                                colorName.includes('pattern')
+
+                                                            // Get gradient style for patterns
+                                                            const getGradientStyle = () => {
+                                                                if (colorName.includes('tortoise') || colorName.includes('tortoiseshell')) {
+                                                                    return 'linear-gradient(135deg, #8B4513 0%, #D2691E 25%, #CD853F 50%, #8B4513 75%, #654321 100%)'
+                                                                }
+                                                                if (colorName.includes('pink') && colorName.includes('gradient')) {
+                                                                    return 'linear-gradient(135deg, #FFC0CB 0%, #FF69B4 50%, #FF1493 100%)'
+                                                                }
+                                                                if (colorName.includes('purple') && colorName.includes('gradient')) {
+                                                                    return 'linear-gradient(135deg, #9370DB 0%, #8A2BE2 50%, #4B0082 100%)'
+                                                                }
+                                                                if (colorName.includes('rainbow')) {
+                                                                    return 'linear-gradient(90deg, #FF0000 0%, #FF7F00 14%, #FFFF00 28%, #00FF00 42%, #0000FF 57%, #4B0082 71%, #9400D3 85%, #FF0000 100%)'
+                                                                }
+                                                                return null
+                                                            }
+
+                                                            const gradientStyle = isPattern ? getGradientStyle() : null
+                                                            const isSelected = selectedColor && (
+                                                                (colorValue && colorValue.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                (colorData.color && colorData.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                (hexCode && hexCode.toLowerCase() === selectedColor.toLowerCase())
+                                                            )
+
+                                                            return (
+                                                                <button
+                                                                    key={`${product.id}-${index}-${colorValue}`}
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault()
+                                                                        e.stopPropagation()
+                                                                        setProductColorSelections(prev => ({
+                                                                            ...prev,
+                                                                            [product.id]: colorValue
+                                                                        }))
+                                                                    }}
+                                                                    className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${isSelected
+                                                                            ? 'border-blue-600 scale-110 ring-2 ring-blue-200 shadow-md'
+                                                                            : 'border-gray-300 hover:border-gray-400'
+                                                                        }`}
+                                                                    style={{
+                                                                        backgroundColor: gradientStyle ? 'transparent' : hexCode,
+                                                                        backgroundImage: gradientStyle || undefined,
+                                                                        borderColor: isSelected ? '#2563EB' : undefined,
+                                                                        backgroundSize: gradientStyle ? 'cover' : undefined,
+                                                                    }}
+                                                                    title={displayName}
+                                                                    aria-label={`Select color ${displayName}`}
+                                                                >
+                                                                    {isSelected && (
+                                                                        <svg className="w-3 h-3 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                    )}
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                )}
+
+                                                {/* Model Number and Heart Icon - Same Row */}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    {product.sku && (
+                                                        <p className="text-xs text-gray-500 font-semibold">
+                                                            {product.sku}
+                                                        </p>
+                                                    )}
+                                                    {!product.sku && <div />}
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            toggleWishlist(product)
+                                                        }}
+                                                        className="w-6 h-6 flex items-center justify-center hover:text-red-500 transition-colors"
+                                                        title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
+                                                    >
+                                                        {isInWishlist(product.id) ? (
+                                                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            </svg>
+                                                        ) : (
+                                                            <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                            </svg>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                {/* Try On Button - Only for Glasses - HIDDEN */}
+                                                {false && isGlassesProduct(product) && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            setSelectedProductForTryOn(product)
+                                                            setShowTryOnModal(true)
+                                                        }}
+                                                        className="mb-3 w-full border-2 border-blue-500 bg-white hover:bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                                                    >
+                                                        {t('shop.tryOn', 'Try on')}
+                                                    </button>
+                                                )}
+
+                                                {/* Price and Reviews - Same Row */}
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex flex-col">
+                                                        {product.sale_price && product.price && Number(product.sale_price) < Number(product.price) ? (
+                                                            <>
+                                                                <span className="text-base font-bold text-gray-900">
+                                                                    €{Number(product.sale_price || 0).toFixed(2)}
+                                                                </span>
+                                                                <span className="text-xs text-gray-400 line-through">
+                                                                    €{Number(product.price || 0).toFixed(2)}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-base font-bold text-gray-900">
                                                                 €{Number(product.price || 0).toFixed(2)}
                                                             </span>
-                                                        </>
-                                                    ) : (
-                                                    <span className="text-base font-bold text-gray-900">
-                                                            €{Number(product.price || 0).toFixed(2)}
+                                                        )}
+                                                    </div>
+                                                    {/* Reviews Count */}
+                                                    {product.review_count !== undefined && product.review_count > 0 && (
+                                                        <span className="text-xs text-gray-500">
+                                                            {product.review_count} {t('shop.reviews', 'Reviews')}
                                                         </span>
                                                     )}
                                                 </div>
-                                            {/* Reviews Count */}
-                                                {product.review_count !== undefined && product.review_count > 0 && (
-                                                    <span className="text-xs text-gray-500">
-                                                    {product.review_count} {t('shop.reviews', 'Reviews')}
-                                                    </span>
-                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                                )
+                                    )
                                 })}
-                                    </div>
+                            </div>
 
                             {/* Pagination */}
                             {pagination && pagination.pages > 1 && (
@@ -1193,15 +1154,14 @@ const Products: React.FC = () => {
                                     <button
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                            currentPage === 1
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === 1
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                 : 'bg-blue-950 text-white hover:bg-blue-900'
-                                        }`}
+                                            }`}
                                     >
                                         Previous
                                     </button>
-                                    
+
                                     {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
                                         const page = i + 1
                                         if (
@@ -1213,11 +1173,10 @@ const Products: React.FC = () => {
                                                 <button
                                                     key={page}
                                                     onClick={() => handlePageChange(page)}
-                                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                                        currentPage === page
+                                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === page
                                                             ? 'bg-blue-950 text-white'
                                                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {page}
                                                 </button>
@@ -1227,15 +1186,14 @@ const Products: React.FC = () => {
                                         }
                                         return null
                                     })}
-                                    
+
                                     <button
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === pagination.pages}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
-                                            currentPage === pagination.pages
+                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === pagination.pages
                                                 ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                 : 'bg-blue-950 text-white hover:bg-blue-900'
-                                        }`}
+                                            }`}
                                     >
                                         Next
                                     </button>
@@ -1246,7 +1204,7 @@ const Products: React.FC = () => {
                             {pagination && (
                                 <div className="text-center mt-4 text-gray-600">
                                     Showing {products.length} of {pagination.total || 0} products
-                        </div>
+                                </div>
                             )}
                         </>
                     )}
