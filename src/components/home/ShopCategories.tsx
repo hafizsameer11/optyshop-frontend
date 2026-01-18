@@ -10,6 +10,7 @@ import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { addItemToCart } from '../../services/cartService'
+import CategoryBanner from './CategoryBanner'
 
 interface CategoryWithProducts extends Category {
     fetchedProducts?: Product[]
@@ -214,6 +215,13 @@ const ShopCategories: React.FC = () => {
                     <div className="space-y-16">
                         {categories.map((category) => (
                             <div key={category.id} className="category-section">
+                                {/* Category Banner - Position-based banner above each category */}
+                                <CategoryBanner 
+                                    categoryName={translateCategory(category)}
+                                    categoryId={category.id}
+                                    position="category_section"
+                                />
+                                
                                 {/* Category Header */}
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
