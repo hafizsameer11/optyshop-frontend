@@ -22,6 +22,7 @@ import {
     getNestedSubcategoriesByParentId,
     type Category 
 } from '../../services/categoriesService'
+import CategoryBanner from '../../components/home/CategoryBanner'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
@@ -648,48 +649,21 @@ const CategoryPage: React.FC = () => {
             </div>
         )
     }
+}
 
-    return (
+return (
         <div className="bg-white min-h-screen">
             <Navbar />
 
-            {/* Hero Section - Show for subcategories and sub-subcategories */}
-            {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                <section className="bg-gradient-to-r from-blue-900 via-blue-700 to-blue-600 py-16 md:py-20 lg:py-24 px-4 sm:px-6">
-                    <div className="w-[90%] mx-auto max-w-7xl">
-                        <div className="text-center text-white">
-                            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 md:mb-4">
-                                {categoryInfo.subSubcategory 
-                                    ? translateCategory(categoryInfo.subSubcategory)
-                                    : translateCategory(categoryInfo.subcategory)}
-                            </h1>
-                            <p className="text-lg md:text-xl lg:text-2xl text-white/95 max-w-2xl mx-auto">
-                                {categoryInfo.subSubcategory 
-                                    ? t('shop.browseCollection', { name: translateCategory(categoryInfo.subSubcategory) })
-                                    : t('shop.browseCollection', { name: translateCategory(categoryInfo.subcategory) })}
-                            </p>
-                        </div>
-                    </div>
-                </section>
+            {/* Category Banner - Dynamic banners from backend */}
+            {categoryInfo.category && (
+                <CategoryBanner 
+                    categoryName={translateCategory(categoryInfo.category)}
+                    categoryId={categoryInfo.category.id}
+                    position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
+                />
             )}
 
-            {/* Hero Section for main categories */}
-            {categoryInfo.category && !categoryInfo.subcategory && !categoryInfo.subSubcategory && (
-                <section className="bg-gradient-to-r from-blue-950 to-blue-800 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
-                    <div className="w-[90%] mx-auto max-w-7xl">
-                        <div className="text-center text-white">
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6">
-                                {translateCategory(categoryInfo.category)}
-                            </h1>
-                            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
-                                {t('shop.discoverCollection', { name: translateCategory(categoryInfo.category) })}
-                            </p>
-                        </div>
-                    </div>
-                </section>
-            )}
-
-            
             {/* Products Grid */}
             <section className="bg-gray-50 py-8 md:py-10 lg:py-12 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
