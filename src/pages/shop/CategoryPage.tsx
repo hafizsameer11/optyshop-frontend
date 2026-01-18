@@ -136,7 +136,7 @@ const CategoryPage: React.FC = () => {
                 }
 
                 // For contact lenses category, use the section endpoint
-                if (categoryInfo.category.slug === 'contact-lenses') {
+                if (categoryInfo.category?.slug === 'contact-lenses') {
                     // Use contact lenses section endpoint
                     const result = await getProducts({
                         ...filters,
@@ -248,8 +248,16 @@ const CategoryPage: React.FC = () => {
             {/* Category Banner - Dynamic banners from backend */}
             {categoryInfo.category && (
                 <CategoryBanner 
-                    categoryName={translateCategory(categoryInfo.category)}
-                    categoryId={categoryInfo.category.id}
+                    categoryName={translateCategory(
+                        categoryInfo.subSubcategory || 
+                        categoryInfo.subcategory || 
+                        categoryInfo.category
+                    )}
+                    categoryId={
+                        categoryInfo.subSubcategory?.id || 
+                        categoryInfo.subcategory?.id || 
+                        categoryInfo.category?.id || 0
+                    }
                     position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
                 />
             )}
@@ -302,17 +310,17 @@ const CategoryPage: React.FC = () => {
                                 </p>
                                 {categoryInfo.subSubcategory ? (
                                     <Link 
-                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`}
+                                        to={`/category/${categoryInfo.category?.slug || ''}/${categoryInfo.subcategory?.slug || ''}`}
                                         className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
                                     >
                                         {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
                                     </Link>
                                 ) : categoryInfo.subcategory ? (
                                     <Link 
-                                        to={`/category/${categoryInfo.category.slug}`}
+                                        to={`/category/${categoryInfo.category?.slug || ''}`}
                                         className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
                                     >
-                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.category) })}
+                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.category || { name: '', slug: '' }) })}
                                     </Link>
                                 ) : null}
                                 <Link 

@@ -23,19 +23,65 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
             try {
                 setLoading(true)
                 
-                // Fetch banners for category position (don't filter by position for category banners
-                // since position field contains category name rather than page position)
-                const data = await getBanners({
-                    page_type: 'category',
-                    category_id: categoryId
-                })
+                // Fetch banners for category position
+                // For different category levels, we use different strategies
+                let data
+                
+                if (position === 'sub_subcategory_page') {
+                    // For sub-subcategory pages, try to get banners specific to this level
+                    data = await getBanners({
+                        page_type: 'category',
+                        category_id: categoryId,
+                        position: 'sub_subcategory_page'
+                    })
+                    
+                    // If no specific banners found, fallback to general category banners
+                    if (!data || data.length === 0) {
+                        data = await getBanners({
+                            page_type: 'category',
+                            category_id: categoryId
+                        })
+                    }
+                } else if (position === 'subcategory_page') {
+                    // For subcategory pages, try to get banners specific to this level
+                    data = await getBanners({
+                        page_type: 'category',
+                        category_id: categoryId,
+                        position: 'subcategory_page'
+                    })
+                    
+                    // If no specific banners found, fallback to general category banners
+                    if (!data || data.length === 0) {
+                        data = await getBanners({
+                            page_type: 'category',
+                            category_id: categoryId
+                        })
+                    }
+                } else {
+                    // For main category pages, get general category banners
+                    data = await getBanners({
+                        page_type: 'category',
+                        category_id: categoryId,
+                        position: 'category_page'
+                    })
+                    
+                    // If no specific category page banners found, try without position filter
+                    if (!data || data.length === 0) {
+                        data = await getBanners({
+                            page_type: 'category',
+                            category_id: categoryId
+                        })
+                    }
+                }
                 
                 if (isCancelled) return
                 
-                setBanners(data)
+                setBanners(data || [])
                 
-                if (data.length > 0) {
-                    console.log(`Loaded ${data.length} banner(s) for category: ${categoryName} (ID: ${categoryId})`)
+                if (data && data.length > 0) {
+                    console.log(`Loaded ${data.length} banner(s) for ${categoryName} (${position}) - Category ID: ${categoryId}`)
+                } else {
+                    console.log(`No banners found for ${categoryName} (${position}) - Category ID: ${categoryId}`)
                 }
             } catch (error) {
                 if (!isCancelled) {
