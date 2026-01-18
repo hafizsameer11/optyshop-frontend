@@ -4540,66 +4540,77 @@ const ProductDetail: React.FC = () => {
                             )}
                         </div>
                         <div className={`grid grid-cols-1 sm:grid-cols-2 ${isEyeHygiene ? 'lg:grid-cols-4 xl:grid-cols-4' : 'lg:grid-cols-4'} gap-6`}>
-                            {relatedProducts.map((relatedProduct) => (
-                                <Link
-                                    key={relatedProduct.id}
-                                    to={`/shop/product/${relatedProduct.slug}`}
-                                    className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1"
-                                >
-                                    <div className="relative h-64 bg-gray-100 overflow-hidden">
-                                        <img
-                                            src={getProductImageUrl(relatedProduct)}
-                                            alt={relatedProduct.name}
-                                            className="w-full h-full object-contain p-4 transition-transform duration-300 hover:scale-105"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement
-                                                target.src = '/assets/images/frame1.png'
-                                            }}
-                                        />
-                                        {/* Show variant badge for Eye Hygiene products */}
-                                        {false && (
-                                            <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                                0 sizes
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-4 flex-grow flex flex-col">
-                                        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
-                                            {relatedProduct.name}
-                                        </h3>
-                                        {relatedProduct.brand && (
-                                            <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
-                                                {relatedProduct.brand}
-                                            </p>
-                                        )}
-                                        <div className="mt-auto pt-4">
-                                            {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xl font-bold text-blue-950">
-                                                        ${Number(relatedProduct.sale_price).toFixed(2)}
-                                                    </span>
-                                                    <span className="text-sm text-gray-400 line-through">
-                                                        ${Number(relatedProduct.price).toFixed(2)}
-                                                    </span>
-                                                    <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                                                        {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
-                                                    </span>
+                            {relatedProducts.map((relatedProduct) => {
+                                // Check if related product is a contact lens
+                                // Contact lenses don't use inventory stock, so we shouldn't show "Out of stock"
+                                const isRelatedContactLens =
+                                    relatedProduct.category?.slug?.toLowerCase().includes('contact') ||
+                                    relatedProduct.category?.name?.toLowerCase().includes('contact') ||
+                                    relatedProduct.slug?.toLowerCase().includes('contact') ||
+                                    relatedProduct.name?.toLowerCase().includes('contact') ||
+                                    false
+
+                                return (
+                                    <Link
+                                        key={relatedProduct.id}
+                                        to={`/shop/product/${relatedProduct.slug}`}
+                                        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1"
+                                    >
+                                        <div className="relative h-64 bg-gray-100 overflow-hidden">
+                                            <img
+                                                src={getProductImageUrl(relatedProduct)}
+                                                alt={relatedProduct.name}
+                                                className="w-full h-full object-contain p-4 transition-transform duration-300 hover:scale-105"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement
+                                                    target.src = '/assets/images/frame1.png'
+                                                }}
+                                            />
+                                            {/* Show variant badge for Eye Hygiene products */}
+                                            {false && (
+                                                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                                                    0 sizes
                                                 </div>
-                                            ) : (
-                                                <span className="text-xl font-bold text-blue-950">
-                                                    ${Number(relatedProduct.price || 0).toFixed(2)}
-                                                </span>
-                                            )}
-                                            {/* Show stock status */}
-                                            {relatedProduct.stock_quantity !== undefined && (
-                                                <p className={`text-xs mt-1 font-medium ${relatedProduct.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                    {relatedProduct.stock_quantity > 0 ? `${relatedProduct.stock_quantity} in stock` : 'Out of stock'}
-                                                </p>
                                             )}
                                         </div>
-                                    </div>
-                                </Link>
-                            ))}
+                                        <div className="p-4 flex-grow flex flex-col">
+                                            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
+                                                {relatedProduct.name}
+                                            </h3>
+                                            {relatedProduct.brand && (
+                                                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
+                                                    {relatedProduct.brand}
+                                                </p>
+                                            )}
+                                            <div className="mt-auto pt-4">
+                                                {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xl font-bold text-blue-950">
+                                                            ${Number(relatedProduct.sale_price).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-sm text-gray-400 line-through">
+                                                            ${Number(relatedProduct.price).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                                            {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xl font-bold text-blue-950">
+                                                        ${Number(relatedProduct.price || 0).toFixed(2)}
+                                                    </span>
+                                                )}
+                                                {/* Show stock status - ONLY for non-contact lens products */}
+                                                {!isRelatedContactLens && relatedProduct.stock_quantity !== undefined && (
+                                                    <p className={`text-xs mt-1 font-medium ${relatedProduct.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                        {relatedProduct.stock_quantity > 0 ? `${relatedProduct.stock_quantity} in stock` : 'Out of stock'}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </Link>
+                                )
+                            })}
                         </div>
                     </div>
                 </section>
