@@ -463,21 +463,39 @@ const Prescriptions: React.FC = () => {
                         Created: {new Date(prescription.created_at).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-2 gap-6 mt-4">
                       <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Right Eye (OD)</h4>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          {prescription.od_sphere && <p>Sphere: {prescription.od_sphere}</p>}
-                          {prescription.od_cylinder && <p>Cylinder: {prescription.od_cylinder}</p>}
-                          {prescription.od_axis && <p>Axis: {prescription.od_axis}°</p>}
+                        <h4 className="font-medium text-gray-700 mb-3">Right Eye (OD)</h4>
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">SPH:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.od_sphere || '--'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">CYL:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.od_cylinder || '--'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">AXIS:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.od_axis ? prescription.od_axis + '°' : '--'}</span>
+                          </div>
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-700 mb-2">Left Eye (OS)</h4>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          {prescription.os_sphere && <p>Sphere: {prescription.os_sphere}</p>}
-                          {prescription.os_cylinder && <p>Cylinder: {prescription.os_cylinder}</p>}
-                          {prescription.os_axis && <p>Axis: {prescription.os_axis}°</p>}
+                        <h4 className="font-medium text-gray-700 mb-3">Left Eye (OS)</h4>
+                        <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">SPH:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.os_sphere || '--'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">CYL:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.os_cylinder || '--'}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-gray-600">AXIS:</span>
+                            <span className="text-sm text-gray-900 font-mono">{prescription.os_axis ? prescription.os_axis + '°' : '--'}</span>
+                          </div>
                         </div>
                       </div>
                     </div>

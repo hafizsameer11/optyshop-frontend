@@ -4,18 +4,18 @@ import { useTranslation } from 'react-i18next'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { getProductOptions, type LensType, type LensCoating, type Product } from '../../services/productsService'
-import { 
-  createPrescription, 
+import {
+  createPrescription,
   getPrescriptions,
   type PrescriptionData,
-  type Prescription 
+  type Prescription
 } from '../../services/prescriptionsService'
 import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '../../services/cartService'
 import { createOrder, createGuestOrder, type Address as OrderAddress } from '../../services/ordersService'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
-import { 
+import {
   calculateCustomizationPriceWithPrescription,
   getProductCustomizationOptions,
   calculateCustomizationPrice,
@@ -50,13 +50,10 @@ import {
   getPrescriptionSunLenses,
   type LensOption,
   type LensColor,
-  type PhotochromicLens,
-  type PrescriptionSunLens,
 } from '../../services/lensOptionsService'
 import {
   getFormStructure,
   getFieldValues,
-  getAllFieldValues,
   type PrescriptionFormStructure,
   type FormType,
 } from '../../services/prescriptionFormsService'
@@ -75,8 +72,6 @@ if (import.meta.env.DEV) {
 interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
-  initialFrameMaterials?: string[] // Optional: pre-selected frame materials from product page
-  initialLensType?: string // Optional: pre-selected lens type from product page
   initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
 }
 
@@ -115,34 +110,34 @@ interface PrescriptionFormData {
   os_axis: string
 }
 
-const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialFrameMaterials, initialLensType, initialSelectedColor }) => {
+const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
-  
+
   // Store selected product color variant (from product page selection)
-  const [selectedProductColor, setSelectedProductColor] = useState<string | null>(initialSelectedColor || null)
+  const [selectedProductColor] = useState<string | null>(initialSelectedColor || null)
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('lens_type')
   const [lensOptions, setLensOptions] = useState<LensType[]>([])
   const [coatingOptions, setCoatingOptions] = useState<LensCoating[]>([])
   const [lensIndexOptions, setLensIndexOptions] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedImageIndex] = useState(0)
-  
+
   // Helper function to get the color-specific image URL
   const getColorSpecificImageUrl = useCallback((product: Product, imageIndex: number = 0): string => {
     if (!selectedProductColor) {
       // Fallback to regular product image if no color selected
       return getProductImageUrl(product, imageIndex)
     }
-    
+
     const p = product as any
     const selectedColorLower = (selectedProductColor || '').toLowerCase()
-    
+
     // First try 'colors' array (preferred format from API)
     if (p.colors && Array.isArray(p.colors)) {
-      const colorData = p.colors.find((c: any) => 
+      const colorData = p.colors.find((c: any) =>
         (c.value && c.value.toLowerCase() === selectedColorLower) ||
         (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
         (c.name && c.name.toLowerCase() === selectedColorLower)
@@ -156,7 +151,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
       }
     }
-    
+
     // Fallback to 'color_images' array
     if (product.color_images) {
       const colorImage = product.color_images.find(ci =>
@@ -172,11 +167,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
       }
     }
-    
+
     // Fallback to regular product image
     return getProductImageUrl(product, imageIndex)
   }, [selectedProductColor])
-  
+
   const [lensSelection, setLensSelection] = useState<LensSelection>({
     type: 'distance_vision',
     coatings: [],
@@ -200,7 +195,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     error: customizationError,
     refetch: refetchCustomization
   } = useLensCustomization()
-  
+
   const [prescriptionData, setPrescriptionData] = useState<PrescriptionFormData>({
     pd_binocular: '',
     pd_right: '',
@@ -227,19 +222,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [, setProductCustomizationOptions] = useState<ProductCustomizationOptions | null>(null)
   // Start with empty array - will be populated from API (admin data)
   // Type matches API guide structure: isRecommended, viewingRange, useCases
-  const [progressiveOptions, setProgressiveOptions] = useState<Array<{ 
-    id: string; 
-    name: string; 
-    price: number; 
-    description: string; 
-    recommended?: boolean; 
+  const [progressiveOptions, setProgressiveOptions] = useState<Array<{
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    recommended?: boolean;
     viewingRange?: string;
     useCases?: string;
-    icon?: string; 
-    variantId?: number 
+    icon?: string;
+    variantId?: number
   }>>([])
   const [progressiveOptionsLoading, setProgressiveOptionsLoading] = useState(true)
-  
+
   // New API configuration state
   const [productConfig, setProductConfig] = useState<ProductConfig | null>(null)
   const [lensThicknessMaterials, setLensThicknessMaterials] = useState<LensThicknessMaterial[]>([])
@@ -249,7 +244,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [shippingLoading, setShippingLoading] = useState(true)
-  
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('')
   const [appliedCoupon, setAppliedCoupon] = useState<CouponDiscount | null>(null)
@@ -260,7 +255,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [prescriptionSunColors, setPrescriptionSunColors] = useState<LensColor[]>([])
   const [lensColors, setLensColors] = useState<LensColor[]>([])
   const [lensOptionsLoading, setLensOptionsLoading] = useState(true)
-  
+
   // Checkout flow states
   const [checkoutMode, setCheckoutMode] = useState<'cart' | 'checkout'>('cart') // 'cart' = add to cart, 'checkout' = direct checkout
   const [shippingAddress, setShippingAddress] = useState<OrderAddress & { state?: string }>({
@@ -298,7 +293,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       fetchSavedPrescriptions()
     }
   }, [isAuthenticated, product.id])
-  
+
   // Debug: Log when lensColors state changes
   useEffect(() => {
     console.log('🔄 [ProductCheckout] lensColors state changed:', lensColors.length, 'colors')
@@ -307,21 +302,21 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       console.log('🔄 [ProductCheckout] First lens color lensOption:', lensColors[0].lensOption)
     }
   }, [lensColors])
-  
+
   // PRIMARY METHOD: Get Product Configuration
   // GET /api/products/:id/configuration
   // This is the recommended endpoint per API guide - returns all config including variants
   const fetchProductConfiguration = async () => {
     setConfigLoading(true)
     setProgressiveOptionsLoading(true)
-    
+
     try {
       console.log(`🔄 [API] PRIMARY: GET /api/products/${product.id}/configuration`)
       const config = await getProductConfiguration(product.id)
-      
+
       if (config) {
         setProductConfig(config)
-        
+
         // Set prescription lens types from configuration
         if (config.prescriptionLensTypes && config.prescriptionLensTypes.length > 0) {
           // Store the actual API types with their real IDs - map to ApiPrescriptionLensType format
@@ -342,48 +337,48 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 prescription_lens_type_id: type.id,
                 name: variant.name || 'Unknown',
                 slug: variant.slug || '',
-                description: variant.description || null,
+                description: variant.description || undefined,
                 price: variant.price || 0,
                 is_recommended: variant.isRecommended || false,
-                viewing_range: variant.viewingRange || null,
-                use_cases: variant.useCases || null,
+                viewing_range: variant.viewingRange || undefined,
+                use_cases: variant.useCases || undefined,
                 is_active: true,
                 sort_order: 0,
                 colors: []
               }))
           }))
           setApiPrescriptionLensTypes(apiTypes)
-          
+
           // Also set the simplified version for UI display
           setPrescriptionLensTypes(config.prescriptionLensTypes.map(type => ({
-            id: type.slug === 'distance-vision' ? 'distance_vision' : 
-                type.slug === 'near-vision' ? 'near_vision' : 'progressive',
+            id: type.slug === 'distance-vision' ? 'distance_vision' :
+              type.slug === 'near-vision' ? 'near_vision' : 'progressive',
             name: type.name,
             description: type.description,
-            type: type.prescriptionType === 'progressive' ? 'progressive' : 
-                  type.slug === 'distance-vision' ? 'distance_vision' : 'near_vision'
+            type: type.prescriptionType === 'progressive' ? 'progressive' :
+              type.slug === 'distance-vision' ? 'distance_vision' : 'near_vision'
           })))
           console.log('✅ [API] Prescription lens types loaded from configuration:', config.prescriptionLensTypes.length)
           console.log('📋 [API] Actual API types with IDs:', apiTypes.map(t => ({ id: t.id, name: t.name, prescription_type: t.prescription_type, is_active: t.is_active })))
         }
-        
+
         // Extract Progressive variants from configuration (PRIMARY METHOD)
         // Use the actual API type with prescription_type = 'progressive'
         const progressiveType = config.prescriptionLensTypes?.find(
           t => t.prescriptionType === 'progressive' || t.slug === 'progressive'
         )
-        
+
         if (progressiveType && progressiveType.variants && progressiveType.variants.length > 0) {
           // Filter to only active variants
           const activeVariants = progressiveType.variants.filter((v: any) => {
-            const isActive = v.isActive !== undefined 
+            const isActive = v.isActive !== undefined
               ? (v.isActive === true || v.isActive === 1 || v.isActive === '1')
               : (v.is_active === true || v.is_active === 1 || v.is_active === '1')
             return isActive !== false
           })
-          
+
           console.log(`📊 [API] Progressive variants from configuration: ${progressiveType.variants.length} total, ${activeVariants.length} active`)
-          
+
           if (activeVariants.length > 0) {
             // Map variants according to the API guide structure
             // API returns: isRecommended, viewingRange, useCases (camelCase)
@@ -399,7 +394,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 useCases: typeof v.useCases === 'string' ? v.useCases : (typeof v.use_cases === 'string' ? v.use_cases : null),
                 variantId: v.id
               }))
-            
+
             // Sort by sortOrder if available, then by recommended, then by name
             mappedOptions.sort((a, b) => {
               const variantA = activeVariants.find((v: any) => (v.slug || v.id.toString()) === a.id)
@@ -413,7 +408,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
               const bName = (b.name || '').toLowerCase()
               return aName.localeCompare(bName)
             })
-            
+
             console.log('✅ [API] Progressive options loaded from configuration:', mappedOptions.length, 'options')
             console.log('📦 [API] Mapped variants:', mappedOptions.map(o => ({
               id: o.id,
@@ -434,7 +429,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           // Try fallback API before using defaults
           await fetchProgressiveVariantsFallback()
         }
-        
+
         // Set other configuration data
         setLensThicknessMaterials(config.lensThicknessMaterials || [])
         setLensThicknessOptions(config.lensThicknessOptions || [])
@@ -461,22 +456,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       setConfigLoading(false)
     }
   }
-  
+
   // FALLBACK METHOD: Get Progressive Variants using alternative endpoints
   // GET /api/lens/prescription-lens-types - Get all types
   // GET /api/lens/prescription-lens-types/{id}/variants - Get variants
   const fetchProgressiveVariantsFallback = async () => {
     try {
       console.log('🔄 [API] FALLBACK: Using alternative endpoints for Progressive variants')
-      
+
       // Step 1: Use stored API types if available, otherwise fetch from API
       let types: ApiPrescriptionLensType[] = apiPrescriptionLensTypes
-      
+
       if (!types || types.length === 0) {
         console.log('📥 [API] No stored types, fetching from API...')
         // First try to get active types
         const activeTypes = await getPrescriptionLensTypes({ isActive: true })
-        
+
         // If no active types found, try fetching all types (including inactive)
         if (!activeTypes || activeTypes.length === 0) {
           console.log('📥 [API] No active types found, fetching all types (including inactive)...')
@@ -494,7 +489,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       } else {
         console.log('✅ [API] Using stored API types:', types.length)
       }
-      
+
       if (!types || types.length === 0) {
         if (import.meta.env.DEV) {
           console.warn('⚠️ [API] No prescription lens types found in database.')
@@ -533,7 +528,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         setProgressiveOptionsLoading(false)
         return
       }
-      
+
       // Log all found types for debugging
       console.log('📋 [API] Found prescription lens types:', types.map(t => ({
         id: t.id,
@@ -542,19 +537,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         slug: t.slug,
         is_active: t.is_active
       })))
-      
+
       // Step 2: Find Progressive type using actual prescription_type from API
       // Use the actual type from API, not hardcoded "progressive"
       console.log('🔍 [API] Searching for progressive type among', types.length, 'types:')
       types.forEach(t => {
-        console.log('   - Type:', { 
-          id: t.id, 
-          name: t.name, 
+        console.log('   - Type:', {
+          id: t.id,
+          name: t.name,
           prescription_type: t.prescription_type,
-          is_active: t.is_active 
+          is_active: t.is_active
         })
       })
-      
+
       let progressiveType = types.find(t => {
         const typeMatch = t.prescription_type?.toLowerCase() === 'progressive'
         if (typeMatch) {
@@ -562,7 +557,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
         return typeMatch
       })
-      
+
       // If not found by prescription_type, check if any type has "progressive" in name/slug
       if (!progressiveType) {
         console.log('🔍 [API] No type with prescription_type="progressive", checking names/slugs...')
@@ -575,7 +570,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           return nameMatch || slugMatch
         })
       }
-      
+
       // If still not found, try to find by checking if any type has progressive variants
       if (!progressiveType) {
         progressiveType = types.find(t => {
@@ -584,14 +579,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           return nameMatch || slugMatch
         })
       }
-      
+
       // If still not found, check all types to see which one has variants
       // This handles cases where variants exist but the type isn't properly marked as progressive
       if (!progressiveType) {
         console.log('🔍 [API] Progressive type not found by name/type, checking all types for variants...')
         let typeWithMostVariants = null
         let maxVariants = 0
-        
+
         for (const type of types) {
           try {
             console.log(`🔍 [API] Checking type "${type.name}" (ID: ${type.id}) for variants...`)
@@ -610,14 +605,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             continue
           }
         }
-        
+
         if (typeWithMostVariants) {
           progressiveType = typeWithMostVariants
           console.log(`⚠️ [API] Using type "${progressiveType.name}" (ID: ${progressiveType.id}) as progressive - found ${maxVariants} variants`)
           console.log(`⚠️ [API] Note: Please mark this type as prescription_type="progressive" in admin panel for proper identification`)
         }
       }
-      
+
       if (!progressiveType) {
         console.warn('⚠️ [API] Progressive lens type not found in database.')
         console.warn('   → Available types:', types.map(t => ({
@@ -661,32 +656,32 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         setProgressiveOptionsLoading(false)
         return
       }
-      
-      console.log('✅ [API] Progressive type found in fallback:', { 
-        id: progressiveType.id, 
+
+      console.log('✅ [API] Progressive type found in fallback:', {
+        id: progressiveType.id,
         name: progressiveType.name,
         prescription_type: progressiveType.prescription_type
       })
       console.log('🔍 [API] Fetching variants for prescription_lens_type_id:', progressiveType.id)
-      
+
       // Step 3: Get variants for Progressive type
       // First try with isActive filter, but if none found, try without filter to see all variants
-      let variants = await getPrescriptionLensVariantsByType(progressiveType.id, { 
+      let variants = await getPrescriptionLensVariantsByType(progressiveType.id, {
         isActive: true,
-        limit: 100 
+        limit: 100
       })
-      
+
       console.log('📥 [API] Variants response (active only):', {
         total: variants?.length || 0,
         variantIds: variants?.map(v => v.id) || [],
         variantNames: variants?.map(v => v.name) || []
       })
-      
+
       // If no active variants found, try fetching all variants (including inactive)
       if (!variants || variants.length === 0) {
         console.log('🔍 [API] No active variants found, fetching all variants (including inactive)...')
-        variants = await getPrescriptionLensVariantsByType(progressiveType.id, { 
-          limit: 100 
+        variants = await getPrescriptionLensVariantsByType(progressiveType.id, {
+          limit: 100
         })
         console.log('📥 [API] All variants response:', {
           total: variants?.length || 0,
@@ -698,16 +693,16 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           }).length || 0
         })
       }
-      
+
       if (!variants || variants.length === 0) {
         console.info('ℹ️ [API] No progressive variants found for type:', progressiveType.name)
         console.info('   → Checking if variants exist but are inactive...')
-        
+
         // Try fetching ALL variants (including inactive) to see if any exist
-        const allVariants = await getPrescriptionLensVariantsByType(progressiveType.id, { 
-          limit: 100 
+        const allVariants = await getPrescriptionLensVariantsByType(progressiveType.id, {
+          limit: 100
         })
-        
+
         if (allVariants && allVariants.length > 0) {
           console.warn('⚠️ [API] Found variants but they are marked as INACTIVE')
           console.warn('   → Please activate variants in admin panel to display them')
@@ -729,7 +724,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           setProgressiveOptionsLoading(false)
           return
         }
-        
+
         if (import.meta.env.DEV) {
           console.info('   → No variants found (active or inactive). Using default fallback options.')
         }
@@ -764,7 +759,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         setProgressiveOptionsLoading(false)
         return
       }
-      
+
       // Filter to only active variants (double-check even though API should filter)
       const activeVariants = variants.filter(v => {
         const active = (v as any).is_active
@@ -774,14 +769,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
         return isActive
       })
-      
+
       console.log(`📊 [API] Fallback variants: ${variants.length} total, ${activeVariants.length} active`)
       if (variants.length > 0 && activeVariants.length === 0) {
         console.warn('⚠️ [API] All variants are inactive! Check database:')
         console.warn('   → Run: SELECT * FROM prescription_lens_variants WHERE prescription_lens_type_id = ' + progressiveType.id)
         console.warn('   → Verify: is_active = 1 for variants you want to display')
       }
-      
+
       if (activeVariants.length > 0) {
         // Sort variants: by sort_order, then recommended, then name
         const sortedVariants = [...activeVariants].sort((a, b) => {
@@ -796,7 +791,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           const bName = (b.name || '').toLowerCase()
           return aName.localeCompare(bName)
         })
-        
+
         // Map variants to progressive options format according to API guide
         // Handle both camelCase (from API) and snake_case (from database) formats
         const mappedOptions = sortedVariants
@@ -811,7 +806,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             useCases: typeof (variant as any).useCases === 'string' ? (variant as any).useCases : (typeof (variant as any).use_cases === 'string' ? (variant as any).use_cases : null),
             variantId: variant.id
           }))
-        
+
         console.log('📋 [API] Sorted variants before mapping:', sortedVariants.map(v => ({
           id: v.id,
           name: v.name,
@@ -820,7 +815,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           sort_order: v.sort_order,
           is_recommended: v.is_recommended
         })))
-        
+
         console.log('✅ [API] Progressive options loaded from fallback:', mappedOptions.length, 'options')
         console.log('📦 [API] Final mapped options:', mappedOptions.map(o => ({
           id: o.id,
@@ -835,12 +830,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         console.warn('⚠️ [API] Variants found but none are marked as active')
         console.warn('   → Please activate at least one variant in admin panel')
         console.warn('   → Showing inactive variants as fallback (with warning)')
-        
+
         // Try to get inactive variants to show them
-        const allVariants = await getPrescriptionLensVariantsByType(progressiveType.id, { 
-          limit: 100 
+        const allVariants = await getPrescriptionLensVariantsByType(progressiveType.id, {
+          limit: 100
         })
-        
+
         if (allVariants && allVariants.length > 0) {
           const inactiveOptions = allVariants.map((variant: PrescriptionLensVariant) => ({
             id: variant.slug || variant.id.toString(),
@@ -851,7 +846,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             variantId: variant.id
           }))
           setProgressiveOptions(inactiveOptions)
-        setProgressiveOptionsLoading(false)
+          setProgressiveOptionsLoading(false)
         } else {
           // Only use defaults if truly no variants exist
           if (import.meta.env.DEV) {
@@ -923,7 +918,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       setProgressiveOptionsLoading(false)
     }
   }
-  
+
   // Fetch lens thickness materials using documented API
   // GET /api/lens/thickness-materials
   const fetchLensThicknessMaterials = async () => {
@@ -946,7 +941,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       console.error('❌ [API] Error fetching lens thickness materials:', error)
     }
   }
-  
+
   // Fetch lens thickness options using documented API
   // GET /api/lens/thickness-options
   const fetchLensThicknessOptions = async () => {
@@ -968,7 +963,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       console.error('❌ [API] Error fetching lens thickness options:', error)
     }
   }
-  
+
   // Fetch lens treatments using documented API
   // GET /api/lens/treatments
   const fetchLensTreatments = async () => {
@@ -1013,27 +1008,27 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const fetchPhotochromicOptions = async () => {
     try {
       console.log('🔄 [API] Fetching photochromic lenses: GET /api/photochromic-lenses')
-      
+
       // Use dedicated endpoint from Postman collection
       const lenses = await getPhotochromicLenses()
-      
+
       // Log what we got
       console.log('📊 [API] Photochromic API response:', {
         lenses: lenses,
         count: lenses?.length || 0,
         hasData: !!lenses && lenses.length > 0
       })
-      
+
       // Handle null response
       if (lenses === null) {
         console.warn('⚠️ [API] getPhotochromicLenses returned null - API might have errored')
         setPhotochromicOptions([])
         return
       }
-      
+
       if (lenses && lenses.length > 0) {
         console.log('✅ [API] Found', lenses.length, 'photochromic lenses from dedicated endpoint')
-        
+
         // Convert PhotochromicLens to LensOption format for compatibility
         const options: LensOption[] = lenses.map(lens => ({
           id: lens.id,
@@ -1049,7 +1044,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           sortOrder: 0,
           sort_order: 0
         }))
-        
+
         // Log all options
         options.forEach((opt, idx) => {
           console.log(`  [${idx + 1}] ${opt.name} (id: ${opt.id}, colors: ${opt.colors?.length || 0})`)
@@ -1059,7 +1054,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             console.warn(`    ⚠️ No colors found for ${opt.name}`)
           }
         })
-        
+
         setPhotochromicOptions(options)
         console.log('✅ [API] Photochromic options loaded:', options.length, 'options')
       } else {
@@ -1083,26 +1078,26 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const fetchPrescriptionSunOptions = async () => {
     try {
       console.log('🔄 [API] Fetching prescription sun lenses: GET /api/prescription-sun-lenses')
-      
+
       // Try primary endpoint from Postman collection
       const lenses = await getPrescriptionSunLenses()
-      
+
       // Log what we got
       console.log('📊 [API] Prescription Sun API response:', {
         lenses: lenses,
         count: lenses?.length || 0,
         hasData: !!lenses && lenses.length > 0
       })
-      
+
       let options: LensOption[] = []
-      
+
       // Handle null response - try fallback endpoint
       if (lenses === null || (lenses && lenses.length === 0)) {
         console.log('🔄 [API] Primary endpoint returned no data, trying fallback: GET /api/lens/options?type=prescription_sun')
-        
+
         // Try alternative endpoint from Postman collection
         const fallbackOptions = await getLensOptions({ type: 'prescription_sun', isActive: true })
-        
+
         if (fallbackOptions && fallbackOptions.length > 0) {
           console.log('✅ [API] Found', fallbackOptions.length, 'prescription sun options from fallback endpoint')
           options = fallbackOptions
@@ -1118,7 +1113,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
       } else if (lenses && lenses.length > 0) {
         console.log('✅ [API] Found', lenses.length, 'prescription sun lenses from dedicated endpoint')
-        
+
         // Convert PrescriptionSunLens to LensOption format for compatibility
         // Handle structured data with finishes
         options = lenses.flatMap(lens => {
@@ -1156,7 +1151,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           }]
         })
       }
-      
+
       // Log all options
       if (options.length > 0) {
         options.forEach((opt, idx) => {
@@ -1167,7 +1162,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             console.warn(`    ⚠️ No colors found for ${opt.name}`)
           }
         })
-        
+
         setPrescriptionSunOptions(options)
         console.log('✅ [API] Prescription sun options loaded:', options.length, 'options')
       } else {
@@ -1175,12 +1170,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
     } catch (error) {
       console.error('❌ [API] Error fetching prescription sun options:', error)
-      
+
       // Try fallback endpoint on error
       try {
         console.log('🔄 [API] Error occurred, trying fallback endpoint: GET /api/lens/options?type=prescription_sun')
         const fallbackOptions = await getLensOptions({ type: 'prescription_sun', isActive: true })
-        
+
         if (fallbackOptions && fallbackOptions.length > 0) {
           console.log('✅ [API] Found', fallbackOptions.length, 'prescription sun options from fallback endpoint')
           setPrescriptionSunOptions(fallbackOptions)
@@ -1200,11 +1195,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     try {
       console.log('🔄 [ProductCheckout] fetchLensColors called')
       console.log('🔄 [API] Fetching all lens colors: GET /api/lens/colors')
-      
+
       const colors = await getLensColors()
-      
+
       console.log('🔄 [ProductCheckout] getLensColors returned:', colors?.length || 0, 'colors')
-      
+
       if (colors && colors.length > 0) {
         console.log('✅ [ProductCheckout] Found', colors.length, 'lens colors, setting state')
         console.log('✅ [ProductCheckout] First color:', colors[0])
@@ -1227,9 +1222,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const fetchPrescriptionSunColors = async () => {
     try {
       console.log('🔄 [API] Fetching prescription sun colors: GET /api/lens/prescription-sun-colors')
-      
+
       const colors = await getPrescriptionSunColors()
-      
+
       if (colors && colors.length > 0) {
         console.log('✅ [API] Found', colors.length, 'prescription sun colors from dedicated endpoint')
         setPrescriptionSunColors(colors)
@@ -1338,9 +1333,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       if (!product.id) return
 
       // Only calculate if we have meaningful selections
-      const hasSelections = lensSelection.selectedLensTypeId || 
-                           lensSelection.treatments.length > 0 ||
-                           (prescriptionData.pd_binocular && prescriptionData.od_sphere && prescriptionData.os_sphere)
+      const hasSelections = lensSelection.selectedLensTypeId ||
+        lensSelection.treatments.length > 0 ||
+        (prescriptionData.pd_binocular && prescriptionData.od_sphere && prescriptionData.os_sphere)
 
       if (!hasSelections) {
         setPriceCalculation(null)
@@ -1373,12 +1368,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         // Add prescription data if available
         if (prescriptionData.od_sphere && prescriptionData.os_sphere) {
           customizationData.prescription_lens_type = lensSelection.type
-          
+
           // Add progressive variant ID if a progressive option is selected
           if (lensSelection.type === 'progressive' && lensSelection.progressiveVariantId) {
             customizationData.prescription_lens_variant_id = lensSelection.progressiveVariantId
           }
-          
+
           // Build prescription data based on lens type
           const prescriptionDataPayload: any = {
             od_sphere: parseFloat(prescriptionData.od_sphere),
@@ -1428,10 +1423,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
       } catch (error: any) {
         // Check if it's a 404 error (route not found)
-        const is404Error = error?.message?.includes('Route not found') || 
-                          error?.message?.includes('404') ||
-                          error?.message?.includes('not found')
-        
+        const is404Error = error?.message?.includes('Route not found') ||
+          error?.message?.includes('404') ||
+          error?.message?.includes('not found')
+
         if (is404Error) {
           // Price calculation endpoint not available - use base product price
           if (import.meta.env.DEV) {
@@ -1481,7 +1476,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   const validatePrescription = (): boolean => {
     const newErrors: Record<string, string> = {}
-    
+
     // For Progressive Vision, validate pd_mm instead of pd_binocular
     if (lensSelection.type === 'progressive') {
       if (!prescriptionData.pd_mm) {
@@ -1494,9 +1489,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
     } else {
       // For Distance and Near Vision, validate pd_binocular
-    if (!prescriptionData.pd_binocular) {
-      newErrors.pd_binocular = 'Pupillary Distance is required'
-    } else {
+      if (!prescriptionData.pd_binocular) {
+        newErrors.pd_binocular = 'Pupillary Distance is required'
+      } else {
         // For dropdown values, we need to check if it's a valid selection
         // The dropdown shows 1-30, but we should validate the actual PD value
         // Since these are dropdowns, we'll just check if something is selected
@@ -1564,9 +1559,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   }
 
   const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive') => {
-    setLensSelection(prev => ({ 
-      ...prev, 
-      type: type as LensSelection['type'], 
+    setLensSelection(prev => ({
+      ...prev,
+      type: type as LensSelection['type'],
       progressiveOption: type !== 'progressive' ? undefined : prev.progressiveOption,
       progressiveVariantId: type !== 'progressive' ? undefined : prev.progressiveVariantId
     }))
@@ -1604,11 +1599,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const handleProgressiveOptionChange = (optionId: string) => {
     // Find the variant ID for the selected option
     const selectedOption = progressiveOptions.find(opt => opt.id === optionId)
-    setLensSelection(prev => ({ 
-      ...prev, 
-      progressiveOption: optionId, 
+    setLensSelection(prev => ({
+      ...prev,
+      progressiveOption: optionId,
       progressiveVariantId: selectedOption?.variantId,
-      type: 'progressive' 
+      type: 'progressive'
     }))
   }
 
@@ -1724,19 +1719,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     const subtotal = getSubtotal()
     const discount = getDiscountAmount()
     const shipping = selectedShippingMethod ? (Number(selectedShippingMethod.price) || 0) : 0
-    
+
     if (appliedCoupon) {
       // Use coupon's final_total and add shipping
       return (appliedCoupon.final_total || 0) + shipping
     }
-    
+
     return subtotal - discount + shipping
   }
 
   // Update order summary whenever selections change
   const updateOrderSummary = useCallback(() => {
     const summary: Array<{ name: string; price: number; type: 'product' | 'lens_type' | 'coating' | 'treatment' | 'lens_thickness' | 'shipping'; id?: string | number; removable?: boolean }> = []
-    
+
     // Add base product (not removable)
     const basePrice = product.sale_price && Number(product.sale_price) < Number(product.price)
       ? Number(product.sale_price)
@@ -1763,7 +1758,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         })
       }
     }
-    
+
 
     // Add selected coatings
     lensSelection.coatings.forEach(coatingSlug => {
@@ -1793,22 +1788,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
     } else if (lensSelection.lensThickness) {
       // Fallback to hardcoded values if material ID not found
-    if (lensSelection.lensThickness === 'plastic') {
-      summary.push({
-        name: 'Unbreakable (Plastic)',
-        price: 30.00,
+      if (lensSelection.lensThickness === 'plastic') {
+        summary.push({
+          name: 'Unbreakable (Plastic)',
+          price: 30.00,
           type: 'lens_thickness',
           id: 'lens_thickness_plastic',
           removable: true
-      })
-    } else if (lensSelection.lensThickness === 'glass') {
-      summary.push({
-        name: 'Minerals (Glass)',
-        price: 60.00,
+        })
+      } else if (lensSelection.lensThickness === 'glass') {
+        summary.push({
+          name: 'Minerals (Glass)',
+          price: 60.00,
           type: 'lens_thickness',
           id: 'lens_thickness_glass',
           removable: true
-      })
+        })
       }
     }
 
@@ -1819,22 +1814,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         const price = progressiveOption.price || 0
         // Use the actual variant name from API (e.g., "Premium Progressive", "Standard Progressive")
         const variantName = progressiveOption.name || `Progressive - ${lensSelection.progressiveOption.charAt(0).toUpperCase() + lensSelection.progressiveOption.slice(1)}`
-      if (price > 0) {
-        summary.push({
+        if (price > 0) {
+          summary.push({
             name: variantName,
-          price: price,
-          type: 'lens_type',
-          id: `progressive_${lensSelection.progressiveOption}`,
-          removable: true
-        })
+            price: price,
+            type: 'lens_type',
+            id: `progressive_${lensSelection.progressiveOption}`,
+            removable: true
+          })
         }
       }
     }
 
     // Add selected treatments from API
     lensSelection.treatments.forEach(treatmentId => {
-      const treatment = configTreatments.find(t => t.id.toString() === treatmentId) || 
-                        apiTreatments.find(t => t.id === treatmentId)
+      const treatment = configTreatments.find(t => t.id.toString() === treatmentId) ||
+        apiTreatments.find(t => t.id === treatmentId)
       if (treatment) {
         summary.push({
           name: treatment.name,
@@ -1849,14 +1844,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     // Add photochromic color selection
     if (lensSelection.photochromicColor) {
       // Find the photochromic option that contains this color
-      const photochromicOption = photochromicOptions.find(opt => 
+      const photochromicOption = photochromicOptions.find(opt =>
         opt.colors?.some(color => color.id.toString() === lensSelection.photochromicColor?.id)
       )
       if (photochromicOption) {
         const selectedColor = photochromicOption.colors?.find(c => c.id.toString() === lensSelection.photochromicColor?.id);
         // Support both camelCase and snake_case for priceAdjustment
-        const colorPrice = (selectedColor as any)?.priceAdjustment !== undefined 
-          ? (selectedColor as any).priceAdjustment 
+        const colorPrice = (selectedColor as any)?.priceAdjustment !== undefined
+          ? (selectedColor as any).priceAdjustment
           : (selectedColor as any)?.price_adjustment || 0;
         // The mapped photochromicOption has a 'price' property (base price)
         const totalPrice = (photochromicOption as any).price + colorPrice;
@@ -1878,7 +1873,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       // Note: prescriptionSunOptions are mapped to a different structure with subOptions
       const prescriptionSunOption = (prescriptionSunOptions as any[]).find((opt: any) => {
         if (opt.subOptions) {
-          return opt.subOptions.some((subOpt: any) => 
+          return opt.subOptions.some((subOpt: any) =>
             subOpt.colors?.some((color: any) => color.id.toString() === lensSelection.prescriptionSunColor?.id)
           )
         }
@@ -1949,17 +1944,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const handlePrescriptionChange = (field: keyof PrescriptionFormData, value: string) => {
     setPrescriptionData(prev => {
       const updated = { ...prev, [field]: value }
-      
+
       // Auto-calculate pd_mm when both pd_binocular (left) and pd_right are filled
       if (field === 'pd_binocular' || field === 'pd_right') {
         const leftPD = field === 'pd_binocular' ? value : prev.pd_binocular
         const rightPD = field === 'pd_right' ? value : prev.pd_right
-        
+
         // If both are filled and are valid numbers, calculate the sum
         if (leftPD && rightPD) {
           const leftNum = parseFloat(leftPD)
           const rightNum = parseFloat(rightPD)
-          
+
           if (!isNaN(leftNum) && !isNaN(rightNum)) {
             updated.pd_mm = (leftNum + rightNum).toString()
           }
@@ -1968,10 +1963,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           updated.pd_mm = ''
         }
       }
-      
+
       return updated
     })
-    
+
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => {
@@ -2096,15 +2091,15 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       // Calculate final price with lens options
       // Ensure basePrice is a number, not a string
       const basePriceRaw: string | number = product.sale_price && Number(product.sale_price) < Number(product.price)
-        ? product.sale_price 
+        ? product.sale_price
         : product.price
-      
+
       const basePrice = typeof basePriceRaw === 'string'
         ? parseFloat(String(basePriceRaw).replace(/[^0-9.]/g, '')) || 0
         : Number(basePriceRaw) || 0
 
       let finalPrice: number = basePrice
-      
+
       // Add lens type price adjustment
       // For progressive lenses, use the progressive option price
       if (lensSelection.progressiveOption) {
@@ -2114,7 +2109,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           const progressivePrice = typeof priceValue === 'string'
             ? parseFloat(String(priceValue).replace(/[^0-9.]/g, '')) || 0
             : Number(priceValue) || 0
-        finalPrice += progressivePrice
+          finalPrice += progressivePrice
         }
       } else if (lensSelection.lensIndex) {
         // For regular lens index selection
@@ -2195,19 +2190,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           cyl: prescriptionData.od_cylinder ? parseFloat(prescriptionData.od_cylinder) : undefined,
           axis: prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : undefined
         }
-        
+
         const osData = {
           sph: parseFloat(prescriptionData.os_sphere),
           cyl: prescriptionData.os_cylinder ? parseFloat(prescriptionData.os_cylinder) : undefined,
           axis: prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : undefined
         }
-        
+
         const cartPrescriptionData: CartPrescriptionData = {
           pd: lensSelection.type === 'progressive' && prescriptionData.pd_mm
             ? parseFloat(prescriptionData.pd_mm)
             : prescriptionData.pd_binocular
-            ? parseFloat(prescriptionData.pd_binocular)
-            : undefined,
+              ? parseFloat(prescriptionData.pd_binocular)
+              : undefined,
           pd_right: lensSelection.type === 'progressive' && prescriptionData.pd_right
             ? parseFloat(prescriptionData.pd_right)
             : undefined,
@@ -2234,7 +2229,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         // Get lens thickness option ID
         let lensThicknessOptionId: number | undefined
         if (lensSelection.lensThicknessOption) {
-          const option = lensThicknessOptions.find(o => 
+          const option = lensThicknessOptions.find(o =>
             lensSelection.lensThicknessOption?.includes(o.thicknessValue.toString())
           )
           lensThicknessOptionId = option?.id
@@ -2251,7 +2246,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
         // Get color IDs - use the ID directly from the selected color object
         // The color ID comes from the lens options API response
-        const photochromicColorId = lensSelection.photochromicColor 
+        const photochromicColorId = lensSelection.photochromicColor
           ? (parseInt(lensSelection.photochromicColor.id) || null)
           : null
         const prescriptionSunColorId = lensSelection.prescriptionSunColor
@@ -2260,17 +2255,17 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
         // Map lens type to valid API type
         const apiLensType = lensSelection.type === 'progressive' ? 'progressive' :
-                           lensSelection.type === 'distance_vision' ? 'distance_vision' :
-                           lensSelection.type === 'near_vision' ? 'near_vision' :
-                           undefined
+          lensSelection.type === 'distance_vision' ? 'distance_vision' :
+            lensSelection.type === 'near_vision' ? 'near_vision' :
+              undefined
 
         // Get selected color variant details if color is selected
         const selectedColorVariant = selectedProductColor && product.color_images
           ? product.color_images.find(ci => {
-              const selectedColorLower = (selectedProductColor || '').toLowerCase()
-              return (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                     (ci.name && ci.name.toLowerCase() === selectedColorLower)
-            })
+            const selectedColorLower = (selectedProductColor || '').toLowerCase()
+            return (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+              (ci.name && ci.name.toLowerCase() === selectedColorLower)
+          })
           : null
 
         const cartResult = await addItemToCart({
@@ -2305,10 +2300,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
       // Also add to local cart for immediate UI update (for both authenticated and guest users)
       // Ensure finalPrice is a proper number (not string concatenation)
-      const finalPriceNumber = typeof finalPrice === 'string' 
+      const finalPriceNumber = typeof finalPrice === 'string'
         ? parseFloat(String(finalPrice).replace(/[^0-9.]/g, '')) || 0
         : Number(finalPrice) || 0
-      
+
       const cartProduct = {
         id: product.id || 0,
         name: product.name || '',
@@ -2363,7 +2358,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
 
       addToCart(cartProduct)
-      
+
       // Navigate to cart or close modal
       if (onClose) {
         onClose()
@@ -2382,13 +2377,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const handleCreateOrder = async () => {
     setIsProcessingOrder(true)
     setOrderError(null)
-    
+
     try {
       // Validate shipping address
-      if (!shippingAddress.first_name || !shippingAddress.last_name || 
-          !shippingAddress.email || !shippingAddress.phone ||
-          !shippingAddress.address || !shippingAddress.city || 
-          !shippingAddress.zip_code || !shippingAddress.country) {
+      if (!shippingAddress.first_name || !shippingAddress.last_name ||
+        !shippingAddress.email || !shippingAddress.phone ||
+        !shippingAddress.address || !shippingAddress.city ||
+        !shippingAddress.zip_code || !shippingAddress.country) {
         setOrderError('Please fill in all shipping address fields')
         setIsProcessingOrder(false)
         return
@@ -2446,14 +2441,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         })
       }]
 
-      // Build shipping address matching Postman collection structure
-      const shippingAddr = {
-        street: shippingAddress.address,
-        city: shippingAddress.city,
-        state: shippingAddress.state || shippingAddress.zip_code, // Use state if provided, fallback to zip_code
-        zip: shippingAddress.zip_code,
-        country: shippingAddress.country
-      }
+
 
       // Build order payload matching Postman collection structure
       const orderPayload = {
@@ -2497,7 +2485,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       // Use appropriate order creation function based on authentication status
       let order: any = null
       let orderError: string | null = null
-      
+
       if (isAuthenticated) {
         // Authenticated user - use createOrder
         order = await createOrder(orderPayload)
@@ -2521,7 +2509,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             payment_method: (paymentMethod || 'stripe').toLowerCase() // Backend expects lowercase (stripe, paypal, cod)
           }
         })
-        
+
         if (!order) {
           // Check if it's an authorization error - prompt user to login
           orderError = 'Please login to complete your order. Guest checkout may not be available.'
@@ -2553,28 +2541,28 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
     } catch (error: any) {
       console.error('Error creating order:', error)
-      
+
       // Extract error message from API response if available
       let errorMessage = 'Failed to create order. Please try again.'
-      
+
       if (error.response) {
         // If error has response object
         errorMessage = error.response.message || error.response.error || errorMessage
       } else if (error.message) {
         errorMessage = error.message
       }
-      
+
       // Check for authorization errors specifically
-      if (errorMessage && (errorMessage.toLowerCase().includes('not authorized') || 
-          errorMessage.toLowerCase().includes('unauthorized') ||
-          errorMessage.toLowerCase().includes('401'))) {
+      if (errorMessage && (errorMessage.toLowerCase().includes('not authorized') ||
+        errorMessage.toLowerCase().includes('unauthorized') ||
+        errorMessage.toLowerCase().includes('401'))) {
         if (!isAuthenticated) {
           errorMessage = 'Please login to complete your order. Guest checkout requires authentication.'
         } else {
           errorMessage = 'Your session has expired. Please login again and try completing your order.'
         }
       }
-      
+
       setOrderError(errorMessage)
     } finally {
       setIsProcessingOrder(false)
@@ -2615,421 +2603,420 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </button>
           )}
         </div>
-        
+
         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start">
-          {/* Left: Order Summary */}
-          <div className="lg:col-span-1 flex flex-col">
-            <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
-              <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
-                {orderSummary.length === 0 ? (
-                  <p className="text-sm text-gray-500">No items selected</p>
-                ) : (
-                  orderSummary.map((item, index) => (
-                    <div key={item.id || index} className="flex justify-between items-center text-sm pb-2 border-b border-gray-100 last:border-0 group">
-                      <span className="text-gray-700 flex-1 pr-2">{item.name}</span>
-                      <div className="flex items-center gap-2">
-                      <span className="text-gray-900 font-medium whitespace-nowrap">
-                        {item.price > 0 ? `+$${item.price.toFixed(2)}` : 'Free'}
-                      </span>
-                        {item.removable && (
-                          <button
-                            onClick={() => handleRemoveFromSummary(item)}
-                            className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Remove"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start">
+            {/* Left: Order Summary */}
+            <div className="lg:col-span-1 flex flex-col">
+              <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
+                <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
+                  {orderSummary.length === 0 ? (
+                    <p className="text-sm text-gray-500">No items selected</p>
+                  ) : (
+                    orderSummary.map((item, index) => (
+                      <div key={item.id || index} className="flex justify-between items-center text-sm pb-2 border-b border-gray-100 last:border-0 group">
+                        <span className="text-gray-700 flex-1 pr-2">{item.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-900 font-medium whitespace-nowrap">
+                            {item.price > 0 ? `+$${item.price.toFixed(2)}` : 'Free'}
+                          </span>
+                          {item.removable && (
+                            <button
+                              onClick={() => handleRemoveFromSummary(item)}
+                              className="text-red-500 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Remove"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              
-              {/* Shipping Method Selection */}
-              {shippingMethods.length > 0 && (
-                <div className="pt-4 border-t border-gray-200 mt-4">
-                  <label className="block text-sm font-semibold text-gray-900 mb-3">
-                    {t('common.shipping')}
-                  </label>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {shippingMethods.map((method) => (
-                      <label
-                        key={method.id}
-                        className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${
-                          selectedShippingMethod?.id === method.id
+                    ))
+                  )}
+                </div>
+
+                {/* Shipping Method Selection */}
+                {shippingMethods.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200 mt-4">
+                    <label className="block text-sm font-semibold text-gray-900 mb-3">
+                      {t('common.shipping')}
+                    </label>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {shippingMethods.map((method) => (
+                        <label
+                          key={method.id}
+                          className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors ${selectedShippingMethod?.id === method.id
                             ? 'border-blue-600 bg-blue-50'
                             : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="shipping-method"
-                          checked={selectedShippingMethod?.id === method.id}
-                          onChange={() => setSelectedShippingMethod(method)}
-                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-900">{method.name}</div>
-                              {method.description && (
-                                <div className="text-xs text-gray-600 mt-0.5 truncate">{method.description}</div>
-                              )}
-                              {(method.estimated_days || method.estimatedDays) && (
-                                <div className="text-xs text-gray-500 mt-0.5">
-                                  {(method.estimated_days || method.estimatedDays)} {t('shop.businessDays', 'business days')}
-                                </div>
-                              )}
-                            </div>
-                            <div className="text-sm font-semibold text-gray-900 whitespace-nowrap ml-2">
-                              {method.price === 0 ? (
-                                <span className="text-green-600">{t('shop.free', 'Free')}</span>
-                              ) : (
-                                `$${method.price.toFixed(2)}`
-                              )}
+                            }`}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping-method"
+                            checked={selectedShippingMethod?.id === method.id}
+                            onChange={() => setSelectedShippingMethod(method)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-gray-900">{method.name}</div>
+                                {method.description && (
+                                  <div className="text-xs text-gray-600 mt-0.5 truncate">{method.description}</div>
+                                )}
+                                {(method.estimated_days || method.estimatedDays) && (
+                                  <div className="text-xs text-gray-500 mt-0.5">
+                                    {(method.estimated_days || method.estimatedDays)} {t('shop.businessDays', 'business days')}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-sm font-semibold text-gray-900 whitespace-nowrap ml-2">
+                                {method.price === 0 ? (
+                                  <span className="text-green-600">{t('shop.free', 'Free')}</span>
+                                ) : (
+                                  `$${method.price.toFixed(2)}`
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </label>
-                    ))}
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-              
-              {shippingLoading && (
+                )}
+
+                {shippingLoading && (
+                  <div className="pt-4 border-t border-gray-200 mt-4">
+                    <div className="text-sm text-gray-500">{t('shop.loadingShipping', 'Loading shipping options...')}</div>
+                  </div>
+                )}
+
+                {/* Coupon Code Section */}
                 <div className="pt-4 border-t border-gray-200 mt-4">
-                  <div className="text-sm text-gray-500">{t('shop.loadingShipping', 'Loading shipping options...')}</div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Have a coupon code?</h3>
+                  {!appliedCoupon ? (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Enter coupon code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase())
+                          setCouponError('')
+                        }}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleApplyCoupon()
+                          }
+                        }}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={isApplyingCoupon || !couponCode.trim()}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+                      >
+                        {isApplyingCoupon ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm font-semibold text-green-800">
+                          {couponCode} Applied
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <p className="mt-2 text-sm text-red-600">{couponError}</p>
+                  )}
                 </div>
-              )}
 
-              {/* Coupon Code Section */}
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Have a coupon code?</h3>
-                {!appliedCoupon ? (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Enter coupon code"
-                      value={couponCode}
-                      onChange={(e) => {
-                        setCouponCode(e.target.value.toUpperCase())
-                        setCouponError('')
-                      }}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          handleApplyCoupon()
-                        }
-                      }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleApplyCoupon}
-                      disabled={isApplyingCoupon || !couponCode.trim()}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
-                    >
-                      {isApplyingCoupon ? '...' : 'Apply'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-sm font-semibold text-green-800">
-                        {couponCode} Applied
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleRemoveCoupon}
-                      className="text-sm text-red-600 hover:text-red-700 font-medium"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-                {couponError && (
-                  <p className="mt-2 text-sm text-red-600">{couponError}</p>
-                )}
-              </div>
-
-              <div className="pt-4 border-t-2 border-gray-300 mt-4">
-                <div className="flex justify-between items-center mb-2">
-                  <div className="text-sm text-gray-500">
-                    {t('common.subtotal')} ({orderSummary.filter(item => item.type !== 'shipping').length} {t('shop.items', 'items')})
-                  </div>
-                  <div className="text-sm font-medium text-gray-900">
-                    ${getSubtotal().toFixed(2)}
-                  </div>
-                </div>
-                {appliedCoupon && getDiscountAmount() > 0 && (
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="text-sm text-green-600 font-medium">
-                      Discount ({couponCode})
-                    </div>
-                    <div className="text-sm font-medium text-green-600">
-                      -${getDiscountAmount().toFixed(2)}
-                    </div>
-                  </div>
-                )}
-                {selectedShippingMethod && (
+                <div className="pt-4 border-t-2 border-gray-300 mt-4">
                   <div className="flex justify-between items-center mb-2">
                     <div className="text-sm text-gray-500">
-                      {t('common.shipping')} 
-                      {selectedShippingMethod.name && (
-                        <span className="ml-1 text-xs text-gray-400">({selectedShippingMethod.name})</span>
-                      )}
-                      {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays) && (
-                        <span className="ml-1 text-xs text-gray-400">
-                          - {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays)} {t('shop.businessDays', 'business days')}
-                        </span>
-                      )}
+                      {t('common.subtotal')} ({orderSummary.filter(item => item.type !== 'shipping').length} {t('shop.items', 'items')})
                     </div>
-                    <div className={`text-sm font-medium ${selectedShippingMethod.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                      {selectedShippingMethod.price === 0 ? t('shop.free', 'Free') : `$${selectedShippingMethod.price.toFixed(2)}`}
+                    <div className="text-sm font-medium text-gray-900">
+                      ${getSubtotal().toFixed(2)}
                     </div>
                   </div>
-                )}
-                <div className="text-sm text-gray-500 mb-1 mt-3">{t('shop.estimateTotal', 'Estimate Total')}</div>
-                <div className="text-2xl font-bold text-gray-900">
-                  ${getFinalTotal().toFixed(2)}
+                  {appliedCoupon && getDiscountAmount() > 0 && (
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-sm text-green-600 font-medium">
+                        Discount ({couponCode})
+                      </div>
+                      <div className="text-sm font-medium text-green-600">
+                        -${getDiscountAmount().toFixed(2)}
+                      </div>
+                    </div>
+                  )}
+                  {selectedShippingMethod && (
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="text-sm text-gray-500">
+                        {t('common.shipping')}
+                        {selectedShippingMethod.name && (
+                          <span className="ml-1 text-xs text-gray-400">({selectedShippingMethod.name})</span>
+                        )}
+                        {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays) && (
+                          <span className="ml-1 text-xs text-gray-400">
+                            - {(selectedShippingMethod.estimated_days || selectedShippingMethod.estimatedDays)} {t('shop.businessDays', 'business days')}
+                          </span>
+                        )}
+                      </div>
+                      <div className={`text-sm font-medium ${selectedShippingMethod.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                        {selectedShippingMethod.price === 0 ? t('shop.free', 'Free') : `$${selectedShippingMethod.price.toFixed(2)}`}
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-sm text-gray-500 mb-1 mt-3">{t('shop.estimateTotal', 'Estimate Total')}</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    ${getFinalTotal().toFixed(2)}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Middle: Product Image */}
-          <div className="lg:col-span-1 flex flex-col flex-shrink-0">
-            <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}>
-              <img
-                key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
-                src={getColorSpecificImageUrl(product, selectedImageIndex)}
-                alt={product.name}
-                style={{ 
-                  width: 'auto',
-                  height: '100%',
-                  maxWidth: '100%',
-                  maxHeight: '100%',
-                  objectFit: 'contain',
-                  objectPosition: 'top center'
-                }}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement
-                  target.src = '/assets/images/frame1.png'
-                }}
-              />
-              {/* Color overlay effect on lenses - positioned over lens area */}
-              {(() => {
-                // Priority: prescription sun color > photochromic color > selected color
-                const activeColor = lensSelection.prescriptionSunColor || 
-                                  lensSelection.photochromicColor || 
-                                  lensSelection.selectedColor
-                
-                if (!activeColor) return null
-                
-                return (
-                <>
-                  {/* Left lens overlay */}
-                  <div 
-                    className="absolute pointer-events-none z-10"
-                    style={{
-                      left: '25%',
-                      top: '35%',
-                      width: '20%',
-                      height: '25%',
-                      borderRadius: '50%',
-                        background: activeColor.gradient
-                          ? activeColor.color
-                          : activeColor.color,
-                      opacity: 0.7,
-                      mixBlendMode: 'multiply',
-                      filter: 'blur(2px)'
-                    }}
-                  />
-                  {/* Right lens overlay */}
-                  <div 
-                    className="absolute pointer-events-none z-10"
-                    style={{
-                      right: '25%',
-                      top: '35%',
-                      width: '20%',
-                      height: '25%',
-                      borderRadius: '50%',
-                        background: activeColor.gradient
-                          ? activeColor.color
-                          : activeColor.color,
-                      opacity: 0.7,
-                      mixBlendMode: 'multiply',
-                      filter: 'blur(2px)'
-                    }}
-                  />
-                </>
-                )
-              })()}
-            </div>
-            
-            {/* Product name and base price */}
-            <div className="mt-4">
-              <div className="text-lg font-semibold text-gray-900">{product.name}</div>
-              <div className="text-xl font-bold text-gray-900">
-                ${(product.sale_price && Number(product.sale_price) < Number(product.price)
-                  ? Number(product.sale_price)
-                  : Number(product.price) || 0).toFixed(2)}
+            {/* Middle: Product Image */}
+            <div className="lg:col-span-1 flex flex-col flex-shrink-0">
+              <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}>
+                <img
+                  key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
+                  src={getColorSpecificImageUrl(product, selectedImageIndex)}
+                  alt={product.name}
+                  style={{
+                    width: 'auto',
+                    height: '100%',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    objectPosition: 'top center'
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.src = '/assets/images/frame1.png'
+                  }}
+                />
+                {/* Color overlay effect on lenses - positioned over lens area */}
+                {(() => {
+                  // Priority: prescription sun color > photochromic color > selected color
+                  const activeColor = lensSelection.prescriptionSunColor ||
+                    lensSelection.photochromicColor ||
+                    lensSelection.selectedColor
+
+                  if (!activeColor) return null
+
+                  return (
+                    <>
+                      {/* Left lens overlay */}
+                      <div
+                        className="absolute pointer-events-none z-10"
+                        style={{
+                          left: '25%',
+                          top: '35%',
+                          width: '20%',
+                          height: '25%',
+                          borderRadius: '50%',
+                          background: activeColor.gradient
+                            ? activeColor.color
+                            : activeColor.color,
+                          opacity: 0.7,
+                          mixBlendMode: 'multiply',
+                          filter: 'blur(2px)'
+                        }}
+                      />
+                      {/* Right lens overlay */}
+                      <div
+                        className="absolute pointer-events-none z-10"
+                        style={{
+                          right: '25%',
+                          top: '35%',
+                          width: '20%',
+                          height: '25%',
+                          borderRadius: '50%',
+                          background: activeColor.gradient
+                            ? activeColor.color
+                            : activeColor.color,
+                          opacity: 0.7,
+                          mixBlendMode: 'multiply',
+                          filter: 'blur(2px)'
+                        }}
+                      />
+                    </>
+                  )
+                })()}
+              </div>
+
+              {/* Product name and base price */}
+              <div className="mt-4">
+                <div className="text-lg font-semibold text-gray-900">{product.name}</div>
+                <div className="text-xl font-bold text-gray-900">
+                  ${(product.sale_price && Number(product.sale_price) < Number(product.price)
+                    ? Number(product.sale_price)
+                    : Number(product.price) || 0).toFixed(2)}
+                </div>
               </div>
             </div>
+
+            {/* Right: Customization Options */}
+            <div className="lg:col-span-1 flex flex-col overflow-hidden min-h-0">
+              {currentStep === 'lens_type' && (
+                <LensTypeSelectionStep
+                  lensSelection={lensSelection}
+                  prescriptionLensTypes={prescriptionLensTypes}
+                  onLensTypeChange={handleLensTypeChange}
+                  onNext={handleNext}
+                  onNavigateToPrescription={() => setCurrentStep('prescription')}
+                  onNavigateToProgressive={() => setCurrentStep('progressive')}
+                />
+              )}
+
+              {currentStep === 'progressive' && (
+                <ProgressiveLensStep
+                  lensSelection={lensSelection}
+                  progressiveOptions={progressiveOptions}
+                  progressiveOptionsLoading={progressiveOptionsLoading}
+                  onProgressiveOptionChange={handleProgressiveOptionChange}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                />
+              )}
+
+              {currentStep === 'prescription' && (
+                <PrescriptionInputStep
+                  prescriptionData={prescriptionData}
+                  errors={errors}
+                  lensType={lensSelection.type}
+                  onPrescriptionChange={handlePrescriptionChange}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                  savedPrescriptions={savedPrescriptions}
+                  selectedSavedPrescription={selectedSavedPrescription}
+                  onLoadSavedPrescription={loadSavedPrescription}
+                  isAuthenticated={isAuthenticated}
+                />
+              )}
+
+              {currentStep === 'lens_thickness' && (
+                <LensThicknessStep
+                  lensSelection={lensSelection}
+                  lensThicknessMaterials={lensThicknessMaterials}
+                  lensThicknessOptions={lensThicknessOptions}
+                  lensIndexOptions={lensIndexOptions}
+                  prescriptionData={prescriptionData}
+                  onLensThicknessChange={handleLensThicknessChange}
+                  onLensThicknessOptionChange={handleLensThicknessOptionChange}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                />
+              )}
+
+              {currentStep === 'treatment' && (
+                <TreatmentStep
+                  lensSelection={lensSelection}
+                  treatments={configTreatments.map(t => ({
+                    id: t.id.toString(),
+                    name: t.name,
+                    price: t.price,
+                    description: t.description,
+                    slug: t.slug,
+                    type: t.type
+                  }))}
+                  productConfig={productConfig}
+                  photochromicOptions={photochromicOptions}
+                  prescriptionSunOptions={prescriptionSunOptions}
+                  prescriptionSunColors={prescriptionSunColors}
+                  lensColors={lensColors}
+                  onTreatmentToggle={handleTreatmentToggle}
+                  onColorSelect={(colorType, color) => {
+                    if (colorType === 'photochromic') {
+                      setLensSelection(prev => ({
+                        ...prev,
+                        photochromicColor: color,
+                        prescriptionSunColor: undefined
+                        // Keep standard treatments - photochromic can be selected alongside them
+                      }))
+                    } else if (colorType === 'prescription_sun') {
+                      setLensSelection(prev => ({
+                        ...prev,
+                        prescriptionSunColor: color,
+                        photochromicColor: undefined
+                        // Keep standard treatments - prescription sun can be selected alongside them
+                      }))
+                    }
+                  }}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                  loading={configLoading || customizationLoading || lensOptionsLoading}
+                  error={customizationError}
+                  onRetry={() => {
+                    fetchLensTreatments()
+                    refetchCustomization()
+                    fetchPhotochromicOptions()
+                    fetchPrescriptionSunOptions()
+                  }}
+                />
+              )}
+
+              {currentStep === 'summary' && (
+                <SummaryStep
+                  product={product}
+                  lensSelection={lensSelection}
+                  prescriptionData={prescriptionData}
+                  lensOptions={lensOptions}
+                  coatingOptions={coatingOptions}
+                  treatments={apiTreatments}
+                  progressiveOptions={progressiveOptions}
+                  lensThicknessMaterials={lensThicknessMaterials}
+                  onBack={handleBack}
+                  onAddToCart={handleAddToCart}
+                  onCheckoutNow={handleCheckoutNow}
+                  loading={loading}
+                  checkoutMode={checkoutMode}
+                />
+              )}
+
+              {currentStep === 'shipping' && (
+                <ShippingStep
+                  shippingAddress={shippingAddress}
+                  onAddressChange={(field, value) => setShippingAddress(prev => ({ ...prev, [field]: value }))}
+                  onNext={handleNext}
+                  onBack={handleBack}
+                  errors={orderError ? { general: orderError } : {}}
+                />
+              )}
+
+              {currentStep === 'payment' && (
+                <PaymentStep
+                  paymentMethod={paymentMethod}
+                  onPaymentMethodChange={setPaymentMethod}
+                  onBack={handleBack}
+                  onCreateOrder={handleCreateOrder}
+                  isProcessing={isProcessingOrder}
+                  error={orderError}
+                  order={createdOrder}
+                  onLogin={() => navigate('/login')}
+                  isAuthenticated={isAuthenticated}
+                />
+              )}
+            </div>
           </div>
-
-          {/* Right: Customization Options */}
-          <div className="lg:col-span-1 flex flex-col overflow-hidden min-h-0">
-            {currentStep === 'lens_type' && (
-              <LensTypeSelectionStep
-                lensSelection={lensSelection}
-                prescriptionLensTypes={prescriptionLensTypes}
-                onLensTypeChange={handleLensTypeChange}
-                onNext={handleNext}
-                onNavigateToPrescription={() => setCurrentStep('prescription')}
-                onNavigateToProgressive={() => setCurrentStep('progressive')}
-              />
-            )}
-
-            {currentStep === 'progressive' && (
-              <ProgressiveLensStep
-                lensSelection={lensSelection}
-                progressiveOptions={progressiveOptions}
-                progressiveOptionsLoading={progressiveOptionsLoading}
-                onProgressiveOptionChange={handleProgressiveOptionChange}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 'prescription' && (
-              <PrescriptionInputStep
-                prescriptionData={prescriptionData}
-                errors={errors}
-                lensType={lensSelection.type}
-                onPrescriptionChange={handlePrescriptionChange}
-                onNext={handleNext}
-                onBack={handleBack}
-                savedPrescriptions={savedPrescriptions}
-                selectedSavedPrescription={selectedSavedPrescription}
-                onLoadSavedPrescription={loadSavedPrescription}
-                isAuthenticated={isAuthenticated}
-              />
-            )}
-
-            {currentStep === 'lens_thickness' && (
-              <LensThicknessStep
-                lensSelection={lensSelection}
-                lensThicknessMaterials={lensThicknessMaterials}
-                lensThicknessOptions={lensThicknessOptions}
-                lensIndexOptions={lensIndexOptions}
-                prescriptionData={prescriptionData}
-                onLensThicknessChange={handleLensThicknessChange}
-                onLensThicknessOptionChange={handleLensThicknessOptionChange}
-                onNext={handleNext}
-                onBack={handleBack}
-              />
-            )}
-
-            {currentStep === 'treatment' && (
-              <TreatmentStep
-                lensSelection={lensSelection}
-                treatments={configTreatments.map(t => ({
-                  id: t.id.toString(),
-                  name: t.name,
-                  price: t.price,
-                  description: t.description,
-                  slug: t.slug,
-                  type: t.type
-                }))}
-                productConfig={productConfig}
-                photochromicOptions={photochromicOptions}
-                prescriptionSunOptions={prescriptionSunOptions}
-                prescriptionSunColors={prescriptionSunColors}
-                lensColors={lensColors}
-                onTreatmentToggle={handleTreatmentToggle}
-                onColorSelect={(colorType, color) => {
-                  if (colorType === 'photochromic') {
-                    setLensSelection(prev => ({ 
-                      ...prev, 
-                      photochromicColor: color, 
-                      prescriptionSunColor: undefined
-                      // Keep standard treatments - photochromic can be selected alongside them
-                    }))
-                  } else if (colorType === 'prescription_sun') {
-                    setLensSelection(prev => ({ 
-                      ...prev, 
-                      prescriptionSunColor: color, 
-                      photochromicColor: undefined
-                      // Keep standard treatments - prescription sun can be selected alongside them
-                    }))
-                  }
-                }}
-                onNext={handleNext}
-                onBack={handleBack}
-                loading={configLoading || customizationLoading || lensOptionsLoading}
-                error={customizationError}
-                onRetry={() => {
-                  fetchLensTreatments()
-                  refetchCustomization()
-                  fetchPhotochromicOptions()
-                  fetchPrescriptionSunOptions()
-                }}
-              />
-            )}
-
-            {currentStep === 'summary' && (
-              <SummaryStep
-                product={product}
-                lensSelection={lensSelection}
-                prescriptionData={prescriptionData}
-                lensOptions={lensOptions}
-                coatingOptions={coatingOptions}
-                treatments={apiTreatments}
-                progressiveOptions={progressiveOptions}
-                lensThicknessMaterials={lensThicknessMaterials}
-                onBack={handleBack}
-                onAddToCart={handleAddToCart}
-                onCheckoutNow={handleCheckoutNow}
-                loading={loading}
-                checkoutMode={checkoutMode}
-              />
-            )}
-
-            {currentStep === 'shipping' && (
-              <ShippingStep
-                shippingAddress={shippingAddress}
-                onAddressChange={(field, value) => setShippingAddress(prev => ({ ...prev, [field]: value }))}
-                onNext={handleNext}
-                onBack={handleBack}
-                errors={orderError ? { general: orderError } : {}}
-              />
-            )}
-
-            {currentStep === 'payment' && (
-              <PaymentStep
-                paymentMethod={paymentMethod}
-                onPaymentMethodChange={setPaymentMethod}
-                onBack={handleBack}
-                onCreateOrder={handleCreateOrder}
-                isProcessing={isProcessingOrder}
-                error={orderError}
-                order={createdOrder}
-                onLogin={() => navigate('/login')}
-                isAuthenticated={isAuthenticated}
-              />
-            )}
-          </div>
-        </div>
         </div>
       </div>
     </div>
@@ -3057,17 +3044,17 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   // Use API data if available, otherwise fallback to defaults
   const apiLensTypeOptions = prescriptionLensTypes.length > 0
     ? prescriptionLensTypes
-        .map(type => {
-          const typeId = type.type || (typeof type.id === 'string' ? type.id : String(type.id))
-          return {
-            id: typeId,
-            name: type.name || 'Unknown',
-            description: type.description || ''
-          }
-        })
-        .filter(option => option.id && ['distance_vision', 'near_vision', 'progressive'].includes(option.id)) // Filter out invalid options
+      .map(type => {
+        const typeId = type.type || (typeof type.id === 'string' ? type.id : String(type.id))
+        return {
+          id: typeId,
+          name: type.name || 'Unknown',
+          description: type.description || ''
+        }
+      })
+      .filter(option => option.id && ['distance_vision', 'near_vision', 'progressive'].includes(option.id)) // Filter out invalid options
     : []
-  
+
   // Combine API options with default options
   const lensTypeOptions = [
     ...apiLensTypeOptions,
@@ -3095,17 +3082,17 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
       console.error('Invalid option ID:', optionId)
       return
     }
-    
+
     const type = optionId as 'distance_vision' | 'near_vision' | 'progressive'
-    
+
     // Validate the type
     if (!['distance_vision', 'near_vision', 'progressive'].includes(type)) {
       console.error('Invalid lens type:', type)
       return
     }
-    
+
     onLensTypeChange(type)
-    
+
     // Handle lens type navigation
     if (type === 'progressive') {
       // Navigate to progressive step
@@ -3127,7 +3114,7 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   return (
     <div className="flex flex-col h-full">
       <h3 className="text-xl font-bold text-gray-900 mb-4">Select Lens Type</h3>
-      
+
       <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-3">
         {lensTypeOptions.length > 0 ? (
           lensTypeOptions.map((option) => {
@@ -3136,26 +3123,25 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
               return null
             }
             return (
-          <button
-            key={option.id}
-            onClick={() => handleOptionClick(option.id)}
+              <button
+                key={option.id}
+                onClick={() => handleOptionClick(option.id)}
                 type="button"
-            className={`w-full p-4 border-2 rounded-lg text-left transition-all cursor-pointer ${
-              lensSelection.type === option.id
-                ? 'border-blue-600 bg-blue-50'
-                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <div className="font-semibold text-gray-900 mb-1">{option.name}</div>
-                <div className="text-sm text-gray-600">{option.description}</div>
-              </div>
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </div>
-          </button>
+                className={`w-full p-4 border-2 rounded-lg text-left transition-all cursor-pointer ${lensSelection.type === option.id
+                  ? 'border-blue-600 bg-blue-50'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900 mb-1">{option.name}</div>
+                    <div className="text-sm text-gray-600">{option.description}</div>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
             )
           })
         ) : (
@@ -3171,16 +3157,16 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
 // Progressive Lens Step Component
 interface ProgressiveLensStepProps {
   lensSelection: LensSelection
-  progressiveOptions: Array<{ 
-    id: string; 
-    name: string; 
-    price: number; 
-    description: string; 
-    recommended?: boolean; 
+  progressiveOptions: Array<{
+    id: string;
+    name: string;
+    price: number;
+    description: string;
+    recommended?: boolean;
     viewingRange?: string;
     useCases?: string;
-    icon?: string; 
-    variantId?: number 
+    icon?: string;
+    variantId?: number
   }>
   progressiveOptionsLoading?: boolean
   onProgressiveOptionChange: (optionId: string) => void
@@ -3212,10 +3198,10 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
         </button>
         <h3 className="text-xl font-bold text-gray-900">Progressive</h3>
       </div>
-      
+
       {/* Description */}
       <p className="text-sm text-gray-600 mb-6">Progressives (For two powers in same lenses)</p>
-      
+
       {/* Progressive Options List */}
       <div className="flex-1 overflow-y-auto pr-2 mb-6 space-y-3">
         {progressiveOptionsLoading ? (
@@ -3232,60 +3218,58 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
           progressiveOptions
             .filter(option => option && option.id && option.name) // Filter out null/undefined options
             .map((option) => {
-            const isSelected = lensSelection.progressiveOption === option.id || 
-                              (option.id === 'premium' && !lensSelection.progressiveOption && progressiveOptions.length > 0)
-            
-            return (
-              <button
-                key={option.id || `option-${Math.random()}`}
-                onClick={() => onProgressiveOptionChange(option.id)}
-                className={`w-full p-4 border-2 rounded-lg text-left transition-all ${
-                  isSelected
+              const isSelected = lensSelection.progressiveOption === option.id ||
+                (option.id === 'premium' && !lensSelection.progressiveOption && progressiveOptions.length > 0)
+
+              return (
+                <button
+                  key={option.id || `option-${Math.random()}`}
+                  onClick={() => onProgressiveOptionChange(option.id)}
+                  className={`w-full p-4 border-2 rounded-lg text-left transition-all ${isSelected
                     ? 'border-blue-600 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
+                    }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-semibold text-gray-900 text-base">{option.name || 'Unknown'}</span>
-                    {option.recommended && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
-                          Recommended
-                        </span>
-                    )}
+                        {option.recommended && (
+                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full whitespace-nowrap">
+                            Recommended
+                          </span>
+                        )}
+                      </div>
+                      {option.price > 0 && (
+                        <div className="text-lg font-semibold text-gray-900 mb-2">
+                          ${option.price.toFixed(2)}
+                        </div>
+                      )}
+                      {option.description && (
+                        <div className="text-sm text-gray-600 leading-relaxed mb-2">{option.description}</div>
+                      )}
+                      {option.useCases && typeof option.useCases === 'string' && (
+                        <div className="text-xs text-gray-500 italic">{option.useCases}</div>
+                      )}
+                      {option.viewingRange && typeof option.viewingRange === 'string' && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          <span className="font-medium">Viewing Range:</span> {option.viewingRange}
+                        </div>
+                      )}
+                    </div>
+                    <svg
+                      className={`w-5 h-5 flex-shrink-0 transition-colors mt-1 ${isSelected ? 'text-blue-600' : 'text-gray-400'
+                        }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </div>
-                  {option.price > 0 && (
-                      <div className="text-lg font-semibold text-gray-900 mb-2">
-                        ${option.price.toFixed(2)}
-                      </div>
-                  )}
-                  {option.description && (
-                      <div className="text-sm text-gray-600 leading-relaxed mb-2">{option.description}</div>
-                  )}
-                  {option.useCases && typeof option.useCases === 'string' && (
-                      <div className="text-xs text-gray-500 italic">{option.useCases}</div>
-                  )}
-                  {option.viewingRange && typeof option.viewingRange === 'string' && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        <span className="font-medium">Viewing Range:</span> {option.viewingRange}
-                      </div>
-                  )}
-                </div>
-                <svg 
-                    className={`w-5 h-5 flex-shrink-0 transition-colors mt-1 ${
-                    isSelected ? 'text-blue-600' : 'text-gray-400'
-                  }`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </button>
-          )
-          })
+                </button>
+              )
+            })
         )}
       </div>
 
@@ -3332,16 +3316,16 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
     if (!prescriptionData || !prescriptionData.od_sphere || !prescriptionData.os_sphere) {
       return null
     }
-    
+
     const odSph = Math.abs(parseFloat(prescriptionData.od_sphere) || 0)
     const odCyl = Math.abs(parseFloat(prescriptionData.od_cylinder) || 0)
     const osSph = Math.abs(parseFloat(prescriptionData.os_sphere) || 0)
     const osCyl = Math.abs(parseFloat(prescriptionData.os_cylinder) || 0)
-    
+
     const odTotal = odSph + odCyl
     const osTotal = osSph + osCyl
     const total = Math.max(odTotal, osTotal)
-    
+
     if (total <= 1.50) return 1.49
     if (total <= 3.50) return 1.56
     if (total <= 5.50) return 1.60
@@ -3374,7 +3358,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
         </button>
         <h3 className="text-xl font-bold text-gray-900">Lens Thickness</h3>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-4">
         <div className="space-y-3">
           {lensThicknessMaterials.length > 0 ? (
@@ -3386,21 +3370,20 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
               const isSelected = lensSelection.lensThicknessMaterialId !== undefined
                 ? lensSelection.lensThicknessMaterialId === material.id
                 : ((isPlastic && lensSelection.lensThickness === 'plastic') ||
-                   (isGlass && lensSelection.lensThickness === 'glass'))
-              
+                  (isGlass && lensSelection.lensThickness === 'glass'))
+
               return (
                 <label
                   key={material.id}
-                  className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    isSelected 
-                      ? 'border-blue-600 bg-blue-50' 
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-                  }`}
+                  className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${isSelected
+                    ? 'border-blue-600 bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                    }`}
                 >
                   <input
                     type="radio"
                     name="lensThickness"
-                    checked={isSelected}
+                    checked={Boolean(isSelected)}
                     onChange={() => {
                       // Toggle: if already selected, deselect; otherwise select
                       if (isSelected) {
@@ -3419,51 +3402,49 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
           ) : (
             // Fallback to default options if API data not available
             <>
-          <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-            lensSelection.lensThickness === 'plastic' 
-              ? 'border-blue-600 bg-blue-50' 
-              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-          }`}>
-            <input
-              type="radio"
-              name="lensThickness"
-              checked={lensSelection.lensThickness === 'plastic'}
-              onChange={() => {
-                // Toggle: if already selected, deselect; otherwise select
-                if (lensSelection.lensThickness === 'plastic') {
-                  onLensThicknessChange('plastic', undefined)
-                } else {
-                  onLensThicknessChange('plastic')
-                }
-              }}
-              className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-            />
-            <span className="flex-1 text-sm font-medium text-gray-900">Unbreakable (Plastic)</span>
-            <span className="text-sm font-semibold text-gray-700">$30.00</span>
-          </label>
+              <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${lensSelection.lensThickness === 'plastic'
+                ? 'border-blue-600 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                <input
+                  type="radio"
+                  name="lensThickness"
+                  checked={lensSelection.lensThickness === 'plastic'}
+                  onChange={() => {
+                    // Toggle: if already selected, deselect; otherwise select
+                    if (lensSelection.lensThickness === 'plastic') {
+                      onLensThicknessChange('plastic', undefined)
+                    } else {
+                      onLensThicknessChange('plastic')
+                    }
+                  }}
+                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="flex-1 text-sm font-medium text-gray-900">Unbreakable (Plastic)</span>
+                <span className="text-sm font-semibold text-gray-700">$30.00</span>
+              </label>
 
-          <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-            lensSelection.lensThickness === 'glass' 
-              ? 'border-blue-600 bg-blue-50' 
-              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-          }`}>
-            <input
-              type="radio"
-              name="lensThickness"
-              checked={lensSelection.lensThickness === 'glass'}
-              onChange={() => {
-                // Toggle: if already selected, deselect; otherwise select
-                if (lensSelection.lensThickness === 'glass') {
-                  onLensThicknessChange('glass', undefined)
-                } else {
-                  onLensThicknessChange('glass')
-                }
-              }}
-              className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
-            />
-            <span className="flex-1 text-sm font-medium text-gray-900">Minerals (Glass)</span>
-            <span className="text-sm font-semibold text-gray-700">$60.00</span>
-          </label>
+              <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${lensSelection.lensThickness === 'glass'
+                ? 'border-blue-600 bg-blue-50'
+                : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                }`}>
+                <input
+                  type="radio"
+                  name="lensThickness"
+                  checked={lensSelection.lensThickness === 'glass'}
+                  onChange={() => {
+                    // Toggle: if already selected, deselect; otherwise select
+                    if (lensSelection.lensThickness === 'glass') {
+                      onLensThicknessChange('glass', undefined)
+                    } else {
+                      onLensThicknessChange('glass')
+                    }
+                  }}
+                  className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className="flex-1 text-sm font-medium text-gray-900">Minerals (Glass)</span>
+                <span className="text-sm font-semibold text-gray-700">$60.00</span>
+              </label>
             </>
           )}
         </div>
@@ -3571,19 +3552,19 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   const { t } = useTranslation()
   const [showPhotochromic, setShowPhotochromic] = useState(false)
   const [showPrescriptionSun, setShowPrescriptionSun] = useState(false)
-  const [selectedColor, setSelectedColor] = useState<{ type: string; colorId: string } | null>(null)
+
 
   // Use API treatments - filter out photochromic and prescription_sun as they have special handling
   // Standard treatments are those that are not photochromic or prescription_sun
   const standardTreatments = treatments
     .filter(t => {
       const treatmentType = t.type?.toLowerCase() || t.slug?.toLowerCase() || ''
-      return treatmentType !== 'photochromic' && 
-             treatmentType !== 'prescription_sun' && 
-             treatmentType !== 'prescription-sun' &&
-             t.type !== 'photochromic' &&
-             t.slug !== 'photochromic' &&
-             t.slug !== 'prescription-sun'
+      return treatmentType !== 'photochromic' &&
+        treatmentType !== 'prescription_sun' &&
+        treatmentType !== 'prescription-sun' &&
+        t.type !== 'photochromic' &&
+        t.slug !== 'photochromic' &&
+        t.slug !== 'prescription-sun'
     })
     .map(t => ({
       id: t.id,
@@ -3601,7 +3582,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     console.log('🔍 [UI] apiPhotochromicOptions:', apiPhotochromicOptions?.length || 0, 'options')
     console.log('🔍 [UI] apiLensColors:', apiLensColors?.length || 0, 'colors')
     console.log('🔍 [UI] apiLensColors type:', typeof apiLensColors, 'isArray:', Array.isArray(apiLensColors))
-    
+
     if (apiLensColors && apiLensColors.length > 0) {
       console.log('🔍 [UI] First lens color sample:', {
         id: apiLensColors[0].id,
@@ -3611,7 +3592,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
         lensOptionName: apiLensColors[0].lensOption?.name
       })
     }
-    
+
     // Filter colors that belong to photochromic lens options
     const photochromicColors = apiLensColors?.filter(color => {
       if (!color.lensOption) {
@@ -3621,17 +3602,17 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       const type = (color.lensOption.type || '').toLowerCase()
       const slug = (color.lensOption.slug || '').toLowerCase()
       const name = (color.lensOption.name || '').toLowerCase()
-      const isPhotochromic = type === 'photochromic' || 
-             slug === 'photochromic' ||
-             name.includes('photochromic')
-      
+      const isPhotochromic = type === 'photochromic' ||
+        slug === 'photochromic' ||
+        name.includes('photochromic')
+
       if (isPhotochromic) {
         console.log('  ✅ Color', color.id, 'is photochromic (type:', type, 'slug:', slug, 'name:', name, ')')
       }
-      
+
       return isPhotochromic
     }) || []
-    
+
     console.log('📥 [API] Found', photochromicColors.length, 'photochromic colors from /api/lens/colors')
     if (photochromicColors.length > 0) {
       console.log('📥 [API] First photochromic color:', JSON.stringify(photochromicColors[0], null, 2))
@@ -3639,12 +3620,12 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       console.log('📥 [API] No photochromic colors found, but we have', apiLensColors.length, 'total colors')
       console.log('📥 [API] Sample lensOption types:', apiLensColors.slice(0, 5).map(c => c.lensOption?.type || 'null').join(', '))
     }
-    
+
     // If we have colors from the dedicated endpoint but no options, create options from colors
-    if ((!apiPhotochromicOptions || apiPhotochromicOptions.length === 0) && 
-        photochromicColors.length > 0) {
+    if ((!apiPhotochromicOptions || apiPhotochromicOptions.length === 0) &&
+      photochromicColors.length > 0) {
       console.log('📥 [API] No photochromic options found, creating options from lens colors endpoint')
-      
+
       // Group colors by lensOption
       const colorsByOption: Record<number, LensColor[]> = {}
       photochromicColors.forEach(color => {
@@ -3655,9 +3636,9 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           colorsByOption[color.lensOption.id].push(color)
         }
       })
-      
+
       console.log('📥 [API] Grouped colors into', Object.keys(colorsByOption).length, 'options')
-      
+
       // Create options from grouped colors
       const optionsFromColors: LensOption[] = Object.entries(colorsByOption).map(([optionId, colors]) => {
         const firstColor = colors[0]
@@ -3677,20 +3658,20 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           }))
         } as LensOption
       })
-      
+
       console.log('📥 [API] Created', optionsFromColors.length, 'photochromic options from colors')
       console.log('📥 [API] First option colors:', optionsFromColors[0]?.colors?.length || 0)
-      
+
       // Use these options for mapping (this will format colors properly)
       return mapPhotochromicOptionsToUI(optionsFromColors, apiLensColors)
     }
-    
+
     if (apiPhotochromicOptions && apiPhotochromicOptions.length > 0) {
       console.log('📥 [API] Mapping photochromic options from API:', apiPhotochromicOptions.length, 'options')
       console.log('📥 [API] Raw options data:', JSON.stringify(apiPhotochromicOptions, null, 2))
       return mapPhotochromicOptionsToUI(apiPhotochromicOptions, apiLensColors)
     }
-    
+
     // Return empty array if no API data
     if (import.meta.env.DEV) {
       console.warn('⚠️ [UI] No photochromic options to map.')
@@ -3700,7 +3681,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     }
     return []
   }
-  
+
   // Helper function to map photochromic options to UI format
   const mapPhotochromicOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
     // Merge colors from dedicated endpoint into options
@@ -3715,10 +3696,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           // Match by type/slug if IDs don't match
           const optionType = (option.type || option.slug || '').toLowerCase()
           const colorType = (color.lensOption.type || color.lensOption.slug || '').toLowerCase()
-          return optionType === 'photochromic' && 
-                 (colorType === 'photochromic' || colorType.includes('photochromic'))
+          return optionType === 'photochromic' &&
+            (colorType === 'photochromic' || colorType.includes('photochromic'))
         })
-        
+
         if (matchingColors.length > 0) {
           console.log(`  ✅ Found ${matchingColors.length} colors for photochromic option ${option.name} (id: ${option.id})`)
           // Merge colors, avoiding duplicates
@@ -3733,55 +3714,55 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               isActive: color.isActive !== undefined ? color.isActive : color.is_active,
               priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
             }))
-          
+
           option.colors = [...(option.colors || []), ...newColors]
         }
       })
     }
-    
+
     return options
-        .filter(option => {
-          // Support both camelCase and snake_case
-          const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
-          return isActive !== false;
-        })
-        .sort((a, b) => {
-          const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-          const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-          return sortA - sortB;
-        })
-        .map(option => {
-          const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
-          return {
-            id: option.slug || option.id.toString(),
-            name: option.name,
-            description: option.description || '',
-            price: basePrice,
-            colors: (option.colors || [])
-              .filter(color => {
-                // Support both camelCase and snake_case
-                const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
-                return isActive !== false;
-              })
-              .sort((a, b) => {
-                const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-                const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-                return sortA - sortB;
-              })
-              .map(color => {
-                // Support both camelCase and snake_case
-                const hexCode = color.hexCode || color.hex_code || '#000000';
-                const colorCode = color.colorCode || color.color_code || '';
-                return {
-                  id: color.id.toString(),
-                  name: color.name,
-                  color: hexCode,
-                  gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
-                  priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
-                };
-              })
-          };
-        })
+      .filter(option => {
+        // Support both camelCase and snake_case
+        const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+        return isActive !== false;
+      })
+      .sort((a, b) => {
+        const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+        const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+        return sortA - sortB;
+      })
+      .map(option => {
+        const basePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
+        return {
+          id: option.slug || option.id.toString(),
+          name: option.name,
+          description: option.description || '',
+          price: basePrice,
+          colors: (option.colors || [])
+            .filter(color => {
+              // Support both camelCase and snake_case
+              const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+              return isActive !== false;
+            })
+            .sort((a, b) => {
+              const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+              const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+              return sortA - sortB;
+            })
+            .map(color => {
+              // Support both camelCase and snake_case
+              const hexCode = color.hexCode || color.hex_code || '#000000';
+              const colorCode = color.colorCode || color.color_code || '';
+              return {
+                id: color.id.toString(),
+                name: color.name,
+                color: hexCode,
+                gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
+                priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+              };
+            })
+        };
+      })
   }
 
   // Map API prescription sun options to UI format
@@ -3792,29 +3773,29 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     console.log('🔍 [UI] mapPrescriptionSunOptions called with:', apiPrescriptionSunOptions?.length || 0, 'options')
     console.log('🔍 [UI] Prescription sun colors from dedicated endpoint:', apiPrescriptionSunColors?.length || 0, 'colors')
     console.log('🔍 [UI] All lens colors from /api/lens/colors:', apiLensColors?.length || 0, 'colors')
-    
+
     // Collect all prescription sun colors from both endpoints
     const allPrescriptionSunColors: LensColor[] = []
-    
+
     // Add colors from prescription-sun-colors endpoint
     if (apiPrescriptionSunColors && apiPrescriptionSunColors.length > 0) {
       allPrescriptionSunColors.push(...apiPrescriptionSunColors)
     }
-    
+
     // Add colors from /api/lens/colors that have prescriptionLensType
     if (apiLensColors && apiLensColors.length > 0) {
-      const prescriptionSunColorsFromLensColors = apiLensColors.filter(color => 
+      const prescriptionSunColorsFromLensColors = apiLensColors.filter(color =>
         color.prescriptionLensType !== null && color.prescriptionLensType !== undefined
       )
       console.log('📥 [API] Found', prescriptionSunColorsFromLensColors.length, 'prescription sun colors from /api/lens/colors')
       allPrescriptionSunColors.push(...prescriptionSunColorsFromLensColors)
     }
-    
+
     // If we have colors but no options, create options from colors
-    if ((!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0) && 
-        allPrescriptionSunColors.length > 0) {
+    if ((!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0) &&
+      allPrescriptionSunColors.length > 0) {
       console.log('📥 [API] No options found, creating options from prescription sun colors')
-      
+
       // Group colors by prescriptionLensType
       const colorsByType: Record<number, LensColor[]> = {}
       allPrescriptionSunColors.forEach(color => {
@@ -3833,13 +3814,13 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           colorsByType[optionId].push(color)
         }
       })
-      
+
       // Create options from grouped colors
       const optionsFromColors: LensOption[] = Object.entries(colorsByType).map(([typeId, colors]) => {
         const firstColor = colors[0]
         const prescriptionType = firstColor.prescriptionLensType || firstColor.lensOption
         if (!prescriptionType) return null
-        
+
         return {
           id: parseInt(typeId),
           name: prescriptionType.name || 'Prescription Sun',
@@ -3848,29 +3829,29 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           colors: colors
         } as LensOption
       }).filter((opt): opt is LensOption => opt !== null)
-      
+
       if (optionsFromColors.length > 0) {
         // Use these options for mapping
         return mapOptionsToUI(optionsFromColors, allPrescriptionSunColors)
       }
     }
-    
+
     if (apiPrescriptionSunOptions && apiPrescriptionSunOptions.length > 0) {
       console.log('📥 [API] Mapping prescription sun options from API:', apiPrescriptionSunOptions.length, 'options')
       console.log('📥 [API] Raw options data:', JSON.stringify(apiPrescriptionSunOptions, null, 2))
-      
+
       // Merge colors from both endpoints
       const allColors = [...(apiPrescriptionSunColors || []), ...(apiLensColors?.filter(c => c.prescriptionLensType) || [])]
       return mapOptionsToUI(apiPrescriptionSunOptions, allColors)
     }
-    
+
     // Fallback: Create sample data for development/testing when API returns no data
     // This matches the structure described in the Postman collection
     if (import.meta.env.DEV && (!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0)) {
       console.info('ℹ️ [UI] No prescription sun options from API, using sample data for development')
       console.info('   → This is sample data for UI testing')
       console.info('   → Create prescription sun lenses via admin panel to use real data')
-      
+
       // Create sample options matching Postman collection structure
       const sampleOptions: any[] = [
         {
@@ -3971,10 +3952,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
           ]
         }
       ]
-      
+
       return sampleOptions
     }
-    
+
     // Return empty array if no API data and not in dev mode
     if (import.meta.env.DEV) {
       console.info('ℹ️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
@@ -3984,7 +3965,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     }
     return []
   }
-  
+
   // Helper function to map options to UI format
   const mapOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
     // Merge colors from dedicated endpoint into options
@@ -3992,10 +3973,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       console.log('🔄 [UI] Merging', additionalColors.length, 'colors from dedicated endpoint into options')
       options.forEach(option => {
         // Find colors that belong to this option
-        const matchingColors = additionalColors.filter(color => 
+        const matchingColors = additionalColors.filter(color =>
           color.lensOption && color.lensOption.id === option.id
         )
-        
+
         if (matchingColors.length > 0) {
           console.log(`  ✅ Found ${matchingColors.length} colors for option ${option.name} (id: ${option.id})`)
           // Merge colors, avoiding duplicates
@@ -4010,125 +3991,104 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               isActive: color.isActive !== undefined ? color.isActive : color.is_active,
               priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
             }))
-          
+
           option.colors = [...(option.colors || []), ...newColors]
         }
       })
     }
-      
-      // Filter active options and sort
+
+    // Filter active options and sort
     const activeOptions = options
-        .filter(option => {
-          // Support both camelCase and snake_case
-          const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
-          return isActive !== false;
-        })
-        .sort((a, b) => {
-          const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-          const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-          return sortA - sortB;
-        })
-      
-      // Group by main option type (polarized, classic, blokz, etc.)
-      // The grouping is based on the option name or slug
-      const grouped: Record<string, any> = {}
-      
-      activeOptions.forEach(option => {
-        // Determine main type from name or slug
-        // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
-        const nameLower = (option.name || '').toLowerCase()
-        const slugLower = (option.slug || '').toLowerCase()
-        
-        let mainType = ''
-        if (nameLower.includes('polarized') || slugLower.includes('polarized')) {
-          mainType = 'polarized'
-        } else if (nameLower.includes('blokz') || slugLower.includes('blokz')) {
-          mainType = 'blokz'
-        } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
-          mainType = 'classic'
-        } else {
-          // Use first word of name or slug as main type
-          mainType = (option.name ? option.name.split(' ')[0].toLowerCase() : '') || option.slug?.split('_')[0] || 'other'
+      .filter(option => {
+        // Support both camelCase and snake_case
+        const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+        return isActive !== false;
+      })
+      .sort((a, b) => {
+        const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+        const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+        return sortA - sortB;
+      })
+
+    // Group by main option type (polarized, classic, blokz, etc.)
+    // The grouping is based on the option name or slug
+    const grouped: Record<string, any> = {}
+
+    activeOptions.forEach(option => {
+      // Determine main type from name or slug
+      // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
+      const nameLower = (option.name || '').toLowerCase()
+      const slugLower = (option.slug || '').toLowerCase()
+
+      let mainType = ''
+      if (nameLower.includes('polarized') || slugLower.includes('polarized')) {
+        mainType = 'polarized'
+      } else if (nameLower.includes('blokz') || slugLower.includes('blokz')) {
+        mainType = 'blokz'
+      } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+        mainType = 'classic'
+      } else {
+        // Use first word of name or slug as main type
+        mainType = (option.name ? option.name.split(' ')[0].toLowerCase() : '') || option.slug?.split('_')[0] || 'other'
+      }
+
+      // Initialize main option if not exists
+      if (!grouped[mainType]) {
+        // Find the base option for this type (usually the one without sub-type in name)
+        const baseOption = activeOptions.find(opt => {
+          const optName = (opt.name || '').toLowerCase()
+          return (optName === mainType || optName.includes(mainType)) &&
+            !optName.includes('mirror') &&
+            !optName.includes('gradient') &&
+            !optName.includes('fashion')
+        }) || option
+
+        const basePrice = baseOption.basePrice !== undefined ? baseOption.basePrice : baseOption.base_price || 0;
+        grouped[mainType] = {
+          id: baseOption.slug || baseOption.id.toString(),
+          name: baseOption.name,
+          price: basePrice,
+          description: baseOption.description || '',
+          subOptions: []
         }
-        
-        // Initialize main option if not exists
-        if (!grouped[mainType]) {
-          // Find the base option for this type (usually the one without sub-type in name)
-          const baseOption = activeOptions.find(opt => {
-            const optName = (opt.name || '').toLowerCase()
-            return (optName === mainType || optName.includes(mainType)) && 
-                   !optName.includes('mirror') && 
-                   !optName.includes('gradient') && 
-                   !optName.includes('fashion')
-          }) || option
-          
-          const basePrice = baseOption.basePrice !== undefined ? baseOption.basePrice : baseOption.base_price || 0;
-          grouped[mainType] = {
-            id: baseOption.slug || baseOption.id.toString(),
-            name: baseOption.name,
-            price: basePrice,
-            description: baseOption.description || '',
-            subOptions: []
-          }
-        }
-        
-        // Determine sub-option type (classic, mirror, gradient, fashion)
-        let subOptionType = 'classic'
-        if (nameLower.includes('mirror') || slugLower.includes('mirror')) {
-          subOptionType = 'mirror'
-        } else if (nameLower.includes('gradient') || slugLower.includes('gradient')) {
-          subOptionType = 'gradient'
-        } else if (nameLower.includes('fashion') || slugLower.includes('fashion')) {
-          subOptionType = 'fashion'
-        } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
-          subOptionType = 'classic'
-        }
-        
-        // Check if sub-option already exists
-        const existingSubOption = grouped[mainType].subOptions.find((sub: any) => {
-          const subName = (sub.name || '').toLowerCase()
-          const optionName = (option.name || '').toLowerCase()
-          return subName === optionName
-        })
-        
-        const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
-        if (!existingSubOption && option.colors && option.colors.length > 0) {
-          // Add as new sub-option with colors
-          grouped[mainType].subOptions.push({
-            id: `${mainType}_${subOptionType}_${option.id}`,
-            name: option.name,
-            price: optionBasePrice,
-            colors: option.colors
-              .filter(color => {
-                // Support both camelCase and snake_case
-                const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
-                return isActive !== false;
-              })
-              .sort((a, b) => {
-                const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-                const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-                return sortA - sortB;
-              })
-              .map(color => {
-                // Support both camelCase and snake_case
-                const hexCode = color.hexCode || color.hex_code || '#000000';
-                const colorCode = color.colorCode || color.color_code || '';
-                return {
-                  id: color.id.toString(),
-                  name: color.name,
-                  color: hexCode,
-                  gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
-                  priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
-                };
-              })
-          })
-        } else if (existingSubOption && option.colors && option.colors.length > 0) {
-          // Merge colors into existing sub-option
-          const newColors = option.colors
+      }
+
+      // Determine sub-option type (classic, mirror, gradient, fashion)
+      let subOptionType = 'classic'
+      if (nameLower.includes('mirror') || slugLower.includes('mirror')) {
+        subOptionType = 'mirror'
+      } else if (nameLower.includes('gradient') || slugLower.includes('gradient')) {
+        subOptionType = 'gradient'
+      } else if (nameLower.includes('fashion') || slugLower.includes('fashion')) {
+        subOptionType = 'fashion'
+      } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+        subOptionType = 'classic'
+      }
+
+      // Check if sub-option already exists
+      const existingSubOption = grouped[mainType].subOptions.find((sub: any) => {
+        const subName = (sub.name || '').toLowerCase()
+        const optionName = (option.name || '').toLowerCase()
+        return subName === optionName
+      })
+
+      const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
+      if (!existingSubOption && option.colors && option.colors.length > 0) {
+        // Add as new sub-option with colors
+        grouped[mainType].subOptions.push({
+          id: `${mainType}_${subOptionType}_${option.id}`,
+          name: option.name,
+          price: optionBasePrice,
+          colors: option.colors
             .filter(color => {
               // Support both camelCase and snake_case
               const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
               return isActive !== false;
+            })
+            .sort((a, b) => {
+              const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+              const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+              return sortA - sortB;
             })
             .map(color => {
               // Support both camelCase and snake_case
@@ -4138,47 +4098,68 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                 id: color.id.toString(),
                 name: color.name,
                 color: hexCode,
-                gradient: colorCode.toLowerCase().includes('gradient') || false,
+                gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
                 priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
               };
             })
-          existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
-        } else if (!existingSubOption) {
-          // Add sub-option without colors (e.g., Gradient option)
-          grouped[mainType].subOptions.push({
-            id: `${mainType}_${subOptionType}_${option.id}`,
-            name: option.name,
-            price: optionBasePrice,
-          colors: []
-          })
-        }
-      })
-      
-      // Sort sub-options and return grouped values
-      Object.values(grouped).forEach((group: any) => {
-        group.subOptions.sort((a: any, b: any) => {
-          const order = ['classic', 'fashion', 'mirror', 'gradient']
-          const aName = (a.name || '').toLowerCase()
-          const bName = (b.name || '').toLowerCase()
-          const aIndex = order.findIndex(o => aName.includes(o))
-          const bIndex = order.findIndex(o => bName.includes(o))
-          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
-          if (aIndex !== -1) return -1
-          if (bIndex !== -1) return 1
-          // Use the already declared aName and bName variables
-          return aName.localeCompare(bName)
         })
+      } else if (existingSubOption && option.colors && option.colors.length > 0) {
+        // Merge colors into existing sub-option
+        const newColors = option.colors
+          .filter(color => {
+            // Support both camelCase and snake_case
+            const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+            return isActive !== false;
+          })
+          .map(color => {
+            // Support both camelCase and snake_case
+            const hexCode = color.hexCode || color.hex_code || '#000000';
+            const colorCode = color.colorCode || color.color_code || '';
+            return {
+              id: color.id.toString(),
+              name: color.name,
+              color: hexCode,
+              gradient: colorCode.toLowerCase().includes('gradient') || false,
+              priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+            };
+          })
+        existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
+      } else if (!existingSubOption) {
+        // Add sub-option without colors (e.g., Gradient option)
+        grouped[mainType].subOptions.push({
+          id: `${mainType}_${subOptionType}_${option.id}`,
+          name: option.name,
+          price: optionBasePrice,
+          colors: []
+        })
+      }
+    })
+
+    // Sort sub-options and return grouped values
+    Object.values(grouped).forEach((group: any) => {
+      group.subOptions.sort((a: any, b: any) => {
+        const order = ['classic', 'fashion', 'mirror', 'gradient']
+        const aName = (a.name || '').toLowerCase()
+        const bName = (b.name || '').toLowerCase()
+        const aIndex = order.findIndex(o => aName.includes(o))
+        const bIndex = order.findIndex(o => bName.includes(o))
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+        if (aIndex !== -1) return -1
+        if (bIndex !== -1) return 1
+        // Use the already declared aName and bName variables
+        return aName.localeCompare(bName)
       })
-      
-      const result = Object.values(grouped)
-      console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
-      return result
+    })
+
+    const result = Object.values(grouped)
+    console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
+    return result
   }
 
   // Use mapped API options or fallback
   const photochromicOptions = mapPhotochromicOptions()
   const prescriptionSunOptions = mapPrescriptionSunOptions()
-  
+
   // Debug logging
   console.log('🎨 [UI] Final photochromicOptions:', photochromicOptions.length, 'options')
   if (photochromicOptions.length > 0) {
@@ -4186,10 +4167,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       id: photochromicOptions[0].id,
       name: photochromicOptions[0].name,
       colorsCount: photochromicOptions[0].colors?.length || 0,
-      colors: photochromicOptions[0].colors?.map((c: any) => ({ 
-        id: c.id, 
-        name: c.name, 
-        hex: c.hexCode || c.hex_code || c.color 
+      colors: photochromicOptions[0].colors?.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        hex: c.hexCode || c.hex_code || c.color
       }))
     })
   }
@@ -4204,35 +4185,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     setShowPhotochromic(false)
   }
 
-  const handleColorSelect = (type: string, colorId: string, treatmentId: string, color: { id: string; name: string; color: string; gradient?: boolean }) => {
-    setSelectedColor({ type, colorId })
-    
-    // Determine if this is photochromic or prescription sun based on the option type
-    // Check if it's from photochromic options
-    const isPhotochromic = photochromicOptions.some(opt => 
-      type.includes(opt.id) || opt.id === type.split('_')[0]
-    )
-    
-    // Check if it's from prescription sun options
-    const isPrescriptionSun = prescriptionSunOptions.some(opt => 
-      type.includes(opt.id) || opt.id === type.split('_')[0]
-    )
-    
-    if (isPhotochromic) {
-      // Photochromic color - handled separately, don't add to treatments array
-      if (onColorSelect) {
-        onColorSelect('photochromic', color)
-      }
-    } else if (isPrescriptionSun) {
-      // Prescription sun color - handled separately, don't add to treatments array
-      if (onColorSelect) {
-        onColorSelect('prescription_sun', color)
-      }
-    } else {
-      // Standard treatment - add to treatments array
-      onTreatmentToggle(treatmentId)
-    }
-  }
+
 
   return (
     <div className="flex flex-col h-full">
@@ -4277,11 +4230,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               <div className="mb-4">
                 <button
                   onClick={handlePhotochromicClick}
-                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    showPhotochromic || lensSelection.photochromicColor
-                      ? 'border-black bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${showPhotochromic || lensSelection.photochromicColor
+                    ? 'border-black bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4333,11 +4285,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                   title={color.name}
                                 >
                                   <div
-                                    className={`w-14 h-14 rounded-full border-2 transition-all ${
-                                      isSelected
-                                        ? 'border-blue-600 ring-2 ring-blue-200'
-                                        : 'border-gray-300 group-hover:border-gray-400'
-                                    }`}
+                                    className={`w-14 h-14 rounded-full border-2 transition-all ${isSelected
+                                      ? 'border-blue-600 ring-2 ring-blue-200'
+                                      : 'border-gray-300 group-hover:border-gray-400'
+                                      }`}
                                     style={{
                                       background: color.gradient
                                         ? `linear-gradient(135deg, ${color.hexCode || color.hex_code || color.color || '#000000'} 0%, ${color.hexCode2 || color.hex_code2 || color.color || '#000000'} 100%)`
@@ -4371,11 +4322,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
               <div className="mb-4">
                 <button
                   onClick={handlePrescriptionSunClick}
-                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    showPrescriptionSun || lensSelection.prescriptionSunColor
-                      ? 'border-black bg-blue-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
+                  className={`w-full flex items-center justify-between p-4 border-2 rounded-lg cursor-pointer transition-colors ${showPrescriptionSun || lensSelection.prescriptionSunColor
+                    ? 'border-black bg-blue-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4451,11 +4401,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                           title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
                                         >
                                           <div
-                                            className={`w-14 h-14 rounded-full border-2 transition-all ${
-                                              isSelected
-                                                ? 'border-blue-600 ring-2 ring-blue-200'
-                                                : 'border-gray-300 group-hover:border-gray-400'
-                                            }`}
+                                            className={`w-14 h-14 rounded-full border-2 transition-all ${isSelected
+                                              ? 'border-blue-600 ring-2 ring-blue-200'
+                                              : 'border-gray-300 group-hover:border-gray-400'
+                                              }`}
                                             style={{
                                               background: color.gradient
                                                 ? `linear-gradient(to bottom, ${color.color || '#000000'} 0%, ${color.color2 || color.color || '#000000'} 100%)`
@@ -4502,11 +4451,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                   title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
                                 >
                                   <div
-                                    className={`w-14 h-14 rounded-full border-2 transition-all ${
-                                      isSelected
-                                        ? 'border-blue-600 ring-2 ring-blue-200'
-                                        : 'border-gray-300 group-hover:border-gray-400'
-                                    }`}
+                                    className={`w-14 h-14 rounded-full border-2 transition-all ${isSelected
+                                      ? 'border-blue-600 ring-2 ring-blue-200'
+                                      : 'border-gray-300 group-hover:border-gray-400'
+                                      }`}
                                     style={{
                                       background: color.gradient
                                         ? `linear-gradient(to bottom, ${color.color || '#000000'} 0%, ${color.color2 || color.color || '#000000'} 100%)`
@@ -4538,30 +4486,29 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
             {/* Standard Treatments from API */}
             {standardTreatments.length > 0 ? (
               standardTreatments.map((treatment) => {
-              const isSelected = lensSelection.treatments.includes(treatment.id)
-              
-              return (
-                <label
-                  key={treatment.id}
-                  className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${
-                    isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => onTreatmentToggle(treatment.id)}
-                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">{treatment.name}</div>
-                    {treatment.description && (
-                      <div className="text-sm text-gray-500 mt-1">{treatment.description}</div>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">${treatment.price.toFixed(2)}</span>
-                </label>
-              )
+                const isSelected = lensSelection.treatments.includes(treatment.id)
+
+                return (
+                  <label
+                    key={treatment.id}
+                    className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                      }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onTreatmentToggle(treatment.id)}
+                      className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{treatment.name}</div>
+                      {treatment.description && (
+                        <div className="text-sm text-gray-500 mt-1">{treatment.description}</div>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">${treatment.price.toFixed(2)}</span>
+                  </label>
+                )
               })
             ) : (
               !loading && (
@@ -4595,10 +4542,6 @@ interface PrescriptionInputStepProps {
   onPrescriptionChange: (field: keyof PrescriptionFormData, value: string) => void
   onNext: () => void
   onBack: () => void
-  savedPrescriptions?: Prescription[]
-  selectedSavedPrescription?: number | null
-  onLoadSavedPrescription?: (prescriptionId: number) => void
-  isAuthenticated?: boolean
 }
 
 const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
@@ -4608,10 +4551,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   onPrescriptionChange,
   onNext,
   onBack,
-  savedPrescriptions: _savedPrescriptions = [],
-  selectedSavedPrescription: _selectedSavedPrescription,
-  onLoadSavedPrescription: _onLoadSavedPrescription,
-  isAuthenticated: _isAuthenticated = false
 }) => {
   const isProgressive = lensType === 'progressive'
   const isDistanceVision = lensType === 'distance_vision'
@@ -4619,17 +4558,16 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
   // State for form structure from API
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
-  const [formLoading, setFormLoading] = useState(true)
-  const [copyLeftToRight, setCopyLeftToRight] = useState(false)
+
+  const [copyRightToLeft, setCopyRightToLeft] = useState(false)
   const [showAxisDiagram, setShowAxisDiagram] = useState(true)
 
   // Fetch form structure from API
   useEffect(() => {
     const fetchFormStructure = async () => {
-      setFormLoading(true)
       try {
-        const formType: FormType = isProgressive ? 'progressive' : 
-                                   isDistanceVision ? 'distance_vision' : 'near_vision'
+        const formType: FormType = isProgressive ? 'progressive' :
+          isDistanceVision ? 'distance_vision' : 'near_vision'
         const structure = await getFormStructure(formType)
         if (import.meta.env.DEV) {
           console.log('📋 [Prescription Form] Fetched structure:', formType, structure)
@@ -4639,28 +4577,26 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         console.error('Failed to fetch form structure:', error)
         // Fallback to hardcoded values if API fails
         setFormStructure(null)
-      } finally {
-        setFormLoading(false)
       }
     }
 
     fetchFormStructure()
   }, [isProgressive, isDistanceVision, isNearVision])
 
-  // Handle copy left to right
-  const handleCopyLeftToRight = () => {
-    if (prescriptionData.os_sphere) {
-      onPrescriptionChange('od_sphere', prescriptionData.os_sphere)
+  // Handle copy right to left
+  const handleCopyRightToLeft = () => {
+    if (prescriptionData.od_sphere) {
+      onPrescriptionChange('os_sphere', prescriptionData.od_sphere)
     }
-    if (prescriptionData.os_cylinder) {
-      onPrescriptionChange('od_cylinder', prescriptionData.os_cylinder)
+    if (prescriptionData.od_cylinder) {
+      onPrescriptionChange('os_cylinder', prescriptionData.od_cylinder)
     }
-    if (prescriptionData.os_axis) {
-      onPrescriptionChange('od_axis', prescriptionData.os_axis)
+    if (prescriptionData.od_axis) {
+      onPrescriptionChange('os_axis', prescriptionData.od_axis)
     }
-    setCopyLeftToRight(true)
+    setCopyRightToLeft(true)
     // Reset the flag after a short delay to allow the success message to show
-    setTimeout(() => setCopyLeftToRight(false), 3000)
+    setTimeout(() => setCopyRightToLeft(false), 3000)
   }
 
   // Get dropdown values from API structure only (admin-inserted values)
@@ -4678,7 +4614,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         }
       }
     }
-    
+
     // No fallback - return empty array if no API values
     if (import.meta.env.DEV) {
       console.log(`⚠️ [Prescription Form] No API values found for ${fieldType} (${eyeType})`)
@@ -4691,7 +4627,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const pdOptions = useMemo(() => {
     return getFieldOptions('pd', 'both')
   }, [getFieldOptions])
-  
+
   // Generate SPH, CYL, AXIS options based on lens type - only from API
   const getSphereOptions = useCallback((eye: 'left' | 'right') => {
     return getFieldOptions('sph', eye)
@@ -4713,12 +4649,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const addOptions = useMemo(() => {
     return getFieldOptions('select_option', 'both')
   }, [getFieldOptions])
-  
+
   // H (Height) - only from API
   const hOptions = useMemo(() => {
     return getFieldOptions('h', 'both')
   }, [getFieldOptions])
-  
+
   // Year of Birth - only from API
   const yearOptions = useMemo(() => {
     return getFieldOptions('year_of_birth', 'both')
@@ -4741,543 +4677,502 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto pr-2">
-      {/* Customer Support Link */}
-      <div className="mb-4 flex justify-end">
-        <Link
-          to="/contact"
-          className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-          Need help? Contact Customer Support
-        </Link>
-      </div>
-
-      {/* General Error Message */}
-      {errors.general && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-600">{errors.general}</p>
-        </div>
-      )}
-
-      {/* PD Input - Different for Progressive */}
-      {isProgressive ? (
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium text-gray-700">PD</label>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-600"
-              title="Pupillary Distance"
+        {/* Customer Support Link */}
+        <div className="mb-4 flex justify-end">
+          <Link
+            to="/contact"
+            className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
-          </button>
+            Need help? Contact Customer Support
+          </Link>
         </div>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              <select
-                value={prescriptionData.pd_binocular}
-                onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Enter Your Pupillary distance</option>
-                {pdOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              <select
-                value={prescriptionData.pd_right || ''}
-                onChange={(e) => onPrescriptionChange('pd_right', e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Enter Your Right Pupillary distance</option>
-                {pdOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-2">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-        <input
-                type="text"
-                value={prescriptionData.pd_mm || ''}
-                onChange={(e) => onPrescriptionChange('pd_mm', e.target.value)}
-                placeholder="mm"
-                className={`w-20 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.pd_mm ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
+
+        {/* General Error Message */}
+        {errors.general && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{errors.general}</p>
+          </div>
+        )}
+
+        {/* PD Input - Different for Progressive */}
+        {isProgressive ? (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium text-gray-700">PD</label>
               <button
                 type="button"
                 className="text-gray-400 hover:text-gray-600"
-                title="Pupillary Distance in millimeters"
+                title="Pupillary Distance"
               >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                 </svg>
               </button>
             </div>
-          </div>
-          {errors.pd_mm && (
-            <p className="text-sm text-red-500 mt-1">{errors.pd_mm}</p>
-          )}
-        </div>
-      ) : (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <label className="text-sm font-bold text-gray-900">Pupillary Distance (PD)</label>
-            <button
-              type="button"
-              className="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
-              title="Pupillary Distance is the distance between the centers of your pupils"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          <select
-          value={prescriptionData.pd_binocular}
-          onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
-          className={`w-full px-4 py-3.5 border-2 rounded-xl bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${
-            errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
-          }`}
-          >
-            <option value="">Enter Your Pupillary Distance</option>
-            {pdOptions.map(opt => (
-              <option key={opt} value={opt}>{opt}</option>
-            ))}
-          </select>
-        {errors.pd_binocular && (
-          <p className="text-sm text-red-600 mt-2 font-medium">{errors.pd_binocular}</p>
-        )}
-      </div>
-      )}
-
-      {/* H (Height) - Only for Progressive */}
-      {isProgressive && (
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <label className="text-sm font-medium text-gray-700">H</label>
-            <button
-              type="button"
-              className="text-gray-400 hover:text-gray-600"
-              title="Height"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-          <select
-            value={prescriptionData.h || ''}
-            onChange={(e) => onPrescriptionChange('h', e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.h ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            <option value="">- Select -</option>
-            {hOptions.map(opt => (
-              <option key={opt} value={opt.toString()}>{opt}</option>
-            ))}
-          </select>
-          {errors.h && (
-            <p className="text-sm text-red-500 mt-1">{errors.h}</p>
-          )}
-        </div>
-      )}
-
-      {/* Eyes Section - Horizontal Layout */}
-      <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
-      {/* Right Eye (OD) */}
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-                <label className="text-base font-bold text-gray-900">Right Eye OD</label>
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <select
+                  value={prescriptionData.pd_binocular}
+                  onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Enter Your Pupillary distance</option>
+                  {pdOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
-          <button
-            type="button"
-                className="ml-auto text-gray-500 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
-            title="OD = Oculus Dexter (Right Eye)"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-            </svg>
-          </button>
-        </div>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
-                  {prescriptionData.od_sphere && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                      {prescriptionData.od_sphere}
-                    </span>
-                  )}
-                </div>
-            <select
-              value={prescriptionData.od_sphere || ''}
-              onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                    errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                    prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.od_sphere 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                  <option value="">Select</option>
-              {getSphereOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_sphere && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
-            )}
-          </div>
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
-                  {prescriptionData.od_cylinder && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                      {prescriptionData.od_cylinder}
-                    </span>
-                  )}
-                </div>
-            <select
-              value={prescriptionData.od_cylinder || ''}
-              onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                    errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                    prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.od_cylinder 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                  <option value="">Select</option>
-              {getCylinderOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.od_cylinder && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
-            )}
-          </div>
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
-                  {prescriptionData.od_axis && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                      {prescriptionData.od_axis}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 md:gap-2">
-            <select
-              value={prescriptionData.od_axis || ''}
-              onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                      errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                      prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.od_axis 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                    <option value="">Select</option>
-              {getAxisOptions('right').map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-                  <button
-                    type="button"
-                    onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                    className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all p-2 rounded-lg flex-shrink-0"
-                    title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
-                  >
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                </div>
-            {errors.od_axis && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
-                )}
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <select
+                  value={prescriptionData.pd_right || ''}
+                  onChange={(e) => onPrescriptionChange('pd_right', e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Enter Your Right Pupillary distance</option>
+                  {pdOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               </div>
-            </div>
-      </div>
-
-      {/* Left Eye (OS) */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
-            <div className="flex items-center gap-2 mb-4">
-          <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                <label className="text-base font-bold text-gray-900">Left Eye OS</label>
-              </div>
-            <button
-              type="button"
-                className="ml-auto text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
-              title="OS = Oculus Sinister (Left Eye)"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
-          </div>
-            <div className="grid grid-cols-3 gap-2 md:gap-3">
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
-                  {prescriptionData.os_sphere && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                      {prescriptionData.os_sphere}
-                    </span>
-                  )}
-                </div>
-            <select
-              value={prescriptionData.os_sphere || ''}
-              onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                    errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                    prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.os_sphere 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                  <option value="">Select</option>
-              {getOSSphereOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.os_sphere && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
-            )}
-          </div>
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
-                  {prescriptionData.os_cylinder && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                      {prescriptionData.os_cylinder}
-                    </span>
-                  )}
-                </div>
-            <select
-              value={prescriptionData.os_cylinder || ''}
-              onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                  className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                    errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                    prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.os_cylinder 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                  <option value="">Select</option>
-              {getOSCylinderOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            {errors.os_cylinder && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
-            )}
-          </div>
-          <div className="min-w-0">
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
-                  {prescriptionData.os_axis && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                      {prescriptionData.os_axis}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1 md:gap-2">
-            <select
-              value={prescriptionData.os_axis || ''}
-              onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                    className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${
-                      errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' : 
-                      prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
-              }`}
-              style={{
-                backgroundImage: prescriptionData.os_axis 
-                  ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-                  : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
-              }}
-            >
-                    <option value="">Select</option>
-              {getOSAxisOptions().map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-        <button
-          type="button"
-                    onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                    className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg flex-shrink-0"
-                    title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
-        >
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-          </svg>
-        </button>
-                </div>
-                {errors.os_axis && (
-                  <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
-        )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Copy Left to Right Button */}
-        <div className="mb-6 mt-6">
-          <button
-            type="button"
-            onClick={handleCopyLeftToRight}
-            disabled={!prescriptionData.os_sphere && !prescriptionData.os_cylinder && !prescriptionData.os_axis}
-            className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-            <span>Copy Left to Right</span>
-          </button>
-          {copyLeftToRight && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <p className="text-sm text-green-700 font-medium">Left eye values copied to right eye successfully</p>
-            </div>
-          )}
-        </div>
-
-        {/* Axis Diagram - Below both sections */}
-        <div className="mb-6">
-          <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <div className="flex items-center gap-2">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <input
+                  type="text"
+                  value={prescriptionData.pd_mm || ''}
+                  onChange={(e) => onPrescriptionChange('pd_mm', e.target.value)}
+                  placeholder="mm"
+                  className={`w-20 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.pd_mm ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                />
+                <button
+                  type="button"
+                  className="text-gray-400 hover:text-gray-600"
+                  title="Pupillary Distance in millimeters"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
-                </div>
-                <div>
-                  <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
-                </div>
+                </button>
               </div>
+            </div>
+            {errors.pd_mm && (
+              <p className="text-sm text-red-500 mt-1">{errors.pd_mm}</p>
+            )}
+          </div>
+        ) : (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <label className="text-sm font-bold text-gray-900">Pupillary Distance (PD)</label>
               <button
                 type="button"
-                onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg"
-                title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
+                className="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
+                title="Pupillary Distance is the distance between the centers of your pupils"
               >
-                {showAxisDiagram ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                )}
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
               </button>
             </div>
-            {showAxisDiagram && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <AxisDiagram compact={true} />
+            <select
+              value={prescriptionData.pd_binocular}
+              onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
+              className={`w-full px-4 py-3.5 border-2 rounded-xl bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+                }`}
+            >
+              <option value="">Enter Your Pupillary Distance</option>
+              {pdOptions.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            {errors.pd_binocular && (
+              <p className="text-sm text-red-600 mt-2 font-medium">{errors.pd_binocular}</p>
+            )}
+          </div>
+        )}
+
+        {/* H (Height) - Only for Progressive */}
+        {isProgressive && (
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <label className="text-sm font-medium text-gray-700">H</label>
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-600"
+                title="Height"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+            <select
+              value={prescriptionData.h || ''}
+              onChange={(e) => onPrescriptionChange('h', e.target.value)}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.h ? 'border-red-500' : 'border-gray-300'
+                }`}
+            >
+              <option value="">- Select -</option>
+              {hOptions.map(opt => (
+                <option key={opt} value={opt.toString()}>{opt}</option>
+              ))}
+            </select>
+            {errors.h && (
+              <p className="text-sm text-red-500 mt-1">{errors.h}</p>
+            )}
+          </div>
+        )}
+
+        {/* Eyes Section - Horizontal Layout */}
+        <div className="mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
+            {/* Right Eye (OD) */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-purple-600"></div>
+                  <label className="text-base font-bold text-gray-900">Right Eye OD</label>
+                </div>
+                <button
+                  type="button"
+                  className="ml-auto text-gray-500 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
+                  title="OD = Oculus Dexter (Right Eye)"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
+                  </div>
+                  <select
+                    value={prescriptionData.od_sphere || ''}
+                    onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
+                    className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                      prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                      }`}
+                    style={{
+                      backgroundImage: prescriptionData.od_sphere
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                        : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {getSphereOptions('right').map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {errors.od_sphere && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
+                  </div>
+                  <select
+                    value={prescriptionData.od_cylinder || ''}
+                    onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
+                    className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                      prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                      }`}
+                    style={{
+                      backgroundImage: prescriptionData.od_cylinder
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                        : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {getCylinderOptions('right').map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {errors.od_cylinder && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
+                  </div>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <select
+                      value={prescriptionData.od_axis || ''}
+                      onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
+                      className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                        prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 text-purple-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                        }`}
+                      style={{
+                        backgroundImage: prescriptionData.od_axis
+                          ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b21a8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                      }}
+                    >
+                      <option value="">Select</option>
+                      {getAxisOptions('right').map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+                      className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all p-2 rounded-lg flex-shrink-0"
+                      title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
+                    >
+                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                  {errors.od_axis && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Left Eye (OS) */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                  <label className="text-base font-bold text-gray-900">Left Eye OS</label>
+                </div>
+                <button
+                  type="button"
+                  className="ml-auto text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
+                  title="OS = Oculus Sinister (Left Eye)"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2 md:gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
+                  </div>
+                  <select
+                    value={prescriptionData.os_sphere || ''}
+                    onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
+                    className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                      prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                      }`}
+                    style={{
+                      backgroundImage: prescriptionData.os_sphere
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                        : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {getOSSphereOptions().map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {errors.os_sphere && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
+                  </div>
+                  <select
+                    value={prescriptionData.os_cylinder || ''}
+                    onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
+                    className={`w-full px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                      prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                      }`}
+                    style={{
+                      backgroundImage: prescriptionData.os_cylinder
+                        ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                        : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                    }}
+                  >
+                    <option value="">Select</option>
+                    {getOSCylinderOptions().map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                  {errors.os_cylinder && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
+                  </div>
+                  <div className="flex items-center gap-1 md:gap-2">
+                    <select
+                      value={prescriptionData.os_axis || ''}
+                      onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
+                      className={`flex-1 min-w-0 px-3 md:px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-no-repeat bg-right pr-10 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 text-red-900 font-semibold' :
+                        prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 text-blue-900 font-bold' : 'border-gray-300 bg-white text-gray-900 font-medium'
+                        }`}
+                      style={{
+                        backgroundImage: prescriptionData.os_axis
+                          ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%232563eb' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                          : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3E%3C/svg%3E")`
+                      }}
+                    >
+                      <option value="">Select</option>
+                      {getOSAxisOptions().map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+                      className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg flex-shrink-0"
+                      title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
+                    >
+                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                  {errors.os_axis && (
+                    <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy Right to Left Button */}
+          <div className="mb-6 mt-6">
+            <button
+              type="button"
+              onClick={handleCopyRightToLeft}
+              disabled={!prescriptionData.od_sphere && !prescriptionData.od_cylinder && !prescriptionData.od_axis}
+              className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span>Copy Right to Left</span>
+            </button>
+            {copyRightToLeft && (
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <p className="text-sm text-green-700 font-medium">Right eye values copied to left eye successfully</p>
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Select Option (ADD) - Only for Progressive */}
-      {isProgressive && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Option</label>
-          <select
-            value={prescriptionData.select_option || ''}
-            onChange={(e) => onPrescriptionChange('select_option', e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.select_option ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            <option value="">- Select -</option>
-            {formStructure 
-              ? getFieldOptions('select_option', 'both').map(opt => (
+          {/* Axis Diagram - Below both sections */}
+          <div className="mb-6">
+            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
+                    <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+                  className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg"
+                  title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
+                >
+                  {showAxisDiagram ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {showAxisDiagram && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <AxisDiagram compact={true} />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Select Option (ADD) - Only for Progressive */}
+        {isProgressive && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Option</label>
+            <select
+              value={prescriptionData.select_option || ''}
+              onChange={(e) => onPrescriptionChange('select_option', e.target.value)}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.select_option ? 'border-red-500' : 'border-gray-300'
+                }`}
+            >
+              <option value="">- Select -</option>
+              {formStructure
+                ? getFieldOptions('select_option', 'both').map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))
-              : addOptions.map(opt => (
+                : addOptions.map(opt => (
                   <option key={opt} value={opt}>{opt}</option>
                 ))
-            }
-          </select>
-          {errors.select_option && (
-            <p className="text-sm text-red-500 mt-1">{errors.select_option}</p>
-          )}
-        </div>
-      )}
+              }
+            </select>
+            {errors.select_option && (
+              <p className="text-sm text-red-500 mt-1">{errors.select_option}</p>
+            )}
+          </div>
+        )}
 
-      {/* Year of Birth - Only for Progressive */}
-      {isProgressive && (
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Year of Birth</label>
-          <select
-            value={prescriptionData.year_of_birth || ''}
-            onChange={(e) => onPrescriptionChange('year_of_birth', e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.year_of_birth ? 'border-red-500' : 'border-gray-300'
-            }`}
-          >
-            <option value="">--- Please select ---</option>
-            {yearOptions.map(year => (
-              <option key={year} value={year.toString()}>{year}</option>
-            ))}
-          </select>
-          {errors.year_of_birth && (
-            <p className="text-sm text-red-500 mt-1">{errors.year_of_birth}</p>
-          )}
-        </div>
-      )}
+        {/* Year of Birth - Only for Progressive */}
+        {isProgressive && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Year of Birth</label>
+            <select
+              value={prescriptionData.year_of_birth || ''}
+              onChange={(e) => onPrescriptionChange('year_of_birth', e.target.value)}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${errors.year_of_birth ? 'border-red-500' : 'border-gray-300'
+                }`}
+            >
+              <option value="">--- Please select ---</option>
+              {yearOptions.map(year => (
+                <option key={year} value={year.toString()}>{year}</option>
+              ))}
+            </select>
+            {errors.year_of_birth && (
+              <p className="text-sm text-red-500 mt-1">{errors.year_of_birth}</p>
+            )}
+          </div>
+        )}
 
-      <button
-        onClick={onNext}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
-      >
-        Continue
-      </button>
+        <button
+          onClick={onNext}
+          className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
+        >
+          Continue
+        </button>
       </div>
     </div>
   )
@@ -5295,7 +5190,7 @@ interface SummaryStepProps {
   lensThicknessMaterials: Array<{ id: number; name: string; slug: string; price: number }>
   onBack: () => void
   onAddToCart: () => void
-  onCheckoutNow?: () => void
+  onCheckoutNow?: () => void;
   loading: boolean
   checkoutMode?: 'cart' | 'checkout'
 }
@@ -5313,7 +5208,6 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
   onAddToCart,
   onCheckoutNow,
   loading,
-  checkoutMode = 'cart'
 }) => {
   const { t } = useTranslation()
   const basePrice = product.sale_price && Number(product.sale_price) < Number(product.price)
@@ -5681,7 +5575,7 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
   isAuthenticated
 }) => {
   const { t } = useTranslation()
-  
+
   // Check if error is login-related
   const isLoginError = error && typeof error === 'string' && (
     error.toLowerCase().includes('login') ||

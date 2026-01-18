@@ -99,7 +99,7 @@ const ProductDetail: React.FC = () => {
     const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
     const [selectedAstigmatismConfig, setSelectedAstigmatismConfig] = useState<AstigmatismConfig | null>(null)
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
-    
+
     // Unit-based pricing and images state (independent from qty)
     const [selectedUnit, setSelectedUnit] = useState<number | null>(null) // Selected unit (pack size), e.g., 10, 20, 30
     const [unitPrice, setUnitPrice] = useState<number | null>(null)
@@ -124,7 +124,7 @@ const ProductDetail: React.FC = () => {
         size_volume: [],
         pack_type: []
     })
-    
+
 
     // Check if product is a contact lens
     const { translateCategory } = useCategoryTranslation()
@@ -132,7 +132,7 @@ const ProductDetail: React.FC = () => {
     // Fetched variants from API
     const [fetchedVariants, setFetchedVariants] = useState<SizeVolumeVariant[]>([])
     const [variantsLoading, setVariantsLoading] = useState(false)
-    
+
     // Size/Volume Variant Selection State (for products with sizeVolumeVariants from API)
     const [selectedSizeVolumeVariant, setSelectedSizeVolumeVariant] = useState<{
         id: number;
@@ -148,28 +148,28 @@ const ProductDetail: React.FC = () => {
     // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
     const selectedColorVariant = useMemo(() => {
         if (!product || !selectedColor) return null
-        
+
         const p = product as any
         const selectedColorLower = (selectedColor || '').toLowerCase()
-        
+
         // First try to find in 'colors' array (preferred format from API)
         if (p.colors && Array.isArray(p.colors)) {
-            const colorData = p.colors.find((c: any) => 
+            const colorData = p.colors.find((c: any) =>
                 (c.value && c.value.toLowerCase() === selectedColorLower) ||
                 (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
                 (c.name && c.name.toLowerCase() === selectedColorLower)
             )
             if (colorData) return colorData
         }
-        
+
         // Fallback to 'color_images' array
         if (product.color_images) {
-            return product.color_images.find(ci => 
+            return product.color_images.find(ci =>
                 (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
                 (ci.name && ci.name.toLowerCase() === selectedColorLower)
             ) || null
         }
-        
+
         return null
     }, [product, selectedColor])
 
@@ -197,7 +197,7 @@ const ProductDetail: React.FC = () => {
         } else {
             salePrice = product.sale_price ? Number(product.sale_price) : null
         }
-        
+
         const isValidSale = !!(salePrice && salePrice < basePrice)
         const finalPrice = isValidSale ? salePrice : basePrice
 
@@ -220,27 +220,27 @@ const ProductDetail: React.FC = () => {
         const categoryName = product.category?.name || ''
         const subCategorySlug = p.subCategory?.slug || p.sub_category?.slug || ''
         const subCategoryName = p.subCategory?.name || p.sub_category?.name || ''
-        
+
         // Check product_type
         const isEyeHygieneType = p.product_type === 'eye_hygiene'
-        
+
         // Check if category or subcategory contains "eye hygiene" or "hygiene"
-        const categoryMatch = categorySlug.toLowerCase().includes('eye-hygiene') || 
-                             categorySlug.toLowerCase().includes('hygiene') ||
-                             categoryName.toLowerCase().includes('eye hygiene') ||
-                             categoryName.toLowerCase().includes('hygiene')
-        
+        const categoryMatch = categorySlug.toLowerCase().includes('eye-hygiene') ||
+            categorySlug.toLowerCase().includes('hygiene') ||
+            categoryName.toLowerCase().includes('eye hygiene') ||
+            categoryName.toLowerCase().includes('hygiene')
+
         const subCategoryMatch = subCategorySlug.toLowerCase().includes('eye-hygiene') ||
-                                subCategorySlug.toLowerCase().includes('hygiene') ||
-                                subCategoryName.toLowerCase().includes('eye hygiene') ||
-                                subCategoryName.toLowerCase().includes('hygiene')
-        
+            subCategorySlug.toLowerCase().includes('hygiene') ||
+            subCategoryName.toLowerCase().includes('eye hygiene') ||
+            subCategoryName.toLowerCase().includes('hygiene')
+
         // Check if product has Eye Hygiene fields
         const hasEyeHygieneFields = !!(p.size_volume || p.pack_type || p.expiry_date)
-        
+
         // Check if product has sizeVolumeVariants (indicates it's an eye hygiene product)
         const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
-        
+
         return isEyeHygieneType || categoryMatch || subCategoryMatch || hasEyeHygieneFields || hasVariants
     }, [product])
 
@@ -327,7 +327,7 @@ const ProductDetail: React.FC = () => {
                 // Reset selections when product changes
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
-                
+
                 // Log Eye Hygiene fields if present
                 const p = productData as any
                 if (import.meta.env.DEV && (p.size_volume || p.pack_type || p.expiry_date)) {
@@ -343,16 +343,16 @@ const ProductDetail: React.FC = () => {
                         subCategorySlug: p.subCategory?.slug || p.sub_category?.slug
                     });
                 }
-                
+
                 // Variant selection is now handled by the fetchVariants useEffect
                 // This section just resets if product changes
                 setSelectedSizeVolumeVariant(null)
                 setFetchedVariants([])
-                
+
                 // Check URL parameters for color selection
                 const urlParams = new URLSearchParams(window.location.search)
                 const colorParam = urlParams.get('color')
-                
+
                 // Auto-select color: URL parameter > product.selectedColor > first color
                 if (colorParam) {
                     // Color from URL parameter (hex code or color name)
@@ -409,11 +409,11 @@ const ProductDetail: React.FC = () => {
 
                 // Fetch related products - more for Eye Hygiene products
                 // Reuse 'p' variable that was already declared above
-                const isEyeHygieneProduct = productData.category?.slug?.toLowerCase().includes('eye-hygiene') || 
-                                           productData.category?.slug?.toLowerCase().includes('hygiene') ||
-                                           productData.category?.name?.toLowerCase().includes('eye hygiene') ||
-false
-                
+                const isEyeHygieneProduct = productData.category?.slug?.toLowerCase().includes('eye-hygiene') ||
+                    productData.category?.slug?.toLowerCase().includes('hygiene') ||
+                    productData.category?.name?.toLowerCase().includes('eye hygiene') ||
+                    false
+
                 // Fetch more related products for Eye Hygiene (8 instead of 4)
                 const relatedLimit = isEyeHygieneProduct ? 8 : 6
                 const related = await getRelatedProducts(productData.id, relatedLimit)
@@ -620,7 +620,7 @@ false
                                     })
                                 }
                             }
-                            
+
                             // Extract power values from all spherical configs (right_power and left_power arrays)
                             // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
                             // These values are already filtered by product_id since configs are filtered
@@ -629,7 +629,7 @@ false
                                 // Safely extract power values - handle null, undefined, and empty arrays
                                 const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
                                 const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
-                                
+
                                 // Add all power values to the set (handles both string and number arrays)
                                 // Filter out null, undefined, and empty string values
                                 rightPower.forEach(v => {
@@ -643,7 +643,7 @@ false
                                     }
                                 })
                             })
-                            
+
                             // Convert to sorted array of strings
                             const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
                                 const numA = parseFloat(a)
@@ -653,17 +653,17 @@ false
                                 }
                                 return a.localeCompare(b)
                             })
-                            
+
                             if (import.meta.env.DEV) {
                                 console.log('✅ Extracted power values:', {
                                     total: powerValuesArray.length,
                                     first10: powerValuesArray.slice(0, 10)
                                 })
                             }
-                            
+
                             // Store in spherical power values state (NOT in astigmatism dropdown values)
                             setSphericalPowerValues(powerValuesArray)
-                            
+
                             // Astigmatism dropdown values are not used for spherical forms
 
                             if (import.meta.env.DEV) {
@@ -689,7 +689,7 @@ false
                     if (import.meta.env.DEV) {
                         console.warn('⚠️ Failed to load contact lens form config for sub-category:', subCategoryId, '- trying fallback: fetching spherical configs directly')
                     }
-                    
+
                     // Fallback: Try to fetch spherical configs directly
                     // If configs exist, assume it's a spherical form
                     // Filter by product_id to get only configs assigned to this product
@@ -708,13 +708,13 @@ false
                                 leftEye: {}
                             }
                         })
-                        
+
                         setSphericalConfigs(configs)
                         // Auto-select first config if available
                         if (configs.length > 0) {
                             setSelectedConfig(configs[0])
                         }
-                        
+
                         // Extract power values from all spherical configs
                         // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
                         const allPowerValues = new Set<string>()
@@ -722,7 +722,7 @@ false
                             // Safely extract power values - handle null, undefined, and empty arrays
                             const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
                             const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
-                            
+
                             // Filter out null, undefined, and empty string values
                             rightPower.forEach(v => {
                                 if (v != null && v !== '') {
@@ -735,7 +735,7 @@ false
                                 }
                             })
                         })
-                        
+
                         const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
                             const numA = parseFloat(a)
                             const numB = parseFloat(b)
@@ -744,7 +744,7 @@ false
                             }
                             return a.localeCompare(b)
                         })
-                        
+
                         setSphericalPowerValues(powerValuesArray)
 
                         if (import.meta.env.DEV) {
@@ -788,7 +788,7 @@ false
                         if (configs.length > 0) {
                             setSelectedConfig(configs[0])
                         }
-                        
+
                         // Extract power values from all spherical configs
                         // IMPORTANT: Only use power values from spherical configs, NOT from astigmatism dropdown API
                         const allPowerValues = new Set<string>()
@@ -796,7 +796,7 @@ false
                             // Safely extract power values - handle null, undefined, and empty arrays
                             const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
                             const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
-                            
+
                             // Filter out null, undefined, and empty string values
                             rightPower.forEach(v => {
                                 if (v != null && v !== '') {
@@ -809,7 +809,7 @@ false
                                 }
                             })
                         })
-                        
+
                         const powerValuesArray = Array.from(allPowerValues).sort((a, b) => {
                             const numA = parseFloat(a)
                             const numB = parseFloat(b)
@@ -818,7 +818,7 @@ false
                             }
                             return a.localeCompare(b)
                         })
-                        
+
                         setSphericalPowerValues(powerValuesArray)
                     }
                 } catch (fallbackError) {
@@ -843,30 +843,30 @@ false
 
             try {
                 const p = product as any
-                
+
                 // Skip API call if product has variants - use variants instead (handle both property names)
                 const variantsArray = p.sizeVolumeVariants || p.size_volume_variants
                 const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
-                
+
                 if (hasVariants) {
                     // Products with variants don't need options from API
                     setEyeHygieneOptions({ size_volume: [], pack_type: [] })
                     return
                 }
-                
+
                 // Only fetch options for products without variants (legacy support)
                 const subCategoryId = p.subCategory?.id || p.sub_category?.id || p.subcategory?.id || p.sub_category_id
 
                 if (subCategoryId) {
                     try {
-                    const options = await getEyeHygieneOptions(subCategoryId)
-                    if (options) {
-                        setEyeHygieneOptions(options)
-                        if (import.meta.env.DEV) {
-                            console.log('✅ Eye Hygiene Options loaded:', options)
-                        }
-                    } else {
-                        // If API returns null, try to use product's own data as fallback
+                        const options = await getEyeHygieneOptions(subCategoryId)
+                        if (options) {
+                            setEyeHygieneOptions(options)
+                            if (import.meta.env.DEV) {
+                                console.log('✅ Eye Hygiene Options loaded:', options)
+                            }
+                        } else {
+                            // If API returns null, try to use product's own data as fallback
                             const fallbackOptions: EyeHygieneOptions = {
                                 size_volume: p.size_volume ? [p.size_volume] : [],
                                 pack_type: p.pack_type ? [p.pack_type] : []
@@ -1131,27 +1131,27 @@ false
     useEffect(() => {
         const fetchAstigmatismConfigs = async () => {
             // Only fetch if form type is astigmatism
-            const formType = contactLensFormConfig?.formType || 
+            const formType = contactLensFormConfig?.formType ||
                 (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-            
+
             // Clear astigmatism configs if form type is not astigmatism
             if (formType !== 'astigmatism' || !isContactLens || !product) {
                 setAstigmatismConfigs([])
                 setSelectedAstigmatismConfig(null)
                 return
             }
-            
+
             // Clear configs at start of fetch to prevent stale data
             setAstigmatismConfigs([])
             setSelectedAstigmatismConfig(null)
-            
+
             if (formType === 'astigmatism' && isContactLens && product) {
                 try {
                     const p = product as any
-                    
+
                     // Get sub-sub-category ID (same logic as fetchFormConfig)
                     let subCategoryId: number | string | undefined = undefined
-                    
+
                     if (p.subcategory?.parent_id) {
                         subCategoryId = p.subcategory.id
                     } else if (p.sub_category_id) {
@@ -1163,24 +1163,24 @@ false
                     } else if (p.subcategory?.id) {
                         subCategoryId = p.subcategory.id
                     }
-                    
+
                     if (!subCategoryId) {
                         if (import.meta.env.DEV) {
                             console.warn('⚠️ No sub-sub-category ID found for fetching astigmatism configs')
                         }
                         return
                     }
-                    
+
                     const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
                     if (isNaN(numericId) || numericId <= 0) {
                         return
                     }
-                    
+
                     // Fetch astigmatism configurations
                     // Filter by product_id to get only configs assigned to this product
                     // This ensures dropdown values are specific to the selected product
                     const configs = await getAstigmatismConfigs(numericId, product.id)
-                    
+
                     if (import.meta.env.DEV) {
                         console.log('📦 Fetched astigmatism configs (filtered by product_id):', {
                             productId: product.id,
@@ -1197,7 +1197,7 @@ false
                             } : null
                         })
                     }
-                    
+
                     if (configs && configs.length > 0) {
                         // Store astigmatism configs in state
                         setAstigmatismConfigs(configs)
@@ -1213,13 +1213,13 @@ false
                                 })
                             }
                         }
-                        
+
                         // Extract unique dropdown values from all configurations
                         // These values are already filtered by product_id since configs are filtered
                         const allPowerValues = new Set<string>()
                         const allCylinderValues = new Set<string>()
                         const allAxisValues = new Set<string>()
-                        
+
                         configs.forEach(config => {
                             // Extract power values
                             if (config.right_power && Array.isArray(config.right_power)) {
@@ -1232,7 +1232,7 @@ false
                                     if (v != null && v !== '') allPowerValues.add(String(v))
                                 })
                             }
-                            
+
                             // Extract cylinder values
                             if (config.right_cylinder && Array.isArray(config.right_cylinder)) {
                                 config.right_cylinder.forEach(v => {
@@ -1244,7 +1244,7 @@ false
                                     if (v != null && v !== '') allCylinderValues.add(String(v))
                                 })
                             }
-                            
+
                             // Extract axis values
                             if (config.right_axis && Array.isArray(config.right_axis)) {
                                 config.right_axis.forEach(v => {
@@ -1296,7 +1296,7 @@ false
     // Note: Currently unused as qty is a number input, but kept for potential future dropdown use
     void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-        
+
         // ONLY use configs arrays from API - no formFields or dropdownValues
         // Priority 1: Use all configs to aggregate qty options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
@@ -1332,7 +1332,7 @@ false
                 return sortedOptions.map(v => String(v))
             }
         }
-        
+
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allQtyOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1383,7 +1383,7 @@ false
     // Base Curve Options - Currently unused as base curve is a fixed value from config
     void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-        
+
         // ONLY use configs arrays from API - no formFields or dropdownValues
         // Priority 1: Use all configs to aggregate base curve options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
@@ -1419,7 +1419,7 @@ false
                 return sortedOptions.map(v => String(v))
             }
         }
-        
+
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allBCOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1471,7 +1471,7 @@ false
     // Diameter Options - Currently unused as diameter is a fixed value from config
     void useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-        
+
         // ONLY use configs arrays from API - no formFields or dropdownValues
         // Priority 1: Use all configs to aggregate diameter options
         if (formType === 'spherical' && sphericalConfigs.length > 0) {
@@ -1507,7 +1507,7 @@ false
                 return sortedOptions.map(v => String(v))
             }
         }
-        
+
         if (formType === 'astigmatism' && astigmatismConfigs.length > 0) {
             const allDiaOptions = new Set<string | number>()
             astigmatismConfigs.forEach(config => {
@@ -1559,7 +1559,7 @@ false
     // Generate cylinder options from astigmatism configs
     const cylinderOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-        
+
         // Cylinder is only available for astigmatism forms
         if (formType === 'astigmatism') {
             // Use all astigmatism configs to aggregate cylinder options (ONLY from API configs)
@@ -1596,7 +1596,7 @@ false
             }
 
             // Debug: Log why no cylinder options are available (expected when API returns empty configs)
-                if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) {
                 console.info('ℹ️ No cylinder options available (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
                     message: 'Dropdowns will be empty until admin adds configs via API'
@@ -1612,7 +1612,7 @@ false
     // Generate axis options from astigmatism configs
     const axisOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-        
+
         // Axis is only available for astigmatism forms
         if (formType === 'astigmatism') {
             // Use all astigmatism configs to aggregate axis options (ONLY from API configs)
@@ -1649,7 +1649,7 @@ false
             }
 
             // Debug: Log why no axis options are available (expected when API returns empty configs)
-                if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) {
                 console.info('ℹ️ No axis options available (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
                     message: 'Dropdowns will be empty until admin adds configs via API'
@@ -1714,7 +1714,7 @@ false
             }
 
             // Debug: Log why no power options are available (expected when API returns empty configs)
-                if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) {
                 console.info('ℹ️ No power options available for spherical form (API returned empty configs - this is expected):', {
                     sphericalPowerValuesCount: sphericalPowerValues.length,
                     sphericalConfigsCount: sphericalConfigs.length,
@@ -1762,7 +1762,7 @@ false
             }
 
             // Debug: Log why no power options are available (expected when API returns empty configs)
-                if (import.meta.env.DEV) {
+            if (import.meta.env.DEV) {
                 console.info('ℹ️ No power options available for astigmatism form (API returned empty configs - this is expected):', {
                     astigmatismConfigsCount: astigmatismConfigs.length,
                     message: 'Dropdowns will be empty until admin adds configs via API'
@@ -1807,7 +1807,7 @@ false
     // Update form data with fixed values when config changes
     useEffect(() => {
         if (!isContactLens) return
-        
+
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         if (currentConfig) {
             setContactLensFormData(prev => ({
@@ -1899,7 +1899,7 @@ false
         // Get unit price: priority 1) unit_prices from config (immediate), 2) fetched unitPrice, 3) base price
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         let pricePerPack = 0
-        
+
         // Priority 1: Use unit price directly from config (immediate, no API call needed)
         if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
             const configUnitPrice = (currentConfig as any).unit_prices[String(selectedUnit)]
@@ -1958,18 +1958,18 @@ false
         if (unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
-        
+
         if (!selectedColor) {
             // Fallback to regular product image if no color selected
             return getProductImageUrl(product, imageIndex)
         }
-        
+
         const p = product as any
         const selectedColorLower = (selectedColor || '').toLowerCase()
-        
+
         // First try 'colors' array (preferred format from API)
         if (p.colors && Array.isArray(p.colors)) {
-            const colorData = p.colors.find((c: any) => 
+            const colorData = p.colors.find((c: any) =>
                 (c.value && c.value.toLowerCase() === selectedColorLower) ||
                 (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
                 (c.name && c.name.toLowerCase() === selectedColorLower)
@@ -1983,7 +1983,7 @@ false
                 }
             }
         }
-        
+
         // Fallback to 'color_images' array
         if (product.color_images) {
             const colorImage = product.color_images.find(ci =>
@@ -1999,7 +1999,7 @@ false
                 }
             }
         }
-        
+
         // Fallback to regular product image
         return getProductImageUrl(product, imageIndex)
     }
@@ -2044,19 +2044,19 @@ false
         if (currentConfig && isContactLens) {
             // Get available units - check available_units first, then unit_prices keys as fallback
             let availableUnits: number[] = []
-            
+
             // Priority 1: Check available_units array
             if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units) && (currentConfig as any).available_units.length > 0) {
                 availableUnits = (currentConfig as any).available_units.filter((u: any) => u != null && !isNaN(Number(u))).map((u: any) => Number(u))
             }
-            
+
             // Priority 2: If no available_units or empty, use unit_prices keys
             if (availableUnits.length === 0 && (currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
                 availableUnits = Object.keys((currentConfig as any).unit_prices)
                     .map(k => Number(k))
                     .filter(n => !isNaN(n) && n > 0)
             }
-            
+
             if (availableUnits.length > 0) {
                 // If no unit selected, or selected unit is not in available units, select first available
                 if (!selectedUnit || !availableUnits.includes(selectedUnit)) {
@@ -2243,8 +2243,8 @@ false
 
         // Check if product has variants (new approach) - prioritize fetched variants, then check product object
         const p = product as any
-        const variantsArray = fetchedVariants.length > 0 
-            ? fetchedVariants 
+        const variantsArray = fetchedVariants.length > 0
+            ? fetchedVariants
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
@@ -2262,17 +2262,17 @@ false
                 }
             } else {
                 // Legacy form-based validation (for products without variants)
-            if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
-                alert('Please select Capacity')
-                return
-            }
-            if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
-                alert('Please select Pack Type')
-                return
-            }
-            if (eyeHygieneFormData.quantity < 1) {
-                alert('Please enter a valid quantity')
-                return
+                if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
+                    alert('Please select Capacity')
+                    return
+                }
+                if (eyeHygieneOptions.pack_type.length > 0 && !eyeHygieneFormData.pack_type) {
+                    alert('Please select Pack Type')
+                    return
+                }
+                if (eyeHygieneFormData.quantity < 1) {
+                    alert('Please enter a valid quantity')
+                    return
                 }
             }
         }
@@ -2281,7 +2281,7 @@ false
             // Convert API product to cart-compatible format
             // Determine quantity and stock based on variant or legacy form
             const productQuantity = hasVariants && selectedSizeVolumeVariant ? quantity : (isEyeHygiene ? eyeHygieneFormData.quantity : quantity)
-            const productInStock = hasVariants && selectedSizeVolumeVariant 
+            const productInStock = hasVariants && selectedSizeVolumeVariant
                 ? (selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0)
                 : (product.in_stock || false)
 
@@ -2320,7 +2320,7 @@ false
                     const variant = selectedColorVariant as any
                     colorValue = variant.value || variant.hexCode || variant.color || selectedColor
                 }
-                
+
                 const cartRequest: AddToCartRequest = {
                     product_id: cartProduct.id,
                     quantity: productQuantity,
@@ -2350,7 +2350,7 @@ false
                     },
                     lens_type: selectedLensType === '' ? undefined : selectedLensType
                 }
-                
+
                 // Try to add to cart via API, but don't block local cart if it fails
                 addItemToCart(cartRequest).then(result => {
                     if (!result.success) {
@@ -2424,26 +2424,26 @@ false
                     if (import.meta.env.DEV) {
                         console.log('✅ Contact lens added to cart successfully:', result.data.item)
                     }
-                    
+
                     // Calculate total price from API response
                     // API returns unit_price (price per unit/box/pack) and quantities
                     const apiItem = result.data.item
-                    const apiUnitPrice = typeof apiItem.unit_price === 'string' 
-                        ? parseFloat(apiItem.unit_price) 
+                    const apiUnitPrice = typeof apiItem.unit_price === 'string'
+                        ? parseFloat(apiItem.unit_price)
                         : Number(apiItem.unit_price) || 0
-                    
+
                     // For contact lenses, calculate total based on unit_price and quantities
                     // The API's unit_price is the price per unit/box/pack (based on product pricing)
                     // Total = unit_price * (right_qty + left_qty)
                     // This correctly accounts for the selected purchase type (unit/box/pack)
                     // Example: If unit='box' and right_qty=1, left_qty=1, then total = box_price * 2
                     const apiTotalPrice = apiUnitPrice * (apiItem.contact_lens_right_qty + apiItem.contact_lens_left_qty)
-                    
+
                     // Use our calculated price which properly accounts for unit/box/pack selection
                     // The API might not know about the unit type, so we use our local calculation
                     // which uses getUnitPrice() to get the correct price for unit/box/pack
                     const finalPrice = calculateContactLensTotal > 0 ? calculateContactLensTotal : apiTotalPrice
-                    
+
                     // Also add to local cart for UI consistency
                     const cartProduct = {
                         id: product.id || 0,
@@ -2675,7 +2675,7 @@ false
                                             {(() => {
                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
                                                 const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
-                                                
+
                                                 // Get unit price: priority 1) config unit_prices (immediate), 2) fetched unitPrice, 3) base price
                                                 let displayUnitPrice: number | null = null
                                                 if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
@@ -2688,7 +2688,7 @@ false
                                                 } else if (unitPrice !== null) {
                                                     displayUnitPrice = unitPrice
                                                 }
-                                                
+
                                                 return (
                                                     <>
                                                         {selectedUnit && hasUnitPricing && (
@@ -2799,9 +2799,9 @@ false
                                         {/* Color Selection - supports both 'colors' array (preferred) and 'color_images' array (fallback) */}
                                         {(() => {
                                             const p = product as any
-                                            const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
-                                                ? p.colors 
-                                                : (product.color_images && product.color_images.length > 0 
+                                            const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0)
+                                                ? p.colors
+                                                : (product.color_images && product.color_images.length > 0
                                                     ? product.color_images.map((ci: any) => ({
                                                         name: ci.name || ci.color,
                                                         display_name: ci.display_name || ci.name || ci.color,
@@ -2811,9 +2811,9 @@ false
                                                         images: ci.images || []
                                                     }))
                                                     : [])
-                                            
+
                                             if (colorsArray.length === 0) return null
-                                            
+
                                             return (
                                                 <div className="mb-4">
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -2830,24 +2830,23 @@ false
                                                                 (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
                                                                 (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
                                                             )
-                                                            
+
                                                             return (
                                                                 <button
                                                                     key={index}
                                                                     onClick={() => {
                                                                         setSelectedColor(colorValue)
                                                                         setSelectedImageIndex(0) // Reset to first image of selected color
-                                                                        
+
                                                                         // Update URL without page reload
                                                                         const url = new URL(window.location.href)
                                                                         url.searchParams.set('color', colorValue)
                                                                         window.history.pushState({}, '', url)
                                                                     }}
-                                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:scale-105 ${
-                                                                        isSelected
-                                                                            ? 'border-blue-950 bg-blue-50 ring-2 ring-blue-200'
-                                                                            : 'border-gray-200 hover:border-gray-300'
-                                                                    }`}
+                                                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all hover:scale-105 ${isSelected
+                                                                        ? 'border-blue-950 bg-blue-50 ring-2 ring-blue-200'
+                                                                        : 'border-gray-200 hover:border-gray-300'
+                                                                        }`}
                                                                     title={displayName}
                                                                 >
                                                                     {/* Color Swatch */}
@@ -2870,7 +2869,7 @@ false
                                         {(() => {
                                             // Priority: Use unit images if available, otherwise use color images or product images
                                             let imagesArray: string[] = []
-                                            
+
                                             // First priority: Use unit-specific images
                                             if (unitImages.length > 0) {
                                                 imagesArray = unitImages
@@ -2882,7 +2881,7 @@ false
                                                     // First try 'colors' array (preferred)
                                                     if (p.colors && Array.isArray(p.colors)) {
                                                         const selectedColorLower = (selectedColor || '').toLowerCase()
-                                                        const colorData = p.colors.find((c: any) => 
+                                                        const colorData = p.colors.find((c: any) =>
                                                             (c.value && c.value.toLowerCase() === selectedColorLower) ||
                                                             (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
                                                             (c.name && c.name.toLowerCase() === selectedColorLower)
@@ -2891,7 +2890,7 @@ false
                                                             imagesArray = colorData.images
                                                         }
                                                     }
-                                                    
+
                                                     // Fallback to 'color_images' array
                                                     if (imagesArray.length === 0 && product.color_images) {
                                                         const selectedColorLower = (selectedColor || '').toLowerCase()
@@ -2949,626 +2948,668 @@ false
                             </div>
 
                             {/* Contact Lens Parameter Selection Form - Right Side */}
-                                <div className="w-full">
-                                    <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
-                                        <div className="mb-4 pb-3 border-b-2 border-gray-100">
-                                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                                                Select the parameters
-                                            </h2>
-                                            {product && (
-                                                <p className="text-base md:text-lg text-gray-700 font-medium">
-                                                    {product.name}
-                                                </p>
-                                            )}
-                                        </div>
+                            <div className="w-full">
+                                <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
+                                    <div className="mb-4 pb-3 border-b-2 border-gray-100">
+                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+                                            Select the parameters
+                                        </h2>
+                                        {product && (
+                                            <p className="text-base md:text-lg text-gray-700 font-medium">
+                                                {product.name}
+                                            </p>
+                                        )}
+                                    </div>
 
-                                        {/* Unit Selection (Pack Sizes) - Independent from Qty */}
-                                        {(() => {
-                                            // Check both selected config and all configs to find units
-                                            const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                            const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
-                                            
-                                            // Debug logging
-                                            if (import.meta.env.DEV) {
-                                                console.log('🔍 Unit Selection Debug:', {
-                                                    hasSelectedConfig: !!currentConfig,
-                                                    selectedConfigId: currentConfig ? (currentConfig as any).id : null,
-                                                    allConfigsCount: allConfigs.length,
-                                                    selectedConfigAvailableUnits: currentConfig ? (currentConfig as any).available_units : null,
-                                                    selectedConfigUnitPrices: currentConfig ? (currentConfig as any).unit_prices : null
-                                                })
+                                    {/* Unit Selection (Pack Sizes) - Independent from Qty */}
+                                    {(() => {
+                                        // Check both selected config and all configs to find units
+                                        const currentConfig = selectedConfig || selectedAstigmatismConfig
+                                        const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
+
+                                        // Debug logging
+                                        if (import.meta.env.DEV) {
+                                            console.log('🔍 Unit Selection Debug:', {
+                                                hasSelectedConfig: !!currentConfig,
+                                                selectedConfigId: currentConfig ? (currentConfig as any).id : null,
+                                                allConfigsCount: allConfigs.length,
+                                                selectedConfigAvailableUnits: currentConfig ? (currentConfig as any).available_units : null,
+                                                selectedConfigUnitPrices: currentConfig ? (currentConfig as any).unit_prices : null
+                                            })
+                                        }
+
+                                        // Get available units - check selected config first, then all configs
+                                        let availableUnits: number[] = []
+                                        const allUnitPrices: Record<string, number> = {}
+
+                                        // Priority 1: Check selected config first
+                                        if (currentConfig) {
+                                            const configAvailableUnits = (currentConfig as any).available_units
+                                            if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
+                                                availableUnits = configAvailableUnits
+                                                    .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
+                                                    .map((u: any) => Number(u))
+                                                    .filter((n: number) => !isNaN(n) && n > 0)
+
+                                                if (import.meta.env.DEV) {
+                                                    console.log('✅ Found units from selected config available_units:', availableUnits)
+                                                }
                                             }
-                                            
-                                            // Get available units - check selected config first, then all configs
-                                            let availableUnits: number[] = []
-                                            const allUnitPrices: Record<string, number> = {}
-                                            
-                                            // Priority 1: Check selected config first
-                                            if (currentConfig) {
-                                                const configAvailableUnits = (currentConfig as any).available_units
+
+                                            // Also collect unit prices from selected config
+                                            const configUnitPrices = (currentConfig as any).unit_prices
+                                            if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
+                                                Object.assign(allUnitPrices, configUnitPrices)
+                                            }
+
+                                            // Priority 2: If no available_units, use unit_prices keys from selected config
+                                            if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+                                                availableUnits = Object.keys(allUnitPrices)
+                                                    .map(k => Number(k))
+                                                    .filter(n => !isNaN(n) && n > 0)
+
+                                                if (import.meta.env.DEV) {
+                                                    console.log('✅ Found units from selected config unit_prices keys:', availableUnits)
+                                                }
+                                            }
+                                        }
+
+                                        // Priority 3: If still no units, check all configs
+                                        if (availableUnits.length === 0 && allConfigs && allConfigs.length > 0) {
+                                            if (import.meta.env.DEV) {
+                                                console.log('🔍 Checking all configs for units. Config count:', allConfigs.length)
+                                            }
+
+                                            for (const config of allConfigs) {
+                                                if (import.meta.env.DEV) {
+                                                    console.log('🔍 Checking config:', {
+                                                        id: (config as any).id,
+                                                        name: (config as any).name,
+                                                        available_units: (config as any).available_units,
+                                                        unit_prices: (config as any).unit_prices
+                                                    })
+                                                }
+
+                                                const configAvailableUnits = (config as any).available_units
                                                 if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
-                                                    availableUnits = configAvailableUnits
+                                                    const units = configAvailableUnits
                                                         .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
                                                         .map((u: any) => Number(u))
                                                         .filter((n: number) => !isNaN(n) && n > 0)
-                                                    
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('✅ Found units from selected config available_units:', availableUnits)
+                                                    availableUnits = [...new Set([...availableUnits, ...units])]
+
+                                                    if (import.meta.env.DEV && units.length > 0) {
+                                                        console.log('✅ Found units in config:', (config as any).id, units)
                                                     }
                                                 }
-                                                
-                                                // Also collect unit prices from selected config
-                                                const configUnitPrices = (currentConfig as any).unit_prices
+
+                                                const configUnitPrices = (config as any).unit_prices
                                                 if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
                                                     Object.assign(allUnitPrices, configUnitPrices)
-                                                }
-                                                
-                                                // Priority 2: If no available_units, use unit_prices keys from selected config
-                                                if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
-                                                    availableUnits = Object.keys(allUnitPrices)
-                                                        .map(k => Number(k))
-                                                        .filter(n => !isNaN(n) && n > 0)
-                                                    
+
                                                     if (import.meta.env.DEV) {
-                                                        console.log('✅ Found units from selected config unit_prices keys:', availableUnits)
+                                                        console.log('✅ Found unit_prices in config:', (config as any).id, configUnitPrices)
                                                     }
                                                 }
                                             }
-                                            
-                                            // Priority 3: If still no units, check all configs
-                                            if (availableUnits.length === 0 && allConfigs && allConfigs.length > 0) {
+
+                                            // If we have unit_prices but no available_units, use unit_prices keys
+                                            if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+                                                availableUnits = Object.keys(allUnitPrices)
+                                                    .map(k => Number(k))
+                                                    .filter(n => !isNaN(n) && n > 0)
+
                                                 if (import.meta.env.DEV) {
-                                                    console.log('🔍 Checking all configs for units. Config count:', allConfigs.length)
-                                                }
-                                                
-                                                for (const config of allConfigs) {
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('🔍 Checking config:', {
-                                                            id: (config as any).id,
-                                                            name: (config as any).name,
-                                                            available_units: (config as any).available_units,
-                                                            unit_prices: (config as any).unit_prices
-                                                        })
-                                                    }
-                                                    
-                                                    const configAvailableUnits = (config as any).available_units
-                                                    if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
-                                                        const units = configAvailableUnits
-                                                            .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
-                                                            .map((u: any) => Number(u))
-                                                            .filter((n: number) => !isNaN(n) && n > 0)
-                                                        availableUnits = [...new Set([...availableUnits, ...units])]
-                                                        
-                                                        if (import.meta.env.DEV && units.length > 0) {
-                                                            console.log('✅ Found units in config:', (config as any).id, units)
-                                                        }
-                                                    }
-                                                    
-                                                    const configUnitPrices = (config as any).unit_prices
-                                                    if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
-                                                        Object.assign(allUnitPrices, configUnitPrices)
-                                                        
-                                                        if (import.meta.env.DEV) {
-                                                            console.log('✅ Found unit_prices in config:', (config as any).id, configUnitPrices)
-                                                        }
-                                                    }
-                                                }
-                                                
-                                                // If we have unit_prices but no available_units, use unit_prices keys
-                                                if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
-                                                    availableUnits = Object.keys(allUnitPrices)
-                                                        .map(k => Number(k))
-                                                        .filter(n => !isNaN(n) && n > 0)
-                                                    
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('✅ Using unit_prices keys as available units:', availableUnits)
-                                                    }
-                                                }
-                                                
-                                                if (import.meta.env.DEV && availableUnits.length > 0) {
-                                                    console.log('✅ Found units from all configs:', availableUnits)
+                                                    console.log('✅ Using unit_prices keys as available units:', availableUnits)
                                                 }
                                             }
-                                            
-                                            // Only show if we have units to display
-                                            if (availableUnits.length === 0) {
-                                                if (import.meta.env.DEV) {
-                                                    console.log('⚠️ No units found to display after checking all configs')
-                                                }
-                                                return null
+
+                                            if (import.meta.env.DEV && availableUnits.length > 0) {
+                                                console.log('✅ Found units from all configs:', availableUnits)
                                             }
-                                            
-                                            // Sort units for consistent display
-                                            availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
-                                            
+                                        }
+
+                                        // Only show if we have units to display
+                                        if (availableUnits.length === 0) {
                                             if (import.meta.env.DEV) {
-                                                console.log('✅ Displaying unit buttons:', availableUnits, 'with prices:', allUnitPrices)
+                                                console.log('⚠️ No units found to display after checking all configs')
                                             }
-                                            
-                                            return (
-                                                <div className="mb-8">
-                                                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                                        Select Pack Size (Units)
-                                                    </label>
-                                                    <div className="flex flex-wrap gap-3">
-                                                        {availableUnits.map((unit: number) => {
-                                                            const isSelected = selectedUnit === unit
-                                                            // Get unit price from collected prices (from selected config or all configs)
-                                                            const unitPrice = allUnitPrices[String(unit)]
-                                                            const hasPrice = unitPrice !== undefined && typeof unitPrice === 'number'
-                                                            
-                                                            return (
-                                                                <button
-                                                                    key={unit}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        // Toggle selection: if already selected, unselect; otherwise select
-                                                                        if (isSelected) {
-                                                                            setSelectedUnit(null)
-                                                                        } else {
+                                            return null
+                                        }
+
+                                        // Sort units for consistent display
+                                        availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
+
+                                        if (import.meta.env.DEV) {
+                                            console.log('✅ Displaying unit buttons:', availableUnits, 'with prices:', allUnitPrices)
+                                        }
+
+                                        return (
+                                            <div className="mb-8">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                    Select Pack Size (Units)
+                                                </label>
+                                                <div className="flex flex-wrap gap-3">
+                                                    {availableUnits.map((unit: number) => {
+                                                        const isSelected = selectedUnit === unit
+                                                        // Get unit price from collected prices (from selected config or all configs)
+                                                        const unitPrice = allUnitPrices[String(unit)]
+                                                        const hasPrice = unitPrice !== undefined && typeof unitPrice === 'number'
+
+                                                        return (
+                                                            <button
+                                                                key={unit}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    // Toggle selection: if already selected, unselect; otherwise select
+                                                                    if (isSelected) {
+                                                                        setSelectedUnit(null)
+                                                                    } else {
                                                                         setSelectedUnit(unit)
                                                                         setSelectedImageIndex(0) // Reset to first image when unit changes
-                                                                        }
-                                                                    }}
-                                                                    className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${
-                                                                        isSelected
-                                                                            ? 'bg-white text-gray-900 border-gray-900 shadow-md'
-                                                                            : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
+                                                                    }
+                                                                }}
+                                                                className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${isSelected
+                                                                    ? 'bg-white text-gray-900 border-gray-900 shadow-md'
+                                                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
                                                                     }`}
-                                                                >
-                                                                    <div className="flex flex-col items-center">
-                                                                        <span>Unit {unit}</span>
-                                                                        {hasPrice && (
-                                                                            <span className="text-xs font-normal mt-1">
-                                                                                ${unitPrice.toFixed(2)}
-                                                                            </span>
+                                                            >
+                                                                <div className="flex flex-col items-center">
+                                                                    <span>Unit {unit}</span>
+                                                                    {hasPrice && (
+                                                                        <span className="text-xs font-normal mt-1">
+                                                                            ${unitPrice.toFixed(2)}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
+
+                                    {/* Eyes Section - Horizontal Layout */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
+                                        {/* Right Eye Section */}
+                                        <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
+                                            }`}>
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={rightEyeEnabled}
+                                                        onChange={(e) => setRightEyeEnabled(e.target.checked)}
+                                                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                                                    />
+                                                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
+                                                        <span className="text-white font-bold text-sm">R</span>
+                                                    </div>
+                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Right Eye OD</h3>
+                                                </label>
+                                            </div>
+
+                                            <div className={`space-y-3 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                {/* Qty Number Input with Spinner - Full Width */}
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                        Quantity (Qty)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={contactLensFormData.right_qty || 1}
+                                                        onChange={(e) => {
+                                                            const selectedValue = parseInt(e.target.value) || 1
+                                                            handleContactLensFieldChange('right_qty', selectedValue)
+                                                        }}
+                                                        disabled={!rightEyeEnabled}
+                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    />
+                                                    {contactLensErrors.right_qty && (
+                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                            Base Curve (B.C)
+                                                        </label>
+                                                        <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <span className="text-gray-700 font-medium">
+                                                                {fixedBaseCurveAndDiameter.right_base_curve}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                            Diameter (DIA)
+                                                        </label>
+                                                        <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <span className="text-gray-700 font-medium">
+                                                                {fixedBaseCurveAndDiameter.right_diameter}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Right Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
+                                            {(() => {
+                                                const formType = contactLensFormConfig?.formType ||
+                                                    (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+                                                if (formType === 'spherical') {
+                                                    return (
+                                                        <div className={`pt-3 border-t border-blue-200 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <label className="block text-xs text-gray-500 mb-3">
+                                                                * Power (PWR)
+                                                            </label>
+                                                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                {['00.00', ...powerOptions].map((option: string | number) => (
+                                                                    <button
+                                                                        key={option}
+                                                                        type="button"
+                                                                        onClick={() => handleContactLensFieldChange('right_power', option.toString())}
+                                                                        disabled={!rightEyeEnabled}
+                                                                        className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.right_power || '00.00') === option.toString()
+                                                                            ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                                                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <div className="text-xs font-bold mb-1">{option}</div>
+                                                                        <div className="text-[10px] text-gray-500">Power</div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            {contactLensErrors.right_power && (
+                                                                <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                } else if (formType === 'astigmatism') {
+                                                    return (
+                                                        <div className={`mt-4 space-y-4 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <div className="pt-3 border-t border-blue-200">
+                                                                <label className="block text-xs text-gray-500 mb-3">
+                                                                    Power Setting
+                                                                </label>
+                                                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                    {['00.00', ...powerOptions].map((option: string | number) => (
+                                                                        <button
+                                                                            key={option}
+                                                                            type="button"
+                                                                            onClick={() => handleContactLensFieldChange('right_power', option.toString())}
+                                                                            disabled={!rightEyeEnabled}
+                                                                            className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.right_power || '00.00') === option.toString()
+                                                                                ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                                                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                        >
+                                                                            <div className="text-xs font-bold mb-1">{option}</div>
+                                                                            <div className="text-[10px] text-gray-500">Power</div>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {contactLensErrors.right_power && (
+                                                                    <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="pt-4 border-t border-blue-200">
+                                                                <label className="block text-xs text-gray-500 mb-3">
+                                                                    Cylinder & Axis
+                                                                </label>
+                                                                <div className="space-y-4">
+                                                                    <div>
+                                                                        <label className="block text-xs text-gray-500 mb-2">Cylinder (CYL)</label>
+                                                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                                                            {['00.00', ...cylinderOptions].map((option: number | string) => (
+                                                                                <button
+                                                                                    key={option}
+                                                                                    type="button"
+                                                                                    onClick={() => handleContactLensFieldChange('right_cylinder', option.toString())}
+                                                                                    disabled={!rightEyeEnabled}
+                                                                                    className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.right_cylinder || '00.00') === option.toString()
+                                                                                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                                                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                        } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                                >
+                                                                                    <div className="text-xs font-bold mb-1">{option}</div>
+                                                                                    <div className="text-[10px] text-gray-500">Cylinder</div>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                        {contactLensErrors.right_cylinder && (
+                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_cylinder}</p>
                                                                         )}
                                                                     </div>
-                                                                </button>
-                                                            )
-                                                        })}
+                                                                    <div>
+                                                                        <label className="block text-xs text-gray-500 mb-2">Axis (AX)</label>
+                                                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                            {['00.00', ...axisOptions].map((option: number | string) => (
+                                                                                <button
+                                                                                    key={option}
+                                                                                    type="button"
+                                                                                    onClick={() => handleContactLensFieldChange('right_axis', option.toString())}
+                                                                                    disabled={!rightEyeEnabled}
+                                                                                    className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.right_axis || '00.00') === option.toString()
+                                                                                        ? 'border-blue-500 bg-blue-50 text-blue-700 shadow-sm'
+                                                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                        } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                                >
+                                                                                    <div className="text-xs font-bold mb-1">{option}</div>
+                                                                                    <div className="text-[10px] text-gray-500">Axis</div>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                        {contactLensErrors.right_axis && (
+                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_axis}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                }
+                                                return null
+                                            })()}
+                                        </div>
+
+                                        {/* Left Eye Section */}
+                                        <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
+                                            }`}>
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <label className="flex items-center gap-2 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={leftEyeEnabled}
+                                                        onChange={(e) => setLeftEyeEnabled(e.target.checked)}
+                                                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
+                                                    />
+                                                    <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
+                                                        <span className="text-white font-bold text-sm">L</span>
+                                                    </div>
+                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye OS</h3>
+                                                </label>
+                                            </div>
+
+                                            <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                {/* Qty Number Input with Spinner - Full Width */}
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                        Quantity (Qty)
+                                                    </label>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={contactLensFormData.left_qty || 1}
+                                                        onChange={(e) => {
+                                                            const selectedValue = parseInt(e.target.value) || 1
+                                                            handleContactLensFieldChange('left_qty', selectedValue)
+                                                        }}
+                                                        disabled={!leftEyeEnabled}
+                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    />
+                                                    {contactLensErrors.left_qty && (
+                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                            Base Curve (B.C)
+                                                        </label>
+                                                        <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <span className="text-gray-700 font-medium">
+                                                                {fixedBaseCurveAndDiameter.left_base_curve}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                            Diameter (DIA)
+                                                        </label>
+                                                        <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
+                                                            <span className="text-gray-700 font-medium">
+                                                                {fixedBaseCurveAndDiameter.left_diameter}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Left Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
+                                            {(() => {
+                                                const formType = contactLensFormConfig?.formType ||
+                                                    (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+                                                if (formType === 'spherical') {
+                                                    return (
+                                                        <div className={`pt-3 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <label className="block text-xs text-gray-500 mb-3">
+                                                                * Power (PWR)
+                                                            </label>
+                                                            <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                {['00.00', ...powerOptions].map((option: string | number) => (
+                                                                    <button
+                                                                        key={option}
+                                                                        type="button"
+                                                                        onClick={() => handleContactLensFieldChange('left_power', option.toString())}
+                                                                        disabled={!leftEyeEnabled}
+                                                                        className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.left_power || '00.00') === option.toString()
+                                                                            ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                                                            : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <div className="text-xs font-bold mb-1">{option}</div>
+                                                                        <div className="text-[10px] text-gray-500">Power</div>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            {contactLensErrors.left_power && (
+                                                                <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                } else if (formType === 'astigmatism') {
+                                                    return (
+                                                        <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            <div className="pt-3 border-t border-purple-200">
+                                                                <label className="block text-xs text-gray-500 mb-3">
+                                                                    Power Setting
+                                                                </label>
+                                                                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                    {['00.00', ...powerOptions].map((option: string | number) => (
+                                                                        <button
+                                                                            key={option}
+                                                                            type="button"
+                                                                            onClick={() => handleContactLensFieldChange('left_power', option.toString())}
+                                                                            disabled={!leftEyeEnabled}
+                                                                            className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.left_power || '00.00') === option.toString()
+                                                                                ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                                                                : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                        >
+                                                                            <div className="text-xs font-bold mb-1">{option}</div>
+                                                                            <div className="text-[10px] text-gray-500">Power</div>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                                {contactLensErrors.left_power && (
+                                                                    <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="pt-4 border-t border-purple-200">
+                                                                <label className="block text-xs text-gray-500 mb-3">
+                                                                    Cylinder & Axis
+                                                                </label>
+                                                                <div className="space-y-4">
+                                                                    <div>
+                                                                        <label className="block text-xs text-gray-500 mb-2">Cylinder (CYL)</label>
+                                                                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                                                            {['00.00', ...cylinderOptions].map((option: number | string) => (
+                                                                                <button
+                                                                                    key={option}
+                                                                                    type="button"
+                                                                                    onClick={() => handleContactLensFieldChange('left_cylinder', option.toString())}
+                                                                                    disabled={!leftEyeEnabled}
+                                                                                    className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.left_cylinder || '00.00') === option.toString()
+                                                                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                        } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                                >
+                                                                                    <div className="text-xs font-bold mb-1">{option}</div>
+                                                                                    <div className="text-[10px] text-gray-500">Cylinder</div>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                        {contactLensErrors.left_cylinder && (
+                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_cylinder}</p>
+                                                                        )}
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-xs text-gray-500 mb-2">Axis (AX)</label>
+                                                                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                                                                            {['00.00', ...axisOptions].map((option: number | string) => (
+                                                                                <button
+                                                                                    key={option}
+                                                                                    type="button"
+                                                                                    onClick={() => handleContactLensFieldChange('left_axis', option.toString())}
+                                                                                    disabled={!leftEyeEnabled}
+                                                                                    className={`relative p-3 border-2 rounded-lg transition-all text-xs font-medium ${(contactLensFormData.left_axis || '00.00') === option.toString()
+                                                                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                                                                        : 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                                                                                        } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                                >
+                                                                                    <div className="text-xs font-bold mb-1">{option}</div>
+                                                                                    <div className="text-[10px] text-gray-500">Axis</div>
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                        {contactLensErrors.left_axis && (
+                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_axis}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
+                                                                    <p className="mt-2 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                }
+                                                return null
+                                            })()}
+                                        </div>
+                                    </div>
+
+                                    {/* Copy Right to Left Button */}
+                                    <div className="mt-4 mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setContactLensFormData(prev => ({
+                                                    ...prev,
+                                                    left_qty: prev.right_qty,
+                                                    left_base_curve: prev.right_base_curve,
+                                                    left_diameter: prev.right_diameter,
+                                                    left_power: prev.right_power,
+                                                    left_cylinder: prev.right_cylinder,
+                                                    left_axis: prev.right_axis
+                                                }))
+                                                setLeftEyeEnabled(rightEyeEnabled)
+                                            }}
+                                            className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                            title="Copy Right Eye settings to Left Eye"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                            </svg>
+                                            Copy Right to Left
+                                        </button>
+                                    </div>
+
+                                    {/* Axis Diagram - Below both sections */}
+                                    {(() => {
+                                        // Show diagram if axis options exist or axis fields are present
+                                        // This includes: Near Vision, Distance Vision, Astigmatism, and any form with axis fields
+                                        const hasAxisFields = axisOptions.length > 0 ||
+                                            contactLensFormData.right_axis !== undefined ||
+                                            contactLensFormData.left_axis !== undefined ||
+                                            selectedLensType === 'near_vision' ||
+                                            selectedLensType === 'distance_vision' ||
+                                            (contactLensFormConfig?.formType === 'astigmatism') ||
+                                            (isAstigmatismSubSubcategory)
+
+                                        if (hasAxisFields) {
+                                            return (
+                                                <div className="mb-6">
+                                                    <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="p-2 bg-blue-100 rounded-lg">
+                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
+                                                                    <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                                            <AxisDiagram compact={true} />
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )
-                                        })()}
+                                        }
+                                        return null
+                                    })()}
 
-                                        {/* Eyes Section - Horizontal Layout */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 items-start">
-                                            {/* Right Eye Section */}
-                                            <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
-                                                rightEyeEnabled ? 'border-blue-100' : 'border-gray-200 opacity-50'
-                                            }`}>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={rightEyeEnabled}
-                                                            onChange={(e) => setRightEyeEnabled(e.target.checked)}
-                                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
-                                                        />
-                                                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
-                                                            <span className="text-white font-bold text-sm">R</span>
-                                                        </div>
-                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Right Eye OD</h3>
-                                                    </label>
-                                                </div>
-                                                
-                                                <div className={`space-y-3 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                    {/* Qty Number Input with Spinner - Full Width */}
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
-                                                            Quantity (Qty)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={contactLensFormData.right_qty || 1}
-                                                            onChange={(e) => {
-                                                                const selectedValue = parseInt(e.target.value) || 1
-                                                                handleContactLensFieldChange('right_qty', selectedValue)
-                                                            }}
-                                                            disabled={!rightEyeEnabled}
-                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
-                                                                } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        />
-                                                        {contactLensErrors.right_qty && (
-                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Base Curve (B.C)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.right_base_curve}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Diameter (DIA)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!rightEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.right_diameter}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
-                                                {(() => {
-                                                    const formType = contactLensFormConfig?.formType ||
-                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-
-                                                    if (formType === 'spherical') {
-                                                        return (
-                                                            <div className={`pt-3 border-t border-blue-200 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <label className="block text-xs text-gray-500 mb-1">
-                                                                    * Power (PWR)
-                                                                </label>
-                                                                <select
-                                                                    value={contactLensFormData.right_power || '00.00'}
-                                                                    onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
-                                                                    disabled={!rightEyeEnabled}
-                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                                        } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <option value="00.00">00.00</option>
-                                                                    {powerOptions.map((option: string | number) => (
-                                                                        <option key={option} value={option}>
-                                                                            {option}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                                {contactLensErrors.right_power && (
-                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    } else if (formType === 'astigmatism') {
-                                                        return (
-                                                            <div className={`mt-4 space-y-4 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <div className="pt-3 border-t border-blue-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Power Setting
-                                                                    </label>
-                                                                    <select
-                                                                        value={contactLensFormData.right_power || '00.00'}
-                                                                        onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
-                                                                        disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-300'
-                                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                    >
-                                                                        <option value="00.00">00.00</option>
-                                                                        {powerOptions.map((option: string | number) => (
-                                                                            <option key={option} value={option}>
-                                                                                {option}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {contactLensErrors.right_power && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="pt-4 border-t border-blue-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Cylinder & Axis
-                                                                    </label>
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.right_cylinder || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
-                                                                                disabled={!rightEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-300'} ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {cylinderOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Axis (AX)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.right_axis || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
-                                                                                disabled={!rightEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-300'} ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {axisOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    {(contactLensErrors.right_cylinder || contactLensErrors.right_axis) && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null
-                                                })()}
-                                            </div>
-
-                                            {/* Left Eye Section */}
-                                            <div className={`bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border-2 shadow-sm transition-all h-full ${
-                                                leftEyeEnabled ? 'border-purple-100' : 'border-gray-200 opacity-50'
-                                            }`}>
-                                                <div className="flex items-center gap-2 mb-4">
-                                                    <label className="flex items-center gap-2 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={leftEyeEnabled}
-                                                            onChange={(e) => setLeftEyeEnabled(e.target.checked)}
-                                                            className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 cursor-pointer"
-                                                        />
-                                                        <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
-                                                            <span className="text-white font-bold text-sm">L</span>
-                                                        </div>
-                                                        <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye OS</h3>
-                                                    </label>
-                                                </div>
-                                                
-                                                <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                    {/* Qty Number Input with Spinner - Full Width */}
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
-                                                            Quantity (Qty)
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            value={contactLensFormData.left_qty || 1}
-                                                            onChange={(e) => {
-                                                                const selectedValue = parseInt(e.target.value) || 1
-                                                                handleContactLensFieldChange('left_qty', selectedValue)
-                                                            }}
-                                                            disabled={!leftEyeEnabled}
-                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
-                                                                } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                        />
-                                                        {contactLensErrors.left_qty && (
-                                                            <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Base Curve and Diameter - Grouped Together (Fixed Values from Admin) */}
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Base Curve (B.C)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.left_base_curve}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div>
-                                                            <label className="block text-xs text-gray-500 mb-1">
-                                                                Diameter (DIA)
-                                                            </label>
-                                                            <div className={`w-full px-3 py-2 border-2 border-gray-300 rounded-lg bg-gray-50 transition-all shadow-sm text-sm ${!leftEyeEnabled ? 'opacity-50' : ''}`}>
-                                                                <span className="text-gray-700 font-medium">
-                                                                    {fixedBaseCurveAndDiameter.left_diameter}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Left Eye Parameters (Power, Cylinder, Axis for Astigmatism) */}
-                                                {(() => {
-                                                    const formType = contactLensFormConfig?.formType ||
-                                                        (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
-
-                                                    if (formType === 'spherical') {
-                                                        return (
-                                                            <div className={`pt-3 border-t border-purple-200 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <label className="block text-xs text-gray-500 mb-1">
-                                                                    * Power (PWR)
-                                                                </label>
-                                                                <select
-                                                                    value={contactLensFormData.left_power || '00.00'}
-                                                                    onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
-                                                                    disabled={!leftEyeEnabled}
-                                                                    className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                                        } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                >
-                                                                    <option value="00.00">00.00</option>
-                                                                    {powerOptions.map((option: string | number) => (
-                                                                        <option key={option} value={option}>
-                                                                            {option}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                                {contactLensErrors.left_power && (
-                                                                    <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
-                                                                )}
-                                                            </div>
-                                                        )
-                                                    } else if (formType === 'astigmatism') {
-                                                        return (
-                                                            <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                                <div className="pt-3 border-t border-purple-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Power Setting
-                                                                    </label>
-                                                                    <select
-                                                                        value={contactLensFormData.left_power || '00.00'}
-                                                                        onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
-                                                                        disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-300'
-                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                    >
-                                                                        <option value="00.00">00.00</option>
-                                                                        {powerOptions.map((option: string | number) => (
-                                                                            <option key={option} value={option}>
-                                                                                {option}
-                                                                            </option>
-                                                                        ))}
-                                                                    </select>
-                                                                    {contactLensErrors.left_power && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="pt-4 border-t border-purple-200">
-                                                                    <label className="block text-xs text-gray-500 mb-1">
-                                                                        Cylinder & Axis
-                                                                    </label>
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Cylinder (CYL)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.left_cylinder || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {cylinderOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                        <div>
-                                                                            <label className="block text-xs text-gray-500 mb-1">Axis (AX)</label>
-                                                                            <select
-                                                                                value={contactLensFormData.left_axis || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-300'} ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00</option>
-                                                                                {axisOptions.map((option: number | string) => (
-                                                                                    <option key={option} value={option}>{option}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                        </div>
-                                                                    </div>
-                                                                    {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
-                                                                        <p className="mt-1 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        )
-                                                    }
-                                                    return null
-                                                })()}
-                                            </div>
-                                            </div>
-
-                                        {/* Copy Left to Right Button */}
-                                        <div className="mt-4 mb-4">
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setContactLensFormData(prev => ({
-                                                        ...prev,
-                                                        right_qty: prev.left_qty,
-                                                        right_base_curve: prev.left_base_curve,
-                                                        right_diameter: prev.left_diameter,
-                                                        right_power: prev.left_power,
-                                                        right_cylinder: prev.left_cylinder,
-                                                        right_axis: prev.left_axis
-                                                    }))
-                                                    setRightEyeEnabled(leftEyeEnabled)
-                                                }}
-                                                className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-                                                title="Copy Left Eye settings to Right Eye"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                                                </svg>
-                                                Copy Left to Right
-                                            </button>
-                                        </div>
-
-                                        {/* Axis Diagram - Below both sections */}
-                                        {(() => {
-                                            // Show diagram if axis options exist or axis fields are present
-                                            // This includes: Near Vision, Distance Vision, Astigmatism, and any form with axis fields
-                                            const hasAxisFields = axisOptions.length > 0 || 
-                                                                  contactLensFormData.right_axis !== undefined || 
-                                                                  contactLensFormData.left_axis !== undefined ||
-                                                                  selectedLensType === 'near_vision' ||
-                                                                  selectedLensType === 'distance_vision' ||
-                                                                  (contactLensFormConfig?.formType === 'astigmatism') ||
-                                                                  (isAstigmatismSubSubcategory)
-                                            
-                                            if (hasAxisFields) {
-                                                return (
-                                                    <div className="mb-6">
-                                                        <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                                                        <div className="flex items-center justify-between mb-3">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="p-2 bg-blue-100 rounded-lg">
-                                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                            </svg>
-                                                                    </div>
-                                                                    <div>
-                                                                        <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
-                                                                        <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <div className="mt-4 pt-4 border-t border-gray-200">
-                                                                <AxisDiagram compact={true} />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            }
-                                            return null
-                                        })()}
-
-                                        {/* Add to Cart Button */}
-                                        <div className="mt-6 pt-4 border-t-2 border-gray-200">
-                                            <button
-                                                onClick={handleContactLensAddToCart}
-                                                disabled={contactLensLoading || isProductOutOfStock}
-                                                className={`w-full px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-lg ${contactLensLoading || isProductOutOfStock
-                                                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                                                    : 'bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white hover:from-green-700 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0'
-                                                    }`}
-                                            >
-                                                {contactLensLoading ? (
-                                                    <span className="flex items-center justify-center gap-2">
-                                                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                        </svg>
-                                                        Adding to Cart...
-                                                    </span>
-                                                ) : (
-                                                    <span className="flex items-center justify-center gap-2">
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                                                        </svg>
-                                                        Add to Cart
-                                                    </span>
-                                                )}
-                                            </button>
-                                        </div>
+                                    {/* Add to Cart Button */}
+                                    <div className="mt-6 pt-4 border-t-2 border-gray-200">
+                                        <button
+                                            onClick={handleContactLensAddToCart}
+                                            disabled={contactLensLoading || isProductOutOfStock}
+                                            className={`w-full px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-lg ${contactLensLoading || isProductOutOfStock
+                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-green-600 via-green-600 to-emerald-600 text-white hover:from-green-700 hover:via-green-700 hover:to-emerald-700 hover:shadow-xl transform hover:-translate-y-1 active:translate-y-0'
+                                                }`}
+                                        >
+                                            {contactLensLoading ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    Adding to Cart...
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                    </svg>
+                                                    Add to Cart
+                                                </span>
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                             {/* Product Images (Left Column) */}
@@ -3586,7 +3627,7 @@ false
                                             // First try 'colors' array (preferred)
                                             if (p.colors && Array.isArray(p.colors)) {
                                                 const selectedColorLower = (selectedColor || '').toLowerCase()
-                                                const colorData = p.colors.find((c: any) => 
+                                                const colorData = p.colors.find((c: any) =>
                                                     (c.value && c.value.toLowerCase() === selectedColorLower) ||
                                                     (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
                                                     (c.name && c.name.toLowerCase() === selectedColorLower)
@@ -3595,7 +3636,7 @@ false
                                                     imagesArray = colorData.images
                                                 }
                                             }
-                                            
+
                                             // Fallback to 'color_images' array
                                             if (imagesArray.length === 0 && product.color_images) {
                                                 const selectedColorLower = (selectedColor || '').toLowerCase()
@@ -3640,11 +3681,10 @@ false
                                                     <button
                                                         key={index}
                                                         onClick={() => setSelectedImageIndex(index)}
-                                                        className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${
-                                                            index === safeSelectedIndex
-                                                                ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
-                                                                : 'border-gray-200 hover:border-blue-200'
-                                                        }`}
+                                                        className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${index === safeSelectedIndex
+                                                            ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
+                                                            : 'border-gray-200 hover:border-blue-200'
+                                                            }`}
                                                     >
                                                         <img
                                                             src={image}
@@ -3681,9 +3721,9 @@ false
 
                                                 {/* Color Selection below the large image */}
                                                 {(() => {
-                                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0) 
-                                                        ? p.colors 
-                                                        : (product.color_images && product.color_images.length > 0 
+                                                    const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0)
+                                                        ? p.colors
+                                                        : (product.color_images && product.color_images.length > 0
                                                             ? product.color_images.map((ci: any) => ({
                                                                 name: ci.name || ci.color,
                                                                 display_name: ci.display_name || ci.name || ci.color,
@@ -3693,9 +3733,9 @@ false
                                                                 images: ci.images || []
                                                             }))
                                                             : [])
-                                                    
+
                                                     if (colorsArray.length === 0) return null
-                                                    
+
                                                     return (
                                                         <div className="mt-6">
                                                             <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -3715,7 +3755,7 @@ false
                                                                         (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
                                                                         (color.name && color.name.toLowerCase() === selectedColor.toLowerCase())
                                                                     )
-                                                                    
+
                                                                     return (
                                                                         <button
                                                                             key={index}
@@ -3726,17 +3766,16 @@ false
                                                                                 const newColor = colorValue
                                                                                 setSelectedColor(newColor)
                                                                                 setSelectedImageIndex(0) // Reset to first image of selected color
-                                                                                
+
                                                                                 // Update URL without page reload
                                                                                 const url = new URL(window.location.href)
                                                                                 url.searchParams.set('color', newColor)
                                                                                 window.history.pushState({}, '', url)
                                                                             }}
-                                                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 ${
-                                                                                isSelected
-                                                                                    ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
-                                                                                    : 'border-gray-200 hover:border-blue-200 hover:bg-white'
-                                                                            }`}
+                                                                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 transition-all duration-200 shadow-sm hover:shadow-md hover:scale-105 ${isSelected
+                                                                                ? 'border-blue-950 bg-blue-50/50 scale-105 ring-2 ring-blue-100'
+                                                                                : 'border-gray-200 hover:border-blue-200 hover:bg-white'
+                                                                                }`}
                                                                             title={displayName}
                                                                         >
                                                                             {/* Color Swatch */}
@@ -3790,7 +3829,7 @@ false
                                                         ${(originalPrice || 0).toFixed(2)}
                                                     </span>
                                                     <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px]">
-                                                        SAVE {Math.round(((originalPrice - displayPrice) / originalPrice) * 100)}%
+                                                        SAVE {Math.round(((originalPrice - (displayPrice || 0)) / originalPrice) * 100)}%
                                                     </span>
                                                 </div>
                                             </div>
@@ -3805,11 +3844,11 @@ false
                                     {isEyeHygiene && (() => {
                                         const p = product as any
                                         // Check for variants - prioritize fetched variants, then check product object
-                                        const variantsArray = fetchedVariants.length > 0 
-                                            ? fetchedVariants 
+                                        const variantsArray = fetchedVariants.length > 0
+                                            ? fetchedVariants
                                             : (p.sizeVolumeVariants || p.size_volume_variants || [])
                                         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
-                                        
+
                                         // Show loading state while fetching variants
                                         if (variantsLoading) {
                                             return (
@@ -3823,29 +3862,29 @@ false
                                                 </div>
                                             )
                                         }
-                                        
+
                                         // If product has variants from API, use variant selector
                                         if (hasVariants) {
                                             // Extract unique size_volume and pack_type options from variants
-                                            const activeVariants = variantsArray.filter((v: SizeVolumeVariant | any) => 
+                                            const activeVariants = variantsArray.filter((v: SizeVolumeVariant | any) =>
                                                 (v.is_active !== false && v.is_active !== undefined) || v.is_active === true
                                             )
-                                            
+
                                             const sizeVolumeOptions = Array.from(new Set(
                                                 activeVariants
                                                     .map((v: SizeVolumeVariant | any) => v.size_volume)
                                                     .filter(Boolean)
                                             )).sort()
-                                            
+
                                             const selectedSizeVolume = selectedSizeVolumeVariant?.size_volume || ''
-                                            
+
                                             // Filter pack_type options based on selected size_volume
                                             const variantsForSize = selectedSizeVolume
-                                                ? activeVariants.filter((v: SizeVolumeVariant | any) => 
+                                                ? activeVariants.filter((v: SizeVolumeVariant | any) =>
                                                     v.size_volume === selectedSizeVolume
                                                 )
                                                 : []
-                                            
+
                                             const packTypeOptions = selectedSizeVolume && variantsForSize.length > 0
                                                 ? Array.from(new Set(
                                                     variantsForSize
@@ -3853,41 +3892,41 @@ false
                                                         .filter(Boolean)
                                                 )).sort()
                                                 : []
-                                            
+
                                             const hasVariantsWithoutPackType = variantsForSize.some((v: any) => !v.pack_type)
                                             const selectedPackType = selectedSizeVolumeVariant?.pack_type || ''
-                                            
+
                                             // Find matching variant
                                             const findMatchingVariant = (sizeVol: string, packType: string | null) => {
                                                 if (!sizeVol) return null
-                                                
+
                                                 if (packType) {
-                                                    return activeVariants.find((v: SizeVolumeVariant | any) => 
+                                                    return activeVariants.find((v: SizeVolumeVariant | any) =>
                                                         v.size_volume === sizeVol && v.pack_type === packType
                                                     ) || null
                                                 }
-                                                
+
                                                 // If no pack_type, find variant without pack_type or first available
-                                                const variantWithoutPackType = activeVariants.find((v: SizeVolumeVariant | any) => 
+                                                const variantWithoutPackType = activeVariants.find((v: SizeVolumeVariant | any) =>
                                                     v.size_volume === sizeVol && !v.pack_type
                                                 )
-                                                
-                                                return variantWithoutPackType || activeVariants.find((v: SizeVolumeVariant | any) => 
+
+                                                return variantWithoutPackType || activeVariants.find((v: SizeVolumeVariant | any) =>
                                                     v.size_volume === sizeVol
                                                 ) || null
                                             }
-                                            
+
                                             // Handler for size/volume change
                                             const handleSizeVolumeChange = (sizeVol: string) => {
                                                 if (!sizeVol) {
                                                     setSelectedSizeVolumeVariant(null)
                                                     return
                                                 }
-                                                
-                                                let matchingVariant = selectedPackType 
+
+                                                let matchingVariant = selectedPackType
                                                     ? findMatchingVariant(sizeVol, selectedPackType)
                                                     : findMatchingVariant(sizeVol, null)
-                                                
+
                                                 if (matchingVariant) {
                                                     const variant = matchingVariant as SizeVolumeVariant
                                                     setSelectedSizeVolumeVariant({
@@ -3904,11 +3943,11 @@ false
                                                     setSelectedSizeVolumeVariant(null)
                                                 }
                                             }
-                                            
+
                                             // Handler for pack type change
                                             const handlePackTypeChange = (packType: string) => {
                                                 if (!selectedSizeVolume) return
-                                                
+
                                                 const matchingVariant = findMatchingVariant(selectedSizeVolume, packType || null)
                                                 if (matchingVariant) {
                                                     const variant = matchingVariant as SizeVolumeVariant
@@ -3926,13 +3965,13 @@ false
                                                     setSelectedSizeVolumeVariant(null)
                                                 }
                                             }
-                                            
+
                                             return (
                                                 <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
                                                     <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
                                                         Select Options
                                                     </h2>
-                                                    
+
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                                         {/* Size/Volume Dropdown */}
                                                         {sizeVolumeOptions.length > 0 && (
@@ -3966,9 +4005,8 @@ false
                                                                     value={selectedPackType}
                                                                     onChange={(e) => handlePackTypeChange(e.target.value)}
                                                                     disabled={!selectedSizeVolume}
-                                                                    className={`w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium ${
-                                                                        !selectedSizeVolume ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
-                                                                    }`}
+                                                                    className={`w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium ${!selectedSizeVolume ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''
+                                                                        }`}
                                                                     required={packTypeOptions.length > 0}
                                                                 >
                                                                     <option value="">{hasVariantsWithoutPackType && packTypeOptions.length > 0 ? 'No Pack Type' : 'Select Pack Type'}</option>
@@ -3980,11 +4018,11 @@ false
                                                                 </select>
                                                                 {!selectedSizeVolume && (
                                                                     <p className="text-xs text-gray-500 mt-1">Please select Capacity first</p>
-                                                                            )}
-                                                                        </div>
+                                                                )}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    
+
                                                     {/* Selected Variant Details */}
                                                     {selectedSizeVolumeVariant && (
                                                         <div className="pt-4 border-t border-blue-200">
@@ -3993,12 +4031,12 @@ false
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="text-sm font-bold text-gray-700 uppercase">Price</span>
                                                                     <div className="flex items-center gap-3">
-                                                                        {selectedSizeVolumeVariant.compare_at_price && 
-                                                                         Number(selectedSizeVolumeVariant.compare_at_price) > Number(selectedSizeVolumeVariant.price) ? (
+                                                                        {selectedSizeVolumeVariant.compare_at_price &&
+                                                                            Number(selectedSizeVolumeVariant.compare_at_price) > Number(selectedSizeVolumeVariant.price) ? (
                                                                             <>
                                                                                 <span className="text-2xl font-extrabold text-blue-950">
                                                                                     ${Number(selectedSizeVolumeVariant.price).toFixed(2)}
-                                                                            </span>
+                                                                                </span>
                                                                                 <span className="text-lg text-gray-400 line-through">
                                                                                     ${Number(selectedSizeVolumeVariant.compare_at_price).toFixed(2)}
                                                                                 </span>
@@ -4014,139 +4052,139 @@ false
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            
+
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            {/* Quantity Input */}
-                                                            <div className="flex flex-col">
-                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                                    Quantity <span className="text-red-500">*</span>
-                                                                </label>
-                                                                <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
-                                                                    <span className="text-lg">{quantity}</span>
-                                                                    <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            {/* Stock Quantity Display */}
-                                                            <div className="flex flex-col justify-end">
-                                                                <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                                <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                    {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
-                                                                </span>
-                                                            </div>
-                                                            
-                                                            {/* Expiry Date Display (if available) */}
-                                                            {selectedSizeVolumeVariant.expiry_date && (
+                                                                {/* Quantity Input */}
                                                                 <div className="flex flex-col">
-                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                                    <span className="text-gray-900 font-semibold text-lg">
-                                                                        {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
-                                                                            year: 'numeric',
-                                                                            month: 'long',
-                                                                            day: 'numeric'
-                                                                        })}
+                                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                        Quantity <span className="text-red-500">*</span>
+                                                                    </label>
+                                                                    <div className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 bg-gray-50 text-gray-900 font-medium">
+                                                                        <span className="text-lg">{quantity}</span>
+                                                                        <span className="text-xs text-gray-500 ml-2">(quantity can be changed in cart)</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Stock Quantity Display */}
+                                                                <div className="flex flex-col justify-end">
+                                                                    <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                                    <span className={`font-semibold text-lg ${selectedSizeVolumeVariant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {selectedSizeVolumeVariant.stock_quantity > 0 ? selectedSizeVolumeVariant.stock_quantity : 'Out of Stock'}
                                                                     </span>
                                                                 </div>
-                                                            )}
+
+                                                                {/* Expiry Date Display (if available) */}
+                                                                {selectedSizeVolumeVariant.expiry_date && (
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                                        <span className="text-gray-900 font-semibold text-lg">
+                                                                            {new Date(selectedSizeVolumeVariant.expiry_date).toLocaleDateString('en-US', {
+                                                                                year: 'numeric',
+                                                                                month: 'long',
+                                                                                day: 'numeric'
+                                                                            })}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     )}
                                                 </div>
                                             )
                                         }
-                                        
+
                                         // Legacy: Show dropdown form for products without variants
                                         return (
-                                        <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                                            <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
-                                                Select Options
-                                            </h2>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* Size/Volume Dropdown */}
-                                                {eyeHygieneOptions.size_volume.length > 0 ? (
+                                            <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
+                                                <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
+                                                    Select Options
+                                                </h2>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    {/* Size/Volume Dropdown */}
+                                                    {eyeHygieneOptions.size_volume.length > 0 ? (
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                Size / Volume <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={eyeHygieneFormData.size_volume}
+                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
+                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                required
+                                                            >
+                                                                <option value="">Select Size/Volume</option>
+                                                                {eyeHygieneOptions.size_volume.map((option) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {/* Pack Type Dropdown */}
+                                                    {eyeHygieneOptions.pack_type.length > 0 ? (
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                Pack Type <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <select
+                                                                value={eyeHygieneFormData.pack_type}
+                                                                onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
+                                                                className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                required
+                                                            >
+                                                                <option value="">Select Pack Type</option>
+                                                                {eyeHygieneOptions.pack_type.map((option) => (
+                                                                    <option key={option} value={option}>
+                                                                        {option}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {/* Quantity Input - Always show for Eye Hygiene products */}
                                                     <div className="flex flex-col">
                                                         <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                            Size / Volume <span className="text-red-500">*</span>
+                                                            Quantity <span className="text-red-500">*</span>
                                                         </label>
-                                                        <select
-                                                            value={eyeHygieneFormData.size_volume}
-                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, size_volume: e.target.value }))}
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            max={product.stock_quantity || 999}
+                                                            value={eyeHygieneFormData.quantity}
+                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
                                                             className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
                                                             required
-                                                        >
-                                                            <option value="">Select Size/Volume</option>
-                                                            {eyeHygieneOptions.size_volume.map((option) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
+                                                        />
                                                     </div>
-                                                ) : null}
 
-                                                {/* Pack Type Dropdown */}
-                                                {eyeHygieneOptions.pack_type.length > 0 ? (
-                                                    <div className="flex flex-col">
-                                                        <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                            Pack Type <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <select
-                                                            value={eyeHygieneFormData.pack_type}
-                                                            onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, pack_type: e.target.value }))}
-                                                            className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                            required
-                                                        >
-                                                            <option value="">Select Pack Type</option>
-                                                            {eyeHygieneOptions.pack_type.map((option) => (
-                                                                <option key={option} value={option}>
-                                                                    {option}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                ) : null}
+                                                    {/* Stock Quantity Display */}
+                                                    {product.stock_quantity !== undefined && (
+                                                        <div className="flex flex-col justify-end">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
+                                                            <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
+                                                            </span>
+                                                        </div>
+                                                    )}
 
-                                                {/* Quantity Input - Always show for Eye Hygiene products */}
-                                                <div className="flex flex-col">
-                                                    <label className="text-xs font-bold text-gray-700 uppercase mb-2">
-                                                        Quantity <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        max={product.stock_quantity || 999}
-                                                        value={eyeHygieneFormData.quantity}
-                                                        onChange={(e) => setEyeHygieneFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
-                                                        className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
-                                                        required
-                                                    />
+                                                    {/* Expiry Date Display (if available) */}
+                                                    {(product as any).expiry_date && (
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
+                                                            <span className="text-gray-900 font-semibold text-lg">
+                                                                {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
+                                                                    year: 'numeric',
+                                                                    month: 'long',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
-
-                                                {/* Stock Quantity Display */}
-                                                {product.stock_quantity !== undefined && (
-                                                    <div className="flex flex-col justify-end">
-                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
-                                                        <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            {product.stock_quantity > 0 ? product.stock_quantity : 'Out of Stock'}
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                {/* Expiry Date Display (if available) */}
-                                                {(product as any).expiry_date && (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-500 uppercase mb-1">Expiry Date</span>
-                                                        <span className="text-gray-900 font-semibold text-lg">
-                                                            {new Date((product as any).expiry_date).toLocaleDateString('en-US', {
-                                                                year: 'numeric',
-                                                                month: 'long',
-                                                                day: 'numeric'
-                                                            })}
-                                                        </span>
-                                                    </div>
-                                                )}
                                             </div>
-                                        </div>
                                         )
                                     })()}
 
@@ -4185,29 +4223,29 @@ false
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
                                         {isEyeHygiene ? (() => {
                                             const p = product as any
-                                            
+
                                             // Check if product has variants - prioritize fetched variants, then check product object
-                                            const variantsArray = fetchedVariants.length > 0 
-                                                ? fetchedVariants 
+                                            const variantsArray = fetchedVariants.length > 0
+                                                ? fetchedVariants
                                                 : (p.sizeVolumeVariants || p.size_volume_variants || [])
                                             const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
-                                            
+
                                             // Validation for variant-based or legacy form-based
                                             const isFormValid = hasVariants
                                                 ? !!selectedSizeVolumeVariant && selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0
                                                 : (
-                                                (eyeHygieneOptions.size_volume.length === 0 || eyeHygieneFormData.size_volume) &&
-                                                (eyeHygieneOptions.pack_type.length === 0 || eyeHygieneFormData.pack_type) &&
-                                                eyeHygieneFormData.quantity >= 1
+                                                    (eyeHygieneOptions.size_volume.length === 0 || eyeHygieneFormData.size_volume) &&
+                                                    (eyeHygieneOptions.pack_type.length === 0 || eyeHygieneFormData.pack_type) &&
+                                                    eyeHygieneFormData.quantity >= 1
                                                 )
-                                            
+
                                             // Stock check for variant or product
                                             const variantOutOfStock = hasVariants && selectedSizeVolumeVariant
                                                 ? (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0)
                                                 : false
-                                            
+
                                             const isDisabled = variantOutOfStock || isProductOutOfStock || !isFormValid
-                                            
+
                                             return (
                                                 <button
                                                     type="button"
@@ -4222,81 +4260,81 @@ false
                                                         : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                                         }`}
                                                 >
-                                                    {variantOutOfStock || isProductOutOfStock 
-                                                        ? 'Out of Stock' 
-                                                        : !isFormValid 
-                                                        ? (hasVariants ? 'Please Select a Size/Volume Option' : 'Please Select All Options') 
-                                                        : 'Add to Cart'}
+                                                    {variantOutOfStock || isProductOutOfStock
+                                                        ? 'Out of Stock'
+                                                        : !isFormValid
+                                                            ? (hasVariants ? 'Please Select a Size/Volume Option' : 'Please Select All Options')
+                                                            : 'Add to Cart'}
                                                 </button>
                                             )
                                         })() : (
                                             <>
                                                 {/* For other products: Show both Add to Cart and Select Lenses */}
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    handleAddToCart()
-                                                }}
-                                                disabled={isProductOutOfStock}
-                                                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
-                                                    ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
-                                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                            >
-                                                {isProductOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                                            </button>
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            handleAddToCart()
+                                                        }}
+                                                        disabled={isProductOutOfStock}
+                                                        className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
+                                                            ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
+                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                            }`}
+                                                    >
+                                                        {isProductOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                                                    </button>
 
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    setShowCheckout(true)
-                                                }}
-                                                disabled={isProductOutOfStock}
-                                                className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
-                                                    ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transform hover:-translate-y-1'
-                                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                    }`}
-                                            >
-                                                Select Lenses
-                                            </button>
-                                        </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault()
+                                                            e.stopPropagation()
+                                                            setShowCheckout(true)
+                                                        }}
+                                                        disabled={isProductOutOfStock}
+                                                        className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
+                                                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transform hover:-translate-y-1'
+                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                            }`}
+                                                    >
+                                                        Select Lenses
+                                                    </button>
+                                                </div>
 
-                                        <div className="flex gap-3">
-                                            {/* Try on button hidden */}
-                                            {false && (
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.preventDefault()
-                                                    e.stopPropagation()
-                                                    setShowTryOn(true)
-                                                }}
-                                                className="flex-1 px-6 py-4 rounded-xl font-bold text-gray-700 bg-white border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
-                                            >
-                                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                                </svg>
-                                                Virtual Try-on
-                                            </button>
-                                            )}
+                                                <div className="flex gap-3">
+                                                    {/* Try on button hidden */}
+                                                    {false && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                setShowTryOn(true)
+                                                            }}
+                                                            className="flex-1 px-6 py-4 rounded-xl font-bold text-gray-700 bg-white border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                                                        >
+                                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                            Virtual Try-on
+                                                        </button>
+                                                    )}
 
-                                            <a
-                                                href={`https://wa.me/3912345678?text=I'm interested in ${encodeURIComponent(product.name)}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="px-6 py-4 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
-                                            >
-                                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                                                </svg>
-                                            </a>
-                                        </div>
+                                                    <a
+                                                        href={`https://wa.me/3912345678?text=I'm interested in ${encodeURIComponent(product.name)}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="px-6 py-4 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all duration-200 shadow-sm hover:shadow-md flex items-center justify-center"
+                                                    >
+                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+                                                        </svg>
+                                                    </a>
+                                                </div>
                                             </>
                                         )}
                                     </div>
@@ -4319,7 +4357,7 @@ false
                                                     <p className="text-gray-600 leading-relaxed text-lg">
                                                         {product.description}
                                                     </p>
-                                </div>
+                                                </div>
                                             )}
                                         </div>
                                     )}
@@ -4351,19 +4389,19 @@ false
                                     </button>
                                     {showSpecsDescription && (
                                         <div className="mt-3 p-4 bg-white rounded-xl border border-gray-200">
-                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                                        {product.description}
-                                    </div>
+                                            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                                {product.description}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
                             )}
-                            
+
                             {/* Product Specifications - Two Column Layout */}
                             <div className="space-y-0">
                                 {(() => {
                                     const specs: Array<{ label: string; value: string | number | null | undefined; show?: boolean }> = []
-                                    
+
                                     // Producer (contact_lens_brand or brand)
                                     if ((product as any).contact_lens_brand || product.brand) {
                                         specs.push({
@@ -4371,7 +4409,7 @@ false
                                             value: (product as any).contact_lens_brand || product.brand
                                         })
                                     }
-                                    
+
                                     // Brand (if different from producer, or use brand field)
                                     if (product.brand && (product as any).contact_lens_brand !== product.brand) {
                                         specs.push({
@@ -4379,7 +4417,7 @@ false
                                             value: product.brand
                                         })
                                     }
-                                    
+
                                     // Material
                                     if ((product as any).contact_lens_material) {
                                         specs.push({
@@ -4387,7 +4425,7 @@ false
                                             value: (product as any).contact_lens_material
                                         })
                                     }
-                                    
+
                                     // Product Type
                                     if ((product as any).contact_lens_type) {
                                         specs.push({
@@ -4395,7 +4433,7 @@ false
                                             value: (product as any).contact_lens_type
                                         })
                                     }
-                                    
+
                                     // Replacement Frequency
                                     if ((product as any).replacement_frequency) {
                                         specs.push({
@@ -4403,17 +4441,17 @@ false
                                             value: (product as any).replacement_frequency
                                         })
                                     }
-                                    
+
                                     // Water Content
                                     if ((product as any).water_content !== undefined && (product as any).water_content !== null) {
                                         specs.push({
                                             label: 'Water Content',
-                                            value: typeof (product as any).water_content === 'number' 
+                                            value: typeof (product as any).water_content === 'number'
                                                 ? `${(product as any).water_content}%`
                                                 : (product as any).water_content
                                         })
                                     }
-                                    
+
                                     // Powers Range
                                     if ((product as any).powers_range) {
                                         const powersValue = typeof (product as any).powers_range === 'object'
@@ -4424,23 +4462,23 @@ false
                                             value: powersValue
                                         })
                                     }
-                                    
+
                                     // Sleeping with Lenses - HIDDEN
                                     // Medical Device - HIDDEN
                                     // UV Filter - HIDDEN
-                                    
+
                                     if (specs.length === 0) return null
-                                    
+
                                     // Split specs into two columns
                                     const leftColumn = specs.filter((_, index) => index % 2 === 0)
                                     const rightColumn = specs.filter((_, index) => index % 2 === 1)
-                                    
+
                                     return (
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
                                             {/* Left Column */}
                                             <div className="space-y-0 pr-4 md:pr-8">
                                                 {leftColumn.map((spec, index) => (
-                                                    <div 
+                                                    <div
                                                         key={index}
                                                         className={`flex items-center justify-between py-3 ${index < leftColumn.length - 1 ? 'border-b border-gray-100' : ''}`}
                                                     >
@@ -4449,11 +4487,11 @@ false
                                                     </div>
                                                 ))}
                                             </div>
-                                            
+
                                             {/* Right Column */}
                                             <div className="space-y-0 pl-4 md:pl-8">
                                                 {rightColumn.map((spec, index) => (
-                                                    <div 
+                                                    <div
                                                         key={index}
                                                         className={`flex items-center justify-between py-3 ${index < rightColumn.length - 1 ? 'border-b border-gray-100' : ''}`}
                                                     >
@@ -4524,7 +4562,7 @@ false
                                         <div className="mt-auto pt-4">
                                             {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
                                                 <div className="flex items-center gap-2">
-                                            <span className="text-xl font-bold text-blue-950">
+                                                    <span className="text-xl font-bold text-blue-950">
                                                         ${Number(relatedProduct.sale_price).toFixed(2)}
                                                     </span>
                                                     <span className="text-sm text-gray-400 line-through">
@@ -4532,7 +4570,7 @@ false
                                                     </span>
                                                     <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
                                                         {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
-                                            </span>
+                                                    </span>
                                                 </div>
                                             ) : (
                                                 <span className="text-xl font-bold text-blue-950">
@@ -4561,8 +4599,6 @@ false
                 <ProductCheckout
                     product={product}
                     onClose={() => setShowCheckout(false)}
-                    initialFrameMaterials={selectedFrameMaterial ? [selectedFrameMaterial] : []}
-                    initialLensType={selectedLensType || undefined}
                     initialSelectedColor={selectedColor || undefined}
                 />
             )}
