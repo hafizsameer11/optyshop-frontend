@@ -62,6 +62,17 @@ const ProductDetail: React.FC = () => {
     // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
     const [sphericalPowerValues, setSphericalPowerValues] = useState<string[]>([])
 
+    // Sync checkout modal state with URL
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search)
+        const action = searchParams.get('action')
+        if (action === 'checkout') {
+            setShowCheckout(true)
+        } else {
+            setShowCheckout(false)
+        }
+    }, [location.search])
+
     // Contact Lens Form Data State (if not already defined elsewhere)
     interface ContactLensFormData {
         right_qty: number
@@ -4362,7 +4373,9 @@ const ProductDetail: React.FC = () => {
                                                         onClick={(e) => {
                                                             e.preventDefault()
                                                             e.stopPropagation()
-                                                            setShowCheckout(true)
+                                                            // Navigate to the same URL with ?action=checkout query param
+                                                            // This will trigger the useEffect to set showCheckout(true)
+                                                            navigate(`${location.pathname}?action=checkout`)
                                                         }}
                                                         disabled={isProductOutOfStock}
                                                         className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
@@ -4661,7 +4674,10 @@ const ProductDetail: React.FC = () => {
             {showCheckout && product && !isContactLens && !isEyeHygiene && (
                 <ProductCheckout
                     product={product}
-                    onClose={() => setShowCheckout(false)}
+                    onClose={() => {
+                        // Navigate back to the product page without query params
+                        navigate(location.pathname)
+                    }}
                     initialSelectedColor={selectedColor || undefined}
                 />
             )}
