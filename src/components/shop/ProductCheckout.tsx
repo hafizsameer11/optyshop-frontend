@@ -213,8 +213,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [prescriptionId, setPrescriptionId] = useState<number | null>(null)
-  const [savedPrescriptions, setSavedPrescriptions] = useState<Prescription[]>([])
-  const [selectedSavedPrescription, setSelectedSavedPrescription] = useState<number | null>(null)
   const [prescriptionLensTypes, setPrescriptionLensTypes] = useState<PrescriptionLensType[]>([])
   // Store the actual API prescription lens types with their IDs for fetching variants
   const [apiPrescriptionLensTypes, setApiPrescriptionLensTypes] = useState<ApiPrescriptionLensType[]>([])
@@ -289,9 +287,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     fetchPrescriptionSunColors()
     fetchLensColors()
     fetchShippingMethods()
-    if (isAuthenticated) {
-      fetchSavedPrescriptions()
-    }
   }, [isAuthenticated, product.id])
 
   // Debug: Log when lensColors state changes
@@ -1263,15 +1258,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     }
   }
 
-  const fetchSavedPrescriptions = async () => {
-    try {
-      const prescriptions = await getPrescriptions()
-      setSavedPrescriptions(prescriptions || [])
-    } catch (error) {
-      console.error('Error fetching saved prescriptions:', error)
-    }
-  }
-
   const fetchProductCustomizationOptions = async () => {
     try {
       // This is an optional call - if it fails, we continue with getProductConfiguration data
@@ -1291,41 +1277,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       setProductCustomizationOptions(null)
     }
   }
-
-
-
-  // Helper function for default progressive options (unused - kept for reference)
-  // const getDefaultProgressiveOptions = () => [
-  //   {
-  //     id: 'premium',
-  //     name: 'Premium',
-  //     price: 52.95,
-  //     description: 'Up to 40% wider viewing areas than Standard. Maximum comfort & balanced vision.',
-  //     recommended: true,
-  //     icon: 'premium'
-  //   },
-  //   {
-  //     id: 'standard',
-  //     name: 'Standard',
-  //     price: 37.95,
-  //     description: 'Perfect for everyday tasks, offering a comfortable and well-balanced view.',
-  //     icon: 'standard'
-  //   },
-  //   {
-  //     id: 'mid-range',
-  //     name: 'Mid-Range',
-  //     price: 37.95,
-  //     description: 'Clear vision within 14 ft, ideal for work, dining out or watching TV. Not for driving.',
-  //     icon: 'mid-range'
-  //   },
-  //   {
-  //     id: 'near-range',
-  //     name: 'Near-Range',
-  //     price: 37.95,
-  //     description: 'Clear vision within 3 ft, ideal for reading and heavy screen use. Not for driving.',
-  //     icon: 'near-range'
-  //   }
-  // ]
 
   // Calculate price using API when selections change (debounced)
   useEffect(() => {
@@ -1449,30 +1400,6 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     const timeoutId = setTimeout(calculatePrice, 500)
     return () => clearTimeout(timeoutId)
   }, [product.id, lensSelection.selectedLensTypeId, lensSelection.selectedColorId, lensSelection.treatments.join(','), lensSelection.type, prescriptionData.pd_binocular, prescriptionData.od_sphere, prescriptionData.os_sphere])
-
-  const loadSavedPrescription = (prescriptionId: number) => {
-    const prescription = savedPrescriptions.find(p => p.id === prescriptionId)
-    if (prescription) {
-      setPrescriptionData({
-        pd_binocular: prescription.pd_binocular?.toString() || '',
-        od_sphere: prescription.od_sphere?.toString() || '',
-        od_cylinder: prescription.od_cylinder?.toString() || '',
-        od_axis: prescription.od_axis?.toString() || '',
-        os_sphere: prescription.os_sphere?.toString() || '',
-        os_cylinder: prescription.os_cylinder?.toString() || '',
-        os_axis: prescription.os_axis?.toString() || ''
-      })
-      setPrescriptionId(prescription.id)
-      setSelectedSavedPrescription(prescriptionId)
-      // Update lens type if available
-      if (prescription.prescription_type) {
-        setLensSelection(prev => ({
-          ...prev,
-          type: prescription.prescription_type as LensSelection['type']
-        }))
-      }
-    }
-  }
 
   const validatePrescription = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -2050,7 +1977,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       let finalPrescriptionId = prescriptionId
 
       // If user is authenticated, save prescription (if not using saved one)
-      if (isAuthenticated && !selectedSavedPrescription) {
+      if (isAuthenticated) {
         const prescriptionPayload: PrescriptionData = {
           prescription_type: lensSelection.type,
           od_sphere: parseFloat(prescriptionData.od_sphere),
@@ -2392,7 +2319,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       let finalPrescriptionId = prescriptionId
 
       // If user is authenticated, save prescription (if not using saved one)
-      if (isAuthenticated && !selectedSavedPrescription) {
+      if (isAuthenticated) {
         const prescriptionPayload: PrescriptionData = {
           prescription_type: lensSelection.type,
           od_sphere: parseFloat(prescriptionData.od_sphere),
