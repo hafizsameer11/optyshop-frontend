@@ -73,7 +73,7 @@ const Products: React.FC = () => {
     const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
     const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
     const [imageOpacity, setImageOpacity] = useState<Record<number, number>>({}) // Track image opacity for fade effect
-    const hoverIntervals = useRef<Record<number, NodeJS.Timeout>>({}) // Store intervals for cleanup
+    const hoverIntervals = useRef<Record<number, number>>({}) // Store intervals for cleanup
 
     // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
     // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
@@ -458,8 +458,8 @@ const Products: React.FC = () => {
                         <Link
                             to="/shop"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${!currentSection
-                                    ? 'bg-blue-950 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             All Products
@@ -467,8 +467,8 @@ const Products: React.FC = () => {
                         <Link
                             to="/shop/sunglasses"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'sunglasses'
-                                    ? 'bg-blue-950 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             Sunglasses
@@ -476,8 +476,8 @@ const Products: React.FC = () => {
                         <Link
                             to="/shop/eyeglasses"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'eyeglasses'
-                                    ? 'bg-blue-950 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             Eyeglasses
@@ -485,8 +485,8 @@ const Products: React.FC = () => {
                         <Link
                             to="/shop/contact-lenses"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'contact-lenses'
-                                    ? 'bg-blue-950 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             Contact Lenses
@@ -494,8 +494,8 @@ const Products: React.FC = () => {
                         <Link
                             to="/shop/eye-hygiene"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'eye-hygiene'
-                                    ? 'bg-blue-950 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             Eye Hygiene
@@ -550,8 +550,8 @@ const Products: React.FC = () => {
                                         setCurrentPage(1)
                                     }}
                                     className={`px-8 py-3 rounded-xl font-bold transition-colors ${showNewArrivals
-                                            ? 'bg-blue-950 text-white'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? 'bg-blue-950 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
                                     {showNewArrivals ? '✓ New Arrivals' : 'New Arrivals'}
@@ -568,8 +568,8 @@ const Products: React.FC = () => {
                                                     setCurrentPage(1)
                                                 }}
                                                 className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${gender === g
-                                                        ? 'bg-blue-950 text-white'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    ? 'bg-blue-950 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                     }`}
                                             >
                                                 {g.charAt(0).toUpperCase() + g.slice(1)}
@@ -1050,8 +1050,8 @@ const Products: React.FC = () => {
                                                                         }))
                                                                     }}
                                                                     className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${isSelected
-                                                                            ? 'border-blue-600 scale-110 ring-2 ring-blue-200 shadow-md'
-                                                                            : 'border-gray-300 hover:border-gray-400'
+                                                                        ? 'border-blue-600 scale-110 ring-2 ring-blue-200 shadow-md'
+                                                                        : 'border-gray-300 hover:border-gray-400'
                                                                         }`}
                                                                     style={{
                                                                         backgroundColor: gradientStyle ? 'transparent' : hexCode,
@@ -1155,8 +1155,8 @@ const Products: React.FC = () => {
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
                                         className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === 1
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-950 text-white hover:bg-blue-900'
                                             }`}
                                     >
                                         Previous
@@ -1174,8 +1174,8 @@ const Products: React.FC = () => {
                                                     key={page}
                                                     onClick={() => handlePageChange(page)}
                                                     className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === page
-                                                            ? 'bg-blue-950 text-white'
-                                                            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                        ? 'bg-blue-950 text-white'
+                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                                                         }`}
                                                 >
                                                     {page}
@@ -1191,8 +1191,8 @@ const Products: React.FC = () => {
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === pagination.pages}
                                         className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === pagination.pages
-                                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                : 'bg-blue-950 text-white hover:bg-blue-900'
+                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                            : 'bg-blue-950 text-white hover:bg-blue-900'
                                             }`}
                                     >
                                         Next
