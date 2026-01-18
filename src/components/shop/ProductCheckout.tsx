@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCart } from '../../context/CartContext'
@@ -122,6 +122,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [lensIndexOptions, setLensIndexOptions] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedImageIndex] = useState(0)
+
+  // Mouse position for lens preview effect (normalized 0-1)
+  const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 })
+  const imageContainerRef = useRef<HTMLDivElement>(null)
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (imageContainerRef.current) {
+      const rect = imageContainerRef.current.getBoundingClientRect()
+      const x = (e.clientX - rect.left) / rect.width
+      const y = (e.clientY - rect.top) / rect.height
+      setMousePosition({ x, y })
+    }
+  }
+
+  const handleMouseLeave = () => {
+    // Reset to center on leave for a "fixed" look
+    setMousePosition({ x: 0.5, y: 0.5 })
+  }
 
   // Helper function to get the color-specific image URL
   const getColorSpecificImageUrl = useCallback((product: Product, imageIndex: number = 0): string => {
@@ -2720,67 +2738,108 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
             {/* Middle: Product Image */}
             <div className="lg:col-span-1 flex flex-col flex-shrink-0">
-              <div className="bg-gray-100 rounded-lg overflow-hidden relative" style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}>
+              <div
+                ref={imageContainerRef}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                className="bg-gray-100 rounded-lg overflow-hidden relative cursor-crosshair group/preview"
+                style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}
+              >
                 <img
                   key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
                   src={getColorSpecificImageUrl(product, selectedImageIndex)}
                   alt={product.name}
+                  className="transition-transform duration-500 group-hover/preview:scale-[1.02]"
                   style={{
                     width: 'auto',
                     height: '100%',
                     maxWidth: '100%',
                     maxHeight: '100%',
                     objectFit: 'contain',
-                    objectPosition: 'top center'
+                    objectPosition: 'top center',
                   }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement
                     target.src = '/assets/images/frame1.png'
                   }}
                 />
-                {/* Color overlay effect on lenses - positioned over lens area */}
+
+                {/* Interactive Lens Overlays */}
                 {(() => {
-                  // Priority: prescription sun color > photochromic color > selected color
                   const activeColor = lensSelection.prescriptionSunColor ||
                     lensSelection.photochromicColor ||
                     lensSelection.selectedColor
 
                   if (!activeColor) return null
 
+                  // Calculate perspective shift based on mouse position
+                  const shiftX = (mousePosition.x - 0.5) * 15
+                  const shiftY = (mousePosition.y - 0.5) * 10
+                  const flareX = mousePosition.x * 100
+                  const flareY = mousePosition.y * 100
+
+                  const overlayStyle = {
+                    position: 'absolute' as const,
+                    pointerEvents: 'none' as const,
+                    zIndex: 10,
+                    width: '24%', // Slightly wider for better "fix"
+                    height: '22%',
+                    borderRadius: '45% 45% 40% 40%', // More lens-like shape
+                    mixBlendMode: 'multiply' as const,
+                    filter: 'blur(1.5px)',
+                    transition: 'all 0.1s ease-out',
+                    opacity: 0.75,
+                  }
+
                   return (
                     <>
                       {/* Left lens overlay */}
                       <div
-                        className="absolute pointer-events-none z-10"
                         style={{
-                          left: '25%',
-                          top: '35%',
-                          width: '20%',
-                          height: '25%',
-                          borderRadius: '50%',
-                          background: activeColor.gradient
-                            ? activeColor.color
-                            : activeColor.color,
-                          opacity: 0.7,
-                          mixBlendMode: 'multiply',
-                          filter: 'blur(2px)'
+                          ...overlayStyle,
+                          left: `${22}%`,
+                          top: `${36}%`,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 5}deg)`,
+                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 30%, ${activeColor.color}dd 100%)`,
                         }}
                       />
+                      {/* Left Glass Shine */}
+                      <div
+                        className="absolute pointer-events-none z-20 opacity-40 mix-blend-screen"
+                        style={{
+                          left: `${22}%`,
+                          top: `${36}%`,
+                          width: '24%',
+                          height: '22%',
+                          borderRadius: '45% 45% 40% 40%',
+                          transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
+                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 60%)`,
+                          filter: 'blur(4px)',
+                        }}
+                      />
+
                       {/* Right lens overlay */}
                       <div
-                        className="absolute pointer-events-none z-10"
                         style={{
-                          right: '25%',
-                          top: '35%',
-                          width: '20%',
-                          height: '25%',
-                          borderRadius: '50%',
-                          background: activeColor.gradient
-                            ? activeColor.color
-                            : activeColor.color,
-                          opacity: 0.7,
-                          mixBlendMode: 'multiply',
-                          filter: 'blur(2px)'
+                          ...overlayStyle,
+                          right: `${22}%`,
+                          top: `${36}%`,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 5}deg)`,
+                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 30%, ${activeColor.color}dd 100%)`,
+                        }}
+                      />
+                      {/* Right Glass Shine */}
+                      <div
+                        className="absolute pointer-events-none z-20 opacity-40 mix-blend-screen"
+                        style={{
+                          right: `${22}%`,
+                          top: `${36}%`,
+                          width: '24%',
+                          height: '22%',
+                          borderRadius: '45% 45% 40% 40%',
+                          transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
+                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 60%)`,
+                          filter: 'blur(4px)',
                         }}
                       />
                     </>
