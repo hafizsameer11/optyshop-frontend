@@ -9,6 +9,7 @@ import { WishlistProvider } from './context/WishlistContext'
 // Import test utilities (available in browser console)
 import './utils/testConnection'
 import './utils/formTestUtils'
+import './utils/debugProducts'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

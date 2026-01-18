@@ -151,6 +151,19 @@ const CategoryPage: React.FC = () => {
                             limit: 12,
                             pages: 0
                         })
+                        
+                        // Debug: Log product data
+                        if (import.meta.env.DEV && result.products && result.products.length > 0) {
+                            console.log('🔍 CategoryPage - Contact lenses products received:', result.products.length);
+                            console.log('🔍 Sample product data:', result.products[0]);
+                            console.log('🔍 in_stock values:', result.products.map(p => ({
+                                id: p.id,
+                                name: p.name,
+                                in_stock: p.in_stock,
+                                stock_quantity: p.stock_quantity,
+                                stock_status: (p as any).stock_status
+                            })));
+                        }
                     }
                 } else {
                     // For other categories, use regular category filtering
@@ -174,6 +187,19 @@ const CategoryPage: React.FC = () => {
                             limit: 12,
                             pages: 0
                         })
+                        
+                        // Debug: Log product data
+                        if (import.meta.env.DEV && result.products && result.products.length > 0) {
+                            console.log('🔍 CategoryPage - Other category products received:', result.products.length);
+                            console.log('🔍 Sample product data:', result.products[0]);
+                            console.log('🔍 in_stock values:', result.products.map(p => ({
+                                id: p.id,
+                                name: p.name,
+                                in_stock: p.in_stock,
+                                stock_quantity: p.stock_quantity,
+                                stock_status: (p as any).stock_status
+                            })));
+                        }
                     }
                 }
             } catch (error) {
@@ -209,7 +235,7 @@ const CategoryPage: React.FC = () => {
                 price: finalPrice,
                 image: getProductImageUrl(product),
                 description: product?.description || '',
-                inStock: product?.in_stock || false,
+                inStock: product?.in_stock !== false,
                 rating: product?.rating ? Number(product.rating) : undefined
             }
             addToCart(cartProduct)
@@ -361,7 +387,7 @@ const CategoryPage: React.FC = () => {
                                             )}
                                             
                                             {/* Out of Stock Badge */}
-                                            {(!product.in_stock) && (
+                                            {(product.in_stock === false) && (
                                                 <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold z-10">
                                                     {t('shop.outOfStock')}
                                                 </div>
@@ -398,14 +424,14 @@ const CategoryPage: React.FC = () => {
                                             {/* Add to Cart Button */}
                                             <button
                                                 onClick={() => handleAddToCart(product)}
-                                                disabled={!product.in_stock}
+                                                disabled={product.in_stock === false}
                                                 className={`w-full py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
-                                                    product.in_stock
-                                                        ? 'bg-blue-950 text-white hover:bg-blue-900'
-                                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    product.in_stock === false
+                                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                        : 'bg-blue-950 text-white hover:bg-blue-900'
                                                 }`}
                                             >
-                                                {product.in_stock ? t('shop.addToCart') : t('shop.outOfStock')}
+                                                {product.in_stock === false ? t('shop.outOfStock') : t('shop.addToCart')}
                                             </button>
                                         </div>
                                     </div>
