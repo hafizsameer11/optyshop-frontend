@@ -21,7 +21,6 @@ import {
     getNestedSubcategoriesByParentId,
     type Category 
 } from '../../services/categoriesService'
-import CategoryBanner from '../../components/home/CategoryBanner'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
@@ -767,15 +766,7 @@ const CategoryPage: React.FC = () => {
                 </section>
             )}
 
-            {/* Category Banner - Position-based banner for category pages */}
-            {categoryInfo.category && (
-                <CategoryBanner 
-                    categoryName={translateCategory(categoryInfo.category)}
-                    categoryId={categoryInfo.category.id}
-                    position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
-                />
-            )}
-
+            
             {/* Products Grid */}
             <section className="bg-gray-50 py-8 md:py-10 lg:py-12 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-7xl">
