@@ -7,8 +7,8 @@ interface AxisDiagramProps {
   axisValue?: number
 }
 
-const AxisDiagram: React.FC<AxisDiagramProps> = ({ 
-  onClose, 
+const AxisDiagram: React.FC<AxisDiagramProps> = ({
+  onClose,
   compact = false,
   eyeType = 'left',
   axisValue = 35
@@ -20,7 +20,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   const pointerX = 200 + pointerLength * Math.sin(pointerRadians)
   const pointerY = 200 - pointerLength * Math.cos(pointerRadians)
 
-  const eyeTypeLabel = eyeType === 'left' ? 'Occhio Sinistro' : eyeType === 'right' ? 'Occhio Destro' : 'Occhio'
+  const eyeTypeLabel = eyeType === 'left' ? 'Left Eye' : eyeType === 'right' ? 'Right Eye' : 'Eye'
 
   if (compact) {
     return (
@@ -29,7 +29,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         <div className="text-left mb-3">
           <h3 className="text-base font-bold text-gray-900">{eyeTypeLabel}</h3>
         </div>
-        
+
         <div className="flex justify-center items-center">
           <div className="relative" style={{ width: '400px', height: '200px' }}>
             {/* SVG Gauge Diagram */}
@@ -47,7 +47,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 stroke="#000"
                 strokeWidth="2"
               />
-              
+
               {/* Outer arc */}
               <path
                 d="M 20 200 A 180 180 0 0 1 380 200"
@@ -55,7 +55,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 stroke="#000"
                 strokeWidth="2"
               />
-              
+
               {/* Major tick marks at 20-unit intervals (0, 20, 40, 60, 80, 100, 120, 140, 160, 180) */}
               {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
                 const radians = (angle * Math.PI) / 180
@@ -75,7 +75,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   />
                 )
               })}
-              
+
               {/* Minor tick marks at 10-unit intervals */}
               {[10, 30, 50, 70, 90, 110, 130, 150, 170].map((angle) => {
                 const radians = (angle * Math.PI) / 180
@@ -95,7 +95,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   />
                 )
               })}
-              
+
               {/* Number labels at 20-unit intervals - positioned around the arc */}
               {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
                 const radians = (angle * Math.PI) / 180
@@ -103,7 +103,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 let labelX: number
                 let labelY: number
                 let textAnchor: "start" | "middle" | "end" = "middle"
-                
+
                 // Adjust positioning for edge cases (0° and 180° at base line)
                 if (angle === 0) {
                   // 0° on the right side - position at right end of base line, slightly above
@@ -120,7 +120,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   labelX = 200 + labelRadius * Math.sin(radians)
                   labelY = 200 - labelRadius * Math.cos(radians)
                 }
-                
+
                 return (
                   <text
                     key={`label-${angle}`}
@@ -136,7 +136,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   </text>
                 )
               })}
-              
+
               {/* Red triangular pointer */}
               <defs>
                 <marker
@@ -150,7 +150,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
                 </marker>
               </defs>
-              
+
               <line
                 x1="200"
                 y1="200"
@@ -160,7 +160,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 strokeWidth="3"
                 markerEnd="url(#pointer-compact)"
               />
-              
+
               {/* Center point */}
               <circle cx="200" cy="200" r="4" fill="#dc2626" />
             </svg>
@@ -204,7 +204,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               stroke="#000"
               strokeWidth="2"
             />
-            
+
             {/* Outer arc */}
             <path
               d="M 20 200 A 180 180 0 0 1 380 200"
@@ -212,7 +212,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               stroke="#000"
               strokeWidth="2"
             />
-            
+
             {/* Major tick marks at 20-unit intervals (0, 20, 40, 60, 80, 100, 120, 140, 160, 180) */}
             {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
               const radians = (angle * Math.PI) / 180
@@ -232,7 +232,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 />
               )
             })}
-            
+
             {/* Minor tick marks at 10-unit intervals */}
             {[10, 30, 50, 70, 90, 110, 130, 150, 170].map((angle) => {
               const radians = (angle * Math.PI) / 180
@@ -252,7 +252,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 />
               )
             })}
-            
+
             {/* Number labels at 20-unit intervals - positioned around the arc */}
             {[0, 20, 40, 60, 80, 100, 120, 140, 160, 180].map((angle) => {
               const radians = (angle * Math.PI) / 180
@@ -260,7 +260,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               let labelX: number
               let labelY: number
               let textAnchor: "start" | "middle" | "end" = "middle"
-              
+
               // Adjust positioning for edge cases (0° and 180° at base line)
               if (angle === 0) {
                 // 0° on the right side - position at right end of base line, slightly above
@@ -277,7 +277,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 labelX = 200 + labelRadius * Math.sin(radians)
                 labelY = 200 - labelRadius * Math.cos(radians)
               }
-              
+
               return (
                 <text
                   key={`label-${angle}`}
@@ -293,7 +293,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 </text>
               )
             })}
-            
+
             {/* Red triangular pointer */}
             <defs>
               <marker
@@ -307,7 +307,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
               </marker>
             </defs>
-            
+
             <line
               x1="200"
               y1="200"
@@ -317,7 +317,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               strokeWidth="3"
               markerEnd="url(#pointer-full)"
             />
-            
+
             {/* Center point */}
             <circle cx="200" cy="200" r="4" fill="#dc2626" />
           </svg>
