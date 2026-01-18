@@ -14,6 +14,7 @@ import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 // ContactLensConfiguration component removed - contact lens forms are handled in ProductDetail page
 import { useWishlist } from '../../context/WishlistContext'
+import { useCart } from '../../context/CartContext'
 import { 
     getCategoryBySlug, 
     getSubcategoryBySlug, 
@@ -26,6 +27,7 @@ const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
+    const { addToCart } = useCart()
     const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
         categorySlug: string; 
         subcategorySlug?: string;
@@ -59,89 +61,10 @@ const CategoryPage: React.FC = () => {
     const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
     const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
     const [imageOpacity, setImageOpacity] = useState<Record<number, number>>({}) // Track image opacity for fade effect
-    const hoverIntervals = useRef<Record<number, NodeJS.Timeout>>({}) // Store intervals for cleanup
+    const hoverIntervals = useRef<Record<number, ReturnType<typeof setInterval>>>({}) // Store intervals for cleanup
 
-    // Helper function to check if we're on a contact lens sub-subcategory page (Spherical or Astigmatism)
-    const isContactLensSubSubcategory = (): boolean => {
-        if (!categoryInfo.subSubcategory) return false
-        
-        const subSubcategoryName = (categoryInfo.subSubcategory.name || '').toLowerCase()
-        const subSubcategorySlug = (categoryInfo.subSubcategory.slug || '').toLowerCase()
-        
-        // Check for Spherical
-        const isSpherical = subSubcategoryName.includes('spherical') || 
-                          subSubcategoryName.includes('sferiche') || 
-                          subSubcategoryName.includes('sferica') ||
-                          subSubcategorySlug.includes('spherical') ||
-                          subSubcategorySlug.includes('sferiche') ||
-                          subSubcategorySlug.includes('sferica')
-        
-        // Check for Astigmatism
-        const isAstigmatism = subSubcategoryName.includes('astigmatism') || 
-                             subSubcategoryName.includes('astigmatismo') || 
-                             subSubcategoryName.includes('toric') ||
-                             subSubcategoryName.includes('torica') ||
-                             subSubcategorySlug.includes('astigmatism') ||
-                             subSubcategorySlug.includes('astigmatismo') ||
-                             subSubcategorySlug.includes('toric') ||
-                             subSubcategorySlug.includes('torica')
-        
-        return isSpherical || isAstigmatism
-    }
-
-    // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
-    // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
-    // and image patterns (glasses images usually contain "frame" or "glasses" in URL)
-    const isGlassesProduct = (product: Product): boolean => {
-        const categoryName = product.category?.name?.toLowerCase() || ''
-        const categorySlug = product.category?.slug?.toLowerCase() || ''
-        const productName = product.name?.toLowerCase() || ''
-        const productImage = getProductImageUrl(product).toLowerCase()
-        
-        // Check for Opty Kids category (kids glasses)
-        const isOptyKids = categoryName.includes('opty kids') || 
-                          categorySlug.includes('opty-kids') ||
-                          categorySlug.includes('optykids') ||
-                          categorySlug.includes('opty_kids') ||
-                          categoryName.includes('optykids')
-        
-        // Check if "glasses" appears anywhere in the name or category (includes sunglasses, optyglasses, kids glasses, etc.)
-        const hasGlassesKeyword = categoryName.includes('glasses') || 
-                                  categorySlug.includes('glasses') ||
-                                  productName.includes('glasses') ||
-                                  categoryName.includes('occhiali') || 
-                                  categorySlug.includes('occhiali') ||
-                                  productName.includes('occhiali') ||
-                                  categoryName.includes('frame') || 
-                                  categorySlug.includes('frame') ||
-                                  productName.includes('frame') ||
-                                  categoryName.includes('eyewear') || 
-                                  categorySlug.includes('eyewear') ||
-                                  productName.includes('eyewear')
-        
-        // Check for kids glasses (kids + glasses keywords)
-        const isKidsGlasses = (categoryName.includes('kids') || categorySlug.includes('kids') || productName.includes('kids')) &&
-                             (hasGlassesKeyword || categoryName.includes('occhiali') || categorySlug.includes('occhiali'))
-        
-        // Check if product has color_images (glasses typically have multiple color options)
-        const hasColorImages = Boolean(product.color_images && product.color_images.length > 0)
-        
-        // Check if image URL suggests glasses (contains "frame" or "glasses" in path)
-        const imageSuggestsGlasses = productImage.includes('frame') || 
-                                     productImage.includes('glasses') ||
-                                     productImage.includes('occhiali')
-        
-        // If product has color images, it's likely glasses (glasses have color variations)
-        // OR if it has glasses keywords in name/category
-        // OR if image URL suggests glasses
-        // OR if it's Opty Kids or kids glasses
-        return hasGlassesKeyword || 
-               isOptyKids || 
-               isKidsGlasses ||
-               (hasColorImages && imageSuggestsGlasses) || 
-               (hasColorImages && !productName.includes('contact') && !categoryName.includes('contact'))
-    }
-
+    
+    
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
         let isCancelled = false
@@ -985,11 +908,7 @@ const CategoryPage: React.FC = () => {
                                         product.category?.name?.toLowerCase().includes('eyeglasses') ||
                                         product.category?.name?.toLowerCase().includes('sunglasses') ||
                                         product.category?.slug?.toLowerCase().includes('eyeglasses') ||
-                                        product.category?.slug?.toLowerCase().includes('sunglasses') ||
-                                        (product.category?.parent_category && (
-                                            product.category.parent_category.name?.toLowerCase().includes('eyeglasses') ||
-                                            product.category.parent_category.name?.toLowerCase().includes('sunglasses')
-                                        ))
+                                        product.category?.slug?.toLowerCase().includes('sunglasses')
 
                                     return (
                                     <div
