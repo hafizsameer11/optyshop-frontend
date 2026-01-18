@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
 import { cancelOrder } from '../../services/ordersService'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 interface Order {
   id: number
@@ -131,7 +133,9 @@ const Orders: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">{t('orders.title')}</h1>
         <Link
@@ -292,6 +296,8 @@ const Orders: React.FC = () => {
           </>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

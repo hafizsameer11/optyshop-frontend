@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 interface ContactLensDetails {
   right_eye?: {
@@ -154,7 +156,9 @@ const Cart: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Shopping Cart</h1>
 
       {!cart || !cart.items || cart.items.length === 0 ? (
@@ -407,6 +411,8 @@ const Cart: React.FC = () => {
           </div>
         </div>
       )}
+      </div>
+      <Footer />
     </div>
   )
 }

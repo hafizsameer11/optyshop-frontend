@@ -3,6 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getTransactionById } from '../../services/transactionsService'
 import type { Transaction } from '../../services/transactionsService'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 const TransactionDetail: React.FC = () => {
   const { t } = useTranslation()
@@ -95,7 +97,9 @@ const TransactionDetail: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       <div className="flex items-center justify-between mb-6">
         <div>
           <button
@@ -304,6 +308,8 @@ const TransactionDetail: React.FC = () => {
           </div>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

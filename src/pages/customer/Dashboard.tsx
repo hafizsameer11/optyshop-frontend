@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
 import { useAuth } from '../../context/AuthContext'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 interface DashboardStats {
   totalOrders: number
@@ -182,7 +184,9 @@ const Dashboard: React.FC = () => {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-blue-950 to-blue-900 rounded-2xl p-6 lg:p-8 text-white">
         <div className="flex items-center justify-between">
@@ -377,6 +381,8 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

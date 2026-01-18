@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import { 
     getCategoryBySlug, 
@@ -252,6 +253,7 @@ const CategoryPage: React.FC = () => {
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
                     <p className="mt-4 text-lg text-gray-600">Loading...</p>
                 </div>
+                <Footer />
             </div>
         )
     }
@@ -263,6 +265,7 @@ const CategoryPage: React.FC = () => {
                 <div className="text-center py-12">
                     <p className="text-lg text-gray-600">Category not found</p>
                 </div>
+                <Footer />
             </div>
         )
     }
@@ -466,6 +469,7 @@ const CategoryPage: React.FC = () => {
                     )}
                 </div>
             </section>
+            <Footer />
         </div>
     )
 }

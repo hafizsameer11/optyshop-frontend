@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 const Profile: React.FC = () => {
   const { user, updateProfile, changePassword, refreshUser } = useAuth()
@@ -83,8 +85,10 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">Profile Settings</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Profile Settings</h1>
 
       {/* Tabs */}
       <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-6">
@@ -228,6 +232,8 @@ const Profile: React.FC = () => {
           )}
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

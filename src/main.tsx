@@ -10,6 +10,7 @@ import { WishlistProvider } from './context/WishlistContext'
 import './utils/testConnection'
 import './utils/formTestUtils'
 import './utils/debugProducts'
+import './utils/testCategoryData'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

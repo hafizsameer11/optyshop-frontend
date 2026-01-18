@@ -6,6 +6,8 @@ import {
   deletePrescription
 } from '../../services/prescriptionsService'
 import type { Prescription, PrescriptionData } from '../../services/prescriptionsService'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 const Prescriptions: React.FC = () => {
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([])
@@ -187,7 +189,9 @@ const Prescriptions: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Prescriptions</h1>
         <button
@@ -517,6 +521,8 @@ const Prescriptions: React.FC = () => {
           </div>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

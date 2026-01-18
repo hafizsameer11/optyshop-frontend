@@ -3,6 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getOrderById } from '../../services/ordersService'
 import type { Order } from '../../services/ordersService'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 interface ContactLensDetails {
   right_eye?: {
@@ -185,7 +187,9 @@ const OrderDetail: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       {/* Back Button */}
       <div className="mb-6">
         <button
@@ -534,6 +538,8 @@ const OrderDetail: React.FC = () => {
           )}
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }

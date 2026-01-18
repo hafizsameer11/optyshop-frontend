@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getTransactions, getTransactionById } from '../../services/transactionsService'
 import type { Transaction } from '../../services/transactionsService'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 
 const Transactions: React.FC = () => {
   const { t } = useTranslation()
@@ -85,7 +87,9 @@ const Transactions: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <div className="pt-20">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">{t('transactions.title', { defaultValue: 'Transactions' })}</h1>
       </div>
@@ -243,6 +247,8 @@ const Transactions: React.FC = () => {
           </>
         )}
       </div>
+      </div>
+      <Footer />
     </div>
   )
 }
