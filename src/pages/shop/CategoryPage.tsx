@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
@@ -9,11 +9,19 @@ import {
     getNestedSubcategoriesByParentId,
     type Category 
 } from '../../services/categoriesService'
+import { 
+    getProducts, 
+    type Product,
+    type ProductFilters
+} from '../../services/productsService'
+import { getProductImageUrl } from '../../utils/productImage'
+import { useCart } from '../../context/CartContext'
 import CategoryBanner from '../../components/home/CategoryBanner'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
+    const { addToCart } = useCart()
     const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
         categorySlug: string; 
         subcategorySlug?: string;
@@ -29,7 +37,15 @@ const CategoryPage: React.FC = () => {
         subcategory: null,
         subSubcategory: null
     })
+    const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
+    const [pagination, setPagination] = useState({
+        total: 0,
+        page: 1,
+        limit: 12,
+        pages: 0
+    })
+    const [currentPage, setCurrentPage] = useState(1)
 
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
@@ -105,6 +121,103 @@ const CategoryPage: React.FC = () => {
         }
     }, [categorySlug, subcategorySlug, subSubcategorySlug, navigate])
 
+    // Fetch products
+    useEffect(() => {
+        if (!categoryInfo.category) return
+
+        let isCancelled = false
+
+        const fetchProducts = async () => {
+            try {
+                setLoading(true)
+                const filters: ProductFilters = {
+                    page: currentPage,
+                    limit: 12,
+                }
+
+                // For contact lenses category, use the section endpoint
+                if (categoryInfo.category.slug === 'contact-lenses') {
+                    // Use contact lenses section endpoint
+                    const result = await getProducts({
+                        ...filters,
+                        category: 'contact-lenses'
+                    })
+                    
+                    if (!isCancelled && result) {
+                        setProducts(result.products || [])
+                        setPagination(result.pagination || {
+                            total: 0,
+                            page: 1,
+                            limit: 12,
+                            pages: 0
+                        })
+                    }
+                } else {
+                    // For other categories, use regular category filtering
+                    if (categoryInfo.subSubcategory) {
+                        filters.subcategory = categoryInfo.subSubcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                    } else if (categoryInfo.subcategory) {
+                        filters.subcategory = categoryInfo.subcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                    } else {
+                        filters.category = categoryInfo.category!.slug
+                    }
+                    
+                    const result = await getProducts(filters)
+                    
+                    if (!isCancelled && result) {
+                        setProducts(result.products || [])
+                        setPagination(result.pagination || {
+                            total: 0,
+                            page: 1,
+                            limit: 12,
+                            pages: 0
+                        })
+                    }
+                }
+            } catch (error) {
+                if (!isCancelled) {
+                    console.error('Error fetching products:', error)
+                    setProducts([])
+                }
+            } finally {
+                if (!isCancelled) {
+                    setLoading(false)
+                }
+            }
+        }
+
+        fetchProducts()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage])
+
+    const handleAddToCart = (product: Product) => {
+        try {
+            const salePrice = product?.sale_price ? Number(product.sale_price) : null
+            const regularPrice = product?.price ? Number(product.price) : 0
+            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
+            
+            const cartProduct = {
+                id: product?.id || 0,
+                name: product?.name || '',
+                brand: product?.brand || '',
+                category: product?.category?.slug || 'contact-lenses',
+                price: finalPrice,
+                image: getProductImageUrl(product),
+                description: product?.description || '',
+                inStock: product?.in_stock || false,
+                rating: product?.rating ? Number(product.rating) : undefined
+            }
+            addToCart(cartProduct)
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+        }
+    }
+
     if (loading) {
         return (
             <div className="bg-white min-h-screen">
@@ -162,41 +275,161 @@ const CategoryPage: React.FC = () => {
                         </div>
                     )}
                     
-                    <div className="text-center py-12">
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-                            {categoryInfo.subSubcategory 
-                                ? translateCategory(categoryInfo.subSubcategory)
-                                : categoryInfo.subcategory 
-                                ? translateCategory(categoryInfo.subcategory)
-                                : translateCategory(categoryInfo.category)}
-                        </h1>
-                        <p className="text-lg text-gray-600 mb-8">
-                            {t('shop.discoverCollection', { 
-                                name: categoryInfo.subSubcategory 
-                                    ? translateCategory(categoryInfo.subSubcategory)
-                                    : categoryInfo.subcategory 
-                                    ? translateCategory(categoryInfo.subcategory)
-                                    : translateCategory(categoryInfo.category) 
-                            })}
-                        </p>
-                        <div className="max-w-md mx-auto">
-                            <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                            </svg>
-                            <p className="text-lg text-gray-600 mb-2 font-semibold">
-                                Products coming soon
-                            </p>
-                            <p className="text-sm text-gray-500 mb-6">
-                                This category page is being updated with new products.
-                            </p>
-                            <button 
-                                onClick={() => navigate('/shop')}
-                                className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors"
-                            >
-                                Browse All Products
-                            </button>
+                    {loading ? (
+                        <div className="text-center py-12">
+                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
+                            <p className="mt-4 text-lg text-gray-600">Loading products...</p>
                         </div>
-                    </div>
+                    ) : !products || products.length === 0 ? (
+                        <div className="text-center py-12">
+                            <div className="max-w-md mx-auto">
+                                <svg className="mx-auto h-24 w-24 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p className="text-lg md:text-xl text-gray-600 mb-2 font-semibold">
+                                    {categoryInfo.subSubcategory 
+                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subSubcategory) })
+                                        : categoryInfo.subcategory 
+                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subcategory) })
+                                        : t('shop.noProducts', { category: translateCategory(categoryInfo.category) })}
+                                </p>
+                                <p className="text-sm text-gray-500 mb-6">
+                                    {categoryInfo.subSubcategory 
+                                        ? "This sub-subcategory doesn't have any products yet."
+                                        : categoryInfo.subcategory 
+                                        ? "This subcategory doesn't have any products yet."
+                                        : "This category doesn't have any products yet."}
+                                </p>
+                                {categoryInfo.subSubcategory ? (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory?.slug}`}
+                                        className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
+                                    >
+                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
+                                    </Link>
+                                ) : categoryInfo.subcategory ? (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}`}
+                                        className="inline-block px-6 py-3 bg-blue-950 text-white rounded-lg hover:bg-blue-900 transition-colors mr-3"
+                                    >
+                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.category) })}
+                                    </Link>
+                                ) : null}
+                                <Link 
+                                    to="/shop" 
+                                    className="inline-block px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    Browse All Products
+                                </Link>
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4 mb-8">
+                                {products.map((product) => (
+                                    <div
+                                        key={product.id}
+                                        className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all duration-300 flex flex-col group"
+                                    >
+                                        {/* Product Image */}
+                                        <div className="relative h-40 md:h-48 bg-white overflow-hidden">
+                                            <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
+                                                <img
+                                                    src={getProductImageUrl(product)}
+                                                    alt={product.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement
+                                                        target.src = '/assets/images/placeholder-product.jpg'
+                                                    }}
+                                                />
+                                            </Link>
+                                            
+                                            {/* Sale Badge */}
+                                            {product.sale_price && Number(product.sale_price) < Number(product.price) && (
+                                                <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold z-10">
+                                                    Sale
+                                                </div>
+                                            )}
+                                            
+                                            {/* Out of Stock Badge */}
+                                            {(!product.in_stock) && (
+                                                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-semibold z-10">
+                                                    {t('shop.outOfStock')}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Product Info */}
+                                        <div className="p-2 md:p-3 flex-1 flex flex-col">
+                                            <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1">
+                                                <h3 className="text-sm md:text-base font-semibold text-gray-900 mb-1 line-clamp-2 hover:text-blue-950 transition-colors">
+                                                    {product.name}
+                                                </h3>
+                                                <p className="text-xs text-gray-500 mb-2">{product.brand}</p>
+                                            </Link>
+                                            
+                                            {/* Price */}
+                                            <div className="mb-2">
+                                                {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg md:text-xl font-bold text-red-600">
+                                                            ${Number(product.sale_price).toFixed(2)}
+                                                        </span>
+                                                        <span className="text-sm text-gray-400 line-through">
+                                                            ${Number(product.price).toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-lg md:text-xl font-bold text-gray-900">
+                                                        ${Number(product.price).toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Add to Cart Button */}
+                                            <button
+                                                onClick={() => handleAddToCart(product)}
+                                                disabled={!product.in_stock}
+                                                className={`w-full py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+                                                    product.in_stock
+                                                        ? 'bg-blue-950 text-white hover:bg-blue-900'
+                                                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                }`}
+                                            >
+                                                {product.in_stock ? t('shop.addToCart') : t('shop.outOfStock')}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Pagination */}
+                            {pagination.pages > 1 && (
+                                <div className="flex justify-center items-center gap-2 mt-8">
+                                    <button
+                                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    >
+                                        Previous
+                                    </button>
+                                    
+                                    <span className="px-4 py-2 text-sm text-gray-600">
+                                        Page {currentPage} of {pagination.pages}
+                                    </span>
+                                    
+                                    <button
+                                        onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
+                                        disabled={currentPage === pagination.pages}
+                                        className="px-3 py-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </section>
         </div>
