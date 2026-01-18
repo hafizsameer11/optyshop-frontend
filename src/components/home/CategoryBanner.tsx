@@ -23,11 +23,11 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
             try {
                 setLoading(true)
                 
-                // Fetch banners for category position
+                // Fetch banners for category position (don't filter by position for category banners
+                // since position field contains category name rather than page position)
                 const data = await getBanners({
                     page_type: 'category',
-                    category_id: categoryId,
-                    position: position
+                    category_id: categoryId
                 })
                 
                 if (isCancelled) return
