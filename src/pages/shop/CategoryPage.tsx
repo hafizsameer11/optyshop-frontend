@@ -292,7 +292,7 @@ const CategoryPage: React.FC = () => {
             )}
 
             {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-12 md:py-16 lg:py-20 px-6 sm:px-8 lg:px-12">
+            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-16 md:py-20 lg:py-24 px-8 sm:px-12 lg:px-16">
                 <div className="w-full max-w-7xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
@@ -362,7 +362,7 @@ const CategoryPage: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6 lg:gap-8 mb-12 px-4 lg:px-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 lg:gap-12 mb-16 px-6 lg:px-8">
                                 {products.map((product) => (
                                     <div
                                         key={product.id}
@@ -398,27 +398,27 @@ const CategoryPage: React.FC = () => {
                                         </div>
 
                                         {/* Product Info */}
-                                        <div className="p-5 md:p-6 flex-1 flex flex-col space-y-4">
+                                        <div className="p-6 md:p-8 flex-1 flex flex-col space-y-6">
                                             <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 group">
-                                                <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
+                                                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
                                                     {product.name}
                                                 </h3>
-                                                <p className="text-sm text-gray-500 uppercase tracking-wide font-medium">{product.brand}</p>
+                                                <p className="text-sm text-gray-500 uppercase tracking-wide font-medium mb-2">{product.brand}</p>
                                             </Link>
                                             
                                             {/* Price */}
-                                            <div className="mb-4">
+                                            <div className="mb-6">
                                                 {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
-                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
-                                                        <span className="text-xl md:text-2xl font-bold text-red-600">
+                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
+                                                        <span className="text-2xl md:text-3xl font-bold text-red-600">
                                                             ${Number(product.sale_price).toFixed(2)}
                                                         </span>
-                                                        <span className="text-sm text-gray-400 line-through">
+                                                        <span className="text-base text-gray-400 line-through">
                                                             ${Number(product.price).toFixed(2)}
                                                         </span>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xl md:text-2xl font-bold text-gray-900">
+                                                    <span className="text-2xl md:text-3xl font-bold text-gray-900">
                                                         ${Number(product.price).toFixed(2)}
                                                     </span>
                                                 )}
@@ -428,10 +428,10 @@ const CategoryPage: React.FC = () => {
                                             <button
                                                 onClick={() => handleAddToCart(product)}
                                                 disabled={product.in_stock === false}
-                                                className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
+                                                className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-200 transform hover:scale-105 ${
                                                     product.in_stock === false
                                                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                        : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl'
+                                                        : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-xl hover:shadow-2xl'
                                                 }`}
                                             >
                                                 {product.in_stock === false ? t('shop.outOfStock') : t('shop.addToCart')}
