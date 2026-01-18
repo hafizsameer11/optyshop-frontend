@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
@@ -39,6 +39,7 @@ const ProductDetail: React.FC = () => {
     const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
+    const location = useLocation()
     const { addToCart } = useCart()
     const { isAuthenticated } = useAuth()
     const [product, setProduct] = useState<Product | null>(null)
@@ -2256,6 +2257,13 @@ const ProductDetail: React.FC = () => {
     }
 
     const handleAddToCart = () => {
+        // Enforce Login: Redirect to login if not authenticated
+        if (!isAuthenticated) {
+            const currentPath = location.pathname + location.search
+            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`)
+            return
+        }
+
         if (!product) return
 
         // Check if product has variants (new approach) - prioritize fetched variants, then check product object
@@ -2394,6 +2402,14 @@ const ProductDetail: React.FC = () => {
     }
 
     const handleContactLensAddToCart = async () => {
+        // Enforce Login: Redirect to login if not authenticated
+        if (!isAuthenticated) {
+            const currentPath = location.pathname + location.search
+            // Use encodeURIComponent to ensure the URL is safe
+            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`)
+            return
+        }
+
         if (!validateContactLensForm()) {
             return
         }
@@ -2453,13 +2469,18 @@ const ProductDetail: React.FC = () => {
                     // The API's unit_price is the price per unit/box/pack (based on product pricing)
                     // Total = unit_price * (right_qty + left_qty)
                     // This correctly accounts for the selected purchase type (unit/box/pack)
-                    // Example: If unit='box' and right_qty=1, left_qty=1, then total = box_price * 2
-                    const apiTotalPrice = apiUnitPrice * (apiItem.contact_lens_right_qty + apiItem.contact_lens_left_qty)
+                    // calculateContactLensTotal returns the price per unit/pack
+                    // We need to multiply by the total number of units (right + left)
 
                     // Use our calculated price which properly accounts for unit/box/pack selection
                     // The API might not know about the unit type, so we use our local calculation
                     // which uses getUnitPrice() to get the correct price for unit/box/pack
-                    const finalPrice = calculateContactLensTotal > 0 ? calculateContactLensTotal : apiTotalPrice
+                    // Fix: Multiply unit price by total quantity
+                    // calculateContactLensTotal returns the price *per unit/pack*
+                    // We need to multiply by the total number of units (right + left)
+                    const totalQty = contactLensFormData.right_qty + contactLensFormData.left_qty
+                    const unitPriceToUse = calculateContactLensTotal > 0 ? calculateContactLensTotal : apiUnitPrice
+                    const finalPrice = unitPriceToUse * totalQty
 
                     // Also add to local cart for UI consistency
                     const cartProduct = {
