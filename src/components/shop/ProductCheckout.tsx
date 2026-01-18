@@ -6,9 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getProductOptions, type LensType, type LensCoating, type Product } from '../../services/productsService'
 import {
   createPrescription,
-  getPrescriptions,
-  type PrescriptionData,
-  type Prescription
+  type PrescriptionData
 } from '../../services/prescriptionsService'
 import { addItemToCart, type PrescriptionData as CartPrescriptionData } from '../../services/cartService'
 import { createOrder, createGuestOrder, type Address as OrderAddress } from '../../services/ordersService'
