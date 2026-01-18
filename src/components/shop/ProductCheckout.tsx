@@ -2773,8 +2773,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                   if (!activeColor) return null
 
                   // Calculate perspective shift based on mouse position
-                  const shiftX = (mousePosition.x - 0.5) * 15
-                  const shiftY = (mousePosition.y - 0.5) * 10
+                  const shiftX = (mousePosition.x - 0.5) * 8 // Reduced shift for tighter feel
+                  const shiftY = (mousePosition.y - 0.5) * 5
                   const flareX = mousePosition.x * 100
                   const flareY = mousePosition.y * 100
 
@@ -2782,13 +2782,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                     position: 'absolute' as const,
                     pointerEvents: 'none' as const,
                     zIndex: 10,
-                    width: '24%', // Slightly wider for better "fix"
-                    height: '22%',
-                    borderRadius: '45% 45% 40% 40%', // More lens-like shape
+                    width: '17%', // Reduced size
+                    height: '14%', // Reduced size
+                    borderRadius: '35%', // More squircle/lens-like
                     mixBlendMode: 'multiply' as const,
                     filter: 'blur(1.5px)',
                     transition: 'all 0.1s ease-out',
-                    opacity: 0.75,
+                    opacity: 0.65, // Slightly more transparent
                   }
 
                   return (
@@ -2797,24 +2797,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                       <div
                         style={{
                           ...overlayStyle,
-                          left: `${22}%`,
-                          top: `${36}%`,
-                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 5}deg)`,
+                          left: `${26}%`,
+                          top: `${28}%`,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 8}deg)`,
                           background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 30%, ${activeColor.color}dd 100%)`,
                         }}
                       />
                       {/* Left Glass Shine */}
                       <div
-                        className="absolute pointer-events-none z-20 opacity-40 mix-blend-screen"
+                        className="absolute pointer-events-none z-20 opacity-30 mix-blend-screen"
                         style={{
-                          left: `${22}%`,
-                          top: `${36}%`,
-                          width: '24%',
-                          height: '22%',
-                          borderRadius: '45% 45% 40% 40%',
+                          left: `${26}%`,
+                          top: `${28}%`,
+                          width: '17%',
+                          height: '14%',
+                          borderRadius: '35%',
                           transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
                           background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 60%)`,
-                          filter: 'blur(4px)',
+                          filter: 'blur(3px)',
                         }}
                       />
 
@@ -2822,24 +2822,24 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                       <div
                         style={{
                           ...overlayStyle,
-                          right: `${22}%`,
-                          top: `${36}%`,
-                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 5}deg)`,
+                          right: `${26}%`,
+                          top: `${28}%`,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 8}deg)`,
                           background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 30%, ${activeColor.color}dd 100%)`,
                         }}
                       />
                       {/* Right Glass Shine */}
                       <div
-                        className="absolute pointer-events-none z-20 opacity-40 mix-blend-screen"
+                        className="absolute pointer-events-none z-20 opacity-30 mix-blend-screen"
                         style={{
-                          right: `${22}%`,
-                          top: `${36}%`,
-                          width: '24%',
-                          height: '22%',
-                          borderRadius: '45% 45% 40% 40%',
+                          right: `${26}%`,
+                          top: `${28}%`,
+                          width: '17%',
+                          height: '14%',
+                          borderRadius: '35%',
                           transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
                           background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 60%)`,
-                          filter: 'blur(4px)',
+                          filter: 'blur(3px)',
                         }}
                       />
                     </>
