@@ -971,16 +971,23 @@ const Products: React.FC = () => {
                                                     )}
                                                 </button>
                                                 {(() => {
-                                                    const p = product as any
-                                                    const stockStatus = p.stock_status
-                                                    const stockQty = product.stock_quantity
 
                                                     // Check if out of stock - comprehensive check
-                                                    const isOutOfStock =
-                                                        stockStatus === 'out_of_stock' ||
-                                                        (stockStatus !== 'in_stock' && stockStatus !== undefined && stockQty !== undefined && stockQty <= 0) ||
-                                                        (stockStatus === undefined && product.in_stock === false) ||
-                                                        (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
+                                                    // Contact lenses are configuration-based, not inventory-based
+                                                    const categorySlug = product.category?.slug || ''
+                                                    const categoryName = product.category?.name || ''
+                                                    const isContactLensProduct = categorySlug.toLowerCase().includes('contact') ||
+                                                        categoryName.toLowerCase().includes('contact') ||
+                                                        categorySlug.toLowerCase().includes('lens')
+
+                                                    // Contact lenses should not show out of stock based on inventory
+                                                    // They are made-to-order based on configurations
+                                                    const isOutOfStock = !isContactLensProduct && (
+                                                        (product as any).stock_status === 'out_of_stock' ||
+                                                        ((product as any).stock_status !== 'in_stock' && product.stock_quantity !== undefined && product.stock_quantity <= 0) ||
+                                                        ((product as any).stock_status === undefined && product.in_stock === false) ||
+                                                        ((product as any).stock_status === undefined && product.stock_quantity !== undefined && product.stock_quantity <= 0)
+                                                    )
 
                                                     return isOutOfStock ? (
                                                         <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">

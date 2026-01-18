@@ -1942,6 +1942,22 @@ const ProductDetail: React.FC = () => {
     // Helper function to check if product is out of stock (MUST be before conditional returns)
     const isProductOutOfStock = useMemo(() => {
         if (!product) return false
+
+        // Contact lenses are configuration-based, not inventory-based
+        // They should check if configurations are available instead of stock quantity
+        if (isContactLens) {
+            // For spherical: check if sphericalConfigs exist
+            // For astigmatism: check if astigmatismConfigs exist
+            if (contactLensFormConfig?.formType === 'spherical') {
+                return sphericalConfigs.length === 0
+            } else if (contactLensFormConfig?.formType === 'astigmatism') {
+                return astigmatismConfigs.length === 0
+            }
+            // If no form config loaded yet, don't show out of stock
+            return false
+        }
+
+        // Original logic for non-contact-lens products (glasses, eye hygiene, etc.)
         const p = product as any
         const stockStatus = p.stock_status
         const stockQty = product.stock_quantity
@@ -1950,7 +1966,7 @@ const ProductDetail: React.FC = () => {
             (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
             (stockStatus === undefined && product.in_stock === false) ||
             (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-    }, [product])
+    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs])
 
     // Helper function to get the color-specific image URL (with unit images support)
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
