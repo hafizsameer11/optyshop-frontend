@@ -535,9 +535,9 @@ const Products: React.FC = () => {
             </div>
 
             {/* Filters and Search */}
-            <section className="bg-gray-50 py-12 px-6 sm:px-8">
+            <section className="bg-gray-50 py-6 px-4 sm:px-6">
                 <div className="w-full max-w-7xl mx-auto">
-                    <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mb-12">
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 mb-4">
                         {/* New Arrivals Toggle and Sort */}
                         <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
                             <div className="flex items-center gap-6">
@@ -549,7 +549,7 @@ const Products: React.FC = () => {
                                         }
                                         setCurrentPage(1)
                                     }}
-                                    className={`px-8 py-3 rounded-xl font-bold transition-colors ${showNewArrivals
+                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${showNewArrivals
                                         ? 'bg-blue-950 text-white'
                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
@@ -567,7 +567,7 @@ const Products: React.FC = () => {
                                                     setGender(gender === g ? '' : g)
                                                     setCurrentPage(1)
                                                 }}
-                                                className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors ${gender === g
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${gender === g
                                                     ? 'bg-blue-950 text-white'
                                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                                     }`}
@@ -588,7 +588,7 @@ const Products: React.FC = () => {
                                         setSortBy(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="px-6 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                                 >
                                     <option value="newest">Newest First</option>
                                     <option value="oldest">Oldest First</option>
@@ -609,23 +609,23 @@ const Products: React.FC = () => {
                                     setSearchTerm(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-lg"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                             />
                         </div>
                     </div>
 
                     {/* Filter Options Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                         {/* Category Filter */}
                         <div className="space-y-4">
-                            <label className="block text-base font-semibold text-gray-800 mb-3">Category</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => {
                                     setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                             >
                                 <option value="all">All Categories</option>
                                 {productOptions?.categories?.map((category) => (
@@ -638,14 +638,14 @@ const Products: React.FC = () => {
 
                         {/* Frame Shape Filter */}
                         <div className="space-y-4">
-                            <label className="block text-base font-semibold text-gray-800 mb-3">Frame Shape</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Shape</label>
                             <select
                                 value={frameShape}
                                 onChange={(e) => {
                                     setFrameShape(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                             >
                                 <option value="">All Shapes</option>
                                 {productOptions?.frameShapes?.map((shape) => (
@@ -658,14 +658,14 @@ const Products: React.FC = () => {
 
                         {/* Frame Material Filter */}
                         <div className="space-y-4">
-                            <label className="block text-base font-semibold text-gray-800 mb-3">Frame Material</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Material</label>
                             <select
                                 value={frameMaterial}
                                 onChange={(e) => {
                                     setFrameMaterial(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                             >
                                 <option value="">All Materials</option>
                                 {productOptions?.frameMaterials?.map((material) => (
@@ -678,14 +678,14 @@ const Products: React.FC = () => {
 
                         {/* Gender Filter */}
                         <div className="space-y-4">
-                            <label className="block text-base font-semibold text-gray-800 mb-3">Gender</label>
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Gender</label>
                             <select
                                 value={gender}
                                 onChange={(e) => {
                                     setGender(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                             >
                                 <option value="">All</option>
                                 {productOptions?.genders?.map((g) => (
@@ -696,54 +696,59 @@ const Products: React.FC = () => {
                             </select>
                         </div>
 
-                        {/* Price Range and Color Filter */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-base font-semibold text-gray-800 mb-3">Min Price</label>
-                                <input
-                                    type="number"
-                                    placeholder="Min price"
-                                    value={minPrice || ''}
-                                    onChange={(e) => {
-                                        setMinPrice(e.target.value ? Number(e.target.value) : undefined)
-                                        setCurrentPage(1)
-                                    }}
-                                    className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-base font-semibold text-gray-800 mb-3">Colors</label>
-                                <select
-                                    value={selectedColor}
-                                    onChange={(e) => {
-                                        setSelectedColor(e.target.value)
-                                        setCurrentPage(1)
-                                    }}
-                                    className="w-full px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
-                                >
-                                    <option value="">All Colors</option>
-                                    {availableColors.map((color) => (
-                                        <option key={color} value={color}>
-                                            {color}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">Max Price</label>
-                                <input
-                                    type="number"
-                                    placeholder="Max price"
-                                    value={maxPrice || ''}
-                                    onChange={(e) => {
-                                        setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
-                                        setCurrentPage(1)
-                                    }}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                                />
+                        {/* Price Range */}
+                        <div className="space-y-4">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Min price"
+                                        value={minPrice || ''}
+                                        onChange={(e) => {
+                                            setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Max price"
+                                        value={maxPrice || ''}
+                                        onChange={(e) => {
+                                            setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    />
+                                </div>
                             </div>
                         </div>
+
+                        {/* Colors Filter */}
+                        <div className="space-y-4">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Colors</label>
+                            <select
+                                value={selectedColor}
+                                onChange={(e) => {
+                                    setSelectedColor(e.target.value)
+                                    setCurrentPage(1)
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                            >
+                                <option value="">All Colors</option>
+                                {availableColors.map((color) => (
+                                    <option key={color} value={color}>
+                                        {color}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
+                    {/* Add spacer div for visual separation */}
+                    <div className="mb-20"></div>
                 </div>
             </section>
 
@@ -785,7 +790,7 @@ const Products: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mb-8">
+                            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${currentSection === 'contact-lenses' ? 'xl:grid-cols-4' : 'xl:grid-cols-6'} gap-4 md:gap-6 mb-8`}>
                                 {products && products.length > 0 && products.map((product) => {
                                     const p = product as any
                                     // Get available colors - prefer 'colors' array, fallback to 'color_images'

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { apiClient } from '../utils/api';
 import { API_ROUTES } from '../config/apiRoutes';
 
@@ -20,8 +20,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (data: RegisterData) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; error?: any }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; message?: string; error?: any }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<{ success: boolean; message?: string }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message?: string }>;
@@ -34,6 +34,7 @@ interface RegisterData {
   first_name: string;
   last_name: string;
   phone?: string;
+  role?: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,10 +154,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         return { success: true };
       } else {
-        return { success: false, message: response.message || 'Login failed' };
+        return { 
+          success: false, 
+          message: response.message || response.error || 'Login failed',
+          error: response.error
+        };
       }
     } catch (error: any) {
-      return { success: false, message: error.message || 'Login failed' };
+      return { 
+        success: false, 
+        message: error.message || error.error || 'Login failed',
+        error: error.error || error.message
+      };
     }
   };
 

@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 const Login: React.FC = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { login, user, isLoading } = useAuth()
+    const { showSuccess, showError } = useToast()
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -83,7 +85,7 @@ const Login: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSubmitError('')
-        
+
         if (!validateForm()) {
             return
         }
@@ -92,15 +94,63 @@ const Login: React.FC = () => {
         try {
             const result = await login(formData.email, formData.password)
             if (result.success) {
+                // Show success message
+                showSuccess(t('auth.login.loginSuccessful') || 'Login successful! Redirecting to dashboard...')
                 // Set flag to redirect after user state is updated
                 setShouldRedirect(true)
                 setIsSubmitting(false)
             } else {
-                setSubmitError(result.message || t('auth.login.loginFailed'))
+                // Handle different error structures
+                let errorMessage = t('auth.login.loginFailed')
+
+                if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+                    errorMessage = result.errors.map((err: any) => err.msg).join(', ')
+                } else if (typeof result.message === 'string') {
+                    errorMessage = result.message
+                } else if (result.message && typeof result.message === 'object') {
+                    // If message is an object, try to extract meaningful info
+                    const messageObj = result.message as any
+                    if (typeof messageObj.message === 'string') {
+                        errorMessage = messageObj.message
+                    } else if (typeof messageObj.error === 'string') {
+                        errorMessage = messageObj.error
+                    } else {
+                        errorMessage = JSON.stringify(messageObj)
+                    }
+                } else if (result.error) {
+                    if (typeof result.error === 'string') {
+                        errorMessage = result.error
+                    } else if (typeof result.error === 'object') {
+                        const errorObj = result.error as any
+                        if (typeof errorObj.message === 'string') {
+                            errorMessage = errorObj.message
+                        } else if (typeof errorObj.error === 'string') {
+                            errorMessage = errorObj.error
+                        } else {
+                            errorMessage = JSON.stringify(result.error)
+                        }
+                    }
+                }
+
+                showError(errorMessage)
                 setIsSubmitting(false)
             }
         } catch (error: any) {
-            setSubmitError(error.message || t('auth.login.errorOccurred'))
+            let errorMessage = t('auth.login.errorOccurred')
+
+            if (error && typeof error === 'object') {
+                if (typeof error.message === 'string') {
+                    errorMessage = error.message
+                } else if (error.error && typeof error.error === 'string') {
+                    errorMessage = error.error
+                } else {
+                    errorMessage = JSON.stringify(error)
+                }
+            } else if (typeof error === 'string') {
+                errorMessage = error
+            }
+
+            showError(errorMessage)
             setIsSubmitting(false)
         }
     }
@@ -228,23 +278,6 @@ const Login: React.FC = () => {
                                         {t('auth.login.forgotPassword')}
                                     </Link>
                                 </div>
-
-                                {/* Submit Error */}
-                                {submitError && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm space-y-2">
-                                        <div className="font-semibold">{submitError}</div>
-                                        {submitError.includes('Unable to connect') && (
-                                            <div className="text-xs text-red-600 mt-2 space-y-1">
-                                                <p>💡 <strong>Quick Fix:</strong></p>
-                                                <ol className="list-decimal list-inside space-y-1 ml-2">
-                                                    <li>Open browser console (F12) and check for CORS errors</li>
-                                                    <li>Run <code className="bg-red-100 px-1 rounded">window.testBackend()</code> in console to test connection</li>
-                                                    <li>Ensure backend CORS allows: <code className="bg-red-100 px-1 rounded">{window.location.origin}</code></li>
-                                                </ol>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
                                 {/* Submit Button */}
                                 <button

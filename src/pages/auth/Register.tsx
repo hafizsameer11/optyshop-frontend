@@ -4,11 +4,13 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
+import { useToast } from '../../context/ToastContext'
 
 const Register: React.FC = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { register } = useAuth()
+    const { showSuccess, showError } = useToast()
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -18,6 +20,7 @@ const Register: React.FC = () => {
         phone: ''
     })
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
+    const [successMessages, setSuccessMessages] = useState<{ [key: string]: string }>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string>('')
 
@@ -27,9 +30,15 @@ const Register: React.FC = () => {
             ...prev,
             [name]: value
         }))
-        // Clear error when user starts typing
+        // Clear error and success messages when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
+                ...prev,
+                [name]: ''
+            }))
+        }
+        if (successMessages[name]) {
+            setSuccessMessages(prev => ({
                 ...prev,
                 [name]: ''
             }))
@@ -37,10 +46,33 @@ const Register: React.FC = () => {
         if (submitError) {
             setSubmitError('')
         }
+
+        // Check password match in real-time for confirm password field
+        if (name === 'password' || name === 'confirmPassword') {
+            const password = name === 'password' ? value : formData.password
+            const confirmPassword = name === 'confirmPassword' ? value : formData.confirmPassword
+
+            if (password && confirmPassword && password === confirmPassword) {
+                setSuccessMessages(prev => ({
+                    ...prev,
+                    confirmPassword: t('auth.register.passwordsMatch') || 'Passwords match!'
+                }))
+                setErrors(prev => ({
+                    ...prev,
+                    confirmPassword: ''
+                }))
+            } else if (password && confirmPassword && password !== confirmPassword) {
+                setSuccessMessages(prev => ({
+                    ...prev,
+                    confirmPassword: ''
+                }))
+            }
+        }
     }
 
     const validateForm = () => {
         const newErrors: { [key: string]: string } = {}
+        const newSuccessMessages: { [key: string]: string } = {}
 
         if (!formData.firstName.trim()) {
             newErrors.firstName = t('auth.register.firstNameRequired')
@@ -66,16 +98,19 @@ const Register: React.FC = () => {
             newErrors.confirmPassword = t('auth.register.confirmPasswordRequired')
         } else if (formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = t('auth.register.passwordsDontMatch')
+        } else if (formData.password === formData.confirmPassword && formData.password.trim()) {
+            newSuccessMessages.confirmPassword = t('auth.register.passwordsMatch') || 'Passwords match!'
         }
 
         setErrors(newErrors)
+        setSuccessMessages(newSuccessMessages)
         return Object.keys(newErrors).length === 0
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setSubmitError('')
-        
+
         if (!validateForm()) {
             return
         }
@@ -89,37 +124,89 @@ const Register: React.FC = () => {
                 first_name: formData.firstName.trim(),
                 last_name: formData.lastName.trim(),
             }
-            
+
             // Only include phone if it's not empty
             if (formData.phone && formData.phone.trim()) {
                 registerData.phone = formData.phone.trim()
             }
-            
+
             // Role defaults to 'customer' if not specified
             registerData.role = 'customer'
-            
+
             const result = await register(registerData)
             if (result.success) {
-                // Navigate to login page after successful registration
-                navigate('/login')
+                // Show success message and navigate to login page
+                showSuccess(t('auth.register.registrationSuccessful') || 'Registration successful! Please login to continue.')
+                setTimeout(() => {
+                    navigate('/login')
+                }, 1500)
             } else {
-                // Show detailed error message from backend
-                const errorMessage = result.message || t('auth.register.registrationFailed')
-                setSubmitError(errorMessage)
-                
+                // Handle different error structures
+                let errorMessage = t('auth.register.registrationFailed')
+
+                if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+                    errorMessage = result.errors.map((err: any) => err.msg).join(', ')
+                } else if (typeof result.message === 'string') {
+                    errorMessage = result.message
+                } else if (result.message && typeof result.message === 'object') {
+                    // If message is an object, try to extract meaningful info
+                    const messageObj = result.message as any
+                    if (typeof messageObj.message === 'string') {
+                        errorMessage = messageObj.message
+                    } else if (typeof messageObj.error === 'string') {
+                        errorMessage = messageObj.error
+                    } else {
+                        errorMessage = JSON.stringify(messageObj)
+                    }
+                } else if (result.error) {
+                    if (typeof result.error === 'string') {
+                        errorMessage = result.error
+                    } else if (typeof result.error === 'object') {
+                        const errorObj = result.error as any
+                        if (typeof errorObj.message === 'string') {
+                            errorMessage = errorObj.message
+                        } else if (typeof errorObj.error === 'string') {
+                            errorMessage = errorObj.error
+                        } else {
+                            errorMessage = JSON.stringify(result.error)
+                        }
+                    }
+                }
+
                 // If there are validation errors, show them
                 if (result.error && typeof result.error === 'object') {
                     const validationErrors = Object.entries(result.error)
-                        .map(([field, message]) => `${field}: ${message}`)
+                        .map(([field, message]) => {
+                            // Handle nested message objects
+                            if (typeof message === 'object') {
+                                return JSON.stringify(message)
+                            }
+                            return `${field}: ${message}`
+                        })
                         .join(', ')
                     if (validationErrors) {
-                        setSubmitError(`${errorMessage}: ${validationErrors}`)
+                        errorMessage = `${errorMessage}: ${validationErrors}`
                     }
                 }
+
+                showError(errorMessage)
             }
         } catch (error: any) {
-            const errorMessage = error.message || error.error || t('auth.register.errorOccurred')
-            setSubmitError(errorMessage)
+            let errorMessage = t('auth.register.errorOccurred')
+
+            if (error && typeof error === 'object') {
+                if (typeof error.message === 'string') {
+                    errorMessage = error.message
+                } else if (error.error && typeof error.error === 'string') {
+                    errorMessage = error.error
+                } else {
+                    errorMessage = JSON.stringify(error)
+                }
+            } else if (typeof error === 'string') {
+                errorMessage = error
+            }
+
+            showError(errorMessage)
         } finally {
             setIsSubmitting(false)
         }
@@ -321,7 +408,7 @@ const Register: React.FC = () => {
                                             name="confirmPassword"
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
-                                            className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.confirmPassword ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
+                                            className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.confirmPassword ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : successMessages.confirmPassword ? 'border-green-400 bg-green-50 focus:ring-green-500 focus:border-green-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
                                             placeholder={t('auth.register.confirmPasswordPlaceholder')}
                                         />
                                     </div>
@@ -333,24 +420,15 @@ const Register: React.FC = () => {
                                             {errors.confirmPassword}
                                         </p>
                                     )}
+                                    {successMessages.confirmPassword && (
+                                        <p className="mt-2 text-sm text-green-600 flex items-center gap-1">
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            {successMessages.confirmPassword}
+                                        </p>
+                                    )}
                                 </div>
-
-                                {/* Submit Error */}
-                                {submitError && (
-                                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm space-y-2">
-                                        <div className="font-semibold">{submitError}</div>
-                                        {submitError.includes('Unable to connect') && (
-                                            <div className="text-xs text-red-600 mt-2 space-y-1">
-                                                <p>💡 <strong>Quick Fix:</strong></p>
-                                                <ol className="list-decimal list-inside space-y-1 ml-2">
-                                                    <li>Open browser console (F12) and check for CORS errors</li>
-                                                    <li>Run <code className="bg-red-100 px-1 rounded">window.testBackend()</code> in console to test connection</li>
-                                                    <li>Ensure backend CORS allows: <code className="bg-red-100 px-1 rounded">{window.location.origin}</code></li>
-                                                </ol>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
 
                                 {/* Submit Button */}
                                 <button

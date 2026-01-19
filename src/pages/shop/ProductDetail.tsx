@@ -3294,14 +3294,14 @@ const ProductDetail: React.FC = () => {
                                                             </div>
 
                                                             {/* Inputs Row */}
-                                                            <div className="grid grid-cols-3 gap-2">
+                                                            <div className="grid grid-cols-3 gap-3">
                                                                 {/* SPH (Power) */}
                                                                 <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -3322,7 +3322,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.right_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -3343,7 +3343,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.right_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -3487,14 +3487,14 @@ const ProductDetail: React.FC = () => {
                                                             </div>
 
                                                             {/* Inputs Row */}
-                                                            <div className="grid grid-cols-3 gap-2">
+                                                            <div className="grid grid-cols-3 gap-3">
                                                                 {/* SPH (Power) */}
                                                                 <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -3515,7 +3515,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.left_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -3536,7 +3536,7 @@ const ProductDetail: React.FC = () => {
                                                                         value={contactLensFormData.left_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base min-w-[80px] ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>

@@ -12,8 +12,10 @@ import {
 } from '../../services/categoriesService'
 import { 
     getProducts, 
+    getProductOptions,
     type Product,
-    type ProductFilters
+    type ProductFilters,
+    type ProductOptions
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useCart } from '../../context/CartContext'
@@ -47,6 +49,18 @@ const CategoryPage: React.FC = () => {
         pages: 0
     })
     const [currentPage, setCurrentPage] = useState(1)
+
+    // Filter states
+    const [searchTerm, setSearchTerm] = useState('')
+    const [frameShape, setFrameShape] = useState<string>('')
+    const [frameMaterial, setFrameMaterial] = useState<string>('')
+    const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
+    const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
+    const [gender, setGender] = useState<string>('')
+    const [selectedColor, setSelectedColor] = useState<string>('')
+    const [availableColors, setAvailableColors] = useState<string[]>([])
+    const [sortBy, setSortBy] = useState<string>('newest')
+    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
 
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
@@ -136,6 +150,64 @@ const CategoryPage: React.FC = () => {
                     limit: 12,
                 }
 
+                // Apply category/subcategory filters
+                if (categoryInfo.category?.slug === 'contact-lenses') {
+                    filters.category = 'contact-lenses'
+                } else {
+                    if (categoryInfo.subSubcategory) {
+                        filters.subcategory = categoryInfo.subSubcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                    } else if (categoryInfo.subcategory) {
+                        filters.subcategory = categoryInfo.subcategory.slug
+                        filters.category = categoryInfo.category!.slug
+                    } else {
+                        filters.category = categoryInfo.category!.slug
+                    }
+                }
+
+                // Apply additional filters
+                if (searchTerm) {
+                    filters.search = searchTerm
+                }
+
+                if (frameShape) {
+                    filters.frameShape = frameShape
+                }
+
+                if (frameMaterial) {
+                    filters.frameMaterial = frameMaterial
+                }
+
+                if (minPrice !== undefined) {
+                    filters.minPrice = minPrice
+                }
+
+                if (maxPrice !== undefined) {
+                    filters.maxPrice = maxPrice
+                }
+
+                if (gender) {
+                    filters.gender = gender
+                }
+
+                // Add sorting
+                if (sortBy === 'newest') {
+                    filters.sortBy = 'created_at'
+                    filters.sortOrder = 'desc'
+                } else if (sortBy === 'oldest') {
+                    filters.sortBy = 'created_at'
+                    filters.sortOrder = 'asc'
+                } else if (sortBy === 'price_low') {
+                    filters.sortBy = 'price'
+                    filters.sortOrder = 'asc'
+                } else if (sortBy === 'price_high') {
+                    filters.sortBy = 'price'
+                    filters.sortOrder = 'desc'
+                } else if (sortBy === 'name') {
+                    filters.sortBy = 'name'
+                    filters.sortOrder = 'asc'
+                }
+
                 // For contact lenses category, use the section endpoint
                 if (categoryInfo.category?.slug === 'contact-lenses') {
                     // Use contact lenses section endpoint
@@ -168,26 +240,75 @@ const CategoryPage: React.FC = () => {
                     }
                 } else {
                     // For other categories, use regular category filtering
-                    if (categoryInfo.subSubcategory) {
-                        filters.subcategory = categoryInfo.subSubcategory.slug
-                        filters.category = categoryInfo.category!.slug
-                    } else if (categoryInfo.subcategory) {
-                        filters.subcategory = categoryInfo.subcategory.slug
-                        filters.category = categoryInfo.category!.slug
-                    } else {
-                        filters.category = categoryInfo.category!.slug
-                    }
-                    
                     const result = await getProducts(filters)
                     
                     if (!isCancelled && result) {
-                        setProducts(result.products || [])
-                        setPagination(result.pagination || {
-                            total: 0,
-                            page: 1,
-                            limit: 12,
-                            pages: 0
-                        })
+                        // Extract unique colors from all products for color filter dropdown
+                        if (result.products && result.products.length > 0) {
+                            const colorSet = new Set<string>()
+                            result.products.forEach((product: Product) => {
+                                const p = product as any
+                                // Extract colors from 'colors' array
+                                if (p.colors && Array.isArray(p.colors)) {
+                                    p.colors.forEach((c: any) => {
+                                        const colorName = c.display_name || c.name || c.value || c.color
+                                        if (colorName) {
+                                            colorSet.add(colorName)
+                                        }
+                                    })
+                                }
+                                // Extract colors from 'color_images' array
+                                if (product.color_images && Array.isArray(product.color_images)) {
+                                    product.color_images.forEach((ci: any) => {
+                                        const colorName = ci.display_name || ci.name || ci.color
+                                        if (colorName) {
+                                            colorSet.add(colorName)
+                                        }
+                                    })
+                                }
+                            })
+                            if (!isCancelled) {
+                                setAvailableColors(Array.from(colorSet).sort())
+                            }
+                        }
+
+                        // Filter products by color if color is selected (client-side filtering)
+                        let filteredProducts = result.products || []
+                        if (selectedColor && filteredProducts.length > 0) {
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                const selectedColorLower = selectedColor.toLowerCase()
+
+                                // Check in 'colors' array
+                                if (p.colors && Array.isArray(p.colors)) {
+                                    const hasColor = p.colors.some((c: any) => {
+                                        const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
+                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                    })
+                                    if (hasColor) return true
+                                }
+
+                                // Check in 'color_images' array
+                                if (product.color_images && Array.isArray(product.color_images)) {
+                                    const hasColor = product.color_images.some((ci: any) => {
+                                        const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
+                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                    })
+                                    if (hasColor) return true
+                                }
+
+                                return false
+                            })
+                        }
+
+                        setProducts(filteredProducts)
+                        // Update pagination total if we filtered client-side
+                        const updatedPagination = { ...result.pagination }
+                        if (selectedColor && filteredProducts.length !== (result.products || []).length) {
+                            updatedPagination.total = filteredProducts.length
+                            updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                        }
+                        setPagination(updatedPagination)
                         
                         // Debug: Log product data
                         if (import.meta.env.DEV && result.products && result.products.length > 0) {
@@ -220,7 +341,31 @@ const CategoryPage: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage])
+    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, sortBy])
+
+    // Fetch product options on mount
+    useEffect(() => {
+        let isCancelled = false
+
+        const fetchOptions = async () => {
+            try {
+                const options = await getProductOptions()
+                if (!isCancelled) {
+                    setProductOptions(options)
+                }
+            } catch (error) {
+                if (!isCancelled) {
+                    console.error('Error fetching product options:', error)
+                    setProductOptions(null)
+                }
+            }
+        }
+        fetchOptions()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [])
 
     const handleAddToCart = (product: Product) => {
         try {
@@ -292,7 +437,7 @@ const CategoryPage: React.FC = () => {
             )}
 
             {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-16 md:py-20 lg:py-24 px-8 sm:px-12 lg:px-16">
+            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 md:py-12 lg:py-16 px-8 sm:px-12 lg:px-16">
                 <div className="w-full max-w-7xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
@@ -311,6 +456,160 @@ const CategoryPage: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Filters and Search */}
+                    <div className="mb-2">
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-4">
+                            {/* Sort Dropdown */}
+                            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
+                                <div className="flex items-center gap-3">
+                                    <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => {
+                                            setSortBy(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="price_low">Price: Low to High</option>
+                                        <option value="price_high">Price: High to Low</option>
+                                        <option value="name">Name: A to Z</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Search */}
+                            <div className="flex-1 lg:max-w-md">
+                                <input
+                                    type="text"
+                                    placeholder="Search products..."
+                                    value={searchTerm}
+                                    onChange={(e) => {
+                                        setSearchTerm(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Filter Options Row */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-3">
+                            {/* Frame Shape Filter */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Frame Shape</label>
+                                <select
+                                    value={frameShape}
+                                    onChange={(e) => {
+                                        setFrameShape(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All Shapes</option>
+                                    {productOptions?.frameShapes?.map((shape) => (
+                                        <option key={shape} value={shape}>
+                                            {shape.charAt(0).toUpperCase() + shape.slice(1).replace('_', ' ')}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Frame Material Filter */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Frame Material</label>
+                                <select
+                                    value={frameMaterial}
+                                    onChange={(e) => {
+                                        setFrameMaterial(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All Materials</option>
+                                    {productOptions?.frameMaterials?.map((material) => (
+                                        <option key={material} value={material}>
+                                            {material.charAt(0).toUpperCase() + material.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Gender Filter */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Gender</label>
+                                <select
+                                    value={gender}
+                                    onChange={(e) => {
+                                        setGender(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All</option>
+                                    {productOptions?.genders?.map((g) => (
+                                        <option key={g} value={g}>
+                                            {g.charAt(0).toUpperCase() + g.slice(1)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Colors Filter */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Colors</label>
+                                <select
+                                    value={selectedColor}
+                                    onChange={(e) => {
+                                        setSelectedColor(e.target.value)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All Colors</option>
+                                    {availableColors.map((color) => (
+                                        <option key={color} value={color}>
+                                            {color}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Price Range */}
+                            <div className="space-y-2 lg:col-span-1">
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Price Range</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={minPrice || ''}
+                                            onChange={(e) => {
+                                                setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                setCurrentPage(1)
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={maxPrice || ''}
+                                            onChange={(e) => {
+                                                setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                setCurrentPage(1)
+                                            }}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     
                     {loading ? (
                         <div className="text-center py-16">
