@@ -144,8 +144,8 @@ const Register: React.FC = () => {
                 // Handle different error structures
                 let errorMessage = t('auth.register.registrationFailed')
 
-                if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-                    errorMessage = result.errors.map((err: any) => err.msg).join(', ')
+                if ((result as any).errors && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
+                    errorMessage = (result as any).errors.map((err: any) => err.msg).join(', ')
                 } else if (typeof result.message === 'string') {
                     errorMessage = result.message
                 } else if (result.message && typeof result.message === 'object') {
