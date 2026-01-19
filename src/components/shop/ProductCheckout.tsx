@@ -56,7 +56,6 @@ import {
   type FormType,
 } from '../../services/prescriptionFormsService'
 import AxisDiagram from './AxisDiagram'
-import { Link } from 'react-router-dom'
 
 // Import test function in dev mode
 if (import.meta.env.DEV) {
@@ -4657,18 +4656,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto pr-2">
-        {/* Customer Support Link */}
-        <div className="mb-4 flex justify-end">
-          <Link
-            to="/contact"
-            className="text-sm text-blue-600 hover:text-blue-800 underline flex items-center gap-1"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            Need help? Contact Customer Support
-          </Link>
-        </div>
 
         {/* General Error Message */}
         {errors.general && (
@@ -4754,9 +4741,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             )}
           </div>
         ) : (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <label className="text-sm font-bold text-gray-900">Pupillary Distance (PD)</label>
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <label className="text-lg font-bold text-gray-900">Pupillary Distance (PD)</label>
               <button
                 type="button"
                 className="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
@@ -4770,7 +4757,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             <select
               value={prescriptionData.pd_binocular}
               onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
-              className={`w-full px-4 py-3.5 border-2 rounded-xl bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+              className={`w-full px-6 py-5 text-lg border-2 rounded-xl bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
                 }`}
             >
               <option value="">Enter Your Pupillary Distance</option>
@@ -4845,7 +4832,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_sphere || ''}
                       onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                      className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-none text-transparent ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4855,7 +4842,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       ))}
                     </select>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-[15px] font-bold text-center ${prescriptionData.od_sphere ? 'text-purple-900' : 'text-gray-400'}`}>
+                      <span className={`text-lg font-bold text-center ${prescriptionData.od_sphere ? 'text-purple-900' : 'text-gray-400'}`}>
                         {prescriptionData.od_sphere || '--'}
                       </span>
                     </div>
@@ -4877,7 +4864,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                      className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-none text-transparent ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4887,7 +4874,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       ))}
                     </select>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-[15px] font-bold text-center ${prescriptionData.od_cylinder ? 'text-purple-900' : 'text-gray-400'}`}>
+                      <span className={`text-lg font-bold text-center ${prescriptionData.od_cylinder ? 'text-purple-900' : 'text-gray-400'}`}>
                         {prescriptionData.od_cylinder || '--'}
                       </span>
                     </div>
@@ -4910,7 +4897,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.od_axis || ''}
                         onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                        className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 text-sm appearance-none bg-none text-transparent ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -4920,7 +4907,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         ))}
                       </select>
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className={`text-[15px] font-bold text-center ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
+                        <span className={`text-lg font-bold text-center ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
                           {prescriptionData.od_axis || '--'}
                         </span>
                       </div>
@@ -4974,7 +4961,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_sphere || ''}
                       onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                      className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-none text-transparent ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4984,7 +4971,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       ))}
                     </select>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-[15px] font-bold text-center ${prescriptionData.os_sphere ? 'text-blue-900' : 'text-gray-400'}`}>
+                      <span className={`text-lg font-bold text-center ${prescriptionData.os_sphere ? 'text-blue-900' : 'text-gray-400'}`}>
                         {prescriptionData.os_sphere || '--'}
                       </span>
                     </div>
@@ -5006,7 +4993,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                      className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-none text-transparent ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -5016,7 +5003,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       ))}
                     </select>
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-[15px] font-bold text-center ${prescriptionData.os_cylinder ? 'text-blue-900' : 'text-gray-400'}`}>
+                      <span className={`text-lg font-bold text-center ${prescriptionData.os_cylinder ? 'text-blue-900' : 'text-gray-400'}`}>
                         {prescriptionData.os_cylinder || '--'}
                       </span>
                     </div>
@@ -5039,7 +5026,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.os_axis || ''}
                         onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                        className={`w-full px-2 py-3 border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 text-sm appearance-none bg-none text-transparent ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-4 py-5 text-lg border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -5049,7 +5036,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         ))}
                       </select>
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className={`text-[15px] font-bold text-center ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
+                        <span className={`text-lg font-bold text-center ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
                           {prescriptionData.os_axis || '--'}
                         </span>
                       </div>
