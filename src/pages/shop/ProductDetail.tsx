@@ -3285,95 +3285,91 @@ const ProductDetail: React.FC = () => {
                                                     )
                                                 } else if (formType === 'astigmatism') {
                                                     return (
-                                                        <div className={`mt-4 space-y-4 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                            <div className="pt-3 border-t border-blue-200">
-                                                                <label className="block text-xs text-gray-500 mb-3">
-                                                                    Power Setting
-                                                                </label>
+                                                        <div className={`mt-4 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            {/* Labels Row */}
+                                                            <div className="grid grid-cols-3 gap-2 mb-1 text-center">
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">SPH</label>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">CYL</label>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">AXIS</label>
+                                                            </div>
+
+                                                            {/* Inputs Row */}
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                {/* SPH (Power) */}
                                                                 <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">00.00 (Power)</option>
+                                                                        <option value="00.00">--</option>
                                                                         {powerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
                                                                     </select>
-                                                                    <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
                                                                         <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                         </svg>
                                                                     </div>
                                                                 </div>
-                                                                {contactLensErrors.right_power && (
-                                                                    <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_power}</p>
-                                                                )}
-                                                            </div>
 
-                                                            <div className="pt-4 border-t border-blue-200">
-                                                                <label className="block text-xs text-gray-500 mb-3">
-                                                                    Cylinder & Axis
-                                                                </label>
-                                                                <div className="space-y-4">
-                                                                    <div>
-                                                                        <label className="block text-xs text-gray-500 mb-2">Cylinder (CYL)</label>
-                                                                        <div className="relative">
-                                                                            <select
-                                                                                value={contactLensFormData.right_cylinder || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
-                                                                                disabled={!rightEyeEnabled}
-                                                                                className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
-                                                                                    } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00 (Cylinder)</option>
-                                                                                {cylinderOptions.map((v) => (
-                                                                                    <option key={v} value={v.toString()}>{v}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
-                                                                                <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                                                                </svg>
-                                                                            </div>
-                                                                        </div>
-                                                                        {contactLensErrors.right_cylinder && (
-                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_cylinder}</p>
-                                                                        )}
+                                                                {/* CYL (Cylinder) */}
+                                                                <div className="relative">
+                                                                    <select
+                                                                        value={contactLensFormData.right_cylinder || '00.00'}
+                                                                        onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
+                                                                        disabled={!rightEyeEnabled}
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <option value="00.00">--</option>
+                                                                        {cylinderOptions.map((v) => (
+                                                                            <option key={v} value={v.toString()}>{v}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                        <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                        </svg>
                                                                     </div>
-                                                                    <div>
-                                                                        <label className="block text-xs text-gray-500 mb-2">Axis (AX)</label>
-                                                                        <div className="relative">
-                                                                            <select
-                                                                                value={contactLensFormData.right_axis || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
-                                                                                disabled={!rightEyeEnabled}
-                                                                                className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
-                                                                                    } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00 (Axis)</option>
-                                                                                {axisOptions.map((v) => (
-                                                                                    <option key={v} value={v.toString()}>{v}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
-                                                                                <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                                                                </svg>
-                                                                            </div>
-                                                                        </div>
-                                                                        {contactLensErrors.right_axis && (
-                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.right_axis}</p>
-                                                                        )}
+                                                                </div>
+
+                                                                {/* AXIS */}
+                                                                <div className="relative">
+                                                                    <select
+                                                                        value={contactLensFormData.right_axis || '00.00'}
+                                                                        onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
+                                                                        disabled={!rightEyeEnabled}
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
+                                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <option value="00.00">--</option>
+                                                                        {axisOptions.map((v) => (
+                                                                            <option key={v} value={v.toString()}>{v}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                        <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                        </svg>
                                                                     </div>
                                                                 </div>
                                                             </div>
+
+                                                            {/* Error Messages */}
+                                                            {(contactLensErrors.right_power || contactLensErrors.right_cylinder || contactLensErrors.right_axis) && (
+                                                                <div className="mt-2 text-center text-xs text-red-600 font-medium">
+                                                                    {contactLensErrors.right_power && <p>{contactLensErrors.right_power}</p>}
+                                                                    {(contactLensErrors.right_cylinder || contactLensErrors.right_axis) && <p>Please select CYL and AXIS</p>}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )
                                                 }
+
                                                 return null
                                             })()}
                                         </div>
@@ -3482,98 +3478,91 @@ const ProductDetail: React.FC = () => {
                                                     )
                                                 } else if (formType === 'astigmatism') {
                                                     return (
-                                                        <div className={`mt-4 space-y-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                            <div className="pt-3 border-t border-purple-200">
-                                                                <label className="block text-xs text-gray-500 mb-3">
-                                                                    Power Setting
-                                                                </label>
+                                                        <div className={`mt-4 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
+                                                            {/* Labels Row */}
+                                                            <div className="grid grid-cols-3 gap-2 mb-1 text-center">
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">SPH</label>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">CYL</label>
+                                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">AXIS</label>
+                                                            </div>
+
+                                                            {/* Inputs Row */}
+                                                            <div className="grid grid-cols-3 gap-2">
+                                                                {/* SPH (Power) */}
                                                                 <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">00.00 (Power)</option>
+                                                                        <option value="00.00">--</option>
                                                                         {powerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
                                                                     </select>
-                                                                    <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
                                                                         <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                         </svg>
                                                                     </div>
                                                                 </div>
-                                                                {contactLensErrors.left_power && (
-                                                                    <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_power}</p>
-                                                                )}
-                                                            </div>
 
-                                                            <div className="pt-4 border-t border-purple-200">
-                                                                <label className="block text-xs text-gray-500 mb-3">
-                                                                    Cylinder & Axis
-                                                                </label>
-                                                                <div className="space-y-4">
-                                                                    <div>
-                                                                        <label className="block text-xs text-gray-500 mb-2">Cylinder (CYL)</label>
-                                                                        <div className="relative">
-                                                                            <select
-                                                                                value={contactLensFormData.left_cylinder || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
-                                                                                    } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00 (Cylinder)</option>
-                                                                                {cylinderOptions.map((v) => (
-                                                                                    <option key={v} value={v.toString()}>{v}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
-                                                                                <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                                                                </svg>
-                                                                            </div>
-                                                                        </div>
-                                                                        {contactLensErrors.left_cylinder && (
-                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_cylinder}</p>
-                                                                        )}
-                                                                    </div>
-                                                                    <div>
-                                                                        <label className="block text-xs text-gray-500 mb-2">Axis (AX)</label>
-                                                                        <div className="relative">
-                                                                            <select
-                                                                                value={contactLensFormData.left_axis || '00.00'}
-                                                                                onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
-                                                                                disabled={!leftEyeEnabled}
-                                                                                className={`w-full px-3 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
-                                                                                    } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                                            >
-                                                                                <option value="00.00">00.00 (Axis)</option>
-                                                                                {axisOptions.map((v) => (
-                                                                                    <option key={v} value={v.toString()}>{v}</option>
-                                                                                ))}
-                                                                            </select>
-                                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
-                                                                                <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                                                                                </svg>
-                                                                            </div>
-                                                                        </div>
-                                                                        {contactLensErrors.left_axis && (
-                                                                            <p className="mt-2 text-xs text-red-600 font-medium">{contactLensErrors.left_axis}</p>
-                                                                        )}
+                                                                {/* CYL (Cylinder) */}
+                                                                <div className="relative">
+                                                                    <select
+                                                                        value={contactLensFormData.left_cylinder || '00.00'}
+                                                                        onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
+                                                                        disabled={!leftEyeEnabled}
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <option value="00.00">--</option>
+                                                                        {cylinderOptions.map((v) => (
+                                                                            <option key={v} value={v.toString()}>{v}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                        <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                        </svg>
                                                                     </div>
                                                                 </div>
-                                                                {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
-                                                                    <p className="mt-2 text-xs text-red-600 font-medium">Please select CYL and AXIS</p>
-                                                                )}
+
+                                                                {/* AXIS */}
+                                                                <div className="relative">
+                                                                    <select
+                                                                        value={contactLensFormData.left_axis || '00.00'}
+                                                                        onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
+                                                                        disabled={!leftEyeEnabled}
+                                                                        className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
+                                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                                    >
+                                                                        <option value="00.00">--</option>
+                                                                        {axisOptions.map((v) => (
+                                                                            <option key={v} value={v.toString()}>{v}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                    <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                        <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                        </svg>
+                                                                    </div>
+                                                                </div>
                                                             </div>
+
+                                                            {/* Error Messages */}
+                                                            {(contactLensErrors.left_power || contactLensErrors.left_cylinder || contactLensErrors.left_axis) && (
+                                                                <div className="mt-2 text-center text-xs text-red-600 font-medium">
+                                                                    {contactLensErrors.left_power && <p>{contactLensErrors.left_power}</p>}
+                                                                    {(contactLensErrors.left_cylinder || contactLensErrors.left_axis) && <p>Please select CYL and AXIS</p>}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )
                                                 }
+
                                                 return null
                                             })()}
                                         </div>

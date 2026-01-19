@@ -32,20 +32,21 @@ const Payment: React.FC = () => {
 
   useEffect(() => {
     const initializePayment = async () => {
-      try {
-        // Validate order ID
-        if (!orderIdParam) {
-          setError('Order ID is required. Please return to checkout.')
-          setLoading(false)
-          return
-        }
+      // Validate order ID
+      if (!orderIdParam) {
+        setError('Order ID is required. Please return to checkout.')
+        setLoading(false)
+        return
+      }
 
-        const parsedOrderId = parseInt(orderIdParam, 10)
-        if (isNaN(parsedOrderId)) {
-          setError('Invalid order ID. Please return to checkout.')
-          setLoading(false)
-          return
-        }
+      const parsedOrderId = parseInt(orderIdParam, 10)
+      if (isNaN(parsedOrderId)) {
+        setError('Invalid order ID. Please return to checkout.')
+        setLoading(false)
+        return
+      }
+
+      try {
 
         setOrderId(parsedOrderId)
 
@@ -71,7 +72,7 @@ const Payment: React.FC = () => {
         }
       } catch (err: any) {
         console.error('Error initializing payment:', err)
-        
+
         // Enhanced error handling as per documentation
         if (err.response?.status === 404) {
           // Order not found
@@ -206,7 +207,7 @@ const Payment: React.FC = () => {
                 <p className="text-gray-600">Loading payment form...</p>
               </div>
             }>
-              <StripeElementsWrapper 
+              <StripeElementsWrapper
                 stripe={stripePromise}
                 options={{
                   clientSecret,
