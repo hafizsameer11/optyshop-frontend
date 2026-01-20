@@ -2796,7 +2796,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                   }}
                 />
 
-                {/* Interactive Lens Overlays */}
+                {/* Enhanced Interactive Lens Overlays */}
                 {(() => {
                   const activeColor = lensSelection.prescriptionSunColor ||
                     lensSelection.photochromicColor ||
@@ -2805,22 +2805,131 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                   if (!activeColor) return null
 
                   // Calculate perspective shift based on mouse position
-                  const shiftX = (mousePosition.x - 0.5) * 8 // Reduced shift for tighter feel
+                  const shiftX = (mousePosition.x - 0.5) * 8
                   const shiftY = (mousePosition.y - 0.5) * 5
                   const flareX = mousePosition.x * 100
                   const flareY = mousePosition.y * 100
 
-                  const overlayStyle = {
+                  // Enhanced overlay styles for better lens fitting
+                  // Dynamic positioning based on frame type
+                  const getFrameSpecificSettings = () => {
+                    // Detect frame type from product name or category
+                    const productName = product.name.toLowerCase()
+                    const isSquare = productName.includes('square') || productName.includes('rectangle')
+                    const isRound = productName.includes('round') || productName.includes('circle')
+                    const isAviator = productName.includes('aviator') || productName.includes('pilot')
+                    const isCatEye = productName.includes('cat') || productName.includes('butterfly')
+                    
+                    if (isSquare) {
+                      return {
+                        width: '28%',
+                        height: '24%',
+                        borderRadius: '15%',
+                        left: '21%',
+                        right: '21%',
+                        top: '23%'
+                      }
+                    } else if (isRound) {
+                      return {
+                        width: '26%',
+                        height: '26%',
+                        borderRadius: '50%',
+                        left: '22%',
+                        right: '22%',
+                        top: '22%'
+                      }
+                    } else if (isAviator) {
+                      return {
+                        width: '24%',
+                        height: '28%',
+                        borderRadius: '40% 60% 60% 40% / 60% 40% 60% 40%',
+                        left: '23%',
+                        right: '23%',
+                        top: '20%'
+                      }
+                    } else if (isCatEye) {
+                      return {
+                        width: '25%',
+                        height: '23%',
+                        borderRadius: '60% 40% 50% 50% / 60% 50% 50% 40%',
+                        left: '22.5%',
+                        right: '22.5%',
+                        top: '24%'
+                      }
+                    } else {
+                      // Default for standard frames
+                      return {
+                        width: '26%',
+                        height: '22%',
+                        borderRadius: '50%',
+                        left: '22.5%',
+                        right: '22.5%',
+                        top: '24%'
+                      }
+                    }
+                  }
+
+                  const frameSettings = getFrameSpecificSettings()
+                  
+                  const baseOverlayStyle = {
                     position: 'absolute' as const,
                     pointerEvents: 'none' as const,
                     zIndex: 10,
-                    width: '24%', // Increased size to cover more lens area
-                    height: '20%', // Increased size
-                    borderRadius: '45%', // Smoother shape
-                    mixBlendMode: 'multiply' as const,
-                    filter: 'blur(5px)', // Increased blur for "paint-like" blending
-                    transition: 'all 0.1s ease-out',
-                    opacity: 0.75, // Slightly more visible color
+                    width: frameSettings.width,
+                    height: frameSettings.height,
+                    borderRadius: frameSettings.borderRadius,
+                    transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+                    opacity: 0.85,
+                  }
+
+                  // Determine lens type and apply appropriate effects
+                  const isMirror = activeColor.name?.toLowerCase().includes('mirror')
+                  const isGradient = activeColor.gradient || activeColor.name?.toLowerCase().includes('gradient')
+                  const isPhotochromic = lensSelection.photochromicColor
+
+                  // Generate lens background based on type
+                  const getLensBackground = (color: string, isGradientType: boolean, isMirrorType: boolean) => {
+                    if (isMirrorType) {
+                      // Mirror lens effect with metallic reflection
+                      return `radial-gradient(ellipse at ${flareX}% ${flareY}%, 
+                        ${color}ee 0%, 
+                        ${color}cc 30%, 
+                        ${color}99 60%, 
+                        ${color}66 100%)`
+                    } else if (isGradientType) {
+                      // Gradient lens effect
+                      return `linear-gradient(135deg, 
+                        ${color}dd 0%, 
+                        ${color}99 50%, 
+                        ${color}66 100%)`
+                    } else {
+                      // Solid color lens with subtle vignette
+                      return `radial-gradient(ellipse at ${flareX}% ${flareY}%, 
+                        ${color}cc 0%, 
+                        ${color}aa 40%, 
+                        ${color}88 70%, 
+                        ${color}66 100%)`
+                    }
+                  }
+
+                  const lensBackground = getLensBackground(activeColor.color, isGradient, isMirror)
+
+                  // Enhanced blend modes for different lens types
+                  const getBlendMode = () => {
+                    if (isMirror) return 'screen'
+                    if (isPhotochromic) return 'multiply'
+                    return 'multiply'
+                  }
+
+                  const getFilter = () => {
+                    const baseFilter = 'blur(2px)'
+                    if (isMirror) {
+                      return `${baseFilter} brightness(1.1) contrast(1.05)`
+                    }
+                    if (isPhotochromic) {
+                      return `${baseFilter} saturate(0.9)`
+                    }
+                    return baseFilter
                   }
 
                   return (
@@ -2828,52 +2937,108 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                       {/* Left lens overlay */}
                       <div
                         style={{
-                          ...overlayStyle,
-                          left: `${23}%`, // Adjusted for larger size
-                          top: `${25}%`, // Adjusted for larger size
-                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 8}deg)`,
-                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 40%, ${activeColor.color}dd 100%)`, // Softer gradient
+                          ...baseOverlayStyle,
+                          left: frameSettings.left,
+                          top: frameSettings.top,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 10}deg) scale(${1 + Math.abs(shiftY) * 0.02})`,
+                          background: lensBackground,
+                          mixBlendMode: getBlendMode(),
+                          filter: getFilter(),
                         }}
                       />
-                      {/* Left Glass Shine */}
+                      {/* Enhanced Left Glass Shine */}
                       <div
-                        className="absolute pointer-events-none z-20 opacity-20 mix-blend-screen"
+                        className="absolute pointer-events-none z-20"
                         style={{
-                          left: `${23}%`,
-                          top: `${25}%`,
-                          width: '24%',
-                          height: '20%',
-                          borderRadius: '45%',
-                          transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
-                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 70%)`,
-                          filter: 'blur(8px)', // Softer shine
+                          left: frameSettings.left,
+                          top: frameSettings.top,
+                          width: frameSettings.width,
+                          height: frameSettings.height,
+                          borderRadius: frameSettings.borderRadius,
+                          transform: `translate(${shiftX * 1.2}px, ${shiftY * 1.2}px)`,
+                          background: `radial-gradient(ellipse at ${30 + flareX * 0.3}% ${20 + flareY * 0.3}%, 
+                            rgba(255, 255, 255, 0.4) 0%, 
+                            rgba(255, 255, 255, 0.2) 30%, 
+                            rgba(255, 255, 255, 0.1) 60%, 
+                            transparent 100%)`,
+                          filter: 'blur(3px)',
+                          opacity: isMirror ? 0.6 : 0.3,
+                          mixBlendMode: 'screen',
                         }}
                       />
+                      {/* Additional reflection layer for mirror lenses */}
+                      {isMirror && (
+                        <div
+                          className="absolute pointer-events-none z-25"
+                          style={{
+                            left: frameSettings.left,
+                            top: frameSettings.top,
+                            width: frameSettings.width,
+                            height: frameSettings.height,
+                            borderRadius: frameSettings.borderRadius,
+                            transform: `translate(${shiftX * 0.8}px, ${shiftY * 0.8}px)`,
+                            background: `linear-gradient(135deg, 
+                              rgba(255, 255, 255, 0.3) 0%, 
+                              transparent 40%, 
+                              rgba(255, 255, 255, 0.1) 100%)`,
+                            filter: 'blur(1px)',
+                            mixBlendMode: 'screen',
+                          }}
+                        />
+                      )}
 
                       {/* Right lens overlay */}
                       <div
                         style={{
-                          ...overlayStyle,
-                          right: `${23}%`, // Adjusted for larger size
-                          top: `${25}%`, // Adjusted for larger size
-                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 8}deg)`,
-                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, ${activeColor.color} 40%, ${activeColor.color}dd 100%)`,
+                          ...baseOverlayStyle,
+                          right: frameSettings.right,
+                          top: frameSettings.top,
+                          transform: `translate(${shiftX}px, ${shiftY}px) rotate(${-shiftX / 10}deg) scale(${1 + Math.abs(shiftY) * 0.02})`,
+                          background: lensBackground,
+                          mixBlendMode: getBlendMode(),
+                          filter: getFilter(),
                         }}
                       />
-                      {/* Right Glass Shine */}
+                      {/* Enhanced Right Glass Shine */}
                       <div
-                        className="absolute pointer-events-none z-20 opacity-20 mix-blend-screen"
+                        className="absolute pointer-events-none z-20"
                         style={{
-                          right: `${23}%`,
-                          top: `${25}%`,
-                          width: '24%',
-                          height: '20%',
-                          borderRadius: '45%',
-                          transform: `translate(${shiftX * 1.5}px, ${shiftY * 1.5}px)`,
-                          background: `radial-gradient(circle at ${flareX}% ${flareY}%, white 0%, transparent 70%)`,
-                          filter: 'blur(8px)',
+                          right: frameSettings.right,
+                          top: frameSettings.top,
+                          width: frameSettings.width,
+                          height: frameSettings.height,
+                          borderRadius: frameSettings.borderRadius,
+                          transform: `translate(${shiftX * 1.2}px, ${shiftY * 1.2}px)`,
+                          background: `radial-gradient(ellipse at ${70 - flareX * 0.3}% ${20 + flareY * 0.3}%, 
+                            rgba(255, 255, 255, 0.4) 0%, 
+                            rgba(255, 255, 255, 0.2) 30%, 
+                            rgba(255, 255, 255, 0.1) 60%, 
+                            transparent 100%)`,
+                          filter: 'blur(3px)',
+                          opacity: isMirror ? 0.6 : 0.3,
+                          mixBlendMode: 'screen',
                         }}
                       />
+                      {/* Additional reflection layer for mirror lenses */}
+                      {isMirror && (
+                        <div
+                          className="absolute pointer-events-none z-25"
+                          style={{
+                            right: frameSettings.right,
+                            top: frameSettings.top,
+                            width: frameSettings.width,
+                            height: frameSettings.height,
+                            borderRadius: frameSettings.borderRadius,
+                            transform: `translate(${shiftX * 0.8}px, ${shiftY * 0.8}px)`,
+                            background: `linear-gradient(45deg, 
+                              rgba(255, 255, 255, 0.3) 0%, 
+                              transparent 40%, 
+                              rgba(255, 255, 255, 0.1) 100%)`,
+                            filter: 'blur(1px)',
+                            mixBlendMode: 'screen',
+                          }}
+                        />
+                      )}
                     </>
                   )
                 })()}
@@ -4304,7 +4469,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                     style={{
                                       background: color.gradient
                                         ? `linear-gradient(135deg, ${color.hexCode || color.hex_code || color.color || '#000000'} 0%, ${color.hexCode2 || color.hex_code2 || color.color || '#000000'} 100%)`
-                                        : color.hexCode || color.hex_code || color.color || '#000000'
+                                        : `radial-gradient(circle at 30% 30%, ${color.hexCode || color.hex_code || color.color || '#000000'}dd 0%, ${color.hexCode || color.hex_code || color.color || '#000000'} 100%)`,
+                                      boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'inset 0 1px 2px rgba(0,0,0,0.1)',
                                     }}
                                   />
                                   {isSelected && (
@@ -4420,7 +4586,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                             style={{
                                               background: color.gradient
                                                 ? `linear-gradient(to bottom, ${color.color || '#000000'} 0%, ${color.color2 || color.color || '#000000'} 100%)`
-                                                : color.color || '#000000'
+                                                : `radial-gradient(circle at 30% 30%, ${color.color || '#000000'}dd 0%, ${color.color || '#000000'} 100%)`,
+                                              boxShadow: isSelected ? '0 0 0 2px rgba(59, 130, 246, 0.2)' : 'inset 0 1px 2px rgba(0,0,0,0.1)',
                                             }}
                                           />
                                           {isSelected && (
