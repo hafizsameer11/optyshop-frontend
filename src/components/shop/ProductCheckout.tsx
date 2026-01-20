@@ -4917,7 +4917,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_sphere || ''}
                       onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none text-transparent pr-8 ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4926,12 +4926,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-sm font-bold text-center ${prescriptionData.od_sphere ? 'text-purple-900' : 'text-gray-400'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                      <span className={`text-xs font-bold text-center w-full ${prescriptionData.od_sphere ? 'text-purple-900' : 'text-gray-400'}`}>
                         {prescriptionData.od_sphere || '--'}
                       </span>
                     </div>
-                    <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                    <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.od_sphere ? 'opacity-0' : 'opacity-40'}`}>
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -4949,7 +4949,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none text-transparent pr-8 ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4958,12 +4958,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-sm font-bold text-center ${prescriptionData.od_cylinder ? 'text-purple-900' : 'text-gray-400'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                      <span className={`text-xs font-bold text-center w-full ${prescriptionData.od_cylinder ? 'text-purple-900' : 'text-gray-400'}`}>
                         {prescriptionData.od_cylinder || '--'}
                       </span>
                     </div>
-                    <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                    <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.od_cylinder ? 'opacity-0' : 'opacity-40'}`}>
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -4982,7 +4982,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.od_axis || ''}
                         onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                        className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none text-transparent pr-8 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -4991,12 +4991,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                           <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                         ))}
                       </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className={`text-sm font-bold text-center ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
                           {prescriptionData.od_axis || '--'}
                         </span>
                       </div>
-                      <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.od_axis ? 'opacity-0' : 'opacity-40'}`}>
                         <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                         </svg>
@@ -5046,7 +5046,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_sphere || ''}
                       onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none text-transparent pr-8 ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -5055,12 +5055,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-sm font-bold text-center ${prescriptionData.os_sphere ? 'text-blue-900' : 'text-gray-400'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                      <span className={`text-xs font-bold text-center w-full ${prescriptionData.os_sphere ? 'text-blue-900' : 'text-gray-400'}`}>
                         {prescriptionData.os_sphere || '--'}
                       </span>
                     </div>
-                    <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                    <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.os_sphere ? 'opacity-0' : 'opacity-40'}`}>
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -5078,7 +5078,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none text-transparent pr-8 ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -5087,12 +5087,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <span className={`text-sm font-bold text-center ${prescriptionData.os_cylinder ? 'text-blue-900' : 'text-gray-400'}`}>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                      <span className={`text-xs font-bold text-center w-full ${prescriptionData.os_cylinder ? 'text-blue-900' : 'text-gray-400'}`}>
                         {prescriptionData.os_cylinder || '--'}
                       </span>
                     </div>
-                    <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                    <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.os_cylinder ? 'opacity-0' : 'opacity-40'}`}>
                       <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                       </svg>
@@ -5111,7 +5111,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.os_axis || ''}
                         onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                        className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none text-transparent pr-8 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -5120,12 +5120,12 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                           <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                         ))}
                       </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <span className={`text-sm font-bold text-center ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
                           {prescriptionData.os_axis || '--'}
                         </span>
                       </div>
-                      <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
+                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.os_axis ? 'opacity-0' : 'opacity-40'}`}>
                         <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                         </svg>
