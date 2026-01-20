@@ -3233,20 +3233,15 @@ const ProductDetail: React.FC = () => {
                                                                 value={contactLensFormData.right_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
                                                                 disabled={!rightEyeEnabled}
-                                                                className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 bg-white font-medium'}`}
+                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v) => (
+                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v: number) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
-                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                <span className={`text-sm font-bold text-center ${contactLensFormData.right_base_curve && contactLensFormData.right_base_curve !== '00.00' ? 'text-blue-900' : 'text-gray-400'}`}>
-                                                                    {contactLensFormData.right_base_curve && contactLensFormData.right_base_curve !== '00.00' ? contactLensFormData.right_base_curve : '--'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
-                                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                 </svg>
                                                             </div>
@@ -3262,20 +3257,15 @@ const ProductDetail: React.FC = () => {
                                                                 value={contactLensFormData.right_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
                                                                 disabled={!rightEyeEnabled}
-                                                                className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 bg-white font-medium'}`}
+                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.diameterOptions?.map((v) => (
+                                                                {subSubcategoryOptions?.diameterOptions?.map((v: number) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
-                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                <span className={`text-sm font-bold text-center ${contactLensFormData.right_diameter && contactLensFormData.right_diameter !== '00.00' ? 'text-blue-900' : 'text-gray-400'}`}>
-                                                                    {contactLensFormData.right_diameter && contactLensFormData.right_diameter !== '00.00' ? contactLensFormData.right_diameter : '--'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
-                                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                 </svg>
                                                             </div>
@@ -3330,9 +3320,9 @@ const ProductDetail: React.FC = () => {
                                                             </div>
 
                                                             {/* Inputs Row */}
-                                                            <div className="grid grid-cols-3 gap-4">
+                                                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
                                                                 {/* SPH (Power) */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
@@ -3353,7 +3343,7 @@ const ProductDetail: React.FC = () => {
                                                                 </div>
 
                                                                 {/* CYL (Cylinder) */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.right_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
@@ -3374,7 +3364,7 @@ const ProductDetail: React.FC = () => {
                                                                 </div>
 
                                                                 {/* AXIS */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.right_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
@@ -3462,20 +3452,15 @@ const ProductDetail: React.FC = () => {
                                                                 value={contactLensFormData.left_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
                                                                 disabled={!leftEyeEnabled}
-                                                                className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 bg-white font-medium'}`}
+                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v) => (
+                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v: number) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
-                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                <span className={`text-sm font-bold text-center ${contactLensFormData.left_base_curve && contactLensFormData.left_base_curve !== '00.00' ? 'text-blue-900' : 'text-gray-400'}`}>
-                                                                    {contactLensFormData.left_base_curve && contactLensFormData.left_base_curve !== '00.00' ? contactLensFormData.left_base_curve : '--'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
-                                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                 </svg>
                                                             </div>
@@ -3491,20 +3476,15 @@ const ProductDetail: React.FC = () => {
                                                                 value={contactLensFormData.left_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
                                                                 disabled={!leftEyeEnabled}
-                                                                className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-300 bg-white font-medium'}`}
+                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.diameterOptions?.map((v) => (
+                                                                {subSubcategoryOptions?.diameterOptions?.map((v: number) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
-                                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                                <span className={`text-sm font-bold text-center ${contactLensFormData.left_diameter && contactLensFormData.left_diameter !== '00.00' ? 'text-blue-900' : 'text-gray-400'}`}>
-                                                                    {contactLensFormData.left_diameter && contactLensFormData.left_diameter !== '00.00' ? contactLensFormData.left_diameter : '--'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="absolute right-1.5 bottom-1.5 pointer-events-none opacity-40">
-                                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <div className="absolute right-1 bottom-1 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
                                                                 </svg>
                                                             </div>
@@ -3559,9 +3539,9 @@ const ProductDetail: React.FC = () => {
                                                             </div>
 
                                                             {/* Inputs Row */}
-                                                            <div className="grid grid-cols-3 gap-4">
+                                                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
                                                                 {/* SPH (Power) */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
@@ -3582,7 +3562,7 @@ const ProductDetail: React.FC = () => {
                                                                 </div>
 
                                                                 {/* CYL (Cylinder) */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.left_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
@@ -3603,7 +3583,7 @@ const ProductDetail: React.FC = () => {
                                                                 </div>
 
                                                                 {/* AXIS */}
-                                                                <div className="relative min-w-[100px]">
+                                                                <div className="relative">
                                                                     <select
                                                                         value={contactLensFormData.left_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
