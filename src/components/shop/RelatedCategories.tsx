@@ -26,6 +26,46 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
     const [siblingSubcategories, setSiblingSubcategories] = useState<Category[]>([])
     const [loading, setLoading] = useState(true)
 
+    // Helper function to filter subcategories based on the current subcategory type
+    const filterSubcategoriesByType = (subcategories: Category[], currentSubcategory: Category): Category[] => {
+        if (!currentSubcategory || !subcategories || subcategories.length === 0) {
+            return subcategories || []
+        }
+
+        const currentName = (currentSubcategory.name || '').toLowerCase()
+        
+        // Determine the type of the current subcategory
+        const isSpherical = /spherical|sferiche|sferica/i.test(currentName)
+        const isAstigmatism = /astigmatism|astigmatismo|toric|torica/i.test(currentName)
+        const isColored = /colored|coloured|color|colour/i.test(currentName)
+        
+        // Filter subcategories based on the detected type
+        return subcategories.filter(sub => {
+            const subName = (sub.name || '').toLowerCase()
+            
+            if (isSpherical) {
+                // For spherical pages, show ONLY spherical-related subcategories
+                // Exclude anything that is clearly not spherical (replacement frequency, colors, astigmatism)
+                const isReplacementFrequency = /daily|weekly|monthly|disposable|frequent/i.test(subName)
+                const isColoredType = /colored|coloured|color|colour/i.test(subName)
+                const isAstigmatismType = /astigmatism|astigmatismo|toric|torica/i.test(subName)
+                
+                // Include if it's spherical OR if it doesn't match any excluded categories
+                return /spherical|sferiche|sferica/i.test(subName) || 
+                       (!isReplacementFrequency && !isColoredType && !isAstigmatismType)
+            } else if (isAstigmatism) {
+                // For astigmatism pages, show only astigmatism-related subcategories
+                return /astigmatism|astigmatismo|toric|torica/i.test(subName)
+            } else if (isColored) {
+                // For colored pages, show only colored-related subcategories
+                return /colored|coloured|color|colour/i.test(subName)
+            } else {
+                // For other types, show all subcategories
+                return true
+            }
+        })
+    }
+
     useEffect(() => {
         const fetchRelatedData = async () => {
             setLoading(true)
@@ -35,45 +75,53 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                 // Fetch related categories based on current level
                 if (subSubcategory) {
                     // We're in a sub-subcategory page
-                    // Get sibling sub-subcategories
+                    // Get sibling sub-subcategories (filter by type)
                     if (subcategory?.id) {
                         promises.push(
                             getNestedSubcategoriesByParentId(subcategory.id)
                                 .then(subcategories => {
-                                    const siblings = subcategories.filter(sub => sub.id !== subSubcategory.id)
+                                    // Filter subcategories based on the current subcategory type
+                                    const filteredSubcategories = filterSubcategoriesByType(subcategories, subSubcategory)
+                                    const siblings = filteredSubcategories.filter(sub => sub.id !== subSubcategory.id)
                                     setSiblingSubcategories(siblings)
                                 })
                         )
                     }
 
-                    // Get related subcategories of the same parent category
+                    // Get related subcategories of the same parent category (filter by type)
                     if (category?.id) {
                         promises.push(
                             getSubcategoriesByCategoryId(category.id)
                                 .then(subcategories => {
-                                    const related = subcategories.filter(sub => sub.id !== subcategory?.id)
+                                    // Filter subcategories based on the current subcategory type
+                                    const filteredSubcategories = filterSubcategoriesByType(subcategories, subSubcategory)
+                                    const related = filteredSubcategories.filter(sub => sub.id !== subcategory?.id)
                                     setRelatedSubcategories(related)
                                 })
                         )
                     }
                 } else if (subcategory) {
                     // We're in a subcategory page
-                    // Get sibling subcategories
+                    // Get sibling subcategories (filter by type)
                     if (category?.id) {
                         promises.push(
                             getSubcategoriesByCategoryId(category.id)
                                 .then(subcategories => {
-                                    const siblings = subcategories.filter(sub => sub.id !== subcategory.id)
+                                    // Filter subcategories based on the current subcategory type
+                                    const filteredSubcategories = filterSubcategoriesByType(subcategories, subcategory)
+                                    const siblings = filteredSubcategories.filter(sub => sub.id !== subcategory.id)
                                     setSiblingSubcategories(siblings)
                                 })
                         )
                     }
 
-                    // Get nested subcategories of current subcategory
+                    // Get nested subcategories of current subcategory (filter by type)
                     promises.push(
                         getNestedSubcategoriesByParentId(subcategory.id)
                             .then(nested => {
-                                setRelatedSubcategories(nested)
+                                // Filter nested subcategories based on the current subcategory type
+                                const filteredNested = filterSubcategoriesByType(nested, subcategory)
+                                setRelatedSubcategories(filteredNested)
                             })
                     )
 
