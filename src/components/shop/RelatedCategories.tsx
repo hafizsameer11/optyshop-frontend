@@ -203,75 +203,51 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
         <div className="bg-white rounded-lg shadow-md p-3 mb-4">
             <h3 className="text-sm font-bold text-gray-900 mb-3">Related Pages</h3>
             
-            {/* Related Categories */}
-            {relatedCategories.length > 0 && (
-                <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-800 mb-2">Related Categories</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
-                        {relatedCategories.map((relatedCat) => (
-                            <Link
-                                key={relatedCat.id}
-                                to={`/category/${relatedCat.slug}`}
-                                className="block p-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-sm group"
-                            >
-                                <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center truncate">
-                                    {translateCategory(relatedCat)}
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {/* All related items in one line */}
+            <div className="flex flex-wrap gap-1">
+                {/* Related Categories */}
+                {relatedCategories.map((relatedCat) => (
+                    <Link
+                        key={`cat-${relatedCat.id}`}
+                        to={`/category/${relatedCat.slug}`}
+                        className="block p-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-sm group"
+                    >
+                        <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center truncate px-2">
+                            {translateCategory(relatedCat)}
+                        </div>
+                    </Link>
+                ))}
 
-            {/* Related Subcategories */}
-            {relatedSubcategories.length > 0 && (
-                <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-800 mb-2">
-                        {subSubcategory ? 'Other Subcategories' : 
-                         subcategory ? 'Nested Subcategories' : 
-                         'Subcategories'}
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
-                        {relatedSubcategories.map((relatedSub) => (
-                            <Link
-                                key={relatedSub.id}
-                                to={`/category/${category?.slug}/${relatedSub.slug}`}
-                                className="block p-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-sm group"
-                            >
-                                <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center truncate">
-                                    {translateCategory(relatedSub)}
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
+                {/* Related Subcategories */}
+                {relatedSubcategories.map((relatedSub) => (
+                    <Link
+                        key={`sub-${relatedSub.id}`}
+                        to={`/category/${category?.slug}/${relatedSub.slug}`}
+                        className="block p-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-sm group"
+                    >
+                        <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center truncate px-2">
+                            {translateCategory(relatedSub)}
+                        </div>
+                    </Link>
+                ))}
 
-            {/* Sibling Subcategories */}
-            {siblingSubcategories.length > 0 && (
-                <div className="mb-3">
-                    <h4 className="text-xs font-semibold text-gray-800 mb-2">
-                        {subSubcategory ? 'Other Sub-subcategories' : 'Other Subcategories'}
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
-                        {siblingSubcategories.map((sibling) => (
-                            <Link
-                                key={sibling.id}
-                                to={
-                                    subSubcategory 
-                                        ? `/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`
-                                        : `/category/${category?.slug}/${sibling.slug}`
-                                }
-                                className="block p-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-sm group"
-                            >
-                                <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center truncate">
-                                    {translateCategory(sibling)}
-                                </div>
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-            )}
+                {/* Sibling Subcategories */}
+                {siblingSubcategories.map((sibling) => (
+                    <Link
+                        key={`sib-${sibling.id}`}
+                        to={
+                            subSubcategory 
+                                ? `/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`
+                                : `/category/${category?.slug}/${sibling.slug}`
+                        }
+                        className="block p-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-sm group"
+                    >
+                        <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center truncate px-2">
+                            {translateCategory(sibling)}
+                        </div>
+                    </Link>
+                ))}
+            </div>
 
             {/* Special handling for astigmatism */}
             {(subcategory?.slug?.includes('astigmatism') || subSubcategory?.slug?.includes('astigmatism')) && (

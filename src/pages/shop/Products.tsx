@@ -15,7 +15,13 @@ import {
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
-import { getCategoryBySlug, getSubcategoryBySlug, type Category } from '../../services/categoriesService'
+import { 
+    getCategoryBySlug, 
+    getSubcategoryBySlug, 
+    getSubcategoriesByCategoryId, 
+    getNestedSubcategoriesByParentId, 
+    type Category 
+} from '../../services/categoriesService'
 import Campaigns from '../../components/home/Campaigns'
 import ProductCard from '../../components/products/ProductCard'
 
@@ -52,9 +58,14 @@ const Products: React.FC = () => {
         subcategory: null
     })
 
-    // Filters
+    // Category and subcategory filters
     const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
     const [selectedSubcategory, setSelectedSubcategory] = useState<string | number | null>(null)
+    const [availableSubcategories, setAvailableSubcategories] = useState<Category[]>([])
+    const [availableSubSubcategories, setAvailableSubSubcategories] = useState<Category[]>([])
+    const [selectedSubSubcategory, setSelectedSubSubcategory] = useState<string | number | null>(null)
+    
+    // Legacy filters (kept for compatibility)
     const [searchTerm, setSearchTerm] = useState('')
     const [frameShape, setFrameShape] = useState<string>('')
     const [frameMaterial, setFrameMaterial] = useState<string>('')
@@ -143,6 +154,87 @@ const Products: React.FC = () => {
         }
     }, [searchParams])
 
+    // Fetch subcategories when category changes
+    useEffect(() => {
+        let isCancelled = false
+
+        const fetchSubcategories = async () => {
+            if (selectedCategory && selectedCategory !== 'all') {
+                try {
+                    const subcategories = await getSubcategoriesByCategoryId(selectedCategory)
+                    if (!isCancelled) {
+                        setAvailableSubcategories(subcategories)
+                        // Reset subcategory and sub-subcategory when category changes
+                        setSelectedSubcategory(null)
+                        setSelectedSubSubcategory(null)
+                        setAvailableSubSubcategories([])
+                    }
+                } catch (error) {
+                    if (!isCancelled) {
+                        console.error('Error fetching subcategories:', error)
+                        setAvailableSubcategories([])
+                    }
+                }
+            } else {
+                if (!isCancelled) {
+                    setAvailableSubcategories([])
+                    setAvailableSubSubcategories([])
+                    setSelectedSubcategory(null)
+                    setSelectedSubSubcategory(null)
+                }
+            }
+        }
+
+        fetchSubcategories()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [selectedCategory])
+
+    // Fetch sub-subcategories when subcategory changes
+    useEffect(() => {
+        let isCancelled = false
+
+        const fetchSubSubcategories = async () => {
+            if (selectedSubcategory) {
+                try {
+                    // Get sub-subcategories from the selected subcategory's children
+                    const subcategory = availableSubcategories.find(sub => sub.id === Number(selectedSubcategory))
+                    if (subcategory && subcategory.children) {
+                        if (!isCancelled) {
+                            setAvailableSubSubcategories(subcategory.children)
+                            setSelectedSubSubcategory(null)
+                        }
+                    } else {
+                        // Fallback: fetch from API
+                        const subSubcategories = await getNestedSubcategoriesByParentId(selectedSubcategory)
+                        if (!isCancelled) {
+                            setAvailableSubSubcategories(subSubcategories)
+                            setSelectedSubSubcategory(null)
+                        }
+                    }
+                } catch (error) {
+                    if (!isCancelled) {
+                        console.error('Error fetching sub-subcategories:', error)
+                        setAvailableSubSubcategories([])
+                    }
+                }
+            } else {
+                if (!isCancelled) {
+                    setAvailableSubSubcategories([])
+                    setSelectedSubSubcategory(null)
+                }
+            }
+        }
+
+        fetchSubSubcategories()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [selectedSubcategory, availableSubcategories])
+
     // Fetch product options on mount
     useEffect(() => {
         let isCancelled = false
@@ -186,6 +278,10 @@ const Products: React.FC = () => {
 
                 if (selectedSubcategory) {
                     filters.subcategory = selectedSubcategory
+                }
+
+                if (selectedSubSubcategory) {
+                    filters.subSubcategory = selectedSubSubcategory
                 }
 
                 if (searchTerm) {
@@ -401,7 +497,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals, currentSection, location.pathname, lensType, baseCurve, diameter, replacementPeriod])
+    }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals, currentSection, location.pathname, lensType, baseCurve, diameter, replacementPeriod])
 
 
     const handlePageChange = (newPage: number) => {
@@ -582,29 +678,74 @@ const Products: React.FC = () => {
 
                     {/* Filter Options Row */}
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                        {/* Category Filter */}
+                        <div className="space-y-4">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => {
+                                    setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                    setCurrentPage(1)
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                            >
+                                <option value="all">All Categories</option>
+                                {productOptions?.categories?.map((category) => (
+                                    <option key={category.id} value={category.id}>
+                                        {translateCategory(category)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Subcategory Filter */}
+                        {selectedCategory !== 'all' && availableSubcategories.length > 0 && (
+                            <div className="space-y-4">
+                                <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Subcategory</label>
+                                <select
+                                    value={selectedSubcategory || ''}
+                                    onChange={(e) => {
+                                        setSelectedSubcategory(e.target.value ? Number(e.target.value) : null)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All Subcategories</option>
+                                    {availableSubcategories.map((subcategory) => (
+                                        <option key={subcategory.id} value={subcategory.id}>
+                                            {translateCategory(subcategory)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Sub-subcategory Filter */}
+                        {selectedSubcategory && availableSubSubcategories.length > 0 && (
+                            <div className="space-y-4">
+                                <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
+                                <select
+                                    value={selectedSubSubcategory || ''}
+                                    onChange={(e) => {
+                                        setSelectedSubSubcategory(e.target.value ? Number(e.target.value) : null)
+                                        setCurrentPage(1)
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                >
+                                    <option value="">All Types</option>
+                                    {availableSubSubcategories.map((subSubcategory) => (
+                                        <option key={subSubcategory.id} value={subSubcategory.id}>
+                                            {translateCategory(subSubcategory)}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Product Specification Filters based on category type */}
                         {currentSection === 'contact-lenses' ? (
                             // Contact Lens Specific Filters
                             <>
-                                {/* Category Filter */}
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
-                                    <select
-                                        value={selectedCategory}
-                                        onChange={(e) => {
-                                            setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                                            setCurrentPage(1)
-                                        }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                    >
-                                        <option value="all">All Categories</option>
-                                        {productOptions?.categories?.map((category) => (
-                                            <option key={category.id} value={category.id}>
-                                                {translateCategory(category)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
                                 {/* Lens Type Filter */}
                                 <div className="space-y-4">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Lens Type</label>
@@ -687,61 +828,10 @@ const Products: React.FC = () => {
                                         <option value="yearly">Yearly</option>
                                     </select>
                                 </div>
-
-                                {/* Price Range */}
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <input
-                                                type="number"
-                                                placeholder="Min price"
-                                                value={minPrice || ''}
-                                                onChange={(e) => {
-                                                    setMinPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                    setCurrentPage(1)
-                                                }}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <input
-                                                type="number"
-                                                placeholder="Max price"
-                                                value={maxPrice || ''}
-                                                onChange={(e) => {
-                                                    setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                    setCurrentPage(1)
-                                                }}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
                             </>
                         ) : (
                             // Regular Eyeglasses/Sunglasses Filters
                             <>
-                                {/* Category Filter */}
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
-                                    <select
-                                        value={selectedCategory}
-                                        onChange={(e) => {
-                                            setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                                            setCurrentPage(1)
-                                        }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                    >
-                                        <option value="all">All Categories</option>
-                                        {productOptions?.categories?.map((category) => (
-                                            <option key={category.id} value={category.id}>
-                                                {translateCategory(category)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
                                 {/* Frame Shape Filter */}
                                 <div className="space-y-4">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Shape</label>
@@ -802,37 +892,6 @@ const Products: React.FC = () => {
                                     </select>
                                 </div>
 
-                                {/* Price Range */}
-                                <div className="space-y-4">
-                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <input
-                                                type="number"
-                                                placeholder="Min price"
-                                                value={minPrice || ''}
-                                                onChange={(e) => {
-                                                    setMinPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                    setCurrentPage(1)
-                                                }}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                            />
-                                        </div>
-                                        <div>
-                                            <input
-                                                type="number"
-                                                placeholder="Max price"
-                                                value={maxPrice || ''}
-                                                onChange={(e) => {
-                                                    setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                    setCurrentPage(1)
-                                                }}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Colors Filter */}
                                 <div className="space-y-4">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Colors</label>
@@ -854,6 +913,37 @@ const Products: React.FC = () => {
                                 </div>
                             </>
                         )}
+
+                        {/* Price Range - Common for all product types */}
+                        <div className="space-y-4">
+                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Min price"
+                                        value={minPrice || ''}
+                                        onChange={(e) => {
+                                            setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Max price"
+                                        value={maxPrice || ''}
+                                        onChange={(e) => {
+                                            setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     {/* Add spacer div for visual separation */}
                     <div className="mb-20"></div>
