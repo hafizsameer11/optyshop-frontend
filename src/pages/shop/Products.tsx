@@ -1104,7 +1104,7 @@ const Products: React.FC = () => {
                                                         src={productImageUrl}
                                                         alt={product.name}
                                                         key={`${product.id}-${displayColor || 'default'}`}
-                                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                                                         style={{
                                                             opacity: imageOpacity[product.id] ?? 1,
                                                             transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'

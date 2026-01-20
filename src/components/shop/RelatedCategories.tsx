@@ -178,12 +178,12 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
 
     if (loading) {
         return (
-            <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+            <div className="bg-white rounded-lg shadow-md p-3 mb-4">
                 <div className="animate-pulse">
-                    <div className="h-6 bg-gray-200 rounded mb-4"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                         {[...Array(8)].map((_, i) => (
-                            <div key={i} className="h-20 bg-gray-200 rounded-lg"></div>
+                            <div key={i} className="h-12 bg-gray-200 rounded"></div>
                         ))}
                     </div>
                 </div>
@@ -200,21 +200,21 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
     }
 
     return (
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Related Pages</h3>
+        <div className="bg-white rounded-lg shadow-md p-3 mb-4">
+            <h3 className="text-sm font-bold text-gray-900 mb-3">Related Pages</h3>
             
             {/* Related Categories */}
             {relatedCategories.length > 0 && (
-                <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">Related Categories</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                <div className="mb-3">
+                    <h4 className="text-xs font-semibold text-gray-800 mb-2">Related Categories</h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
                         {relatedCategories.map((relatedCat) => (
                             <Link
                                 key={relatedCat.id}
                                 to={`/category/${relatedCat.slug}`}
-                                className="block p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-sm group"
                             >
-                                <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center">
+                                <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center truncate">
                                     {translateCategory(relatedCat)}
                                 </div>
                             </Link>
@@ -225,20 +225,20 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
 
             {/* Related Subcategories */}
             {relatedSubcategories.length > 0 && (
-                <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                <div className="mb-3">
+                    <h4 className="text-xs font-semibold text-gray-800 mb-2">
                         {subSubcategory ? 'Other Subcategories' : 
                          subcategory ? 'Nested Subcategories' : 
                          'Subcategories'}
                     </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
                         {relatedSubcategories.map((relatedSub) => (
                             <Link
                                 key={relatedSub.id}
                                 to={`/category/${category?.slug}/${relatedSub.slug}`}
-                                className="block p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-sm group"
                             >
-                                <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center">
+                                <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center truncate">
                                     {translateCategory(relatedSub)}
                                 </div>
                             </Link>
@@ -249,11 +249,11 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
 
             {/* Sibling Subcategories */}
             {siblingSubcategories.length > 0 && (
-                <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                <div className="mb-3">
+                    <h4 className="text-xs font-semibold text-gray-800 mb-2">
                         {subSubcategory ? 'Other Sub-subcategories' : 'Other Subcategories'}
                     </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1">
                         {siblingSubcategories.map((sibling) => (
                             <Link
                                 key={sibling.id}
@@ -262,9 +262,9 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                                         ? `/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`
                                         : `/category/${category?.slug}/${sibling.slug}`
                                 }
-                                className="block p-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-sm group"
                             >
-                                <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center">
+                                <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center truncate">
                                     {translateCategory(sibling)}
                                 </div>
                             </Link>
@@ -275,25 +275,25 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
 
             {/* Special handling for astigmatism */}
             {(subcategory?.slug?.includes('astigmatism') || subSubcategory?.slug?.includes('astigmatism')) && (
-                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <h4 className="text-lg font-semibold text-yellow-900 mb-2">Astigmatism Resources</h4>
-                    <p className="text-sm text-yellow-800 mb-3">
-                        Find specialized products and information for astigmatism correction.
+                <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <h4 className="text-xs font-semibold text-yellow-900 mb-1">Astigmatism Resources</h4>
+                    <p className="text-xs text-yellow-800 mb-2">
+                        Find specialized products for astigmatism correction.
                     </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <Link
                             to="/category/contact-lenses/toric"
-                            className="block p-3 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200 transition-colors"
+                            className="block p-2 bg-yellow-100 border border-yellow-300 rounded hover:bg-yellow-200 transition-colors"
                         >
-                            <div className="text-sm font-medium text-yellow-900 text-center">
+                            <div className="text-xs font-medium text-yellow-900 text-center">
                                 Toric Contact Lenses
                             </div>
                         </Link>
                         <Link
                             to="/shop/product/astigmatism-lenses"
-                            className="block p-3 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200 transition-colors"
+                            className="block p-2 bg-yellow-100 border border-yellow-300 rounded hover:bg-yellow-200 transition-colors"
                         >
-                            <div className="text-sm font-medium text-yellow-900 text-center">
+                            <div className="text-xs font-medium text-yellow-900 text-center">
                                 Astigmatism Products
                             </div>
                         </Link>
