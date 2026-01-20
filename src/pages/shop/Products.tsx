@@ -538,7 +538,7 @@ const Products: React.FC = () => {
 
             {/* Breadcrumbs */}
             <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
-                <div className="w-[90%] mx-auto max-w-7xl">
+                <div className="w-[90%] mx-auto max-w-screen-2xl">
                     <nav className="flex items-center gap-2 text-sm text-gray-900 flex-wrap">
                         <Link to="/" className="flex items-center gap-2 hover:text-gray-700 transition-colors">
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -929,7 +929,7 @@ const Products: React.FC = () => {
             {/* New Arrivals Section */}
             {showNewArrivals && (
                 <section className="bg-white py-8 px-4 sm:px-6 border-b border-gray-200">
-                    <div className="w-[90%] mx-auto max-w-7xl">
+                    <div className="w-[90%] mx-auto max-w-screen-2xl">
                         <div className="flex items-center justify-between mb-6">
                             <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
                                 New Arrivals
@@ -950,7 +950,7 @@ const Products: React.FC = () => {
 
             {/* Products Grid */}
             <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
-                <div className="w-[90%] mx-auto max-w-7xl">
+                <div className="w-[90%] mx-auto max-w-screen-2xl">
                     {loading ? (
                         <div className="text-center py-12">
                             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
@@ -964,7 +964,7 @@ const Products: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${currentSection === 'contact-lenses' ? 'xl:grid-cols-4' : 'xl:grid-cols-6'} gap-4 md:gap-6 mb-8`}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 md:gap-4 mb-8">
                                 {products && products.length > 0 && products.map((product) => {
                                     const p = product as any
                                     // Get available colors - prefer 'colors' array, fallback to 'color_images'

@@ -439,7 +439,7 @@ const CategoryPage: React.FC = () => {
 
             {/* Page Content */}
             <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 md:py-12 lg:py-16 px-8 sm:px-12 lg:px-16">
-                <div className="w-full max-w-7xl mx-auto">
+                <div className="w-full max-w-screen-2xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
                         <div className="mb-8 bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-600">
@@ -466,58 +466,58 @@ const CategoryPage: React.FC = () => {
                     />
 
                     {/* Filters and Search */}
-                    <div className="mb-2">
-                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-4">
+                    <div className="mb-6">
+                        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 mb-3">
                             {/* Sort Dropdown */}
-                            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
-                                <div className="flex items-center gap-3">
-                                    <label className="text-sm font-medium text-gray-700">Sort by:</label>
+                            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
+                                <div className="flex items-center gap-2">
+                                    <label className="text-xs font-medium text-gray-700">Sort:</label>
                                     <select
                                         value={sortBy}
                                         onChange={(e) => {
                                             setSortBy(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
-                                        <option value="newest">Newest First</option>
-                                        <option value="oldest">Oldest First</option>
-                                        <option value="price_low">Price: Low to High</option>
-                                        <option value="price_high">Price: High to Low</option>
-                                        <option value="name">Name: A to Z</option>
+                                        <option value="newest">Newest</option>
+                                        <option value="oldest">Oldest</option>
+                                        <option value="price_low">Price Low</option>
+                                        <option value="price_high">Price High</option>
+                                        <option value="name">Name A-Z</option>
                                     </select>
                                 </div>
                             </div>
 
                             {/* Search */}
-                            <div className="flex-1 lg:max-w-md">
+                            <div className="flex-1 lg:max-w-xs">
                                 <input
                                     type="text"
-                                    placeholder="Search products..."
+                                    placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => {
                                         setSearchTerm(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 />
                             </div>
                         </div>
 
                         {/* Filter Options Row */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                             {/* Lens Type Filter */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Lens Type</label>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-800 mb-1">Type</label>
                                 <select
                                     value={lensType}
                                     onChange={(e) => {
                                         setLensType(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
-                                    <option value="">All Types</option>
+                                    <option value="">All</option>
                                     {productOptions?.lensTypes?.map((lensType) => (
                                         <option key={lensType.id} value={lensType.slug}>
                                             {lensType.name}
@@ -527,17 +527,17 @@ const CategoryPage: React.FC = () => {
                             </div>
 
                             {/* Lens Coating Filter */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Lens Coating</label>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-800 mb-1">Coating</label>
                                 <select
                                     value={lensCoating}
                                     onChange={(e) => {
                                         setLensCoating(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
-                                    <option value="">All Coatings</option>
+                                    <option value="">All</option>
                                     {productOptions?.lensCoatings?.map((coating) => (
                                         <option key={coating.id} value={coating.slug}>
                                             {coating.name}
@@ -547,15 +547,15 @@ const CategoryPage: React.FC = () => {
                             </div>
 
                             {/* Gender Filter */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Gender</label>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-800 mb-1">Gender</label>
                                 <select
                                     value={gender}
                                     onChange={(e) => {
                                         setGender(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All</option>
                                     {productOptions?.genders?.map((g) => (
@@ -567,17 +567,17 @@ const CategoryPage: React.FC = () => {
                             </div>
 
                             {/* Colors Filter */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Colors</label>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-800 mb-1">Color</label>
                                 <select
                                     value={selectedColor}
                                     onChange={(e) => {
                                         setSelectedColor(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
-                                    <option value="">All Colors</option>
+                                    <option value="">All</option>
                                     {availableColors.map((color) => (
                                         <option key={color} value={color}>
                                             {color}
@@ -587,33 +587,29 @@ const CategoryPage: React.FC = () => {
                             </div>
 
                             {/* Price Range */}
-                            <div className="space-y-2 lg:col-span-1">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Price Range</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div>
-                                        <input
-                                            type="number"
-                                            placeholder="Min"
-                                            value={minPrice || ''}
-                                            onChange={(e) => {
-                                                setMinPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                setCurrentPage(1)
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <input
-                                            type="number"
-                                            placeholder="Max"
-                                            value={maxPrice || ''}
-                                            onChange={(e) => {
-                                                setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
-                                                setCurrentPage(1)
-                                            }}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                        />
-                                    </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-800 mb-1">Price</label>
+                                <div className="grid grid-cols-2 gap-1">
+                                    <input
+                                        type="number"
+                                        placeholder="Min"
+                                        value={minPrice || ''}
+                                        onChange={(e) => {
+                                            setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    />
+                                    <input
+                                        type="number"
+                                        placeholder="Max"
+                                        value={maxPrice || ''}
+                                        onChange={(e) => {
+                                            setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -669,7 +665,7 @@ const CategoryPage: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8 lg:gap-12 mb-16 px-6 lg:px-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
                                 {products.map((product) => (
                                     <div
                                         key={product.id}
