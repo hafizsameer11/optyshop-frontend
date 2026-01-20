@@ -4908,8 +4908,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex-1 min-w-[100px]">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
                   </div>
@@ -4941,7 +4941,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-[100px]">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
                   </div>
@@ -4973,7 +4973,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-[100px]">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
@@ -5037,8 +5037,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="flex-1 min-w-[100px]">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
                   </div>
@@ -5070,7 +5070,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-[100px]">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
                   </div>
@@ -5102,7 +5102,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-[100px]">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
