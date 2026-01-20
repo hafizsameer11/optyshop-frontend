@@ -70,6 +70,11 @@ interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
   initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
+  categoryContext?: {
+    category?: { id: number; name: string; slug: string } | null
+    subcategory?: { id: number; name: string; slug: string } | null
+    subSubcategory?: { id: number; name: string; slug: string } | null
+  } // Optional: category context for form customization
 }
 
 type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
@@ -107,7 +112,7 @@ interface PrescriptionFormData {
   os_axis: string
 }
 
-const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor }) => {
+const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, categoryContext }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -120,6 +125,40 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const [coatingOptions, setCoatingOptions] = useState<LensCoating[]>([])
   const [lensIndexOptions, setLensIndexOptions] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
+
+  // Category-specific lens type selection
+  useEffect(() => {
+    if (categoryContext) {
+      const { subcategory, subSubcategory } = categoryContext
+      
+      // Check if we're in an astigmatism-related category
+      const isAstigmatismCategory = 
+        subcategory?.slug?.includes('astigmatism') ||
+        subSubcategory?.slug?.includes('astigmatism') ||
+        subcategory?.name?.toLowerCase().includes('astigmatism') ||
+        subSubcategory?.name?.toLowerCase().includes('astigmatism')
+
+      if (isAstigmatismCategory) {
+        // For astigmatism, prefer toric lenses or single_vision with cylinder correction
+        setLensSelection(prev => ({
+          ...prev,
+          type: 'single_vision' // Default to single vision for astigmatism correction
+        }))
+        console.log('🎯 Category Context: Astigmatism detected - setting single_vision lens type')
+      }
+
+      // Check for contact lens categories
+      const isContactLensCategory = 
+        categoryContext.category?.slug === 'contact-lenses' ||
+        subcategory?.slug?.includes('contact') ||
+        subSubcategory?.slug?.includes('contact')
+
+      if (isContactLensCategory) {
+        console.log('🎯 Category Context: Contact lenses detected')
+        // Additional contact lens specific logic can be added here
+      }
+    }
+  }, [categoryContext])
   const [selectedImageIndex] = useState(0)
 
   // Mouse position for lens preview effect (normalized 0-1)
@@ -1456,8 +1495,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         newErrors.od_axis = 'Axis is required when cylinder is specified'
       } else {
         const axis = parseInt(prescriptionData.od_axis)
-        if (isNaN(axis) || axis < 0 || axis > 180) {
-          newErrors.od_axis = 'Axis must be between 0 and 180'
+        if (isNaN(axis) || axis < -180 || axis > 180) {
+          newErrors.od_axis = 'Axis must be between -180 and 180'
         }
       }
     }
@@ -1477,8 +1516,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         newErrors.os_axis = 'Axis is required when cylinder is specified'
       } else {
         const axis = parseInt(prescriptionData.os_axis)
-        if (isNaN(axis) || axis < 0 || axis > 180) {
-          newErrors.os_axis = 'Axis must be between 0 and 180'
+        if (isNaN(axis) || axis < -180 || axis > 180) {
+          newErrors.os_axis = 'Axis must be between -180 and 180'
         }
       }
     }
@@ -4583,23 +4622,69 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
     // Only use values from API structure (admin-inserted values)
     if (formStructure && formStructure.fields && formStructure.fields[fieldType]) {
       const values = getFieldValues(formStructure, fieldType, eyeType)
-      if (values && values.length > 0) {
-        const apiValues = values.map(v => v.value || v.label).filter(v => v)
-        if (apiValues.length > 0) {
-          if (import.meta.env.DEV) {
-            console.log(`✅ [Prescription Form] Using API values for ${fieldType} (${eyeType}):`, apiValues.length, 'options')
+      
+      // For axis field, ensure we have the complete -180 to 180 range
+      if (fieldType === 'axis') {
+        const axisValues = values.map(v => v.value)
+        
+        // If API doesn't provide negative values or incomplete range, generate full range
+        if (axisValues.length < 361 || !axisValues.some(v => parseInt(v) < 0)) {
+          const fullRange = []
+          for (let i = -180; i <= 180; i++) {
+            fullRange.push(i.toString())
           }
-          return apiValues
+          return fullRange
+        }
+        
+        return axisValues
+      }
+      
+      return values.map(v => v.value)
+    }
+    
+    // Fallback for axis field if no API data
+    if (fieldType === 'axis') {
+      const fullRange = []
+      for (let i = -180; i <= 180; i++) {
+        fullRange.push(i.toString())
+      }
+      return fullRange
+    }
+    
+    if (fieldType === 'sph') {
+      // Generate sphere values from -20.00 to +20.00 in 0.25 steps
+      const sphereValues = []
+      for (let i = -2000; i <= 2000; i += 25) {
+        const value = (i / 100).toFixed(2)
+        sphereValues.push(value)
+      }
+      return sphereValues
+    }
+    
+    if (fieldType === 'cyl') {
+      // Generate cylinder values from -6.00 to +6.00 in 0.25 steps
+      const cylinderValues = ['0'] // Start with 0
+      for (let i = -600; i <= 600; i += 25) {
+        if (i !== 0) { // Skip 0 as it's already added
+          const value = (i / 100).toFixed(2)
+          cylinderValues.push(value)
         }
       }
+      return cylinderValues.sort((a, b) => parseFloat(a) - parseFloat(b))
     }
-
-    // No fallback - return empty array if no API values
-    if (import.meta.env.DEV) {
-      console.log(`⚠️ [Prescription Form] No API values found for ${fieldType} (${eyeType})`)
+    
+    if (fieldType === 'pd') {
+      // Generate PD values from 50mm to 80mm in 0.5mm steps
+      const pdValues = []
+      for (let i = 500; i <= 800; i += 5) {
+        const value = (i / 10).toFixed(1)
+        pdValues.push(value)
+      }
+      return pdValues
     }
+    
     return []
-  }, [formStructure, isProgressive, isDistanceVision, isNearVision])
+  }, [formStructure])
 
   // Generate options - only from API (admin-inserted values)
   // Use useMemo to recalculate when formStructure changes
@@ -4805,9 +4890,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
         {/* Eyes Section - Horizontal Layout */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
             {/* Right Eye (OD) */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-2 h-2 rounded-full bg-purple-600"></div>
@@ -4823,8 +4908,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex-1 min-w-0">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
                   </div>
@@ -4832,7 +4917,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_sphere || ''}
                       onChange={(e) => onPrescriptionChange('od_sphere', e.target.value)}
-                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_sphere ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4856,7 +4941,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_sphere}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
                   </div>
@@ -4864,7 +4949,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.od_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('od_cylinder', e.target.value)}
-                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.od_cylinder ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4888,7 +4973,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_cylinder}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
@@ -4897,7 +4982,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.od_axis || ''}
                         onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none bg-none text-transparent pr-8 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -4936,7 +5021,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             </div>
 
             {/* Left Eye (OS) */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0">
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full">
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -4952,8 +5037,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="flex-1 min-w-0">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
                   </div>
@@ -4961,7 +5046,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_sphere || ''}
                       onChange={(e) => onPrescriptionChange('os_sphere', e.target.value)}
-                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_sphere ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_sphere ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -4985,7 +5070,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_sphere}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">CYL</label>
                   </div>
@@ -4993,7 +5078,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <select
                       value={prescriptionData.os_cylinder || ''}
                       onChange={(e) => onPrescriptionChange('os_cylinder', e.target.value)}
-                      className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                      className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_cylinder ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                         prescriptionData.os_cylinder ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                         }`}
                     >
@@ -5017,7 +5102,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_cylinder}</p>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-[100px]">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
@@ -5026,7 +5111,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                       <select
                         value={prescriptionData.os_axis || ''}
                         onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                        className={`w-full px-3 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none bg-none text-transparent pr-8 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
                           prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
                           }`}
                       >
@@ -5122,7 +5207,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
               </div>
               {showAxisDiagram && (
                 <div className="mt-4 pt-4 border-t border-gray-200">
-                  <AxisDiagram compact={true} />
+                  <AxisDiagram compact={true} axisValue={parseInt(prescriptionData.os_axis) || 0} />
                 </div>
               )}
             </div>
