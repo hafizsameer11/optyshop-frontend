@@ -207,14 +207,14 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
             {relatedCategories.length > 0 && (
                 <div className="mb-6">
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">Related Categories</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
                         {relatedCategories.map((relatedCat) => (
                             <Link
                                 key={relatedCat.id}
                                 to={`/category/${relatedCat.slug}`}
-                                className="block p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-md group"
                             >
-                                <div className="text-sm font-medium text-blue-900 group-hover:text-blue-700 text-center">
+                                <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center">
                                     {translateCategory(relatedCat)}
                                 </div>
                             </Link>
@@ -231,14 +231,14 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                          subcategory ? 'Nested Subcategories' : 
                          'Subcategories'}
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
                         {relatedSubcategories.map((relatedSub) => (
                             <Link
                                 key={relatedSub.id}
                                 to={`/category/${category?.slug}/${relatedSub.slug}`}
-                                className="block p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-md group"
                             >
-                                <div className="text-sm font-medium text-green-900 group-hover:text-green-700 text-center">
+                                <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center">
                                     {translateCategory(relatedSub)}
                                 </div>
                             </Link>
@@ -253,7 +253,7 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                     <h4 className="text-lg font-semibold text-gray-800 mb-3">
                         {subSubcategory ? 'Other Sub-subcategories' : 'Other Subcategories'}
                     </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-2">
                         {siblingSubcategories.map((sibling) => (
                             <Link
                                 key={sibling.id}
@@ -262,9 +262,9 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                                         ? `/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`
                                         : `/category/${category?.slug}/${sibling.slug}`
                                 }
-                                className="block p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-md group"
+                                className="block p-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-md group"
                             >
-                                <div className="text-sm font-medium text-purple-900 group-hover:text-purple-700 text-center">
+                                <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center">
                                     {translateCategory(sibling)}
                                 </div>
                             </Link>
