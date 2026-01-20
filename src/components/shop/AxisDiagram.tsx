@@ -16,14 +16,14 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   // Convert axis value to angle for needle positioning
   // Map -180 to 180 range to 0 to 360 degrees for the dial
   // In optical axis: 0° is horizontal right, 90° is up, 180° is horizontal left, -90° is down
-  let normalizedAngle: number
+  let displayAngle: number
   if (axisValue >= 0) {
-    normalizedAngle = axisValue
+    displayAngle = axisValue
   } else {
-    normalizedAngle = axisValue + 360
+    displayAngle = axisValue + 360
   }
   
-  const pointerAngle = normalizedAngle
+  const pointerAngle = displayAngle
   const pointerRadians = (pointerAngle * Math.PI) / 180
   const pointerLength = 160
   const pointerX = 200 + pointerLength * Math.sin(pointerRadians)
