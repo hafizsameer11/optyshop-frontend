@@ -15,10 +15,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
 }) => {
   // Convert axis value to angle for needle positioning
   // Map -180 to 180 range to 0 to 360 degrees for the dial
-  const normalizedAngle = axisValue < 0 ? axisValue + 360 : axisValue
+  // In optical axis: 0° is horizontal right, 90° is up, 180° is horizontal left, -90° is down
+  let normalizedAngle: number
+  if (axisValue >= 0) {
+    normalizedAngle = axisValue
+  } else {
+    normalizedAngle = axisValue + 360
+  }
+  
   const pointerAngle = normalizedAngle
   const pointerRadians = (pointerAngle * Math.PI) / 180
-  const pointerLength = 170
+  const pointerLength = 160
   const pointerX = 200 + pointerLength * Math.sin(pointerRadians)
   const pointerY = 200 - pointerLength * Math.cos(pointerRadians)
 
@@ -58,8 +65,8 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 strokeWidth="2"
               />
 
-              {/* Major tick marks - left side: -180 to 0, right side: 0 to 60 */}
-              {[-180, -150, -120, -90, -60, -30, 0, 15, 30, 45, 60].map((angle) => {
+              {/* Major tick marks - full range from -180 to 180 */}
+              {[-180, -150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180].map((angle) => {
                 // Convert to display angle (0-360)
                 const displayAngle = angle < 0 ? angle + 360 : angle
                 const radians = (displayAngle * Math.PI) / 180
@@ -81,7 +88,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               })}
 
               {/* Minor tick marks at 15-unit intervals */}
-              {[-165, -135, -105, -75, -45, -15, 15, 30, 45].map((angle) => {
+              {[-165, -135, -105, -75, -45, -15, 15, 45, 75, 105, 135, 165].map((angle) => {
                 const displayAngle = angle < 0 ? angle + 360 : angle
                 const radians = (displayAngle * Math.PI) / 180
                 const outerX = 200 + 180 * Math.sin(radians)
@@ -102,7 +109,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               })}
 
               {/* Number labels at 30-unit intervals - positioned around the arc */}
-              {[-180, -150, -120, -90, -60, -30, 0, 15, 30, 45, 60].map((angle) => {
+              {[-180, -150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180].map((angle) => {
                 const displayAngle = angle < 0 ? angle + 360 : angle
                 const radians = (displayAngle * Math.PI) / 180
                 let labelRadius = 145
@@ -116,10 +123,20 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                   labelX = 380
                   labelY = 190
                   textAnchor = "middle"
-                } else if (angle === -180) {
-                  // -180° on the left side - position at left end of base line, slightly above
+                } else if (angle === 180 || angle === -180) {
+                  // 180°/-180° on the left side - position at left end of base line, slightly above
                   labelX = 20
                   labelY = 190
+                  textAnchor = "middle"
+                } else if (angle === 90) {
+                  // 90° at the top - position above the arc
+                  labelX = 200
+                  labelY = 35
+                  textAnchor = "middle"
+                } else if (angle === -90) {
+                  // -90° at the bottom - position below the base line
+                  labelX = 200
+                  labelY = 220
                   textAnchor = "middle"
                 } else {
                   // All other angles - position on the arc
@@ -219,8 +236,8 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               strokeWidth="2"
             />
 
-            {/* Major tick marks - left side: -180 to 0, right side: 0 to 60 */}
-            {[-180, -150, -120, -90, -60, -30, 0, 15, 30, 45, 60].map((angle) => {
+            {/* Major tick marks - full range from -180 to 180 */}
+            {[-180, -150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180].map((angle) => {
               // Convert to display angle (0-360)
               const displayAngle = angle < 0 ? angle + 360 : angle
               const radians = (displayAngle * Math.PI) / 180
@@ -242,7 +259,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
             })}
 
             {/* Minor tick marks at 15-unit intervals */}
-            {[-165, -135, -105, -75, -45, -15, 15, 30, 45].map((angle) => {
+            {[-165, -135, -105, -75, -45, -15, 15, 45, 75, 105, 135, 165].map((angle) => {
               const displayAngle = angle < 0 ? angle + 360 : angle
               const radians = (displayAngle * Math.PI) / 180
               const outerX = 200 + 180 * Math.sin(radians)
@@ -263,7 +280,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
             })}
 
             {/* Number labels at 30-unit intervals - positioned around the arc */}
-            {[-180, -150, -120, -90, -60, -30, 0, 15, 30, 45, 60].map((angle) => {
+            {[-180, -150, -120, -90, -60, -30, 0, 30, 60, 90, 120, 150, 180].map((angle) => {
               const displayAngle = angle < 0 ? angle + 360 : angle
               const radians = (displayAngle * Math.PI) / 180
               let labelRadius = 145
@@ -277,10 +294,20 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 labelX = 380
                 labelY = 190
                 textAnchor = "middle"
-              } else if (angle === -180) {
+              } else if (angle === 180 || angle === -180) {
                 // 180°/-180° on the left side - position at left end of base line, slightly above
                 labelX = 20
                 labelY = 190
+                textAnchor = "middle"
+              } else if (angle === 90) {
+                // 90° at the top - position above the arc
+                labelX = 200
+                labelY = 35
+                textAnchor = "middle"
+              } else if (angle === -90) {
+                // -90° at the bottom - position below the base line
+                labelX = 200
+                labelY = 220
                 textAnchor = "middle"
               } else {
                 // All other angles - position on the arc
@@ -337,9 +364,9 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">How to read your axis:</h4>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-          <li>The axis is measured in degrees from -180° to 60°</li>
-          <li>0° is horizontal, positive angles go upward, negative angles go downward</li>
-          <li>-180° is on the far left, 60° is on the upper right</li>
+          <li>The axis is measured in degrees from -180° to 180°</li>
+          <li>0° is horizontal (right), 90° is vertical (up), 180°/-180° is horizontal (left), -90° is vertical (down)</li>
+          <li>The red needle points to your selected axis value</li>
           <li>Find the axis value on your prescription and select it from the dropdown</li>
           <li>If you have astigmatism (CYL value), you must provide an axis value</li>
         </ul>

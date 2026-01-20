@@ -17,15 +17,13 @@ import {
     type ProductFilters,
     type ProductOptions
 } from '../../services/productsService'
-import { getProductImageUrl } from '../../utils/productImage'
-import { useCart } from '../../context/CartContext'
 import CategoryBanner from '../../components/home/CategoryBanner'
 import RelatedCategories from '../../components/shop/RelatedCategories'
+import ProductCard from '../../components/products/ProductCard'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
-    const { addToCart } = useCart()
     const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
         categorySlug: string; 
         subcategorySlug?: string;
@@ -368,29 +366,7 @@ const CategoryPage: React.FC = () => {
         }
     }, [])
 
-    const handleAddToCart = (product: Product) => {
-        try {
-            const salePrice = product?.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product?.price ? Number(product.price) : 0
-            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
-            
-            const cartProduct = {
-                id: product?.id || 0,
-                name: product?.name || '',
-                brand: product?.brand || '',
-                category: product?.category?.slug || 'contact-lenses',
-                price: finalPrice,
-                image: getProductImageUrl(product),
-                description: product?.description || '',
-                inStock: product?.in_stock !== false,
-                rating: product?.rating ? Number(product.rating) : undefined
-            }
-            addToCart(cartProduct)
-        } catch (error) {
-            console.error('Error adding to cart:', error)
-        }
-    }
-
+    
     if (loading) {
         return (
             <div className="bg-white min-h-screen">
@@ -445,13 +421,10 @@ const CategoryPage: React.FC = () => {
                         <div className="mb-8 bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-600">
                             <div className="flex items-center justify-between flex-wrap gap-4">
                                 <div>
-                                    <p className="text-sm text-gray-600 mb-2 font-medium">
-                                        {categoryInfo.subSubcategory ? 'Viewing sub-subcategory:' : 'Viewing subcategory:'}
-                                    </p>
-                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+                                    <h2 className="text-lg md:text-xl font-bold text-gray-900">
                                         {categoryInfo.subSubcategory 
-                                            ? translateCategory(categoryInfo.subSubcategory)
-                                            : translateCategory(categoryInfo.subcategory)}
+                                            ? `${translateCategory(categoryInfo.subSubcategory)} (Sub-subcategory)`
+                                            : `${translateCategory(categoryInfo.subcategory)} (Subcategory)`}
                                     </h2>
                                 </div>
                             </div>
@@ -665,82 +638,9 @@ const CategoryPage: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
                                 {products.map((product) => (
-                                    <div
-                                        key={product.id}
-                                        className="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl border border-gray-100 transition-all duration-300 flex flex-col group h-full transform hover:scale-105"
-                                    >
-                                        {/* Product Image */}
-                                        <div className="relative h-56 md:h-64 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden rounded-t-2xl">
-                                            <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                                                <img
-                                                    src={getProductImageUrl(product)}
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 rounded-t-2xl"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.src = '/assets/images/placeholder-product.jpg'
-                                                    }}
-                                                />
-                                            </Link>
-                                             
-                                            {/* Sale Badge */}
-                                            {product.sale_price && Number(product.sale_price) < Number(product.price) && (
-                                                <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold z-10 shadow-lg">
-                                                    Sale
-                                                </div>
-                                            )}
-                                             
-                                            {/* Out of Stock Badge */}
-                                            {(product.in_stock === false) && (
-                                                <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold z-10 shadow-lg">
-                                                    {t('shop.outOfStock')}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Product Info */}
-                                        <div className="p-6 md:p-8 flex-1 flex flex-col space-y-6">
-                                            <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 group">
-                                                <h3 className="text-lg md:text-xl font-semibold text-gray-900 mb-4 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
-                                                    {product.name}
-                                                </h3>
-                                                <p className="text-sm text-gray-500 uppercase tracking-wide font-medium mb-2">{product.brand}</p>
-                                            </Link>
-                                            
-                                            {/* Price */}
-                                            <div className="mb-6">
-                                                {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
-                                                    <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4">
-                                                        <span className="text-2xl md:text-3xl font-bold text-red-600">
-                                                            ${Number(product.sale_price).toFixed(2)}
-                                                        </span>
-                                                        <span className="text-base text-gray-400 line-through">
-                                                            ${Number(product.price).toFixed(2)}
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-2xl md:text-3xl font-bold text-gray-900">
-                                                        ${Number(product.price).toFixed(2)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            
-                                            {/* Add to Cart Button */}
-                                            <button
-                                                onClick={() => handleAddToCart(product)}
-                                                disabled={product.in_stock === false}
-                                                className={`w-full py-4 px-6 rounded-2xl font-bold text-base transition-all duration-200 transform hover:scale-105 ${
-                                                    product.in_stock === false
-                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                                        : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-xl hover:shadow-2xl'
-                                                }`}
-                                            >
-                                                {product.in_stock === false ? t('shop.outOfStock') : t('shop.addToCart')}
-                                            </button>
-                                        </div>
-                                    </div>
+                                    <ProductCard key={product.id} product={product} />
                                 ))}
                             </div>
                             
