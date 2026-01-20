@@ -9,10 +9,7 @@
 // For production: https://optyshop-frontend.hmstech.org/api
 // For local development: http://localhost:5000/api
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (import.meta.env.DEV 
-    ? 'http://localhost:5000/api'  // Local development (matches Postman collection)
-    : 'https://optyshop-frontend.hmstech.org/api'  // Production
-  );
+  'https://optyshop-frontend.hmstech.org/api';  // Always use server URL
 
 export interface ApiResponse<T = any> {
   success: boolean;

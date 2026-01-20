@@ -77,7 +77,7 @@ interface ProductCheckoutProps {
   } // Optional: category context for form customization
 }
 
-type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'summary' | 'shipping' | 'payment'
+type CheckoutStep = 'lens_type' | 'prescription' | 'progressive' | 'lens_thickness' | 'treatment' | 'shipping' | 'summary' | 'payment'
 
 interface LensSelection {
   type: 'distance_vision' | 'near_vision' | 'progressive' | 'single_vision' | 'bifocal' | 'reading' | 'glasses_only' | 'no_lenses'
@@ -1960,8 +1960,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   const handleCheckoutNow = () => {
     setCheckoutMode('checkout')
-    // Navigate to summary first, then shipping
-    if (currentStep === 'treatment' || currentStep === 'summary') {
+    // Navigate to shipping directly, bypassing summary
+    if (currentStep === 'treatment') {
       setCurrentStep('shipping')
     } else {
       // Continue through normal flow, then go to shipping
@@ -1989,16 +1989,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     } else if (currentStep === 'lens_thickness') {
       setCurrentStep('treatment')
     } else if (currentStep === 'treatment') {
-      if (checkoutMode === 'checkout') {
-        setCurrentStep('shipping')
-      } else {
-        setCurrentStep('summary')
-      }
-    } else if (currentStep === 'summary') {
-      if (checkoutMode === 'checkout') {
-        setCurrentStep('shipping')
-      }
+      setCurrentStep('shipping')
     } else if (currentStep === 'shipping') {
+      setCurrentStep('summary')
+    } else if (currentStep === 'summary') {
       setCurrentStep('payment')
     }
   }
@@ -2016,12 +2010,12 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       setCurrentStep('prescription')
     } else if (currentStep === 'treatment') {
       setCurrentStep('lens_thickness')
-    } else if (currentStep === 'summary') {
-      setCurrentStep('treatment')
     } else if (currentStep === 'shipping') {
-      setCurrentStep('summary')
-    } else if (currentStep === 'payment') {
+      setCurrentStep('treatment')
+    } else if (currentStep === 'summary') {
       setCurrentStep('shipping')
+    } else if (currentStep === 'payment') {
+      setCurrentStep('summary')
     }
   }
 

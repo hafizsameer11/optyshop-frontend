@@ -64,6 +64,13 @@ const Products: React.FC = () => {
     const [gender, setGender] = useState<string>('')
     const [selectedColor, setSelectedColor] = useState<string>('')
     const [availableColors, setAvailableColors] = useState<string[]>([])
+    
+    // Contact lens specific filters
+    const [lensType, setLensType] = useState<string>('')
+    const [baseCurve, setBaseCurve] = useState<string>('')
+    const [diameter, setDiameter] = useState<string>('')
+    const [replacementPeriod, setReplacementPeriod] = useState<string>('')
+    
     const [currentPage, setCurrentPage] = useState(1)
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
     const [showNewArrivals, setShowNewArrivals] = useState(false)
@@ -251,12 +258,20 @@ const Products: React.FC = () => {
                     filters.search = searchTerm
                 }
 
-                if (frameShape) {
-                    filters.frameShape = frameShape
+                if (lensType) {
+                    filters.lensType = lensType
                 }
 
-                if (frameMaterial) {
-                    filters.frameMaterial = frameMaterial
+                if (baseCurve) {
+                    filters.baseCurve = baseCurve
+                }
+
+                if (diameter) {
+                    filters.diameter = diameter
+                }
+
+                if (replacementPeriod) {
+                    filters.replacementPeriod = replacementPeriod
                 }
 
                 if (minPrice !== undefined) {
@@ -269,6 +284,23 @@ const Products: React.FC = () => {
 
                 if (gender) {
                     filters.gender = gender
+                }
+
+                // Contact lens specific filters
+                if (lensType) {
+                    filters.lensType = lensType
+                }
+                
+                if (baseCurve) {
+                    filters.baseCurve = baseCurve
+                }
+                
+                if (diameter) {
+                    filters.diameter = diameter
+                }
+                
+                if (replacementPeriod) {
+                    filters.replacementPeriod = replacementPeriod
                 }
 
                 // Note: Color filtering is done client-side after fetching products
@@ -435,7 +467,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals, currentSection, location.pathname])
+    }, [selectedCategory, selectedSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, currentPage, sortBy, showNewArrivals, currentSection, location.pathname, lensType, baseCurve, diameter, replacementPeriod])
 
 
     const handlePageChange = (newPage: number) => {
@@ -616,136 +648,278 @@ const Products: React.FC = () => {
 
                     {/* Filter Options Row */}
                     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-                        {/* Category Filter */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
-                            <select
-                                value={selectedCategory}
-                                onChange={(e) => {
-                                    setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
-                                    setCurrentPage(1)
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                            >
-                                <option value="all">All Categories</option>
-                                {productOptions?.categories?.map((category) => (
-                                    <option key={category.id} value={category.id}>
-                                        {translateCategory(category)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Frame Shape Filter */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Shape</label>
-                            <select
-                                value={frameShape}
-                                onChange={(e) => {
-                                    setFrameShape(e.target.value)
-                                    setCurrentPage(1)
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                            >
-                                <option value="">All Shapes</option>
-                                {productOptions?.frameShapes?.map((shape) => (
-                                    <option key={shape} value={shape}>
-                                        {shape.charAt(0).toUpperCase() + shape.slice(1).replace('_', ' ')}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Frame Material Filter */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Material</label>
-                            <select
-                                value={frameMaterial}
-                                onChange={(e) => {
-                                    setFrameMaterial(e.target.value)
-                                    setCurrentPage(1)
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                            >
-                                <option value="">All Materials</option>
-                                {productOptions?.frameMaterials?.map((material) => (
-                                    <option key={material} value={material}>
-                                        {material.charAt(0).toUpperCase() + material.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Gender Filter */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Gender</label>
-                            <select
-                                value={gender}
-                                onChange={(e) => {
-                                    setGender(e.target.value)
-                                    setCurrentPage(1)
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                            >
-                                <option value="">All</option>
-                                {productOptions?.genders?.map((g) => (
-                                    <option key={g} value={g}>
-                                        {g.charAt(0).toUpperCase() + g.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Price Range */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <input
-                                        type="number"
-                                        placeholder="Min price"
-                                        value={minPrice || ''}
+                        {currentSection === 'contact-lenses' ? (
+                            // Contact Lens Specific Filters
+                            <>
+                                {/* Category Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
+                                    <select
+                                        value={selectedCategory}
                                         onChange={(e) => {
-                                            setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
                                             setCurrentPage(1)
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                    />
+                                    >
+                                        <option value="all">All Categories</option>
+                                        {productOptions?.categories?.map((category) => (
+                                            <option key={category.id} value={category.id}>
+                                                {translateCategory(category)}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                                <div>
-                                    <input
-                                        type="number"
-                                        placeholder="Max price"
-                                        value={maxPrice || ''}
+
+                                {/* Lens Type Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Lens Type</label>
+                                    <select
+                                        value={lensType}
                                         onChange={(e) => {
-                                            setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                            setLensType(e.target.value)
                                             setCurrentPage(1)
                                         }}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                                    />
+                                    >
+                                        <option value="">All Types</option>
+                                        {productOptions?.lensTypeEnums?.map((type) => (
+                                            <option key={type} value={type}>
+                                                {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Colors Filter */}
-                        <div className="space-y-4">
-                            <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Colors</label>
-                            <select
-                                value={selectedColor}
-                                onChange={(e) => {
-                                    setSelectedColor(e.target.value)
-                                    setCurrentPage(1)
-                                }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
-                            >
-                                <option value="">All Colors</option>
-                                {availableColors.map((color) => (
-                                    <option key={color} value={color}>
-                                        {color}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
+                                {/* Base Curve Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Base Curve</label>
+                                    <select
+                                        value={baseCurve}
+                                        onChange={(e) => {
+                                            setBaseCurve(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Base Curves</option>
+                                        <option value="8.4">8.4</option>
+                                        <option value="8.5">8.5</option>
+                                        <option value="8.6">8.6</option>
+                                        <option value="8.7">8.7</option>
+                                        <option value="8.8">8.8</option>
+                                        <option value="8.9">8.9</option>
+                                        <option value="9.0">9.0</option>
+                                    </select>
+                                </div>
+
+                                {/* Diameter Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Diameter</label>
+                                    <select
+                                        value={diameter}
+                                        onChange={(e) => {
+                                            setDiameter(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Diameters</option>
+                                        <option value="13.8">13.8</option>
+                                        <option value="14.0">14.0</option>
+                                        <option value="14.2">14.2</option>
+                                        <option value="14.4">14.4</option>
+                                        <option value="14.5">14.5</option>
+                                        <option value="15.0">15.0</option>
+                                    </select>
+                                </div>
+
+                                {/* Replacement Period Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Replacement</label>
+                                    <select
+                                        value={replacementPeriod}
+                                        onChange={(e) => {
+                                            setReplacementPeriod(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Periods</option>
+                                        <option value="daily">Daily</option>
+                                        <option value="bi-weekly">Bi-Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="Min price"
+                                                value={minPrice || ''}
+                                                onChange={(e) => {
+                                                    setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                    setCurrentPage(1)
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="Max price"
+                                                value={maxPrice || ''}
+                                                onChange={(e) => {
+                                                    setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                    setCurrentPage(1)
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            // Regular Eyeglasses/Sunglasses Filters
+                            <>
+                                {/* Category Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
+                                    <select
+                                        value={selectedCategory}
+                                        onChange={(e) => {
+                                            setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="all">All Categories</option>
+                                        {productOptions?.categories?.map((category) => (
+                                            <option key={category.id} value={category.id}>
+                                                {translateCategory(category)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Frame Shape Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Shape</label>
+                                    <select
+                                        value={frameShape}
+                                        onChange={(e) => {
+                                            setFrameShape(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Shapes</option>
+                                        {productOptions?.frameShapes?.map((shape) => (
+                                            <option key={shape} value={shape}>
+                                                {shape.charAt(0).toUpperCase() + shape.slice(1).replace('_', ' ')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Frame Material Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Frame Material</label>
+                                    <select
+                                        value={frameMaterial}
+                                        onChange={(e) => {
+                                            setFrameMaterial(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Materials</option>
+                                        {productOptions?.frameMaterials?.map((material) => (
+                                            <option key={material} value={material}>
+                                                {material.charAt(0).toUpperCase() + material.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Gender Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Gender</label>
+                                    <select
+                                        value={gender}
+                                        onChange={(e) => {
+                                            setGender(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All</option>
+                                        {productOptions?.genders?.map((g) => (
+                                            <option key={g} value={g}>
+                                                {g.charAt(0).toUpperCase() + g.slice(1)}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Price Range */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price Range</label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="Min price"
+                                                value={minPrice || ''}
+                                                onChange={(e) => {
+                                                    setMinPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                    setCurrentPage(1)
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                            />
+                                        </div>
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="Max price"
+                                                value={maxPrice || ''}
+                                                onChange={(e) => {
+                                                    setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
+                                                    setCurrentPage(1)
+                                                }}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Colors Filter */}
+                                <div className="space-y-4">
+                                    <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Colors</label>
+                                    <select
+                                        value={selectedColor}
+                                        onChange={(e) => {
+                                            setSelectedColor(e.target.value)
+                                            setCurrentPage(1)
+                                        }}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    >
+                                        <option value="">All Colors</option>
+                                        {availableColors.map((color) => (
+                                            <option key={color} value={color}>
+                                                {color}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </>
+                        )}
                     </div>
                     {/* Add spacer div for visual separation */}
                     <div className="mb-20"></div>

@@ -180,6 +180,12 @@ export interface ProductFilters {
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   isFeatured?: boolean; // Filter featured products (true/false)
+  
+  // Contact lens specific filters
+  baseCurve?: string;
+  diameter?: string;
+  replacementPeriod?: string;
+  
   [key: string]: any; // Allow for additional filter properties
 }
 

@@ -20,6 +20,7 @@ import {
 import { getProductImageUrl } from '../../utils/productImage'
 import { useCart } from '../../context/CartContext'
 import CategoryBanner from '../../components/home/CategoryBanner'
+import RelatedCategories from '../../components/shop/RelatedCategories'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
@@ -52,8 +53,8 @@ const CategoryPage: React.FC = () => {
 
     // Filter states
     const [searchTerm, setSearchTerm] = useState('')
-    const [frameShape, setFrameShape] = useState<string>('')
-    const [frameMaterial, setFrameMaterial] = useState<string>('')
+    const [lensType, setLensType] = useState<string>('')
+    const [lensCoating, setLensCoating] = useState<string>('')
     const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
     const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
     const [gender, setGender] = useState<string>('')
@@ -170,12 +171,12 @@ const CategoryPage: React.FC = () => {
                     filters.search = searchTerm
                 }
 
-                if (frameShape) {
-                    filters.frameShape = frameShape
+                if (lensType) {
+                    filters.lensType = lensType
                 }
 
-                if (frameMaterial) {
-                    filters.frameMaterial = frameMaterial
+                if (lensCoating) {
+                    filters.lensCoating = lensCoating
                 }
 
                 if (minPrice !== undefined) {
@@ -341,7 +342,7 @@ const CategoryPage: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, sortBy])
+    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, lensType, lensCoating, minPrice, maxPrice, gender, selectedColor, sortBy])
 
     // Fetch product options on mount
     useEffect(() => {
@@ -457,6 +458,13 @@ const CategoryPage: React.FC = () => {
                         </div>
                     )}
 
+                    {/* Related Categories Section */}
+                    <RelatedCategories 
+                        category={categoryInfo.category}
+                        subcategory={categoryInfo.subcategory}
+                        subSubcategory={categoryInfo.subSubcategory}
+                    />
+
                     {/* Filters and Search */}
                     <div className="mb-2">
                         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 mb-4">
@@ -498,41 +506,41 @@ const CategoryPage: React.FC = () => {
 
                         {/* Filter Options Row */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-5 gap-3">
-                            {/* Frame Shape Filter */}
+                            {/* Lens Type Filter */}
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Frame Shape</label>
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Lens Type</label>
                                 <select
-                                    value={frameShape}
+                                    value={lensType}
                                     onChange={(e) => {
-                                        setFrameShape(e.target.value)
+                                        setLensType(e.target.value)
                                         setCurrentPage(1)
                                     }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                                 >
-                                    <option value="">All Shapes</option>
-                                    {productOptions?.frameShapes?.map((shape) => (
-                                        <option key={shape} value={shape}>
-                                            {shape.charAt(0).toUpperCase() + shape.slice(1).replace('_', ' ')}
+                                    <option value="">All Types</option>
+                                    {productOptions?.lensTypes?.map((lensType) => (
+                                        <option key={lensType.id} value={lensType.slug}>
+                                            {lensType.name}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {/* Frame Material Filter */}
+                            {/* Lens Coating Filter */}
                             <div className="space-y-2">
-                                <label className="block text-sm font-semibold text-gray-800 mb-1">Frame Material</label>
+                                <label className="block text-sm font-semibold text-gray-800 mb-1">Lens Coating</label>
                                 <select
-                                    value={frameMaterial}
+                                    value={lensCoating}
                                     onChange={(e) => {
-                                        setFrameMaterial(e.target.value)
+                                        setLensCoating(e.target.value)
                                         setCurrentPage(1)
                                     }}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                                 >
-                                    <option value="">All Materials</option>
-                                    {productOptions?.frameMaterials?.map((material) => (
-                                        <option key={material} value={material}>
-                                            {material.charAt(0).toUpperCase() + material.slice(1)}
+                                    <option value="">All Coatings</option>
+                                    {productOptions?.lensCoatings?.map((coating) => (
+                                        <option key={coating.id} value={coating.slug}>
+                                            {coating.name}
                                         </option>
                                     ))}
                                 </select>
