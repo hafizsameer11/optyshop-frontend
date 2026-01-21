@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 
 interface AxisDiagramProps {
   onClose?: () => void
@@ -11,284 +11,168 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   compact = false,
   axisValue = 0
 }) => {
-  // Calculate the rotation for the needle based on the axisValue
-  // For the D-shape:
-  // - Positive values (0 to +180): needle points to lower arc
-  // - Negative values (-180 to 0): needle points to upper arc
-  const needleLength = 160
-  let needleRadians: number
-  let needleX: number
-  let needleY: number
-  
-  if (axisValue >= 0) {
-    // Positive values: needle points to lower arc (below baseline)
-    needleRadians = (axisValue * Math.PI) / 180
-    needleX = 200 + needleLength * Math.cos(needleRadians)
-    needleY = 200 + needleLength * Math.sin(needleRadians) // Positive Y for lower arc
-  } else {
-    // Negative values: needle points to upper arc (above baseline)
-    const positiveAngle = Math.abs(axisValue)
-    needleRadians = (positiveAngle * Math.PI) / 180
-    needleX = 200 + needleLength * Math.cos(needleRadians)
-    needleY = 200 - needleLength * Math.sin(needleRadians) // Negative Y for upper arc
-  }
+  const [needleAngle, setNeedleAngle] = useState(0);
+
+  useEffect(() => {
+    // Convert axis value to rotation angle for circular protractor
+    // 0° is at the right (3 o'clock position)
+    // Positive values go counter-clockwise
+    // Negative values go clockwise
+    let angle = 0;
+    
+    if (axisValue < 0) {
+      // Negative values: -1 becomes 1°, -90 becomes 90°, -180 becomes 180°
+      angle = Math.abs(axisValue);
+    } else if (axisValue > 0) {
+      // Positive values: 1 becomes 359°, 90 becomes 270°, 180 becomes 180°
+      angle = 360 - axisValue;
+    }
+    
+    setNeedleAngle(angle);
+  }, [axisValue]);
+
+  const centerX = 200;
+  const centerY = 200;
+  const radius = 160;
+  const needleLength = radius * 0.8;
+
+  // Calculate needle position
+  const needleAngleRad = (needleAngle - 90) * (Math.PI / 180);
+  const needleX = centerX + Math.cos(needleAngleRad) * needleLength;
+  const needleY = centerY + Math.sin(needleAngleRad) * needleLength;
+
+  // Generate angle markings for circular protractor
+  const generateMarkings = () => {
+    const markings = [];
+    
+    // Main degree markings every 10 degrees
+    for (let i = 0; i <= 360; i += 10) {
+      const angle = (i - 90) * (Math.PI / 180); // Convert to radians, adjust for SVG coordinate system
+      const isMainMarking = i % 30 === 0;
+      const markLength = isMainMarking ? 15 : 8;
+      
+      const x1 = centerX + Math.cos(angle) * (radius - markLength);
+      const y1 = centerY + Math.sin(angle) * (radius - markLength);
+      const x2 = centerX + Math.cos(angle) * radius;
+      const y2 = centerY + Math.sin(angle) * radius;
+      
+      markings.push(
+        <line
+          key={`mark-${i}`}
+          x1={x1}
+          y1={y1}
+          x2={x2}
+          y2={y2}
+          stroke="#333"
+          strokeWidth={isMainMarking ? 2 : 1}
+        />
+      );
+      
+      // Add degree labels for main markings
+      if (isMainMarking) {
+        const labelRadius = radius - 25;
+        const labelX = centerX + Math.cos(angle) * labelRadius;
+        const labelY = centerY + Math.sin(angle) * labelRadius;
+        
+        // Calculate the display value (positive/negative)
+        let displayValue = i;
+        if (i > 0 && i < 180) {
+          displayValue = -i; // Negative on the right side (0° to 180°)
+        } else if (i > 180) {
+          displayValue = 360 - i; // Positive on the left side (180° to 360°)
+        }
+        
+        markings.push(
+          <text
+            key={`label-${i}`}
+            x={labelX}
+            y={labelY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="12"
+            fill="#333"
+            fontWeight="bold"
+          >
+            {displayValue}
+          </text>
+        );
+      }
+    }
+    
+    return markings;
+  };
 
   
   if (compact) {
     return (
       <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm">
-
         <div className="flex justify-center items-center">
-          <div className="relative" style={{ width: '400px', height: '250px' }}>
-            {/* SVG Gauge Diagram */}
+          <div className="relative" style={{ width: '400px', height: '400px' }}>
+            {/* Circular Protractor SVG */}
             <svg
-              viewBox="0 0 400 250"
+              viewBox="0 0 400 400"
               className="w-full h-full"
               style={{ maxWidth: '100%', height: 'auto' }}
             >
-              {/* Semi-circle base line */}
+              {/* Outer circle */}
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r={radius}
+                fill="white"
+                stroke="#333"
+                strokeWidth="2"
+              />
+              
+              {/* Inner circle */}
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r="8"
+                fill="#333"
+              />
+              
+              {/* Angle markings */}
+              {generateMarkings()}
+              
+              {/* Horizontal and vertical reference lines */}
               <line
-                x1="0"
-                y1="200"
-                x2="400"
-                y2="200"
-                stroke="#000"
-                strokeWidth="2"
+                x1={centerX - radius}
+                y1={centerY}
+                x2={centerX + radius}
+                y2={centerY}
+                stroke="#666"
+                strokeWidth="1"
+                strokeDasharray="2,2"
               />
-
-              {/* Outer arc */}
-              <path
-                d="M 20 200 A 180 180 0 0 1 380 200"
-                fill="none"
-                stroke="#000"
-                strokeWidth="2"
+              <line
+                x1={centerX}
+                y1={centerY - radius}
+                x2={centerX}
+                y2={centerY + radius}
+                stroke="#666"
+                strokeWidth="1"
+                strokeDasharray="2,2"
               />
-
-              {/* Major tick marks - Positive values (0 to +180) on lower arc */}
-              {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
-                const radians = (angle * Math.PI) / 180
-                
-                // Tick marks on lower arc (below baseline)
-                const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 + 180 * Math.sin(radians)
-                const innerX = 200 + 165 * Math.cos(radians)
-                const innerY = 200 + 165 * Math.sin(radians)
-
-                return (
-                  <line
-                    key={`major-pos-${angle}`}
-                    x1={outerX}
-                    y1={outerY}
-                    x2={innerX}
-                    y2={innerY}
-                    stroke="#000"
-                    strokeWidth="2"
-                  />
-                )
-              })}
-
-              {/* Major tick marks - Negative values (-180 to -10) on upper arc */}
-              {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-                // Convert negative angle to positive for positioning on upper arc
-                const positiveAngle = Math.abs(angle)
-                const radians = (positiveAngle * Math.PI) / 180
-                
-                // Tick marks on upper arc (above baseline)
-                const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 - 180 * Math.sin(radians)
-                const innerX = 200 + 165 * Math.cos(radians)
-                const innerY = 200 - 165 * Math.sin(radians)
-
-                return (
-                  <line
-                    key={`major-neg-${angle}`}
-                    x1={outerX}
-                    y1={outerY}
-                    x2={innerX}
-                    y2={innerY}
-                    stroke="#000"
-                    strokeWidth="2"
-                  />
-                )
-              })}
-
-              {/* Minor tick marks at 5-unit intervals - Positive values on lower arc */}
-              {[5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175].map((angle) => {
-                const radians = (angle * Math.PI) / 180
-                
-                // Minor tick marks on lower arc (below baseline)
-                const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 + 180 * Math.sin(radians)
-                const innerX = 200 + 172 * Math.cos(radians)
-                const innerY = 200 + 172 * Math.sin(radians)
-
-                return (
-                  <line
-                    key={`minor-pos-${angle}`}
-                    x1={outerX}
-                    y1={outerY}
-                    x2={innerX}
-                    y2={innerY}
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                )
-              })}
-
-              {/* Minor tick marks at 5-unit intervals - Negative values on upper arc */}
-              {[-175, -165, -155, -145, -135, -125, -115, -105, -95, -85, -75, -65, -55, -45, -35, -25, -15, -5].map((angle) => {
-                // Convert negative angle to positive for positioning on upper arc
-                const positiveAngle = Math.abs(angle)
-                const radians = (positiveAngle * Math.PI) / 180
-                
-                // Minor tick marks on upper arc (above baseline)
-                const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 - 180 * Math.sin(radians)
-                const innerX = 200 + 172 * Math.cos(radians)
-                const innerY = 200 - 172 * Math.sin(radians)
-
-                return (
-                  <line
-                    key={`minor-neg-${angle}`}
-                    x1={outerX}
-                    y1={outerY}
-                    x2={innerX}
-                    y2={innerY}
-                    stroke="#000"
-                    strokeWidth="1"
-                  />
-                )
-              })}
-
-              {/* Number labels - Positive values (0° to +180°) on lower arc */}
-              {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
-                const radians = (angle * Math.PI) / 180
-                let labelRadius = 145
-                let labelX: number
-                let labelY: number
-                
-                // Special positioning for 0 and 180
-                if (angle === 0) {
-                  // 0° positioned slightly to the right of center, well below baseline
-                  labelX = 210
-                  labelY = 235
-                } else if (angle === 180) {
-                  // 180° positioned slightly to the left of center, well below baseline
-                  labelX = 190
-                  labelY = 235
-                } else {
-                  // All other positive angles on the lower arc (below baseline)
-                  labelX = 200 + labelRadius * Math.cos(radians)
-                  labelY = 200 + labelRadius * Math.sin(radians)
-                }
-                
-                return (
-                  <text
-                    key={`label-pos-${angle}`}
-                    x={labelX}
-                    y={labelY}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="12"
-                    fill="#000"
-                    fontWeight="500"
-                  >
-                    {angle > 0 ? `+${angle}°` : '0°'}
-                  </text>
-                )
-              })}
-
-              {/* Number labels - Negative values (-180° to -10°) on upper arc */}
-              {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-                // Convert negative angle to positive for positioning on upper arc
-                const positiveAngle = Math.abs(angle)
-                const radians = (positiveAngle * Math.PI) / 180
-                let labelRadius = 145
-                let labelX: number
-                let labelY: number
-                
-                // Special positioning for -180
-                if (angle === -180) {
-                  // -180° positioned slightly to the left of center, above baseline
-                  labelX = 190
-                  labelY = 160
-                } else {
-                  // All other negative angles on the upper arc (above baseline)
-                  labelX = 200 + labelRadius * Math.cos(radians)
-                  labelY = 200 - labelRadius * Math.sin(radians)
-                }
-                
-                return (
-                  <text
-                    key={`label-neg-${angle}`}
-                    x={labelX}
-                    y={labelY}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="12"
-                    fill="#000"
-                    fontWeight="500"
-                  >
-                    {angle}°
-                  </text>
-                )
-              })}
               
-              {/* Base line label */}
-              <text
-                x="200"
-                y="220"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="14"
-                fill="#000"
-                fontWeight="bold"
-              >
-                Base line
-              </text>
+              {/* Needle */}
+              <line
+                x1={centerX}
+                y1={centerY}
+                x2={needleX}
+                y2={needleY}
+                stroke="#ff0000"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
               
-              {/* Centre label */}
-              <text
-                x="200"
-                y="240"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                fontSize="12"
-                fill="#000"
-                fontWeight="500"
-              >
-                Centre
-              </text>
-
-              {/* Red triangular pointer */}
-              <defs>
-                <marker
-                  id="pointer-compact"
-                  markerWidth="12"
-                  markerHeight="12"
-                  refX="10"
-                  refY="3"
-                  orient="auto"
-                >
-                  <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
-                </marker>
-              </defs>
-
-              {/* Only show needle when axisValue is not 0 */}
-              {axisValue !== 0 && (
-                <line
-                  x1="200"
-                  y1="200"
-                  x2={needleX}
-                  y2={needleY}
-                  stroke="#dc2626"
-                  strokeWidth="3"
-                  markerEnd="url(#pointer-compact)"
-                />
-              )}
-
-              {/* Center point */}
-              <circle cx="200" cy="200" r="4" fill="#dc2626" />
+              {/* Needle base circle */}
+              <circle
+                cx={centerX}
+                cy={centerY}
+                r="6"
+                fill="#ff0000"
+              />
             </svg>
           </div>
         </div>
@@ -313,257 +197,79 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
       )}
 
       <div className="flex justify-center items-center mb-4">
-        <div className="relative" style={{ width: '400px', height: '250px' }}>
-          {/* SVG Gauge Diagram */}
+        <div className="relative" style={{ width: '400px', height: '400px' }}>
+          {/* Circular Protractor SVG */}
           <svg
-            viewBox="0 0 400 250"
+            viewBox="0 0 400 400"
             className="w-full h-full"
             style={{ maxWidth: '100%', height: 'auto' }}
           >
-            {/* Semi-circle base line */}
+            {/* Outer circle */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r={radius}
+              fill="white"
+              stroke="#333"
+              strokeWidth="2"
+            />
+            
+            {/* Inner circle */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r="8"
+              fill="#333"
+            />
+            
+            {/* Angle markings */}
+            {generateMarkings()}
+            
+            {/* Horizontal and vertical reference lines */}
             <line
-              x1="0"
-              y1="200"
-              x2="400"
-              y2="200"
-              stroke="#000"
-              strokeWidth="2"
+              x1={centerX - radius}
+              y1={centerY}
+              x2={centerX + radius}
+              y2={centerY}
+              stroke="#666"
+              strokeWidth="1"
+              strokeDasharray="2,2"
             />
-
-            {/* Outer arc */}
-            <path
-              d="M 20 200 A 180 180 0 0 1 380 200"
-              fill="none"
-              stroke="#000"
-              strokeWidth="2"
+            <line
+              x1={centerX}
+              y1={centerY - radius}
+              x2={centerX}
+              y2={centerY + radius}
+              stroke="#666"
+              strokeWidth="1"
+              strokeDasharray="2,2"
             />
-
-            {/* Major tick marks - Positive values (0 to +180) on lower arc */}
-            {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              
-              // Tick marks on lower arc (below baseline)
-              const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 + 180 * Math.sin(radians)
-              const innerX = 200 + 165 * Math.cos(radians)
-              const innerY = 200 + 165 * Math.sin(radians)
-
-              return (
-                <line
-                  key={`major-pos-${angle}`}
-                  x1={outerX}
-                  y1={outerY}
-                  x2={innerX}
-                  y2={innerY}
-                  stroke="#000"
-                  strokeWidth="2"
-                />
-              )
-            })}
-
-            {/* Major tick marks - Negative values (-180 to -10) on upper arc */}
-            {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-              // Convert negative angle to positive for positioning on upper arc
-              const positiveAngle = Math.abs(angle)
-              const radians = (positiveAngle * Math.PI) / 180
-              
-              // Tick marks on upper arc (above baseline)
-              const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 - 180 * Math.sin(radians)
-              const innerX = 200 + 165 * Math.cos(radians)
-              const innerY = 200 - 165 * Math.sin(radians)
-
-              return (
-                <line
-                  key={`major-neg-${angle}`}
-                  x1={outerX}
-                  y1={outerY}
-                  x2={innerX}
-                  y2={innerY}
-                  stroke="#000"
-                  strokeWidth="2"
-                />
-              )
-            })}
-
-            {/* Minor tick marks at 5-unit intervals - Positive values on lower arc */}
-            {[5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              
-              // Minor tick marks on lower arc (below baseline)
-              const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 + 180 * Math.sin(radians)
-              const innerX = 200 + 172 * Math.cos(radians)
-              const innerY = 200 + 172 * Math.sin(radians)
-
-              return (
-                <line
-                  key={`minor-pos-${angle}`}
-                  x1={outerX}
-                  y1={outerY}
-                  x2={innerX}
-                  y2={innerY}
-                  stroke="#000"
-                  strokeWidth="1"
-                />
-              )
-            })}
-
-            {/* Minor tick marks at 5-unit intervals - Negative values on upper arc */}
-            {[-175, -165, -155, -145, -135, -125, -115, -105, -95, -85, -75, -65, -55, -45, -35, -25, -15, -5].map((angle) => {
-              // Convert negative angle to positive for positioning on upper arc
-              const positiveAngle = Math.abs(angle)
-              const radians = (positiveAngle * Math.PI) / 180
-              
-              // Minor tick marks on upper arc (above baseline)
-              const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 - 180 * Math.sin(radians)
-              const innerX = 200 + 172 * Math.cos(radians)
-              const innerY = 200 - 172 * Math.sin(radians)
-
-              return (
-                <line
-                  key={`minor-neg-${angle}`}
-                  x1={outerX}
-                  y1={outerY}
-                  x2={innerX}
-                  y2={innerY}
-                  stroke="#000"
-                  strokeWidth="1"
-                />
-              )
-            })}
-
-            {/* Number labels - Positive values (0° to +180°) on lower arc */}
-            {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              let labelRadius = 145
-              let labelX: number
-              let labelY: number
-              
-              // Special positioning for 0 and 180
-              if (angle === 0) {
-                // 0° positioned slightly to the right of center, well below baseline
-                labelX = 210
-                labelY = 235
-              } else if (angle === 180) {
-                // 180° positioned slightly to the left of center, well below baseline
-                labelX = 190
-                labelY = 235
-              } else {
-                // All other positive angles on the lower arc (below baseline)
-                labelX = 200 + labelRadius * Math.cos(radians)
-                labelY = 200 + labelRadius * Math.sin(radians)
-              }
-              
-              return (
-                <text
-                  key={`label-pos-${angle}`}
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="12"
-                  fill="#000"
-                  fontWeight="500"
-                >
-                  {angle > 0 ? `+${angle}°` : '0°'}
-                </text>
-              )
-            })}
-
-            {/* Number labels - Negative values (-180° to -10°) on upper arc */}
-            {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-              // Convert negative angle to positive for positioning on upper arc
-              const positiveAngle = Math.abs(angle)
-              const radians = (positiveAngle * Math.PI) / 180
-              let labelRadius = 145
-              let labelX: number
-              let labelY: number
-              
-              // Special positioning for -180
-              if (angle === -180) {
-                // -180° positioned slightly to the left of center, above baseline
-                labelX = 190
-                labelY = 160
-              } else {
-                // All other negative angles on the upper arc (above baseline)
-                labelX = 200 + labelRadius * Math.cos(radians)
-                labelY = 200 - labelRadius * Math.sin(radians)
-              }
-              
-              return (
-                <text
-                  key={`label-neg-${angle}`}
-                  x={labelX}
-                  y={labelY}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                  fontSize="12"
-                  fill="#000"
-                  fontWeight="500"
-                >
-                  {angle}°
-                </text>
-              )
-            })}
             
-            {/* Base line label */}
-            <text
-              x="200"
-              y="220"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="14"
-              fill="#000"
-              fontWeight="bold"
-            >
-              Base line
-            </text>
+            {/* Needle */}
+            <line
+              x1={centerX}
+              y1={centerY}
+              x2={needleX}
+              y2={needleY}
+              stroke="#ff0000"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
             
-            {/* Centre label */}
-            <text
-              x="200"
-              y="240"
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="12"
-              fill="#000"
-              fontWeight="500"
-            >
-              Centre
-            </text>
-
-            {/* Red triangular pointer */}
-            <defs>
-              <marker
-                id="pointer-full"
-                markerWidth="12"
-                markerHeight="12"
-                refX="10"
-                refY="3"
-                orient="auto"
-              >
-                <polygon points="0 0, 12 3, 0 6" fill="#dc2626" stroke="#dc2626" strokeWidth="0.5" />
-              </marker>
-            </defs>
-
-            {/* Only show needle when axisValue is not 0 */}
-            {axisValue !== 0 && (
-              <line
-                x1="200"
-                y1="200"
-                x2={needleX}
-                y2={needleY}
-                stroke="#dc2626"
-                strokeWidth="3"
-                markerEnd="url(#pointer-full)"
-              />
-            )}
-
-            {/* Center point */}
-            <circle cx="200" cy="200" r="4" fill="#dc2626" />
+            {/* Needle base circle */}
+            <circle
+              cx={centerX}
+              cy={centerY}
+              r="6"
+              fill="#ff0000"
+            />
           </svg>
+        </div>
+      </div>
+
+      <div className="text-center mb-4">
+        <div className="text-lg font-bold text-gray-800">
+          Axis: {axisValue}°
         </div>
       </div>
 
@@ -571,9 +277,9 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         <h4 className="font-semibold text-blue-900 mb-2">How to read your axis:</h4>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
           <li>The axis is measured in degrees from -180° to +180°</li>
-          <li>Negative values (-180° to 0°) are shown on the upper arc</li>
-          <li>Positive values (0° to +180°) are shown on the lower arc</li>
-          <li>0° is at the right center, +90° is at the bottom, -90° is at the top</li>
+          <li>Negative values (-180° to 0°) are shown on the right side</li>
+          <li>Positive values (0° to +180°) are shown on the left side</li>
+          <li>0° is at the right (3 o'clock position)</li>
           <li>The red needle points to your selected axis value</li>
           <li>Find the axis value on your prescription and select it from the dropdown</li>
           <li>If you have astigmatism (CYL value), you must provide an axis value</li>
