@@ -5,16 +5,16 @@ const TestAxisDiagram = () => {
   return (
     <div style={{ padding: '20px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
       <div>
-        <h3>Right Eye OD: Axis -166°</h3>
-        <AxisDiagram axisValue={-166} compact={true} />
+        <h3>Right Eye OD: Axis 135°</h3>
+        <AxisDiagram axisValue={135} compact={true} />
       </div>
       <div>
-        <h3>Left Eye OS: Axis -168°</h3>
-        <AxisDiagram axisValue={-168} compact={true} />
+        <h3>Left Eye OS: Axis 90°</h3>
+        <AxisDiagram axisValue={90} compact={true} />
       </div>
       <div>
-        <h3>Full Version - Axis -166°</h3>
-        <AxisDiagram axisValue={-166} />
+        <h3>Full Version - Axis 45°</h3>
+        <AxisDiagram axisValue={45} />
       </div>
     </div>
   )

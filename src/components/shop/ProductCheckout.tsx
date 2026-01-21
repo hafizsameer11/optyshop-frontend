@@ -26,6 +26,7 @@ import {
   type PrescriptionLensType as ApiPrescriptionLensType,
   type PrescriptionLensVariant
 } from '../../services/prescriptionLensService'
+import AxisDiagram from './AxisDiagram'
 import {
   getProductConfiguration,
   getLensThicknessMaterials,
@@ -4799,6 +4800,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
 
   const [copyRightToLeft, setCopyRightToLeft] = useState(false)
+  const [showAxisDiagram, setShowAxisDiagram] = useState(false)
 
   // Fetch form structure from API
   useEffect(() => {
@@ -4945,7 +4947,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   }, [getFieldOptions])
 
   return (
-    <div className="h-full flex flex-col min-h-0">
+    <>
+      <div className="h-full flex flex-col min-h-0">
       <div className="flex items-center gap-2 mb-4 flex-shrink-0">
         <button
           onClick={onBack}
@@ -5110,9 +5113,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
         {/* Eyes Section - Horizontal Layout */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 items-start">
             {/* Right Eye (OD) */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-3 sm:p-4 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full">
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-6 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
               <div className="flex items-center gap-2 mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-2 h-2 rounded-full bg-purple-600"></div>
@@ -5197,8 +5200,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
+                  <div className="relative">
                       <select
                         value={prescriptionData.od_axis || ''}
                         onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
@@ -5222,7 +5224,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         </svg>
                       </div>
                     </div>
-                                      </div>
+                  </div>
                   {errors.od_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
                   )}
@@ -5231,7 +5233,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             </div>
 
             {/* Left Eye (OS) */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-3 sm:p-4 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full">
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 sm:p-6 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -5316,8 +5318,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">AXIS</label>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
+                  <div className="relative">
                       <select
                         value={prescriptionData.os_axis || ''}
                         onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
@@ -5341,7 +5342,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         </svg>
                       </div>
                     </div>
-                                      </div>
+                  </div>
                   {errors.os_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
                   )}
@@ -5373,7 +5374,60 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             )}
           </div>
 
+          {/* Axis Diagram Toggle and Display */}
+          <div className="mb-6 mt-6">
+            <button
+              type="button"
+              onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+              className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              <span>{showAxisDiagram ? 'Hide' : 'Show'} Axis Diagram</span>
+            </button>
+            
+            {showAxisDiagram && (
+              <div className="mt-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-200 overflow-visible">
+                  <div className="text-center mb-4">
+                    <h3 className="text-base font-semibold text-gray-800 mb-2">Axis Measurements</h3>
+                    <div className="flex justify-center items-center gap-6">
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-purple-600 mb-1">Right Eye (OD)</div>
+                        <div className="text-lg font-bold text-gray-800">{Number(prescriptionData.od_axis) || 0}°</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xs font-medium text-blue-600 mb-1">Left Eye (OS)</div>
+                        <div className="text-lg font-bold text-gray-800">{Number(prescriptionData.os_axis) || 0}°</div>
+                      </div>
+                    </div>
                   </div>
+                  
+                  <div className="flex flex-col justify-center items-center gap-6">
+                    <div className="text-center flex-shrink-0">
+                      <div className="text-xs font-medium text-blue-600 mb-2">OS</div>
+                      <div className="mx-auto" style={{ minWidth: '300px', minHeight: '320px', maxWidth: '100vw' }}>
+                        <AxisDiagram 
+                          axisValue={Number(prescriptionData.os_axis) || 0} 
+                          compact={true}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-center flex-shrink-0">
+                      <div className="text-xs font-medium text-purple-600 mb-2">OD</div>
+                      <div className="mx-auto" style={{ minWidth: '300px', minHeight: '320px', maxWidth: '100vw' }}>
+                        <AxisDiagram 
+                          axisValue={Number(prescriptionData.od_axis) || 0} 
+                          compact={true}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
         {/* Select Option (ADD) - Only for Progressive */}
         {isProgressive && (
@@ -5422,14 +5476,15 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </div>
         )}
 
-        <button
-          onClick={onNext}
-          className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
-        >
-          Continue
-        </button>
       </div>
-    </div>
+
+      <button
+        onClick={onNext}
+        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
+      >
+        Continue
+      </button>
+    </>
   )
 }
 

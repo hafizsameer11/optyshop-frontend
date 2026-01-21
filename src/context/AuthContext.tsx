@@ -207,18 +207,62 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         return { success: true };
       } else {
-        // Return detailed error message
+        // Return detailed error message with better formatting
+        let errorMessage = 'Registration failed';
+        
+        if (response.message && typeof response.message === 'string') {
+          errorMessage = response.message;
+        } else if (response.error && typeof response.error === 'string') {
+          errorMessage = response.error;
+        }
+        
+        // Handle validation errors specifically
+        if (response.error && typeof response.error === 'object' && response.error !== null) {
+          const validationErrors: string[] = [];
+          const errorObj = response.error as any;
+          
+          if (errorObj.errors && typeof errorObj.errors === 'object') {
+            Object.entries(errorObj.errors).forEach(([field, message]) => {
+              validationErrors.push(`${field}: ${message}`);
+            });
+          } else if (errorObj.errors && Array.isArray(errorObj.errors)) {
+            errorObj.errors.forEach((err: any) => {
+              if (typeof err === 'string') {
+                validationErrors.push(err);
+              } else if (typeof err === 'object' && err.msg) {
+                validationErrors.push(err.msg);
+              }
+            });
+          }
+          
+          if (validationErrors.length > 0) {
+            errorMessage = validationErrors.join(', ');
+          }
+        }
+        
         return { 
           success: false, 
-          message: response.message || response.error || 'Registration failed',
+          message: errorMessage,
           error: response.error
         };
       }
     } catch (error: any) {
+      let errorMessage = 'Registration failed due to an unexpected error';
+      
+      if (error && typeof error === 'object') {
+        if (error.message && typeof error.message === 'string') {
+          errorMessage = error.message;
+        } else if (error.error && typeof error.error === 'string') {
+          errorMessage = error.error;
+        }
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       return { 
         success: false, 
-        message: error.message || error.error || 'Registration failed',
-        error: error.error || error.message
+        message: errorMessage,
+        error: error
       };
     }
   };

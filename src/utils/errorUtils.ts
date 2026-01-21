@@ -88,15 +88,45 @@ export const formatErrorMessage = (error: any): string => {
       return JSON.stringify(errorObj);
     }
 
-    // Last resort: stringify the object
+    // Last resort: try to extract meaningful information from the object
     try {
-      const jsonString = JSON.stringify(error);
-      // If the JSON string is too long, truncate it
-      if (jsonString.length > 200) {
-        return jsonString.substring(0, 200) + '...';
+      // Check if it's a circular reference or complex object
+      if (error && typeof error === 'object') {
+        // Try to construct a meaningful message from common error properties
+        const parts: string[] = [];
+        
+        if (error.message) {
+          parts.push(`Message: ${error.message}`);
+        }
+        if (error.error) {
+          parts.push(`Error: ${error.error}`);
+        }
+        if (error.status) {
+          parts.push(`Status: ${error.status}`);
+        }
+        if (error.code) {
+          parts.push(`Code: ${error.code}`);
+        }
+        
+        if (parts.length > 0) {
+          return parts.join(' - ');
+        }
+        
+        // If no meaningful properties found, try a safe string representation
+        if (error.toString && typeof error.toString === 'function') {
+          const stringRepresentation = error.toString();
+          if (stringRepresentation && stringRepresentation !== '[object Object]') {
+            return stringRepresentation;
+          }
+        }
+        
+        // Final fallback - provide a generic error message
+        return 'An error occurred during registration. Please check your information and try again.';
       }
-      return jsonString;
-    } catch {
+      
+      // For non-object types, just convert to string
+      return String(error);
+    } catch (stringifyError) {
       return 'An error occurred but could not be displayed properly';
     }
   }

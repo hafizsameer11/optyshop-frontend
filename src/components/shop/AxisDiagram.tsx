@@ -15,25 +15,25 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
 
   useEffect(() => {
     // Convert axis value to rotation angle for circular protractor
-    // 0° is at the right (3 o'clock position)
-    // Positive values go counter-clockwise
-    // Negative values go clockwise
+    // In ophthalmology: 0° is at right (3 o'clock), 90° is at top (12 o'clock)
+    // 180° is at left (9 o'clock), 270° is at bottom (6 o'clock)
+    // Negative values go clockwise from 0°, positive values go counter-clockwise
     let angle = 0;
     
     if (axisValue < 0) {
-      // Negative values: -1 becomes 1°, -90 becomes 90°, -180 becomes 180°
-      angle = Math.abs(axisValue);
-    } else if (axisValue > 0) {
-      // Positive values: 1 becomes 359°, 90 becomes 270°, 180 becomes 180°
-      angle = 360 - axisValue;
+      // Negative values: -1 becomes 359°, -65 becomes 295°, -84 becomes 276°, -90 becomes 270°
+      angle = 360 + axisValue; // axisValue is negative, so this adds to 360
+    } else {
+      // Positive values: 0 becomes 0°, 90 becomes 90°, 180 becomes 180°
+      angle = axisValue;
     }
     
     setNeedleAngle(angle);
   }, [axisValue]);
 
-  const centerX = 200;
-  const centerY = 200;
-  const radius = 160;
+  const centerX = 150;
+  const centerY = 150;
+  const radius = 120;
   const needleLength = radius * 0.8;
 
   // Calculate needle position
@@ -74,12 +74,12 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         const labelX = centerX + Math.cos(angle) * labelRadius;
         const labelY = centerY + Math.sin(angle) * labelRadius;
         
-        // Calculate the display value (positive/negative)
+        // Calculate the display value (ophthalmic axis convention)
         let displayValue = i;
-        if (i > 0 && i < 180) {
-          displayValue = -i; // Negative on the right side (0° to 180°)
+        if (i > 0 && i <= 180) {
+          displayValue = i; // Positive values: 0° to 180° (right to left, through top)
         } else if (i > 180) {
-          displayValue = 360 - i; // Positive on the left side (180° to 360°)
+          displayValue = i - 360; // Negative values: 181° to 359° become -179° to -1°
         }
         
         markings.push(
@@ -105,12 +105,12 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   
   if (compact) {
     return (
-      <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm">
-        <div className="flex justify-center items-center">
-          <div className="relative" style={{ width: '400px', height: '400px' }}>
+      <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm" style={{ width: '300px', height: '320px' }}>
+        <div className="flex justify-center items-center h-full">
+          <div className="relative" style={{ width: '280px', height: '280px' }}>
             {/* Circular Protractor SVG */}
             <svg
-              viewBox="0 0 400 400"
+              viewBox="0 0 300 300"
               className="w-full h-full"
               style={{ maxWidth: '100%', height: 'auto' }}
             >
@@ -181,7 +181,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   }
 
   return (
-    <div className="bg-gray-100 rounded-lg p-6 max-w-2xl mx-auto border border-gray-300 shadow-sm">
+    <div className="bg-gray-100 rounded-lg p-4 w-72 h-80 mx-auto border border-gray-300 shadow-sm">
       {onClose && (
         <div className="flex justify-end mb-4">
           <button
@@ -196,13 +196,13 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         </div>
       )}
 
-      <div className="flex justify-center items-center mb-4">
-        <div className="relative" style={{ width: '400px', height: '400px' }}>
+      <div className="flex justify-center items-center mb-2">
+        <div className="relative" style={{ width: '200px', height: '200px' }}>
           {/* Circular Protractor SVG */}
           <svg
-            viewBox="0 0 400 400"
+            viewBox="0 0 300 300"
             className="w-full h-full"
-            style={{ maxWidth: '100%', height: 'auto' }}
+            style={{ maxWidth: '200px', height: '200px' }}
           >
             {/* Outer circle */}
             <circle
@@ -267,25 +267,13 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         </div>
       </div>
 
-      <div className="text-center mb-4">
+      <div className="text-center mb-2">
         <div className="text-lg font-bold text-gray-800">
           Axis: {axisValue}°
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">How to read your axis:</h4>
-        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-          <li>The axis is measured in degrees from -180° to +180°</li>
-          <li>Negative values (-180° to 0°) are shown on the right side</li>
-          <li>Positive values (0° to +180°) are shown on the left side</li>
-          <li>0° is at the right (3 o'clock position)</li>
-          <li>The red needle points to your selected axis value</li>
-          <li>Find the axis value on your prescription and select it from the dropdown</li>
-          <li>If you have astigmatism (CYL value), you must provide an axis value</li>
-        </ul>
-      </div>
-
+      
       {onClose && (
         <div className="mt-6 flex justify-end">
           <button
