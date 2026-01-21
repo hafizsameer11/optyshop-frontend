@@ -55,6 +55,7 @@ import PageDetail from './pages/cms/PageDetail'
 import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
 import ScrollToTop from './components/ScrollToTop'
 
+
 // Redirect component for old /product/:slug URLs
 const ProductRedirect = () => {
   const { slug } = useParams<{ slug: string }>()
@@ -69,6 +70,7 @@ function App() {
         <FloatingLanguageSwitcher />
         <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/virtual-test" element={<VirtualTest />} />
         <Route path="/digital-frames" element={<DigitalFrames />} />
         <Route path="/optical-instruments" element={<OpticalInstruments />} />

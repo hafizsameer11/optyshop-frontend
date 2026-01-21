@@ -5118,27 +5118,25 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </div>
         )}
 
-        {/* Eyes Section - Horizontal Layout */}
+        {/* Eyes Section - Vertical Layout */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+          <div className="space-y-4">
             {/* Right Eye (OD) */}
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-6 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-purple-600"></div>
-                  <label className="text-base font-bold text-gray-900">Right Eye OD</label>
-                </div>
+            <div className="bg-white rounded-xl border-2 border-purple-200 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+                <h3 className="text-lg font-semibold text-gray-900">Right Eye OD</h3>
                 <button
                   type="button"
-                  className="ml-auto text-gray-500 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
+                  className="ml-auto text-gray-400 hover:text-purple-600 transition-colors"
                   title="OD = Oculus Dexter (Right Eye)"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
@@ -5240,23 +5238,21 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             </div>
 
             {/* Left Eye (OS) */}
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 sm:p-6 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-blue-600"></div>
-                  <label className="text-base font-bold text-gray-900">Left Eye OS</label>
-                </div>
+            <div className="bg-white rounded-xl border-2 border-blue-200 p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                <h3 className="text-lg font-semibold text-gray-900">Left Eye OS</h3>
                 <button
                   type="button"
-                  className="ml-auto text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
+                  className="ml-auto text-gray-400 hover:text-blue-600 transition-colors"
                   title="OS = Oculus Sinister (Left Eye)"
                 >
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-2 sm:gap-4">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
@@ -5356,9 +5352,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+        </div>
 
-          {/* Copy Right to Left Button */}
+        {/* Copy Right to Left Button */}
           <div className="mb-6 mt-6">
             <button
               type="button"

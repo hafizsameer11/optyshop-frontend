@@ -20,6 +20,7 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
   const [pupillaryDistance, setPupillaryDistance] = useState('');
 
   const handleInputChange = (eye: 'right' | 'left', field: 'sph' | 'cyl' | 'axis', value: string) => {
+    console.log(`Changing ${eye} eye ${field} to: ${value}`);
     if (eye === 'right') {
       setRightEye(prev => ({ ...prev, [field]: value }));
     } else {
@@ -40,8 +41,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
     const dotColor = eyeType === 'right' ? 'bg-purple-500' : 'bg-blue-500';
     
     return (
-      <div className={`rounded-lg p-6 shadow-sm ${cardBgColor} border border-gray-200 h-full`}>
-        <div className="flex items-center mb-6">
+      <div className={`rounded-lg p-5 shadow-sm ${cardBgColor} border border-gray-200 h-full flex flex-col`}>
+        <div className="flex items-center mb-5">
           <div className={`w-3 h-3 rounded-full mr-3 ${dotColor}`}></div>
           <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           <div className="ml-2 w-5 h-5 bg-gray-200 rounded-full flex items-center justify-center">
@@ -49,14 +50,14 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           </div>
         </div>
         
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-3 items-end flex-grow">
           <div className="text-center">
-            <label className="text-sm font-medium text-gray-700 block mb-2">SPH</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">SPH</label>
             <div className="relative">
               <select
                 value={values.sph}
                 onChange={(e) => handleInputChange(eyeType, 'sph', e.target.value)}
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-2 py-2 h-10 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
               >
                 <option value="--">--</option>
                 <option value="-8.00">-8.00</option>
@@ -104,12 +105,12 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           </div>
 
           <div className="text-center">
-            <label className="text-sm font-medium text-gray-700 block mb-2">CYL</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">CYL</label>
             <div className="relative">
               <select
                 value={values.cyl}
                 onChange={(e) => handleInputChange(eyeType, 'cyl', e.target.value)}
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-2 py-2 h-10 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
               >
                 <option value="--">--</option>
                 <option value="-8.00">-8.00</option>
@@ -157,12 +158,12 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           </div>
 
           <div className="text-center">
-            <label className="text-sm font-medium text-gray-700 block mb-2">AXIS</label>
+            <label className="text-sm font-medium text-gray-700 block mb-1">AXIS</label>
             <div className="relative">
               <select
                 value={values.axis}
                 onChange={(e) => handleInputChange(eyeType, 'axis', e.target.value)}
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-2 py-2 h-10 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
               >
                 <option value="--">--</option>
                 {Array.from({ length: 181 }, (_, i) => i).map(num => (
@@ -217,7 +218,7 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-6 items-stretch">
         <EyeCard 
           title="Right Eye OD" 
           eyeType="right" 
