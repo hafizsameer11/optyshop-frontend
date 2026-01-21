@@ -13,7 +13,6 @@ import { createOrder, createGuestOrder, type Address as OrderAddress } from '../
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
-import AxisDiagram from '../common/AxisDiagram'
 import {
   calculateCustomizationPriceWithPrescription,
   getProductCustomizationOptions,
@@ -4922,9 +4921,13 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
     return getFieldOptions('cyl', eye)
   }, [getFieldOptions])
 
-  
+  const getAxisOptions = useCallback((eye: 'left' | 'right') => {
+    return getFieldOptions('axis', eye)
+  }, [getFieldOptions])
+
   const getOSSphereOptions = useCallback(() => getSphereOptions('left'), [getSphereOptions])
   const getOSCylinderOptions = useCallback(() => getCylinderOptions('left'), [getCylinderOptions])
+  const getOSAxisOptions = useCallback(() => getAxisOptions('left'), [getAxisOptions])
 
   // Select Option (ADD) - only from API
   const addOptions = useMemo(() => {
@@ -5196,14 +5199,30 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <AxisDiagram
-                        value={prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : 0}
-                        onChange={(value: number) => onPrescriptionChange('od_axis', value.toString())}
-                        size={120}
-                        disabled={!prescriptionData.od_cylinder || prescriptionData.od_cylinder === '0'}
-                      />
+                      <select
+                        value={prescriptionData.od_axis || ''}
+                        onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
+                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none text-transparent pr-8 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                          prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
+                          }`}
+                      >
+                        <option value="" className="text-gray-900">Select</option>
+                        {getAxisOptions('right').map(opt => (
+                          <option key={opt} value={opt} className="text-gray-900">{opt}</option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
+                          {prescriptionData.od_axis || '--'}
+                        </span>
+                      </div>
+                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.od_axis ? 'opacity-0' : 'opacity-40'}`}>
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
-                  </div>
+                                      </div>
                   {errors.od_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
                   )}
@@ -5299,14 +5318,30 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <AxisDiagram
-                        value={prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : 0}
-                        onChange={(value: number) => onPrescriptionChange('os_axis', value.toString())}
-                        size={120}
-                        disabled={!prescriptionData.os_cylinder || prescriptionData.os_cylinder === '0'}
-                      />
+                      <select
+                        value={prescriptionData.os_axis || ''}
+                        onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
+                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none text-transparent pr-8 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
+                          prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
+                          }`}
+                      >
+                        <option value="" className="text-gray-900">Select</option>
+                        {getOSAxisOptions().map(opt => (
+                          <option key={opt} value={opt} className="text-gray-900">{opt}</option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
+                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
+                          {prescriptionData.os_axis || '--'}
+                        </span>
+                      </div>
+                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.os_axis ? 'opacity-0' : 'opacity-40'}`}>
+                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
                     </div>
-                  </div>
+                                      </div>
                   {errors.os_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
                   )}
