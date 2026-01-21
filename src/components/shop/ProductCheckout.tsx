@@ -13,6 +13,7 @@ import { createOrder, createGuestOrder, type Address as OrderAddress } from '../
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useLensCustomization } from '../../hooks/useLensCustomization'
+import AxisDiagram from '../common/AxisDiagram'
 import {
   calculateCustomizationPriceWithPrescription,
   getProductCustomizationOptions,
@@ -55,7 +56,6 @@ import {
   type PrescriptionFormStructure,
   type FormType,
 } from '../../services/prescriptionFormsService'
-import AxisDiagram from './AxisDiagram'
 
 // Import test function in dev mode
 if (import.meta.env.DEV) {
@@ -4800,7 +4800,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
 
   const [copyRightToLeft, setCopyRightToLeft] = useState(false)
-  const [showAxisDiagram, setShowAxisDiagram] = useState(true)
 
   // Fetch form structure from API
   useEffect(() => {
@@ -4923,13 +4922,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
     return getFieldOptions('cyl', eye)
   }, [getFieldOptions])
 
-  const getAxisOptions = useCallback((eye: 'left' | 'right') => {
-    return getFieldOptions('axis', eye)
-  }, [getFieldOptions])
-
+  
   const getOSSphereOptions = useCallback(() => getSphereOptions('left'), [getSphereOptions])
   const getOSCylinderOptions = useCallback(() => getCylinderOptions('left'), [getCylinderOptions])
-  const getOSAxisOptions = useCallback(() => getAxisOptions('left'), [getAxisOptions])
 
   // Select Option (ADD) - only from API
   const addOptions = useMemo(() => {
@@ -5201,39 +5196,13 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <select
-                        value={prescriptionData.od_axis || ''}
-                        onChange={(e) => onPrescriptionChange('od_axis', e.target.value)}
-                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all hover:border-purple-300 appearance-none text-transparent pr-8 ${errors.od_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
-                          prescriptionData.od_axis ? 'border-purple-500 bg-purple-100 font-bold' : 'border-gray-300 bg-white font-medium'
-                          }`}
-                      >
-                        <option value="" className="text-gray-900">Select</option>
-                        {getAxisOptions('right').map(opt => (
-                          <option key={opt} value={opt} className="text-gray-900">{opt}</option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
-                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.od_axis ? 'text-purple-900' : 'text-gray-400'}`}>
-                          {prescriptionData.od_axis || '--'}
-                        </span>
-                      </div>
-                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.od_axis ? 'opacity-0' : 'opacity-40'}`}>
-                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
+                      <AxisDiagram
+                        value={prescriptionData.od_axis ? parseInt(prescriptionData.od_axis) : 0}
+                        onChange={(value: number) => onPrescriptionChange('od_axis', value.toString())}
+                        size={120}
+                        disabled={!prescriptionData.od_cylinder || prescriptionData.od_cylinder === '0'}
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                      className="text-gray-500 hover:text-purple-600 hover:bg-purple-50 transition-all p-2 rounded-lg flex-shrink-0"
-                      title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
-                    >
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </button>
                   </div>
                   {errors.od_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
@@ -5330,39 +5299,13 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="relative flex-1">
-                      <select
-                        value={prescriptionData.os_axis || ''}
-                        onChange={(e) => onPrescriptionChange('os_axis', e.target.value)}
-                        className={`w-full px-2 py-3 text-sm border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none text-transparent pr-8 ${errors.os_axis ? 'border-red-500 focus:border-red-500 focus:ring-red-500 bg-red-50 font-semibold' :
-                          prescriptionData.os_axis ? 'border-blue-500 bg-blue-100 font-bold' : 'border-gray-300 bg-white font-medium'
-                          }`}
-                      >
-                        <option value="" className="text-gray-900">Select</option>
-                        {getOSAxisOptions().map(opt => (
-                          <option key={opt} value={opt} className="text-gray-900">{opt}</option>
-                        ))}
-                      </select>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-2">
-                        <span className={`text-xs font-bold text-center w-full ${prescriptionData.os_axis ? 'text-blue-900' : 'text-gray-400'}`}>
-                          {prescriptionData.os_axis || '--'}
-                        </span>
-                      </div>
-                      <div className={`absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity ${prescriptionData.os_axis ? 'opacity-0' : 'opacity-40'}`}>
-                        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
+                      <AxisDiagram
+                        value={prescriptionData.os_axis ? parseInt(prescriptionData.os_axis) : 0}
+                        onChange={(value: number) => onPrescriptionChange('os_axis', value.toString())}
+                        size={120}
+                        disabled={!prescriptionData.os_cylinder || prescriptionData.os_cylinder === '0'}
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                      className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg flex-shrink-0"
-                      title={showAxisDiagram ? "Hide Axis Diagram" : "Show Axis Diagram"}
-                    >
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </button>
                   </div>
                   {errors.os_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
@@ -5395,46 +5338,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             )}
           </div>
 
-          {/* Axis Diagram - Below both sections */}
-          <div className="mb-6">
-            <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
                   </div>
-                  <div>
-                    <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
-                    <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-                  className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-all p-2 rounded-lg"
-                  title={showAxisDiagram ? "Hide Diagram" : "Show Diagram"}
-                >
-                  {showAxisDiagram ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {showAxisDiagram && (
-                <div className="mt-4 pt-4 border-t border-gray-200">
-                  <AxisDiagram compact={true} axisValue={parseInt(prescriptionData.os_axis) || 0} />
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Select Option (ADD) - Only for Progressive */}
         {isProgressive && (
