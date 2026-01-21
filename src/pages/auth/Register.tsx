@@ -143,7 +143,10 @@ const Register: React.FC = () => {
                 }, 1500)
             } else {
                 // Handle different error structures using the utility function
-                const errorMessage = formatErrorMessage(result)
+                // Pass only the error part, not the whole result object
+                console.log('Registration error result:', result)
+                const errorMessage = formatErrorMessage(result.error || result.message || result)
+                console.log('Formatted error message:', errorMessage)
                 showError(errorMessage)
             }
         } catch (error: any) {
