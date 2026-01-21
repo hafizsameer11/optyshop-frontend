@@ -5049,9 +5049,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             )}
           </div>
         ) : (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-sm font-bold text-gray-900">Pupillary Distance (PD)</label>
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <label className="text-base font-bold text-gray-900">Pupillary Distance (PD)</label>
               <button
                 type="button"
                 className="text-gray-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
@@ -5062,17 +5062,24 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                 </svg>
               </button>
             </div>
-            <select
-              value={prescriptionData.pd_binocular}
-              onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
-              className={`w-full px-4 py-3 text-base border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 ${errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
-                }`}
-            >
-              <option value="">Enter Your Pupillary Distance</option>
-              {pdOptions.map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={prescriptionData.pd_binocular}
+                onChange={(e) => onPrescriptionChange('pd_binocular', e.target.value)}
+                className={`w-full px-4 py-3 text-base border-2 rounded-lg bg-white text-gray-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all hover:border-blue-300 appearance-none ${errors.pd_binocular ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : 'border-gray-300'
+                  }`}
+              >
+                <option value="">Enter Your Pupillary Distance</option>
+                {pdOptions.map(opt => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
             {errors.pd_binocular && (
               <p className="text-sm text-red-600 mt-2 font-medium">{errors.pd_binocular}</p>
             )}
@@ -5113,11 +5120,11 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
         {/* Eyes Section - Horizontal Layout */}
         <div className="mb-6">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
             {/* Right Eye (OD) */}
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 sm:p-6 border border-purple-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
               <div className="flex items-center gap-2 mb-4">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-purple-600"></div>
                   <label className="text-base font-bold text-gray-900">Right Eye OD</label>
                 </div>
@@ -5131,7 +5138,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>
@@ -5234,8 +5241,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
             {/* Left Eye (OS) */}
             <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 sm:p-6 border border-blue-100 shadow-sm hover:shadow-md transition-shadow min-w-0 flex-shrink-0 w-full overflow-visible">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                   <label className="text-base font-bold text-gray-900">Left Eye OS</label>
                 </div>
@@ -5249,7 +5256,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                   </svg>
                 </button>
               </div>
-              <div className="grid grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide">SPH</label>

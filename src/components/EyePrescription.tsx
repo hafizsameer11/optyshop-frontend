@@ -6,15 +6,15 @@ interface EyePrescriptionProps {
 
 const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => {
   const [rightEye, setRightEye] = useState({
-    sph: '',
-    cyl: '',
-    axis: ''
+    sph: '--',
+    cyl: '--',
+    axis: '--'
   });
 
   const [leftEye, setLeftEye] = useState({
-    sph: '',
-    cyl: '',
-    axis: ''
+    sph: '--',
+    cyl: '--',
+    axis: '--'
   });
 
   const [pupillaryDistance, setPupillaryDistance] = useState('');
@@ -53,13 +53,48 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           <div className="text-center">
             <label className="text-sm font-medium text-gray-700 block mb-2">SPH</label>
             <div className="relative">
-              <input
-                type="text"
+              <select
                 value={values.sph}
                 onChange={(e) => handleInputChange(eyeType, 'sph', e.target.value)}
-                placeholder="--"
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="--">--</option>
+                <option value="-8.00">-8.00</option>
+                <option value="-7.50">-7.50</option>
+                <option value="-7.00">-7.00</option>
+                <option value="-6.50">-6.50</option>
+                <option value="-6.00">-6.00</option>
+                <option value="-5.50">-5.50</option>
+                <option value="-5.00">-5.00</option>
+                <option value="-4.50">-4.50</option>
+                <option value="-4.00">-4.00</option>
+                <option value="-3.50">-3.50</option>
+                <option value="-3.00">-3.00</option>
+                <option value="-2.50">-2.50</option>
+                <option value="-2.00">-2.00</option>
+                <option value="-1.50">-1.50</option>
+                <option value="-1.00">-1.00</option>
+                <option value="-0.75">-0.75</option>
+                <option value="-0.50">-0.50</option>
+                <option value="-0.25">-0.25</option>
+                <option value="0.00">0.00</option>
+                <option value="+0.25">+0.25</option>
+                <option value="+0.50">+0.50</option>
+                <option value="+0.75">+0.75</option>
+                <option value="+1.00">+1.00</option>
+                <option value="+1.25">+1.25</option>
+                <option value="+1.50">+1.50</option>
+                <option value="+1.75">+1.75</option>
+                <option value="+2.00">+2.00</option>
+                <option value="+2.25">+2.25</option>
+                <option value="+2.50">+2.50</option>
+                <option value="+2.75">+2.75</option>
+                <option value="+3.00">+3.00</option>
+                <option value="+3.50">+3.50</option>
+                <option value="+4.00">+4.00</option>
+                <option value="+4.50">+4.50</option>
+                <option value="+5.00">+5.00</option>
+              </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -71,13 +106,48 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           <div className="text-center">
             <label className="text-sm font-medium text-gray-700 block mb-2">CYL</label>
             <div className="relative">
-              <input
-                type="text"
+              <select
                 value={values.cyl}
                 onChange={(e) => handleInputChange(eyeType, 'cyl', e.target.value)}
-                placeholder="--"
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="--">--</option>
+                <option value="-8.00">-8.00</option>
+                <option value="-7.50">-7.50</option>
+                <option value="-7.00">-7.00</option>
+                <option value="-6.50">-6.50</option>
+                <option value="-6.00">-6.00</option>
+                <option value="-5.50">-5.50</option>
+                <option value="-5.00">-5.00</option>
+                <option value="-4.50">-4.50</option>
+                <option value="-4.00">-4.00</option>
+                <option value="-3.50">-3.50</option>
+                <option value="-3.00">-3.00</option>
+                <option value="-2.50">-2.50</option>
+                <option value="-2.00">-2.00</option>
+                <option value="-1.50">-1.50</option>
+                <option value="-1.00">-1.00</option>
+                <option value="-0.75">-0.75</option>
+                <option value="-0.50">-0.50</option>
+                <option value="-0.25">-0.25</option>
+                <option value="0.00">0.00</option>
+                <option value="+0.25">+0.25</option>
+                <option value="+0.50">+0.50</option>
+                <option value="+0.75">+0.75</option>
+                <option value="+1.00">+1.00</option>
+                <option value="+1.25">+1.25</option>
+                <option value="+1.50">+1.50</option>
+                <option value="+1.75">+1.75</option>
+                <option value="+2.00">+2.00</option>
+                <option value="+2.25">+2.25</option>
+                <option value="+2.50">+2.50</option>
+                <option value="+2.75">+2.75</option>
+                <option value="+3.00">+3.00</option>
+                <option value="+3.50">+3.50</option>
+                <option value="+4.00">+4.00</option>
+                <option value="+4.50">+4.50</option>
+                <option value="+5.00">+5.00</option>
+              </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -89,13 +159,16 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '' }) => 
           <div className="text-center">
             <label className="text-sm font-medium text-gray-700 block mb-2">AXIS</label>
             <div className="relative">
-              <input
-                type="text"
+              <select
                 value={values.axis}
                 onChange={(e) => handleInputChange(eyeType, 'axis', e.target.value)}
-                placeholder="--"
-                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+                className="w-full px-3 py-2 rounded-md text-gray-900 text-center font-medium bg-white border border-gray-300 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                <option value="--">--</option>
+                {Array.from({ length: 181 }, (_, i) => i).map(num => (
+                  <option key={num} value={num}>{num}</option>
+                ))}
+              </select>
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
