@@ -17,43 +17,59 @@ const ProtractorDisplay: React.FC<ProtractorDisplayProps> = ({
   const centerY = size / 2
   const radius = size / 2 - 30
 
-  // Generate degree markings for full circle
+  // Generate degree markings for relevant arc only
   const generateMarkings = () => {
     const markings = []
     
-    // Generate markings for full 360 degrees
-    for (let i = 0; i < 360; i += 10) {
-      const angle = i // Standard angle (0° at right, going counterclockwise)
-      const radian = (angle * Math.PI) / 180
-      const x1 = centerX + (radius - 8) * Math.cos(radian)
-      const y1 = centerY - (radius - 8) * Math.sin(radian)
-      const x2 = centerX + radius * Math.cos(radian)
-      const y2 = centerY - radius * Math.sin(radian)
-      
-      // Calculate text position
-      const textRadius = radius + 20
-      const textX = centerX + textRadius * Math.cos(radian)
-      const textY = centerY - textRadius * Math.sin(radian)
-      
-      // Determine if negative or positive based on angle
-      let displayText = `${i}°`
-      let isNegative = false
-      
-      if (i > 180) {
-        displayText = `-${360 - i}°`
-        isNegative = true
-      } else if (i > 0 && i <= 180) {
-        displayText = `+${i}°`
-        isNegative = false
+    // Determine if we should show positive or negative arc
+    const isNegativeAngle = angle < 0
+    
+    // Generate markings for relevant arc only
+    if (isNegativeAngle) {
+      // Show negative arc (upper half): -10° to -170°
+      for (let i = 190; i < 350; i += 10) {
+        const displayAngle = -(360 - i)
+        const radian = (i * Math.PI) / 180
+        const x1 = centerX + (radius - 8) * Math.cos(radian)
+        const y1 = centerY - (radius - 8) * Math.sin(radian)
+        const x2 = centerX + radius * Math.cos(radian)
+        const y2 = centerY - radius * Math.sin(radian)
+        
+        // Calculate text position
+        const textRadius = radius + 20
+        const textX = centerX + textRadius * Math.cos(radian)
+        const textY = centerY - textRadius * Math.sin(radian)
+        
+        markings.push({
+          type: 'marking',
+          x1, y1, x2, y2,
+          text: `${displayAngle}°`,
+          textX, textY,
+          isNegative: true
+        })
       }
-      
-      markings.push({
-        type: 'marking',
-        x1, y1, x2, y2,
-        text: displayText,
-        textX, textY,
-        isNegative
-      })
+    } else {
+      // Show positive arc (lower half): +10° to +170°
+      for (let i = 10; i <= 170; i += 10) {
+        const radian = (i * Math.PI) / 180
+        const x1 = centerX + (radius - 8) * Math.cos(radian)
+        const y1 = centerY - (radius - 8) * Math.sin(radian)
+        const x2 = centerX + radius * Math.cos(radian)
+        const y2 = centerY - radius * Math.sin(radian)
+        
+        // Calculate text position
+        const textRadius = radius + 20
+        const textX = centerX + textRadius * Math.cos(radian)
+        const textY = centerY - textRadius * Math.sin(radian)
+        
+        markings.push({
+          type: 'marking',
+          x1, y1, x2, y2,
+          text: `+${i}°`,
+          textX, textY,
+          isNegative: false
+        })
+      }
     }
     
     return markings
@@ -62,7 +78,14 @@ const ProtractorDisplay: React.FC<ProtractorDisplayProps> = ({
   const markings = generateMarkings()
   
   // Calculate angle indicator line position
-  const angleRadian = (angle * Math.PI) / 180
+  let angleRadian: number
+  if (angle < 0) {
+    // Convert negative angle to positive radian for upper arc
+    angleRadian = ((360 + angle) * Math.PI) / 180
+  } else {
+    // Positive angle for lower arc
+    angleRadian = (angle * Math.PI) / 180
+  }
   const indicatorX = centerX + (radius - 15) * Math.cos(angleRadian)
   const indicatorY = centerY - (radius - 15) * Math.sin(angleRadian)
 
@@ -80,11 +103,12 @@ const ProtractorDisplay: React.FC<ProtractorDisplayProps> = ({
           viewBox={`0 0 ${size} ${size}`}
           className="overflow-visible"
         >
-        {/* Full circle */}
-        <circle
-          cx={centerX}
-          cy={centerY}
-          r={radius}
+        {/* Arc path instead of full circle */}
+        <path
+          d={angle < 0 
+            ? `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius * Math.cos(10 * Math.PI / 180)} ${centerY - radius * Math.sin(10 * Math.PI / 180)}`
+            : `M ${centerX + radius} ${centerY} A ${radius} ${radius} 0 0 1 ${centerX - radius * Math.cos(10 * Math.PI / 180)} ${centerY + radius * Math.sin(10 * Math.PI / 180)}`
+          }
           fill="none"
           stroke="#374151"
           strokeWidth="2"

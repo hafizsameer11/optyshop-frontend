@@ -3693,7 +3693,6 @@ const ProductDetail: React.FC = () => {
                                                                 <div className="mt-4 flex justify-center">
                                                                     <AxisDiagram 
                                                                         compact={true} 
-                                                                        eyeType="left"
                                                                         axisValue={contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : 0}
                                                                     />
                                                                 </div>

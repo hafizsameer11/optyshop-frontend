@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
 import { useToast } from '../../context/ToastContext'
+import { formatErrorMessage } from '../../utils/errorUtils'
 
 const Register: React.FC = () => {
     const { t } = useTranslation()
@@ -141,71 +142,12 @@ const Register: React.FC = () => {
                     navigate('/login')
                 }, 1500)
             } else {
-                // Handle different error structures
-                let errorMessage = t('auth.register.registrationFailed')
-
-                if ((result as any).errors && Array.isArray((result as any).errors) && (result as any).errors.length > 0) {
-                    errorMessage = (result as any).errors.map((err: any) => err.msg).join(', ')
-                } else if (typeof result.message === 'string') {
-                    errorMessage = result.message
-                } else if (result.message && typeof result.message === 'object') {
-                    // If message is an object, try to extract meaningful info
-                    const messageObj = result.message as any
-                    if (typeof messageObj.message === 'string') {
-                        errorMessage = messageObj.message
-                    } else if (typeof messageObj.error === 'string') {
-                        errorMessage = messageObj.error
-                    } else {
-                        errorMessage = JSON.stringify(messageObj)
-                    }
-                } else if (result.error) {
-                    if (typeof result.error === 'string') {
-                        errorMessage = result.error
-                    } else if (typeof result.error === 'object') {
-                        const errorObj = result.error as any
-                        if (typeof errorObj.message === 'string') {
-                            errorMessage = errorObj.message
-                        } else if (typeof errorObj.error === 'string') {
-                            errorMessage = errorObj.error
-                        } else {
-                            errorMessage = JSON.stringify(result.error)
-                        }
-                    }
-                }
-
-                // If there are validation errors, show them
-                if (result.error && typeof result.error === 'object') {
-                    const validationErrors = Object.entries(result.error)
-                        .map(([field, message]) => {
-                            // Handle nested message objects
-                            if (typeof message === 'object') {
-                                return JSON.stringify(message)
-                            }
-                            return `${field}: ${message}`
-                        })
-                        .join(', ')
-                    if (validationErrors) {
-                        errorMessage = `${errorMessage}: ${validationErrors}`
-                    }
-                }
-
+                // Handle different error structures using the utility function
+                const errorMessage = formatErrorMessage(result)
                 showError(errorMessage)
             }
         } catch (error: any) {
-            let errorMessage = t('auth.register.errorOccurred')
-
-            if (error && typeof error === 'object') {
-                if (typeof error.message === 'string') {
-                    errorMessage = error.message
-                } else if (error.error && typeof error.error === 'string') {
-                    errorMessage = error.error
-                } else {
-                    errorMessage = JSON.stringify(error)
-                }
-            } else if (typeof error === 'string') {
-                errorMessage = error
-            }
-
+            const errorMessage = formatErrorMessage(error)
             showError(errorMessage)
         } finally {
             setIsSubmitting(false)

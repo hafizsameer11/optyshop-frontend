@@ -3,40 +3,46 @@ import React from 'react'
 interface AxisDiagramProps {
   onClose?: () => void
   compact?: boolean
-  eyeType?: 'left' | 'right' | 'both'
   axisValue?: number
 }
 
 const AxisDiagram: React.FC<AxisDiagramProps> = ({
   onClose,
   compact = false,
-  eyeType = 'left',
   axisValue = 0
 }) => {
   // Calculate the rotation for the needle based on the axisValue
   // For the D-shape:
-  // - Positive values (0 to +180): 0° at right, 90° at top, 180° at left
-  // - Negative values (-180 to 0): 0° at right, -90° at bottom, -180° at left
-  const needleRadians = (axisValue * Math.PI) / 180
+  // - Positive values (0 to +180): needle points to lower arc
+  // - Negative values (-180 to 0): needle points to upper arc
   const needleLength = 160
-  const needleX = 200 + needleLength * Math.cos(needleRadians)
-  const needleY = 200 - needleLength * Math.sin(needleRadians)
+  let needleRadians: number
+  let needleX: number
+  let needleY: number
+  
+  if (axisValue >= 0) {
+    // Positive values: needle points to lower arc (below baseline)
+    needleRadians = (axisValue * Math.PI) / 180
+    needleX = 200 + needleLength * Math.cos(needleRadians)
+    needleY = 200 + needleLength * Math.sin(needleRadians) // Positive Y for lower arc
+  } else {
+    // Negative values: needle points to upper arc (above baseline)
+    const positiveAngle = Math.abs(axisValue)
+    needleRadians = (positiveAngle * Math.PI) / 180
+    needleX = 200 + needleLength * Math.cos(needleRadians)
+    needleY = 200 - needleLength * Math.sin(needleRadians) // Negative Y for upper arc
+  }
 
-  const eyeTypeLabel = eyeType === 'left' ? 'Left Eye' : eyeType === 'right' ? 'Right Eye' : 'Eye'
-
+  
   if (compact) {
     return (
       <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm">
-        {/* Title */}
-        <div className="text-left mb-3">
-          <h3 className="text-base font-bold text-gray-900">{eyeTypeLabel}</h3>
-        </div>
 
         <div className="flex justify-center items-center">
-          <div className="relative" style={{ width: '400px', height: '200px' }}>
+          <div className="relative" style={{ width: '400px', height: '250px' }}>
             {/* SVG Gauge Diagram */}
             <svg
-              viewBox="0 0 400 200"
+              viewBox="0 0 400 250"
               className="w-full h-full"
               style={{ maxWidth: '100%', height: 'auto' }}
             >
@@ -58,15 +64,15 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 strokeWidth="2"
               />
 
-              {/* Major tick marks - Positive values (0 to +180) on top arc */}
+              {/* Major tick marks - Positive values (0 to +180) on lower arc */}
               {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
                 const radians = (angle * Math.PI) / 180
                 
-                // Tick marks on top arc (lower position for positive values)
+                // Tick marks on lower arc (below baseline)
                 const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 - 180 * Math.sin(radians)
+                const outerY = 200 + 180 * Math.sin(radians)
                 const innerX = 200 + 165 * Math.cos(radians)
-                const innerY = 200 - 165 * Math.sin(radians)
+                const innerY = 200 + 165 * Math.sin(radians)
 
                 return (
                   <line
@@ -81,15 +87,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
 
-              {/* Major tick marks - Negative values (-180 to -10) on upper arc above positive values */}
+              {/* Major tick marks - Negative values (-180 to -10) on upper arc */}
               {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-                const radians = (angle * Math.PI) / 180
+                // Convert negative angle to positive for positioning on upper arc
+                const positiveAngle = Math.abs(angle)
+                const radians = (positiveAngle * Math.PI) / 180
                 
-                // Tick marks on upper arc (above positive values)
-                const outerX = 200 + 140 * Math.cos(radians)
-                const outerY = 200 - 140 * Math.sin(radians)
-                const innerX = 200 + 125 * Math.cos(radians)
-                const innerY = 200 - 125 * Math.sin(radians)
+                // Tick marks on upper arc (above baseline)
+                const outerX = 200 + 180 * Math.cos(radians)
+                const outerY = 200 - 180 * Math.sin(radians)
+                const innerX = 200 + 165 * Math.cos(radians)
+                const innerY = 200 - 165 * Math.sin(radians)
 
                 return (
                   <line
@@ -104,15 +112,15 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
 
-              {/* Minor tick marks at 5-unit intervals - Positive values on top arc */}
+              {/* Minor tick marks at 5-unit intervals - Positive values on lower arc */}
               {[5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175].map((angle) => {
                 const radians = (angle * Math.PI) / 180
                 
-                // Minor tick marks on top arc (lower position for positive values)
+                // Minor tick marks on lower arc (below baseline)
                 const outerX = 200 + 180 * Math.cos(radians)
-                const outerY = 200 - 180 * Math.sin(radians)
+                const outerY = 200 + 180 * Math.sin(radians)
                 const innerX = 200 + 172 * Math.cos(radians)
-                const innerY = 200 - 172 * Math.sin(radians)
+                const innerY = 200 + 172 * Math.sin(radians)
 
                 return (
                   <line
@@ -127,15 +135,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
 
-              {/* Minor tick marks at 5-unit intervals - Negative values on upper arc above positive values */}
+              {/* Minor tick marks at 5-unit intervals - Negative values on upper arc */}
               {[-175, -165, -155, -145, -135, -125, -115, -105, -95, -85, -75, -65, -55, -45, -35, -25, -15, -5].map((angle) => {
-                const radians = (angle * Math.PI) / 180
+                // Convert negative angle to positive for positioning on upper arc
+                const positiveAngle = Math.abs(angle)
+                const radians = (positiveAngle * Math.PI) / 180
                 
-                // Minor tick marks on upper arc (above positive values)
-                const outerX = 200 + 140 * Math.cos(radians)
-                const outerY = 200 - 140 * Math.sin(radians)
-                const innerX = 200 + 132 * Math.cos(radians)
-                const innerY = 200 - 132 * Math.sin(radians)
+                // Minor tick marks on upper arc (above baseline)
+                const outerX = 200 + 180 * Math.cos(radians)
+                const outerY = 200 - 180 * Math.sin(radians)
+                const innerX = 200 + 172 * Math.cos(radians)
+                const innerY = 200 - 172 * Math.sin(radians)
 
                 return (
                   <line
@@ -150,7 +160,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
 
-              {/* Number labels - Positive values (0° to +180°) on top arc */}
+              {/* Number labels - Positive values (0° to +180°) on lower arc */}
               {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
                 const radians = (angle * Math.PI) / 180
                 let labelRadius = 145
@@ -159,17 +169,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 
                 // Special positioning for 0 and 180
                 if (angle === 0) {
-                  // 0° positioned slightly to the right of center
+                  // 0° positioned slightly to the right of center, well below baseline
                   labelX = 210
-                  labelY = 195
+                  labelY = 235
                 } else if (angle === 180) {
-                  // 180° positioned slightly to the left of center
+                  // 180° positioned slightly to the left of center, well below baseline
                   labelX = 190
-                  labelY = 195
+                  labelY = 235
                 } else {
-                  // All other positive angles on the top arc (lower position)
+                  // All other positive angles on the lower arc (below baseline)
                   labelX = 200 + labelRadius * Math.cos(radians)
-                  labelY = 200 - labelRadius * Math.sin(radians)
+                  labelY = 200 + labelRadius * Math.sin(radians)
                 }
                 
                 return (
@@ -188,20 +198,22 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
                 )
               })}
 
-              {/* Number labels - Negative values (-180° to -10°) on upper arc above positive values */}
+              {/* Number labels - Negative values (-180° to -10°) on upper arc */}
               {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-                const radians = (angle * Math.PI) / 180
-                let labelRadius = 110
+                // Convert negative angle to positive for positioning on upper arc
+                const positiveAngle = Math.abs(angle)
+                const radians = (positiveAngle * Math.PI) / 180
+                let labelRadius = 145
                 let labelX: number
                 let labelY: number
                 
                 // Special positioning for -180
                 if (angle === -180) {
-                  // -180° positioned slightly to the left of center, above positive values
+                  // -180° positioned slightly to the left of center, above baseline
                   labelX = 190
-                  labelY = 175
+                  labelY = 160
                 } else {
-                  // All other negative angles on the upper arc (above positive values)
+                  // All other negative angles on the upper arc (above baseline)
                   labelX = 200 + labelRadius * Math.cos(radians)
                   labelY = 200 - labelRadius * Math.sin(radians)
                 }
@@ -286,9 +298,8 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
 
   return (
     <div className="bg-gray-100 rounded-lg p-6 max-w-2xl mx-auto border border-gray-300 shadow-sm">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-bold text-gray-900">{eyeTypeLabel}</h3>
-        {onClose && (
+      {onClose && (
+        <div className="flex justify-end mb-4">
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -298,14 +309,14 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex justify-center items-center mb-4">
-        <div className="relative" style={{ width: '400px', height: '200px' }}>
+        <div className="relative" style={{ width: '400px', height: '250px' }}>
           {/* SVG Gauge Diagram */}
           <svg
-            viewBox="0 0 400 200"
+            viewBox="0 0 400 250"
             className="w-full h-full"
             style={{ maxWidth: '100%', height: 'auto' }}
           >
@@ -327,15 +338,15 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               strokeWidth="2"
             />
 
-            {/* Major tick marks - Positive values (0 to +180) on top arc */}
+            {/* Major tick marks - Positive values (0 to +180) on lower arc */}
             {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
               const radians = (angle * Math.PI) / 180
               
-              // Tick marks on top arc (lower position for positive values)
+              // Tick marks on lower arc (below baseline)
               const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 - 180 * Math.sin(radians)
+              const outerY = 200 + 180 * Math.sin(radians)
               const innerX = 200 + 165 * Math.cos(radians)
-              const innerY = 200 - 165 * Math.sin(radians)
+              const innerY = 200 + 165 * Math.sin(radians)
 
               return (
                 <line
@@ -350,15 +361,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
 
-            {/* Major tick marks - Negative values (-180 to -10) on upper arc above positive values */}
+            {/* Major tick marks - Negative values (-180 to -10) on upper arc */}
             {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-              const radians = (angle * Math.PI) / 180
+              // Convert negative angle to positive for positioning on upper arc
+              const positiveAngle = Math.abs(angle)
+              const radians = (positiveAngle * Math.PI) / 180
               
-              // Tick marks on upper arc (above positive values)
-              const outerX = 200 + 140 * Math.cos(radians)
-              const outerY = 200 - 140 * Math.sin(radians)
-              const innerX = 200 + 125 * Math.cos(radians)
-              const innerY = 200 - 125 * Math.sin(radians)
+              // Tick marks on upper arc (above baseline)
+              const outerX = 200 + 180 * Math.cos(radians)
+              const outerY = 200 - 180 * Math.sin(radians)
+              const innerX = 200 + 165 * Math.cos(radians)
+              const innerY = 200 - 165 * Math.sin(radians)
 
               return (
                 <line
@@ -373,15 +386,15 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
 
-            {/* Minor tick marks at 5-unit intervals - Positive values on top arc */}
+            {/* Minor tick marks at 5-unit intervals - Positive values on lower arc */}
             {[5, 15, 25, 35, 45, 55, 65, 75, 85, 95, 105, 115, 125, 135, 145, 155, 165, 175].map((angle) => {
               const radians = (angle * Math.PI) / 180
               
-              // Minor tick marks on top arc (lower position for positive values)
+              // Minor tick marks on lower arc (below baseline)
               const outerX = 200 + 180 * Math.cos(radians)
-              const outerY = 200 - 180 * Math.sin(radians)
+              const outerY = 200 + 180 * Math.sin(radians)
               const innerX = 200 + 172 * Math.cos(radians)
-              const innerY = 200 - 172 * Math.sin(radians)
+              const innerY = 200 + 172 * Math.sin(radians)
 
               return (
                 <line
@@ -396,15 +409,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
 
-            {/* Minor tick marks at 5-unit intervals - Negative values on upper arc above positive values */}
+            {/* Minor tick marks at 5-unit intervals - Negative values on upper arc */}
             {[-175, -165, -155, -145, -135, -125, -115, -105, -95, -85, -75, -65, -55, -45, -35, -25, -15, -5].map((angle) => {
-              const radians = (angle * Math.PI) / 180
+              // Convert negative angle to positive for positioning on upper arc
+              const positiveAngle = Math.abs(angle)
+              const radians = (positiveAngle * Math.PI) / 180
               
-              // Minor tick marks on upper arc (above positive values)
-              const outerX = 200 + 140 * Math.cos(radians)
-              const outerY = 200 - 140 * Math.sin(radians)
-              const innerX = 200 + 132 * Math.cos(radians)
-              const innerY = 200 - 132 * Math.sin(radians)
+              // Minor tick marks on upper arc (above baseline)
+              const outerX = 200 + 180 * Math.cos(radians)
+              const outerY = 200 - 180 * Math.sin(radians)
+              const innerX = 200 + 172 * Math.cos(radians)
+              const innerY = 200 - 172 * Math.sin(radians)
 
               return (
                 <line
@@ -419,7 +434,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
 
-            {/* Number labels - Positive values (0° to +180°) on top arc */}
+            {/* Number labels - Positive values (0° to +180°) on lower arc */}
             {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180].map((angle) => {
               const radians = (angle * Math.PI) / 180
               let labelRadius = 145
@@ -428,17 +443,17 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               
               // Special positioning for 0 and 180
               if (angle === 0) {
-                // 0° positioned slightly to the right of center
+                // 0° positioned slightly to the right of center, well below baseline
                 labelX = 210
-                labelY = 195
+                labelY = 235
               } else if (angle === 180) {
-                // 180° positioned slightly to the left of center
+                // 180° positioned slightly to the left of center, well below baseline
                 labelX = 190
-                labelY = 195
+                labelY = 235
               } else {
-                // All other positive angles on the top arc (lower position)
+                // All other positive angles on the lower arc (below baseline)
                 labelX = 200 + labelRadius * Math.cos(radians)
-                labelY = 200 - labelRadius * Math.sin(radians)
+                labelY = 200 + labelRadius * Math.sin(radians)
               }
               
               return (
@@ -457,20 +472,22 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               )
             })}
 
-            {/* Number labels - Negative values (-180° to -10°) on upper arc above positive values */}
+            {/* Number labels - Negative values (-180° to -10°) on upper arc */}
             {[-180, -170, -160, -150, -140, -130, -120, -110, -100, -90, -80, -70, -60, -50, -40, -30, -20, -10].map((angle) => {
-              const radians = (angle * Math.PI) / 180
-              let labelRadius = 110
+              // Convert negative angle to positive for positioning on upper arc
+              const positiveAngle = Math.abs(angle)
+              const radians = (positiveAngle * Math.PI) / 180
+              let labelRadius = 145
               let labelX: number
               let labelY: number
               
               // Special positioning for -180
               if (angle === -180) {
-                // -180° positioned slightly to the left of center, above positive values
+                // -180° positioned slightly to the left of center, above baseline
                 labelX = 190
-                labelY = 175
+                labelY = 160
               } else {
-                // All other negative angles on the upper arc (above positive values)
+                // All other negative angles on the upper arc (above baseline)
                 labelX = 200 + labelRadius * Math.cos(radians)
                 labelY = 200 - labelRadius * Math.sin(radians)
               }
@@ -554,9 +571,9 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
         <h4 className="font-semibold text-blue-900 mb-2">How to read your axis:</h4>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
           <li>The axis is measured in degrees from -180° to +180°</li>
-          <li>Negative values (-180° to 0°) are shown on the upper arc above positive values</li>
+          <li>Negative values (-180° to 0°) are shown on the upper arc</li>
           <li>Positive values (0° to +180°) are shown on the lower arc</li>
-          <li>0° is at the right center, +90° is at the top, -90° is at the bottom</li>
+          <li>0° is at the right center, +90° is at the bottom, -90° is at the top</li>
           <li>The red needle points to your selected axis value</li>
           <li>Find the axis value on your prescription and select it from the dropdown</li>
           <li>If you have astigmatism (CYL value), you must provide an axis value</li>

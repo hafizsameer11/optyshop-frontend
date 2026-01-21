@@ -2813,21 +2813,33 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                   // Enhanced overlay styles for better lens fitting
                   // Dynamic positioning based on frame type
                   const getFrameSpecificSettings = () => {
-                    // Detect frame type from product name or category
-                    const productName = product.name.toLowerCase()
-                    const isSquare = productName.includes('square') || productName.includes('rectangle')
-                    const isRound = productName.includes('round') || productName.includes('circle')
-                    const isAviator = productName.includes('aviator') || productName.includes('pilot')
-                    const isCatEye = productName.includes('cat') || productName.includes('butterfly')
+                    // Detect frame type from product name, category, or frame_shape field
+                    const productName = (product.name || '').toLowerCase()
+                    const frameShape = (product.frame_shape || '').toLowerCase()
+                    const categoryName = (product.category?.name || '').toLowerCase()
+                    
+                    // Combine all text for better detection
+                    const searchText = `${productName} ${frameShape} ${categoryName}`
+                    
+                    // More precise frame detection with priority order
+                    const isSquare = searchText.includes('square') || searchText.includes('rectangle') || searchText.includes('rectangular')
+                    const isRound = searchText.includes('round') || searchText.includes('circle') || searchText.includes('circular') || searchText.includes('oval')
+                    const isAviator = searchText.includes('aviator') || searchText.includes('pilot') || searchText.includes('teardrop')
+                    const isCatEye = searchText.includes('cat') || searchText.includes('butterfly') || searchText.includes('winged')
+                    const isWayfarer = searchText.includes('wayfarer') || searchText.includes('trapezoid')
+                    const isBrowline = searchText.includes('browline') || searchText.includes('clubmaster')
+                    const isRimless = searchText.includes('rimless') || searchText.includes('semi-rimless')
+                    const isSport = searchText.includes('sport') || searchText.includes('athletic') || searchText.includes('wrap')
                     
                     if (isSquare) {
                       return {
                         width: '28%',
                         height: '24%',
-                        borderRadius: '15%',
+                        borderRadius: '12%',
                         left: '21%',
                         right: '21%',
-                        top: '23%'
+                        top: '23%',
+                        clipPath: 'none'
                       }
                     } else if (isRound) {
                       return {
@@ -2836,7 +2848,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         borderRadius: '50%',
                         left: '22%',
                         right: '22%',
-                        top: '22%'
+                        top: '22%',
+                        clipPath: 'none'
                       }
                     } else if (isAviator) {
                       return {
@@ -2845,7 +2858,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         borderRadius: '40% 60% 60% 40% / 60% 40% 60% 40%',
                         left: '23%',
                         right: '23%',
-                        top: '20%'
+                        top: '20%',
+                        clipPath: 'polygon(0% 20%, 20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%)'
                       }
                     } else if (isCatEye) {
                       return {
@@ -2854,7 +2868,48 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         borderRadius: '60% 40% 50% 50% / 60% 50% 50% 40%',
                         left: '22.5%',
                         right: '22.5%',
-                        top: '24%'
+                        top: '24%',
+                        clipPath: 'polygon(0% 40%, 10% 0%, 90% 0%, 100% 40%, 90% 100%, 10% 100%)'
+                      }
+                    } else if (isWayfarer) {
+                      return {
+                        width: '27%',
+                        height: '23%',
+                        borderRadius: '8% 8% 15% 15% / 8% 8% 15% 15%',
+                        left: '21.5%',
+                        right: '21.5%',
+                        top: '23.5%',
+                        clipPath: 'none'
+                      }
+                    } else if (isBrowline) {
+                      return {
+                        width: '26.5%',
+                        height: '24%',
+                        borderRadius: '5% 5% 20% 20% / 5% 5% 20% 20%',
+                        left: '22%',
+                        right: '22%',
+                        top: '23%',
+                        clipPath: 'none'
+                      }
+                    } else if (isSport) {
+                      return {
+                        width: '30%',
+                        height: '26%',
+                        borderRadius: '25% 35% 35% 25% / 45% 45% 55% 55%',
+                        left: '20%',
+                        right: '20%',
+                        top: '21%',
+                        clipPath: 'polygon(5% 25%, 15% 5%, 85% 5%, 95% 25%, 95% 75%, 85% 95%, 15% 95%, 5% 75%)'
+                      }
+                    } else if (isRimless) {
+                      return {
+                        width: '25%',
+                        height: '22%',
+                        borderRadius: '45%',
+                        left: '22.5%',
+                        right: '22.5%',
+                        top: '24%',
+                        clipPath: 'none'
                       }
                     } else {
                       // Default for standard frames
@@ -2864,7 +2919,8 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         borderRadius: '50%',
                         left: '22.5%',
                         right: '22.5%',
-                        top: '24%'
+                        top: '24%',
+                        clipPath: 'none'
                       }
                     }
                   }
@@ -2878,6 +2934,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                     width: frameSettings.width,
                     height: frameSettings.height,
                     borderRadius: frameSettings.borderRadius,
+                    clipPath: frameSettings.clipPath,
                     transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
                     opacity: 0.85,
                   }
@@ -2955,6 +3012,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                           width: frameSettings.width,
                           height: frameSettings.height,
                           borderRadius: frameSettings.borderRadius,
+                          clipPath: frameSettings.clipPath,
                           transform: `translate(${shiftX * 1.2}px, ${shiftY * 1.2}px)`,
                           background: `radial-gradient(ellipse at ${30 + flareX * 0.3}% ${20 + flareY * 0.3}%, 
                             rgba(255, 255, 255, 0.4) 0%, 
@@ -2976,6 +3034,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                             width: frameSettings.width,
                             height: frameSettings.height,
                             borderRadius: frameSettings.borderRadius,
+                            clipPath: frameSettings.clipPath,
                             transform: `translate(${shiftX * 0.8}px, ${shiftY * 0.8}px)`,
                             background: `linear-gradient(135deg, 
                               rgba(255, 255, 255, 0.3) 0%, 
@@ -3008,6 +3067,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                           width: frameSettings.width,
                           height: frameSettings.height,
                           borderRadius: frameSettings.borderRadius,
+                          clipPath: frameSettings.clipPath,
                           transform: `translate(${shiftX * 1.2}px, ${shiftY * 1.2}px)`,
                           background: `radial-gradient(ellipse at ${70 - flareX * 0.3}% ${20 + flareY * 0.3}%, 
                             rgba(255, 255, 255, 0.4) 0%, 
@@ -3029,6 +3089,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                             width: frameSettings.width,
                             height: frameSettings.height,
                             borderRadius: frameSettings.borderRadius,
+                            clipPath: frameSettings.clipPath,
                             transform: `translate(${shiftX * 0.8}px, ${shiftY * 0.8}px)`,
                             background: `linear-gradient(45deg, 
                               rgba(255, 255, 255, 0.3) 0%, 
