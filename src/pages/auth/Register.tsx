@@ -91,8 +91,16 @@ const Register: React.FC = () => {
 
         if (!formData.password.trim()) {
             newErrors.password = t('auth.register.passwordRequired')
-        } else if (formData.password.length < 6) {
-            newErrors.password = t('auth.register.passwordMinLength')
+        } else if (formData.password.length < 8) {
+            newErrors.password = 'Password must be at least 8 characters long'
+        } else if (!/(?=.*[a-z])/.test(formData.password)) {
+            newErrors.password = 'Password must contain at least one lowercase letter'
+        } else if (!/(?=.*[A-Z])/.test(formData.password)) {
+            newErrors.password = 'Password must contain at least one uppercase letter'
+        } else if (!/(?=.*\d)/.test(formData.password)) {
+            newErrors.password = 'Password must contain at least one number'
+        } else if (!/(?=.*[@$!%*?&])/.test(formData.password)) {
+            newErrors.password = 'Password must contain at least one special character (@$!%*?&)'
         }
 
         if (!formData.confirmPassword.trim()) {
@@ -136,10 +144,10 @@ const Register: React.FC = () => {
 
             const result = await register(registerData)
             if (result.success) {
-                // Show success message and navigate to login page
-                showSuccess(t('auth.register.registrationSuccessful') || 'Registration successful! Please login to continue.')
+                // Show success message and redirect to dashboard
+                showSuccess(t('auth.register.registrationSuccessful') || 'Registration successful! Redirecting to dashboard...')
                 setTimeout(() => {
-                    navigate('/login')
+                    navigate('/customer/dashboard')
                 }, 1500)
             } else {
                 // Handle different error structures using the utility function
@@ -323,7 +331,7 @@ const Register: React.FC = () => {
                                             value={formData.password}
                                             onChange={handleChange}
                                             className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.password ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                            placeholder={t('auth.register.createPassword')}
+                                            placeholder="Min 8 chars: 1 uppercase, 1 lowercase, 1 number, 1 special (@$!%*?&)"
                                         />
                                     </div>
                                     {errors.password && (
@@ -354,7 +362,7 @@ const Register: React.FC = () => {
                                             value={formData.confirmPassword}
                                             onChange={handleChange}
                                             className={`w-full pl-12 pr-4 py-3.5 rounded-xl border-2 transition-all duration-200 ${errors.confirmPassword ? 'border-red-400 bg-red-50 focus:ring-red-500 focus:border-red-500' : successMessages.confirmPassword ? 'border-green-400 bg-green-50 focus:ring-green-500 focus:border-green-500' : 'border-gray-200 bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white'} focus:outline-none text-gray-900 placeholder-gray-400`}
-                                            placeholder={t('auth.register.confirmPasswordPlaceholder')}
+                                            placeholder="Re-enter password with same requirements"
                                         />
                                     </div>
                                     {errors.confirmPassword && (
