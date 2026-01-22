@@ -169,9 +169,9 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
 
     if (loading) {
         return (
-            <section className="w-full py-8 md:py-12 bg-slate-950">
+            <section className="w-full py-8 md:py-12 bg-[#F8F3ED]">
                 <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="h-64 md:h-96 bg-slate-800 animate-pulse rounded-lg"></div>
+                    <div className="h-64 md:h-96 bg-slate-200 animate-pulse rounded-lg shadow-lg"></div>
                 </div>
             </section>
         )
@@ -233,7 +233,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
     if (variant === 'compact' && campaigns.length > 0) {
         return (
             <section
-                className="w-full py-6 md:py-8 bg-white relative overflow-hidden"
+                className="w-full py-6 md:py-8 bg-[#F8F3ED] relative overflow-hidden shadow-inner"
                 onMouseEnter={() => setIsAutoPlaying(false)}
                 onMouseLeave={() => setIsAutoPlaying(true)}
             >
@@ -255,7 +255,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                     onClick={() => handleCampaignClick(campaign)}
                                 >
                                     {imageUrl ? (
-                                        <div className="relative w-full h-64 md:h-80 lg:h-96 bg-white overflow-hidden">
+                                        <div className="relative w-full h-64 md:h-80 lg:h-96 bg-white overflow-hidden shadow-lg">
                                             <img
                                                 src={imageUrl}
                                                 alt={campaign.name}
@@ -265,7 +265,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                     target.style.display = 'none'
                                                 }}
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                                            <div className="absolute inset-0 bg-gradient-to-r from-slate-800/80 via-slate-800/50 to-transparent" />
                                             <div className="absolute inset-0 flex items-center px-4 md:px-6">
                                                 <div className="max-w-xl w-full">
                                                     <h3 className="text-lg md:text-xl font-bold text-white mb-1">
@@ -300,7 +300,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                                 e.stopPropagation()
                                                                 handleCampaignClick(campaign)
                                                             }}
-                                                            className="inline-flex items-center bg-blue-950 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-black transition-colors text-xs md:text-sm"
+                                                            className="inline-flex items-center bg-slate-800 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-slate-900 transition-colors text-xs md:text-sm shadow-md"
                                                         >
                                                             Shop Now
                                                             <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -312,7 +312,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="bg-gradient-to-r from-blue-900 to-blue-800 p-4 md:p-6 rounded-lg">
+                                        <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 md:p-6 rounded-lg shadow-lg">
                                             <h3 className="text-lg md:text-xl font-bold text-white mb-2">
                                                 {campaign.name}
                                             </h3>
@@ -343,7 +343,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                         e.stopPropagation()
                                                         handleCampaignClick(campaign)
                                                     }}
-                                                    className="inline-flex items-center bg-white text-blue-950 px-4 py-1.5 rounded-full font-semibold hover:bg-blue-50 transition-colors text-xs md:text-sm"
+                                                    className="inline-flex items-center bg-white text-slate-800 px-4 py-1.5 rounded-full font-semibold hover:bg-slate-100 transition-colors text-xs md:text-sm shadow-md"
                                                 >
                                                     Shop Now
                                                     <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -406,7 +406,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
     // Full variant for homepage with auto-scroll
     return (
         <section
-            className="w-full py-8 md:py-12 bg-white"
+            className="w-full py-8 md:py-12 bg-[#F8F3ED] shadow-inner"
             onMouseEnter={() => setIsAutoPlaying(false)}
             onMouseLeave={() => setIsAutoPlaying(true)}
         >
@@ -460,7 +460,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                 />
 
                                                 {/* Gradient Overlay */}
-                                                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70 z-10" />
+                                                <div className="absolute inset-0 bg-gradient-to-b from-slate-800/70 via-slate-800/50 to-slate-800/80 z-10" />
 
                                                 {/* Content Overlay */}
                                                 <div className="relative z-20 flex flex-col justify-center items-center text-center px-6 py-8 md:py-10 h-full min-h-[300px]">
@@ -499,7 +499,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                                 e.stopPropagation()
                                                                 handleCampaignClick(campaign)
                                                             }}
-                                                            className="inline-flex items-center justify-center rounded-full bg-white text-slate-900 px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-100 transition-all duration-300 hover:scale-105"
+                                                            className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-900 transition-all duration-300 hover:scale-105"
                                                         >
                                                             Shop Now
                                                             <svg
@@ -522,7 +522,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                         ) : (
                                             // Fallback card style if no image
                                             <div
-                                                className={`bg-slate-800 rounded-lg p-6 md:p-8 text-center transition-all duration-300 ${campaign.link_url ? 'cursor-pointer hover:shadow-xl' : ''
+                                                className={`bg-slate-700 rounded-lg p-6 md:p-8 text-center transition-all duration-300 shadow-lg ${campaign.link_url ? 'cursor-pointer hover:shadow-xl' : ''
                                                     }`}
                                                 style={{ minHeight: '300px' }}
                                                 onClick={() => handleCampaignClick(campaign)}
@@ -562,7 +562,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                             e.stopPropagation()
                                                             handleCampaignClick(campaign)
                                                         }}
-                                                        className="inline-flex items-center justify-center rounded-full bg-white text-slate-900 px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-100 transition-all duration-300 hover:scale-105"
+                                                        className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-900 transition-all duration-300 hover:scale-105"
                                                     >
                                                         Shop Now
                                                         <svg
@@ -633,7 +633,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                 {/* Grid Layout for Additional Campaigns */}
                 {otherCampaigns.length > 0 && (
                     <>
-                        <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8 text-center">
+                        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6 md:mb-8 text-center">
                             {t('home.campaigns.title', { defaultValue: 'More Campaigns' })}
                         </h2>
 
@@ -644,12 +644,12 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                 return (
                                     <div
                                         key={campaign.id}
-                                        className={`bg-slate-800 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${campaign.link_url ? 'cursor-pointer' : ''
+                                        className={`bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] shadow-md ${campaign.link_url ? 'cursor-pointer' : ''
                                             }`}
                                         onClick={() => handleCampaignClick(campaign)}
                                     >
                                         {imageUrl ? (
-                                            <div className="relative h-32 bg-slate-700 overflow-hidden">
+                                            <div className="relative h-32 bg-slate-100 overflow-hidden">
                                                 <img
                                                     src={imageUrl}
                                                     alt={campaign.name}
@@ -661,35 +661,35 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="relative h-32 bg-slate-700 flex items-center justify-center">
+                                            <div className="relative h-32 bg-slate-100 flex items-center justify-center">
                                                 <span className="text-slate-400 text-xs">No Image</span>
                                             </div>
                                         )}
 
                                         <div className="p-4">
-                                            <h3 className="text-lg font-semibold text-white mb-2">
+                                            <h3 className="text-lg font-semibold text-slate-800 mb-2">
                                                 {campaign.name}
                                             </h3>
 
                                             {campaign.description && (
-                                                <p className="text-slate-300 text-xs mb-3 line-clamp-2">
+                                                <p className="text-slate-600 text-xs mb-3 line-clamp-2">
                                                     {campaign.description}
                                                 </p>
                                             )}
 
                                             {/* Date Range */}
                                             {(campaign.starts_at || campaign.ends_at) && (
-                                                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-white/70">
+                                                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-slate-500">
                                                     {campaign.starts_at && (
-                                                        <span className="bg-slate-700/60 px-2 py-0.5 rounded">
+                                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                                                             {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </span>
                                                     )}
                                                     {campaign.starts_at && campaign.ends_at && (
-                                                        <span className="text-white/50">-</span>
+                                                        <span className="text-slate-400">-</span>
                                                     )}
                                                     {campaign.ends_at && (
-                                                        <span className="bg-slate-700/60 px-2 py-0.5 rounded">
+                                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                                                             {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </span>
                                                     )}
@@ -697,7 +697,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                             )}
 
                                             {campaign.link_url && (
-                                                <div className="flex items-center text-blue-400 font-medium text-xs hover:text-blue-300 transition-colors">
+                                                <div className="flex items-center text-slate-600 font-medium text-xs hover:text-slate-800 transition-colors">
                                                     <span>Learn More</span>
                                                     <svg
                                                         className="w-3 h-3 ml-1.5"

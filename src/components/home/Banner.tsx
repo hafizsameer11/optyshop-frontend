@@ -107,7 +107,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
     if (loading) {
         return (
-            <div className="relative text-white" style={{ height }}>
+            <div className="relative text-slate-800" style={{ height }}>
                 {showNavbar && (
                     <div className="absolute top-0 left-0 right-0 z-30">
                         <Navbar />
@@ -263,7 +263,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     }
 
     return (
-        <div className="relative text-white w-full" style={{ height, maxWidth: '1400px', margin: '0 auto' }}>
+        <div className="relative text-slate-800 w-full" style={{ height, maxWidth: '1400px', margin: '0 auto' }}>
             {/* Banner Slider Container - Full height */}
             <div className="relative overflow-hidden w-full" style={{ height }}>
                 {/* Navbar - Absolute positioned to overlay banner (only if showNavbar is true) */}
@@ -333,17 +333,17 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }}
                                 />
 
-                                {/* Overlay for better text readability */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-black/80 z-10" />
+                                {/* Overlay for better text readability with attractive background */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-[#F8F3ED]/90 via-[#F8F3ED]/70 to-[#F8F3ED]/90 z-10" />
 
                                 {/* Banner Content */}
                                 <main className="relative z-20 flex items-center justify-center px-6 lg:px-20 h-full" style={{ height }}>
                                     <div className="max-w-3xl text-center">
                                         {banner.title && (
-                                            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold leading-tight">
+                                            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold leading-tight text-slate-900">
                                                 <span className="block">{banner.title}</span>
                                                 {bannerMeta?.description && (
-                                                    <span className="block font-light italic mt-0.5 text-sm sm:text-base md:text-lg lg:text-xl">
+                                                    <span className="block font-light italic mt-0.5 text-sm sm:text-base md:text-lg lg:text-xl text-slate-700">
                                                         {bannerMeta.description}
                                                     </span>
                                                 )}
@@ -351,7 +351,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                         )}
 
                                         {bannerMeta?.description && !banner.title && (
-                                            <p className="mt-2 text-xs sm:text-sm md:text-base text-slate-100/90">
+                                            <p className="mt-2 text-xs sm:text-sm md:text-base text-slate-700/90">
                                                 {bannerMeta.description}
                                             </p>
                                         )}
@@ -365,7 +365,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                                         e.stopPropagation()
                                                         handleButtonClick(bannerMeta.button1)
                                                     }}
-                                                    className="inline-flex justify-center rounded-full bg-white text-slate-900 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                                    className="inline-flex justify-center rounded-full bg-slate-800 text-white px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg hover:bg-slate-900 transition-colors cursor-pointer"
                                                 >
                                                     {bannerMeta.button1.text}
                                                 </button>
@@ -387,7 +387,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                                             }
                                                         }, 50)
                                                     }}
-                                                    className="inline-flex justify-center rounded-full bg-white text-slate-900 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg hover:bg-slate-100 transition-colors cursor-pointer"
+                                                    className="inline-flex justify-center rounded-full bg-slate-800 text-white px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg hover:bg-slate-900 transition-colors cursor-pointer"
                                                 >
                                                     Try on the glasses
                                                 </button>
@@ -400,7 +400,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                                         e.stopPropagation()
                                                         handleButtonClick(bannerMeta.button2)
                                                     }}
-                                                    className="inline-flex justify-center rounded-full border border-white/60 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-white/10 transition-colors cursor-pointer"
+                                                    className="inline-flex justify-center rounded-full border border-slate-600/60 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-slate-600/20 transition-colors cursor-pointer"
                                                 >
                                                     {bannerMeta.button2.text}
                                                 </button>
@@ -422,7 +422,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                                             }
                                                         }, 50)
                                                     }}
-                                                    className="inline-flex justify-center rounded-full border border-white/60 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-white/10 transition-colors cursor-pointer"
+                                                    className="inline-flex justify-center rounded-full border border-slate-600/60 px-4 py-1.5 sm:px-6 sm:py-2 text-xs sm:text-sm font-semibold hover:bg-slate-600/20 transition-colors cursor-pointer"
                                                 >
                                                     Request a demo
                                                 </button>
