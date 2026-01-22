@@ -4463,8 +4463,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
       {!loading && (
         <>
           <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-3">
-            {/* Photochromic Section */}
-            {photochromicOptions.length > 0 && (
+            {/* Photochromic Section - HIDDEN */}
+            {/* {photochromicOptions.length > 0 && (
               <div className="mb-4">
                 <button
                   onClick={handlePhotochromicClick}
@@ -4554,10 +4554,10 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
-            {/* Prescription Sun Lenses Section */}
-            {prescriptionSunOptions.length > 0 && (
+            {/* Prescription Sun Lenses Section - HIDDEN */}
+            {/* {prescriptionSunOptions.length > 0 && (
               <div className="mb-4">
                 <button
                   onClick={handlePrescriptionSunClick}
@@ -4721,7 +4721,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                   </div>
                 )}
               </div>
-            )}
+            )} */}
 
             {/* Standard Treatments from API */}
             {standardTreatments.length > 0 ? (
