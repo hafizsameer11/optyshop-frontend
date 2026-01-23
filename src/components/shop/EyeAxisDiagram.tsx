@@ -167,7 +167,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   // Handlers for prescription value changes
   const handlePrescriptionChange = (eyeType: 'right' | 'left', field: 'sphere' | 'cylinder' | 'axis', value: string) => {
-    const numValue = value === '' ? undefined : parseFloat(value.replace(',', '.'))
+    // For axis, use integer parsing; for sphere/cylinder, use float parsing
+    const numValue = value === '' ? undefined : (field === 'axis' ? parseInt(value.replace(',', '.')) : parseFloat(value.replace(',', '.')))
     
     if (eyeType === 'right') {
       const updated = { ...localRightPrescription, [field]: numValue }
@@ -478,19 +479,17 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           0
         </text>
         
-        {/* Arrow pointing to axis value - always show when axis value is defined */}
-        {axisValue !== undefined && (
-          <line
-            x1={centerX}
-            y1={centerY}
-            x2={arrowX}
-            y2={arrowY}
-            stroke="#2563eb"
-            strokeWidth="2.5"
-            markerEnd={`url(#arrowhead-${eyeType})`}
-            style={{ pointerEvents: 'none' }}
-          />
-        )}
+        {/* Arrow pointing to axis value - always show the needle */}
+        <line
+          x1={centerX}
+          y1={centerY}
+          x2={arrowX}
+          y2={arrowY}
+          stroke="#2563eb"
+          strokeWidth="2.5"
+          markerEnd={`url(#arrowhead-${eyeType})`}
+          style={{ pointerEvents: 'none' }}
+        />
         
         {/* 0° label below the diagram */}
         <text
@@ -534,10 +533,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {/* TABO 0 and INT. labels - shown only on left eye (Occhio Sinistro) */}
         {eyeType === 'left' && (
           <>
-            {/* TABO 0 - below the diagram, aligned with 150-degree mark on inner scale */}
+            {/* TABO 0 - below the diagram, aligned with the left side (180-degree mark) */}
             {(() => {
-              const taboAngle = (150 * Math.PI) / 180
-              const taboX = centerX + Math.cos(taboAngle) * (radius - 25)
+              const taboAngle = (180 * Math.PI) / 180
+              const taboX = centerX + Math.cos(taboAngle) * (radius - 20)
               return (
                 <text
                   x={taboX}
@@ -620,8 +619,18 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
-                  {localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="180"
+                    value={localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                      handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
+                    }}
+                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                  />
                 </td>
               </tr>
               <tr>
@@ -644,8 +653,18 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
-                  {localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="180"
+                    value={localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                      handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
+                    }}
+                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -704,9 +723,19 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
-                {localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
-              </td>
+                <td className="border border-gray-300 px-4 py-2 text-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="180"
+                    value={localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                      handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
+                    }}
+                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  />
+                </td>
             </tr>
             <tr>
               <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
@@ -728,9 +757,19 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
-                {localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
-              </td>
+                <td className="border border-gray-300 px-4 py-2 text-center">
+                  <input
+                    type="number"
+                    min="0"
+                    max="180"
+                    value={localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
+                    onChange={(e) => {
+                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                      handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
+                    }}
+                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  />
+                </td>
             </tr>
           </tbody>
         </table>
