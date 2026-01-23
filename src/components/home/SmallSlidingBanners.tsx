@@ -1,10 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useEffect, useState } from 'react'
 import { getCampaigns } from '../../services/campaignsService'
 import type { Campaign } from '../../services/campaignsService'
 
 const SmallSlidingBanners: React.FC = () => {
-    const { t } = useTranslation()
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [loading, setLoading] = useState(true)
     const [currentIndex, setCurrentIndex] = useState(0)
@@ -209,8 +207,6 @@ const SmallSlidingBanners: React.FC = () => {
     return (
         <section 
             className="w-full py-6 md:py-8 bg-slate-950"
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
         >
             <div className="w-[90%] mx-auto max-w-7xl relative overflow-hidden">
                 {/* Carousel Container */}
