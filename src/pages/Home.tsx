@@ -49,7 +49,7 @@ const Home: React.FC = () => {
                 pageType="home"
                 showNavbar={false}
                 autoSlideInterval={5000}
-                height="200px"
+                height="100vh"
             />
             <SmallSlidingBanners />
             <TrustedBrands />

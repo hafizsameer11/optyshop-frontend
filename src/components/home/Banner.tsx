@@ -263,7 +263,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     }
 
     return (
-        <div className="relative text-slate-800 w-full" style={{ height, maxWidth: '1400px', margin: '0 auto' }}>
+        <div className="relative text-slate-800 w-full" style={{ height }}>
             {/* Banner Slider Container - Full height */}
             <div className="relative overflow-hidden w-full" style={{ height }}>
                 {/* Navbar - Absolute positioned to overlay banner (only if showNavbar is true) */}
@@ -302,8 +302,6 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                 style={{
                                     height,
                                     width: '100%',
-                                    maxWidth: '1400px',
-                                    margin: '0 auto',
                                 }}
                             >
                                 {/* Background Image - Primary method */}

@@ -88,7 +88,7 @@ const SmallSlidingBanners: React.FC = () => {
                 const next = prev + itemsPerView
                 return next > maxIndex ? 0 : next
             })
-        }, 4000) // Change every 4 seconds
+        }, 5000) // Change every 5 seconds (matching hero banner)
 
         return () => clearInterval(interval)
     }, [campaigns.length, isAutoPlaying, itemsPerView])
@@ -234,7 +234,7 @@ const SmallSlidingBanners: React.FC = () => {
                     onTouchEnd={onTouchEnd}
                 >
                     <div
-                        className="flex transition-transform duration-500 ease-in-out"
+                        className="flex transition-transform duration-700 ease-in-out"
                         style={{
                             transform: `translateX(-${currentIndex * slideWidth}%)`,
                         }}
