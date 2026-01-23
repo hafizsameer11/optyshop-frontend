@@ -234,8 +234,6 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
         return (
             <section
                 className="w-full py-6 md:py-8 bg-[#F8F3ED] relative overflow-hidden shadow-inner"
-                onMouseEnter={() => setIsAutoPlaying(false)}
-                onMouseLeave={() => setIsAutoPlaying(true)}
             >
                 <div className="w-[90%] mx-auto max-w-7xl relative overflow-hidden">
                     {/* Auto-scrolling container */}
@@ -407,8 +405,6 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
     return (
         <section
             className="w-full py-8 md:py-12 bg-[#F8F3ED] shadow-inner"
-            onMouseEnter={() => setIsAutoPlaying(false)}
-            onMouseLeave={() => setIsAutoPlaying(true)}
         >
             <div className="w-[90%] mx-auto max-w-7xl">
                 {/* Hero Banner for Current Campaign */}

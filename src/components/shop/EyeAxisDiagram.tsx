@@ -34,6 +34,20 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 }) => {
   const { t } = useTranslation()
   
+  // TABO to International conversion: INT = 180 - TABO
+  // Examples: TABO 30 → INT 150, TABO 120 → INT 60, TABO 100 → INT 80
+  const taboToInt = (taboValue: number): number => {
+    const normalized = normalizeAxis(taboValue)
+    return 180 - normalized
+  }
+  
+  // International to TABO conversion: TABO = 180 - INT
+  // Examples: INT 150 → TABO 30, INT 60 → TABO 120, INT 80 → TABO 100
+  const intToTabo = (intValue: number): number => {
+    const normalized = normalizeAxis(intValue)
+    return 180 - normalized
+  }
+  
   // Normalize axis value to 0-180 range (handle negative values)
   const normalizeAxis = (value: number): number => {
     if (value < 0) {
@@ -135,14 +149,25 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     e.stopPropagation()
     setIsDragging(eyeType)
     const svgElement = e.currentTarget
-    const newAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, eyeType)
+    // calculateAxisFromPoint returns INT value (from outer scale)
+    const newIntAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, eyeType)
     
     if (eyeType === 'right') {
-      setLocalRightAxis(newAxis)
-      onRightEyeAxisChange?.(newAxis)
+      // Right eye: store INT directly
+      setLocalRightAxis(newIntAxis)
+      onRightEyeAxisChange?.(newIntAxis)
+      // Update prescription with INT value
+      const updated = { ...localRightPrescription, axis: newIntAxis }
+      setLocalRightPrescription(updated)
+      onRightEyePrescriptionChange?.(updated)
     } else {
-      setLocalLeftAxis(newAxis)
-      onLeftEyeAxisChange?.(newAxis)
+      // Left eye: store INT (for diagram), but user sees TABO in input
+      setLocalLeftAxis(newIntAxis)
+      onLeftEyeAxisChange?.(newIntAxis)
+      // Update prescription with INT value (stored internally)
+      const updated = { ...localLeftPrescription, axis: newIntAxis }
+      setLocalLeftPrescription(updated)
+      onLeftEyePrescriptionChange?.(updated)
     }
   }
 
@@ -150,14 +175,23 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     if (!isInteractive || !isDragging || isDragging !== eyeType) return
     e.preventDefault()
     const svgElement = e.currentTarget
-    const newAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, eyeType)
+    // calculateAxisFromPoint returns INT value (from outer scale)
+    const newIntAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, eyeType)
     
     if (eyeType === 'right') {
-      setLocalRightAxis(newAxis)
-      onRightEyeAxisChange?.(newAxis)
+      // Right eye: store INT directly
+      setLocalRightAxis(newIntAxis)
+      onRightEyeAxisChange?.(newIntAxis)
+      const updated = { ...localRightPrescription, axis: newIntAxis }
+      setLocalRightPrescription(updated)
+      onRightEyePrescriptionChange?.(updated)
     } else {
-      setLocalLeftAxis(newAxis)
-      onLeftEyeAxisChange?.(newAxis)
+      // Left eye: store INT (for diagram), but user sees TABO in input
+      setLocalLeftAxis(newIntAxis)
+      onLeftEyeAxisChange?.(newIntAxis)
+      const updated = { ...localLeftPrescription, axis: newIntAxis }
+      setLocalLeftPrescription(updated)
+      onLeftEyePrescriptionChange?.(updated)
     }
   }
 
@@ -171,6 +205,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     const numValue = value === '' ? undefined : (field === 'axis' ? parseInt(value.replace(',', '.')) : parseFloat(value.replace(',', '.')))
     
     if (eyeType === 'right') {
+      // Right eye uses International system - store directly
       const updated = { ...localRightPrescription, [field]: numValue }
       setLocalRightPrescription(updated)
       onRightEyePrescriptionChange?.(updated)
@@ -180,34 +215,50 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         onRightEyeAxisChange?.(normalized)
       }
     } else {
-      const updated = { ...localLeftPrescription, [field]: numValue }
-      setLocalLeftPrescription(updated)
-      onLeftEyePrescriptionChange?.(updated)
+      // Left eye uses TABO system - convert TABO input to INT for storage
       if (field === 'axis' && numValue !== undefined) {
-        const normalized = normalizeAxis(numValue)
-        setLocalLeftAxis(normalized)
-        onLeftEyeAxisChange?.(normalized)
+        // User entered TABO value, convert to INT for storage
+        const intValue = taboToInt(numValue)
+        const updated = { ...localLeftPrescription, axis: intValue }
+        setLocalLeftPrescription(updated)
+        onLeftEyePrescriptionChange?.(updated)
+        setLocalLeftAxis(intValue)
+        onLeftEyeAxisChange?.(intValue)
+      } else {
+        // For sphere/cylinder, store directly
+        const updated = { ...localLeftPrescription, [field]: numValue }
+        setLocalLeftPrescription(updated)
+        onLeftEyePrescriptionChange?.(updated)
       }
     }
   }
 
-  useEffect(() => {
-    if (isDragging) {
-      const handleGlobalMouseMove = (e: MouseEvent) => {
-        if (!isDragging) return
-        const svgElement = isDragging === 'right' ? rightSvgRef.current : leftSvgRef.current
-        if (!svgElement) return
-        
-        const newAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, isDragging)
-        
-        if (isDragging === 'right') {
-          setLocalRightAxis(newAxis)
-          onRightEyeAxisChange?.(newAxis)
-        } else {
-          setLocalLeftAxis(newAxis)
-          onLeftEyeAxisChange?.(newAxis)
-        }
-      }
+      useEffect(() => {
+        if (isDragging) {
+          const handleGlobalMouseMove = (e: MouseEvent) => {
+            if (!isDragging) return
+            const svgElement = isDragging === 'right' ? rightSvgRef.current : leftSvgRef.current
+            if (!svgElement) return
+            
+            // calculateAxisFromPoint returns INT value (from outer scale)
+            const newIntAxis = calculateAxisFromPoint(e.clientX, e.clientY, svgElement, isDragging)
+            
+            if (isDragging === 'right') {
+              // Right eye: store INT directly
+              setLocalRightAxis(newIntAxis)
+              onRightEyeAxisChange?.(newIntAxis)
+              const updated = { ...localRightPrescription, axis: newIntAxis }
+              setLocalRightPrescription(updated)
+              onRightEyePrescriptionChange?.(updated)
+            } else {
+              // Left eye: store INT (for diagram), but user sees TABO in input
+              setLocalLeftAxis(newIntAxis)
+              onLeftEyeAxisChange?.(newIntAxis)
+              const updated = { ...localLeftPrescription, axis: newIntAxis }
+              setLocalLeftPrescription(updated)
+              onLeftEyePrescriptionChange?.(updated)
+            }
+          }
 
       const handleGlobalMouseUp = () => {
         setIsDragging(null)
@@ -563,6 +614,23 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             >
               INT.
             </text>
+            {/* Display TABO value for left eye - show the converted TABO value */}
+            {(() => {
+              const taboValue = intToTabo(normalizedAxis)
+              return (
+                <text
+                  x={centerX}
+                  y={centerY - radius - 25}
+                  fontSize="12"
+                  fill="#2563eb"
+                  fontWeight="bold"
+                  fontFamily="Arial, sans-serif"
+                  textAnchor="middle"
+                >
+                  TABO: {taboValue}°
+                </text>
+              )
+            })()}
           </>
         )}
       </svg>
@@ -584,6 +652,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             <div className="flex justify-center">
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
+            <div className="mt-1 text-[10px] text-gray-600 italic">
+              Uses TABO system
+            </div>
           </div>
         </div>
         
@@ -595,7 +666,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 <th className="border border-gray-300 px-3 py-1 text-left font-semibold text-gray-700 text-xs"></th>
                 <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.sphere', 'Sfera')}</th>
                 <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.cylinder', 'Cil.')}</th>
-                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.axis', 'Asse')}</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">
+                  {t('prescription.axis', 'Asse')}
+                  <span className="block text-[9px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -654,17 +728,21 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                   />
                 </td>
                 <td className="border border-gray-300 px-3 py-1 text-center">
-                  <input
-                    type="number"
-                    min="0"
-                    max="180"
-                    value={localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
-                      handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
-                    }}
-                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="180"
+                      value={localLeftPrescription.axis !== undefined ? intToTabo(localLeftPrescription.axis) : (localLeftAxis !== undefined ? intToTabo(localLeftAxis) : '')}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                        handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
+                      }}
+                      className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                      placeholder="--"
+                    />
+                    <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[8px] text-gray-500 font-normal">TABO</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -688,6 +766,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           <div className="flex justify-center">
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
+          <div className="mt-2 text-xs text-gray-600 italic">
+            Uses TABO system (converted to INT for storage)
+          </div>
         </div>
       </div>
       
@@ -699,7 +780,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"></th>
               <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.sphere', 'Sfera')}</th>
               <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.cylinder', 'Cil.')}</th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.axis', 'Asse')}</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">
+                {t('prescription.axis', 'Asse')}
+                <span className="block text-xs font-normal text-gray-500 mt-1">(Left: TABO)</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -758,17 +842,21 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 />
               </td>
                 <td className="border border-gray-300 px-4 py-2 text-center">
-                  <input
-                    type="number"
-                    min="0"
-                    max="180"
-                    value={localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : parseInt(e.target.value)
-                      handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
-                    }}
-                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      min="0"
+                      max="180"
+                      value={localLeftPrescription.axis !== undefined ? intToTabo(localLeftPrescription.axis) : (localLeftAxis !== undefined ? intToTabo(localLeftAxis) : '')}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? undefined : parseInt(e.target.value)
+                        handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
+                      }}
+                      className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 pr-12"
+                      placeholder="--"
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-normal">TABO</span>
+                  </div>
                 </td>
             </tr>
           </tbody>

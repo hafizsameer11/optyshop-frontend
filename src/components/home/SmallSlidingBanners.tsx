@@ -74,12 +74,25 @@ const SmallSlidingBanners: React.FC = () => {
         }
     }, [])
 
+    // Reset to first slide and enable auto-play when campaigns are loaded
+    useEffect(() => {
+        if (campaigns.length > 0) {
+            setCurrentIndex(0)
+            setIsAutoPlaying(true)
+        }
+    }, [campaigns.length])
+
     // Auto-rotate banners - slide one item at a time like hero banner
     useEffect(() => {
+        // Only auto-slide if we have more than 1 campaign and auto-play is enabled
         if (campaigns.length <= 1 || !isAutoPlaying) return
 
         const interval = setInterval(() => {
-            setCurrentIndex((prev) => (prev + 1) % campaigns.length)
+            setCurrentIndex((prev) => {
+                // For infinite loop carousel, use modulo
+                // This ensures smooth continuous sliding
+                return (prev + 1) % Math.max(1, campaigns.length)
+            })
         }, 5000) // Change every 5 seconds (matching hero banner)
 
         return () => clearInterval(interval)
@@ -147,14 +160,19 @@ const SmallSlidingBanners: React.FC = () => {
     }
 
     const goToPrevious = () => {
-        setCurrentIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length)
+        setCurrentIndex((prev) => {
+            const newIndex = prev - 1
+            return newIndex < 0 ? campaigns.length - 1 : newIndex
+        })
         setIsAutoPlaying(false)
+        // Resume auto-play after 10 seconds
         setTimeout(() => setIsAutoPlaying(true), 10000)
     }
 
     const goToNext = () => {
-        setCurrentIndex((prev) => (prev + 1) % campaigns.length)
+        setCurrentIndex((prev) => (prev + 1) % Math.max(1, campaigns.length))
         setIsAutoPlaying(false)
+        // Resume auto-play after 10 seconds
         setTimeout(() => setIsAutoPlaying(true), 10000)
     }
 
@@ -323,6 +341,7 @@ const SmallSlidingBanners: React.FC = () => {
                                 onClick={() => {
                                     setCurrentIndex(index)
                                     setIsAutoPlaying(false)
+                                    // Resume auto-play after 10 seconds
                                     setTimeout(() => setIsAutoPlaying(true), 10000)
                                 }}
                                 className={`h-2 rounded-full transition-all ${
