@@ -506,32 +506,6 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           fill="#000"
         />
         
-        {/* 0 labels at left and right ends of horizontal baseline */}
-        <text
-          x={centerX - radius}
-          y={centerY + 8}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="11"
-          fill="#000"
-          fontFamily="Arial, sans-serif"
-          fontWeight="normal"
-        >
-          0
-        </text>
-        <text
-          x={centerX + radius}
-          y={centerY + 8}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="11"
-          fill="#000"
-          fontFamily="Arial, sans-serif"
-          fontWeight="normal"
-        >
-          0
-        </text>
-        
         {/* Arrow pointing to axis value - always show the needle */}
         <line
           x1={centerX}
@@ -544,7 +518,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           style={{ pointerEvents: 'none' }}
         />
         
-        {/* 0° label below the diagram */}
+        {/* 0° label below the diagram at center */}
         <text
           x={centerX}
           y={centerY + 15}
