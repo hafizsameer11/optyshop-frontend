@@ -1973,8 +1973,36 @@ const ProductDetail: React.FC = () => {
             return false
         }
 
-        // Original logic for non-contact-lens products (glasses, eye hygiene, etc.)
+        // Check if product has variants (for Eye Hygiene products with sizeVolumeVariants)
         const p = product as any
+        const variantsArray = fetchedVariants.length > 0
+            ? fetchedVariants
+            : (p.sizeVolumeVariants || p.size_volume_variants || [])
+        const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
+
+        // If product has variants, check the selected variant's stock
+        if (hasVariants && selectedSizeVolumeVariant) {
+            const variantStockStatus = selectedSizeVolumeVariant.stock_status
+            const variantStockQty = selectedSizeVolumeVariant.stock_quantity
+            
+            return variantStockStatus === 'out_of_stock' ||
+                (variantStockStatus !== 'in_stock' && variantStockQty !== undefined && variantStockQty <= 0) ||
+                (variantStockStatus === undefined && variantStockQty !== undefined && variantStockQty <= 0)
+        }
+
+        // If product has variants but no variant is selected yet, check if any variant is in stock
+        if (hasVariants && !selectedSizeVolumeVariant) {
+            // Check if at least one variant is in stock
+            const hasInStockVariant = variantsArray.some((variant: any) => {
+                const variantStockStatus = variant.stock_status
+                const variantStockQty = variant.stock_quantity
+                return variantStockStatus === 'in_stock' && variantStockQty > 0
+            })
+            // If no variant is in stock, show as out of stock
+            return !hasInStockVariant
+        }
+
+        // Original logic for non-contact-lens products without variants (glasses, etc.)
         const stockStatus = p.stock_status
         const stockQty = product.stock_quantity
 
@@ -1982,7 +2010,7 @@ const ProductDetail: React.FC = () => {
             (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
             (stockStatus === undefined && product.in_stock === false) ||
             (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs])
+    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs, fetchedVariants, selectedSizeVolumeVariant])
 
     // Helper function to get the color-specific image URL (with unit images support)
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
@@ -2695,23 +2723,11 @@ const ProductDetail: React.FC = () => {
                                                     </>
                                                 )
                                             })()}
-                                            {(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-
-                                                const isOutOfStock =
-                                                    stockStatus === 'out_of_stock' ||
-                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                    (stockStatus === undefined && product.in_stock === false) ||
-                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-
-                                                return isOutOfStock ? (
-                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                        {t('shop.outOfStock')}
-                                                    </div>
-                                                ) : null
-                                            })()}
+                                            {isProductOutOfStock && (
+                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                    {t('shop.outOfStock')}
+                                                </div>
+                                            )}
                                             {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
                                                 <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
                                                     Sale
@@ -2823,24 +2839,11 @@ const ProductDetail: React.FC = () => {
                                                     />
                                                 )
                                             })()}
-                                            {(() => {
-                                                const p = product as any
-                                                const stockStatus = p.stock_status
-                                                const stockQty = product.stock_quantity
-
-                                                // Check if out of stock - stock_status takes priority
-                                                const isOutOfStock =
-                                                    stockStatus === 'out_of_stock' ||
-                                                    (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-                                                    (stockStatus === undefined && product.in_stock === false) ||
-                                                    (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-
-                                                return isOutOfStock ? (
-                                                    <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                        Out of Stock
-                                                    </div>
-                                                ) : null
-                                            })()}
+                                            {isProductOutOfStock && (
+                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                                                    Out of Stock
+                                                </div>
+                                            )}
                                             {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
                                                 <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
                                                     Sale
