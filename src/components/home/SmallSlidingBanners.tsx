@@ -52,6 +52,7 @@ const SmallSlidingBanners: React.FC = () => {
                 if (isCancelled) return
                 
                 setCampaigns(bannersToShow)
+                setIsAutoPlaying(true) // Ensure auto-play is enabled when campaigns load
                 
                 if (import.meta.env.DEV && bannersToShow.length > 0) {
                     console.log(`✅ [Small Sliding Banners] Loaded ${bannersToShow.length} banner(s)`)
@@ -75,23 +76,16 @@ const SmallSlidingBanners: React.FC = () => {
         }
     }, [])
 
-    // Auto-rotate banners
+    // Auto-rotate banners - slide one item at a time like hero banner
     useEffect(() => {
         if (campaigns.length <= 1 || !isAutoPlaying) return
 
-        const maxIndex = Math.max(0, campaigns.length - itemsPerView)
-        if (maxIndex === 0) return // Don't auto-slide if all items fit
-
         const interval = setInterval(() => {
-            setCurrentIndex((prev) => {
-                const maxIndex = Math.max(0, campaigns.length - itemsPerView)
-                const next = prev + itemsPerView
-                return next > maxIndex ? 0 : next
-            })
+            setCurrentIndex((prev) => (prev + 1) % campaigns.length)
         }, 5000) // Change every 5 seconds (matching hero banner)
 
         return () => clearInterval(interval)
-    }, [campaigns.length, isAutoPlaying, itemsPerView])
+    }, [campaigns.length, isAutoPlaying])
 
     // Helper function to handle image URLs
     const getImageUrl = (imageUrl: string | null | undefined): string => {
@@ -155,20 +149,13 @@ const SmallSlidingBanners: React.FC = () => {
     }
 
     const goToPrevious = () => {
-        setCurrentIndex((prev) => {
-            const newIndex = prev - itemsPerView
-            return newIndex < 0 ? 0 : newIndex
-        })
+        setCurrentIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length)
         setIsAutoPlaying(false)
         setTimeout(() => setIsAutoPlaying(true), 10000)
     }
 
     const goToNext = () => {
-        const maxIndex = Math.max(0, campaigns.length - itemsPerView)
-        setCurrentIndex((prev) => {
-            const next = prev + itemsPerView
-            return next > maxIndex ? maxIndex : next
-        })
+        setCurrentIndex((prev) => (prev + 1) % campaigns.length)
         setIsAutoPlaying(false)
         setTimeout(() => setIsAutoPlaying(true), 10000)
     }
@@ -307,14 +294,13 @@ const SmallSlidingBanners: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Navigation Arrows */}
-                {campaigns.length > itemsPerView && (
+                {/* Navigation Arrows - Always show if there are multiple campaigns */}
+                {campaigns.length > 1 && (
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10 disabled:opacity-50"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
                             aria-label="Previous banners"
-                            disabled={currentIndex === 0}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -322,9 +308,8 @@ const SmallSlidingBanners: React.FC = () => {
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10 disabled:opacity-50"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
                             aria-label="Next banners"
-                            disabled={currentIndex >= Math.max(0, campaigns.length - itemsPerView)}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -333,30 +318,25 @@ const SmallSlidingBanners: React.FC = () => {
                     </>
                 )}
 
-                {/* Dots Indicator */}
-                {campaigns.length > itemsPerView && (
+                {/* Dots Indicator - Always show if there are multiple campaigns */}
+                {campaigns.length > 1 && (
                     <div className="flex justify-center gap-2 mt-4">
-                        {Array.from({ length: Math.ceil(campaigns.length / itemsPerView) }).map((_, index) => {
-                            const dotIndex = index * itemsPerView
-                            const isActive = currentIndex === dotIndex || 
-                                (currentIndex > dotIndex && currentIndex < dotIndex + itemsPerView)
-                            return (
-                                <button
-                                    key={index}
-                                    onClick={() => {
-                                        setCurrentIndex(dotIndex)
-                                        setIsAutoPlaying(false)
-                                        setTimeout(() => setIsAutoPlaying(true), 10000)
-                                    }}
-                                    className={`h-2 rounded-full transition-all ${
-                                        isActive 
-                                            ? 'bg-white w-8' 
-                                            : 'bg-white/40 w-2 hover:bg-white/60'
-                                    }`}
-                                    aria-label={`Go to slide ${index + 1}`}
-                                />
-                            )
-                        })}
+                        {campaigns.map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => {
+                                    setCurrentIndex(index)
+                                    setIsAutoPlaying(false)
+                                    setTimeout(() => setIsAutoPlaying(true), 10000)
+                                }}
+                                className={`h-2 rounded-full transition-all ${
+                                    index === currentIndex
+                                        ? 'bg-white w-8'
+                                        : 'bg-white/40 w-2 hover:bg-white/60'
+                                }`}
+                                aria-label={`Go to slide ${index + 1}`}
+                            />
+                        ))}
                     </div>
                 )}
             </div>
