@@ -1,8 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react'
 
+interface PrescriptionValues {
+  sphere?: number
+  cylinder?: number
+  axis?: number
+}
+
 interface EyeAxisDiagramProps {
   rightEyeAxis?: number
   leftEyeAxis?: number
+  rightEyePrescription?: PrescriptionValues
+  leftEyePrescription?: PrescriptionValues
   compact?: boolean
   onRightEyeAxisChange?: (value: number) => void
   onLeftEyeAxisChange?: (value: number) => void
@@ -10,33 +18,52 @@ interface EyeAxisDiagramProps {
 }
 
 const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
-  rightEyeAxis = 0,
-  leftEyeAxis = 30,
+  rightEyeAxis,
+  leftEyeAxis,
+  rightEyePrescription,
+  leftEyePrescription,
   compact = false,
   onRightEyeAxisChange,
   onLeftEyeAxisChange,
   interactive
 }) => {
+  // Normalize axis value to 0-180 range (handle negative values)
+  const normalizeAxis = (value: number): number => {
+    if (value < 0) {
+      // Convert negative values: -179 → 1, -90 → 90, -1 → 179
+      return 180 + value
+    }
+    if (value > 180) {
+      // Wrap values > 180: 181 → 1, 270 → 90
+      return value % 180
+    }
+    return value
+  }
+
+  // Use prescription axis if provided, otherwise use prop values, and normalize
+  const rightAxisValue = normalizeAxis(rightEyePrescription?.axis ?? rightEyeAxis ?? 0)
+  const leftAxisValue = normalizeAxis(leftEyePrescription?.axis ?? leftEyeAxis ?? 30)
+  
   // Auto-enable interactive mode if onChange handlers are provided
   const isInteractive = interactive !== undefined ? interactive : !!(onRightEyeAxisChange || onLeftEyeAxisChange)
-  const [localRightAxis, setLocalRightAxis] = useState(rightEyeAxis)
-  const [localLeftAxis, setLocalLeftAxis] = useState(leftEyeAxis)
+  const [localRightAxis, setLocalRightAxis] = useState(rightAxisValue)
+  const [localLeftAxis, setLocalLeftAxis] = useState(leftAxisValue)
   const [isDragging, setIsDragging] = useState<'right' | 'left' | null>(null)
   const rightSvgRef = useRef<SVGSVGElement>(null)
   const leftSvgRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
-    setLocalRightAxis(rightEyeAxis)
-  }, [rightEyeAxis])
+    setLocalRightAxis(rightAxisValue)
+  }, [rightAxisValue])
 
   useEffect(() => {
-    setLocalLeftAxis(leftEyeAxis)
-  }, [leftEyeAxis])
+    setLocalLeftAxis(leftAxisValue)
+  }, [leftAxisValue])
 
-  const svgWidth = 220
-  const svgHeight = 130
+  const svgWidth = 240
+  const svgHeight = 145
   const centerX = svgWidth / 2
-  const centerY = svgHeight - 5
+  const centerY = svgHeight - 20
   const radius = 105
 
   const calculateAxisFromPoint = (clientX: number, clientY: number, svgElement: SVGSVGElement, eyeType: 'right' | 'left'): number => {
@@ -134,14 +161,34 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     }
   }, [isDragging, onRightEyeAxisChange, onLeftEyeAxisChange])
 
+  // Format prescription value for display
+  const formatPrescriptionValue = (value?: number): string => {
+    if (value === undefined || value === null) return ''
+    return value.toFixed(2).replace('.', ',')
+  }
+
   const generateProtractor = (axisValue: number, eyeType: 'right' | 'left', svgRef: React.RefObject<SVGSVGElement | null>) => {
+    // Normalize axis value to 0-180 range to ensure arrow stays within diagram
+    let normalizedAxis = axisValue
+    if (normalizedAxis < 0) {
+      // Convert negative values: -179 → 1, -90 → 90, -1 → 179
+      normalizedAxis = 180 + normalizedAxis
+    }
+    if (normalizedAxis > 180) {
+      // Wrap values > 180
+      normalizedAxis = normalizedAxis % 180
+    }
+    // Ensure final value is in valid range
+    normalizedAxis = Math.max(0, Math.min(180, normalizedAxis))
+    
     // Convert axis value to angle for semi-circular protractor
     // 0° is at bottom right, 180° is at bottom left
     // In SVG: 0° = 0 radians (pointing right), 180° = π radians (pointing left)
-    const angleRad = (axisValue * Math.PI) / 180
+    const angleRad = (normalizedAxis * Math.PI) / 180
     
     // Calculate arrow position (pointing from center towards the axis value on the outer scale)
-    const arrowLength = radius + 5
+    // Use radius - 3 to ensure arrow stays well within the diagram bounds
+    const arrowLength = radius - 3
     const arrowX = centerX + Math.cos(angleRad) * arrowLength
     const arrowY = centerY - Math.sin(angleRad) * arrowLength
 
@@ -192,7 +239,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       )
     }
 
-    // Generate degree markings along the outer arc (every 10 degrees with all labels)
+    // Generate degree markings along the outer arc (every 10 degrees with bidirectional labels)
     const degreeMarkings = []
     for (let deg = 0; deg <= 180; deg += 10) {
       const angle = (deg * Math.PI) / 180
@@ -215,25 +262,53 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         />
       )
 
-      // Add degree labels for all 10-degree intervals
+      // Outer scale (INT) - 0 to 180 from right to left
+      // At right (deg=0): shows 0, at left (deg=180): shows 180
       const labelRadius = radius + 15
       const labelX = centerX + Math.cos(angle) * labelRadius
       const labelY = centerY - Math.sin(angle) * labelRadius
       
+      // Outer scale label (INT scale: 0-180) - show all 10-degree intervals
       degreeMarkings.push(
-          <text
-          key={`label-${deg}`}
-            x={labelX}
-            y={labelY}
-            textAnchor="middle"
-            dominantBaseline="middle"
+        <text
+          key={`label-outer-${deg}`}
+          x={labelX}
+          y={labelY}
+          textAnchor="middle"
+          dominantBaseline="middle"
           fontSize={isMainMark ? "11" : "9"}
-            fill="#333"
+          fill="#000"
           fontWeight={isMainMark ? "bold" : "normal"}
-          >
+        >
           {deg}
-          </text>
-        )
+        </text>
+      )
+      
+      // Inner scale (TABO) - 180 to 0 from left to right
+      // TABO is complementary: at position where INT shows 'deg', TABO shows (180 - deg)
+      // At right (deg=0, INT=0): TABO shows 180
+      // At left (deg=180, INT=180): TABO shows 0
+      // So TABO goes 180→0 from left to right
+      const taboValue = 180 - deg
+      const innerLabelRadius = radius - 20
+      const innerLabelX = centerX + Math.cos(angle) * innerLabelRadius
+      const innerLabelY = centerY - Math.sin(angle) * innerLabelRadius
+      
+      // Show inner scale labels for all 10-degree intervals, but make main marks more prominent
+      degreeMarkings.push(
+        <text
+          key={`label-inner-${deg}`}
+          x={innerLabelX}
+          y={innerLabelY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={isMainMark ? "10" : "8"}
+          fill={isMainMark ? "#666" : "#aaa"}
+          fontWeight="normal"
+        >
+          {taboValue}
+        </text>
+      )
     }
 
     return (
@@ -283,7 +358,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           >
             <polygon
               points="0 0, 10 5, 0 10"
-              fill="#dc2626"
+              fill="#2563eb"
             />
           </marker>
         </defs>
@@ -316,6 +391,32 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           fill="#000"
         />
         
+        {/* 0 labels at left and right ends of horizontal baseline */}
+        <text
+          x={centerX - radius}
+          y={centerY + 8}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="11"
+          fill="#000"
+          fontFamily="Arial, sans-serif"
+          fontWeight="normal"
+        >
+          0
+        </text>
+        <text
+          x={centerX + radius}
+          y={centerY + 8}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="11"
+          fill="#000"
+          fontFamily="Arial, sans-serif"
+          fontWeight="normal"
+        >
+          0
+        </text>
+        
         {/* Arrow pointing to axis value - always show when axis value is defined */}
         {axisValue !== undefined && (
           <line
@@ -323,12 +424,25 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             y1={centerY}
             x2={arrowX}
             y2={arrowY}
-            stroke="#dc2626"
+            stroke="#2563eb"
             strokeWidth="2.5"
             markerEnd={`url(#arrowhead-${eyeType})`}
             style={{ pointerEvents: 'none' }}
           />
         )}
+        
+        {/* 0° label below the diagram */}
+        <text
+          x={centerX}
+          y={centerY + 15}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="10"
+          fill="#999"
+          fontFamily="Arial, sans-serif"
+        >
+          0°
+        </text>
         
         {/* Eye indicators - green R and I for right eye (positioned upper left) */}
         {eyeType === 'right' && (
@@ -356,27 +470,33 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           </>
         )}
         
-        {/* Additional labels - TABO 0 and INT. for left eye */}
+        {/* TABO 0 and INT. labels - shown only on left eye (Occhio Sinistro) */}
         {eyeType === 'left' && (
           <>
-            {/* TABO 0 - below the diagram, slightly to the left of center */}
+            {/* TABO 0 - below the diagram, aligned with 150-degree mark on inner scale */}
+            {(() => {
+              const taboAngle = (150 * Math.PI) / 180
+              const taboX = centerX + Math.cos(taboAngle) * (radius - 25)
+              return (
+                <text
+                  x={taboX}
+                  y={centerY + 12}
+                  fontSize="11"
+                  fill="#000"
+                  fontWeight="normal"
+                  fontFamily="Arial, sans-serif"
+                  textAnchor="middle"
+                >
+                  TABO 0
+                </text>
+              )
+            })()}
+            {/* INT. - at the far right, horizontally aligned with the 0-degree mark on outer scale */}
             <text
-              x={centerX - 20}
-              y={centerY + 18}
-              fontSize="9"
-              fill="#333"
-              fontWeight="normal"
-              fontFamily="Arial, sans-serif"
-              textAnchor="middle"
-            >
-              TABO 0
-            </text>
-            {/* INT. - at the far right, aligned with 180-degree mark */}
-            <text
-              x={centerX + radius + 10}
-              y={centerY - 25}
-              fontSize="9"
-              fill="#333"
+              x={centerX + radius + 8}
+              y={centerY - 2}
+              fontSize="11"
+              fill="#000"
               fontWeight="normal"
               fontFamily="Arial, sans-serif"
               textAnchor="start"
@@ -391,28 +511,60 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   if (compact) {
     return (
-      <div className="flex gap-8 justify-center items-center bg-white p-4 rounded border border-gray-300">
-        <div className="text-center">
-          <div className="font-bold text-sm mb-2">Occhio Destro</div>
-          <div className="flex justify-center">
-            {generateProtractor(localRightAxis, 'right', rightSvgRef)}
-          </div>
-          {isInteractive && (
-            <div className="mt-2 text-xs text-gray-600">
-              {localRightAxis}°
+      <div className="bg-white p-4 rounded border border-gray-300">
+        <div className="flex gap-8 justify-center items-center mb-4">
+          <div className="text-center">
+            <div className="font-bold text-sm mb-2 text-blue-600">Occhio Destro</div>
+            <div className="flex justify-center">
+              {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
-          )}
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-sm mb-2 text-blue-600">Occhio Sinistro</div>
+            <div className="flex justify-center">
+              {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
+            </div>
+          </div>
         </div>
-        <div className="text-center">
-          <div className="font-bold text-sm mb-2">Occhio Sinistro</div>
-          <div className="flex justify-center">
-            {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
-          </div>
-          {isInteractive && (
-            <div className="mt-2 text-xs text-gray-600">
-              {localLeftAxis}°
-            </div>
-          )}
+        
+        {/* Prescription Table */}
+        <div className="mt-4">
+          <table className="w-full border-collapse border border-gray-300 text-sm">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 px-3 py-1 text-left font-semibold text-gray-700 text-xs"></th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Sfera</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Cil.</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Asse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">Occhio Destro</td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
+                  {rightEyePrescription?.sphere !== undefined ? formatPrescriptionValue(rightEyePrescription.sphere) : ''}
+                </td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
+                  {rightEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(rightEyePrescription.cylinder) : ''}
+                </td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
+                  {rightEyePrescription?.axis !== undefined ? rightEyePrescription.axis : localRightAxis}
+                </td>
+              </tr>
+              <tr>
+                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">Occhio Sinistro</td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
+                  {leftEyePrescription?.sphere !== undefined ? formatPrescriptionValue(leftEyePrescription.sphere) : ''}
+                </td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
+                  {leftEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(leftEyePrescription.cylinder) : ''}
+                </td>
+                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
+                  {leftEyePrescription?.axis !== undefined ? leftEyePrescription.axis : localLeftAxis}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     )
@@ -420,30 +572,61 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 max-w-2xl mx-auto">
-      <div className="flex gap-12 justify-center items-center flex-wrap">
+      <div className="flex gap-12 justify-center items-center flex-wrap mb-6">
         <div className="text-center">
-          <div className="font-bold text-lg mb-4">Occhio Destro</div>
+          <div className="font-bold text-lg mb-4 text-blue-600">Occhio Destro</div>
           <div className="flex justify-center">
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
-          {isInteractive && (
-            <div className="mt-2 text-sm text-gray-600 font-semibold">
-              Axis: {localRightAxis}°
-            </div>
-          )}
         </div>
         <div className="text-center">
-          <div className="font-bold text-lg mb-4">Occhio Sinistro</div>
+          <div className="font-bold text-lg mb-4 text-blue-600">Occhio Sinistro</div>
           <div className="flex justify-center">
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
-          {isInteractive && (
-            <div className="mt-2 text-sm text-gray-600 font-semibold">
-              Axis: {localLeftAxis}°
-            </div>
-          )}
         </div>
       </div>
+      
+      {/* Prescription Table */}
+      <div className="mt-6">
+        <table className="w-full border-collapse border border-gray-300">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"></th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Sfera</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Cil.</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Asse</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">Occhio Destro</td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
+                {rightEyePrescription?.sphere !== undefined ? formatPrescriptionValue(rightEyePrescription.sphere) : ''}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
+                {rightEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(rightEyePrescription.cylinder) : ''}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
+                {rightEyePrescription?.axis !== undefined ? rightEyePrescription.axis : localRightAxis}
+              </td>
+            </tr>
+            <tr>
+              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">Occhio Sinistro</td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
+                {leftEyePrescription?.sphere !== undefined ? formatPrescriptionValue(leftEyePrescription.sphere) : ''}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
+                {leftEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(leftEyePrescription.cylinder) : ''}
+              </td>
+              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
+                {leftEyePrescription?.axis !== undefined ? leftEyePrescription.axis : localLeftAxis}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
       {isInteractive && (
         <div className="mt-4 text-center text-xs text-gray-500">
           Click and drag on the protractor to adjust axis values
