@@ -14,7 +14,7 @@ import { addItemToCart, type AddToCartRequest } from '../../services/cartService
 import { getProductImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
-import AxisDiagram from '../../components/shop/AxisDiagram'
+import EyeAxisDiagram from '../../components/shop/EyeAxisDiagram'
 import { useAuth } from '../../context/AuthContext'
 import {
     getContactLensFormConfig,
@@ -3691,9 +3691,16 @@ const ProductDetail: React.FC = () => {
                                                         {showAxisGuide && (
                                                             <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50">
                                                                 <div className="mt-4 flex justify-center">
-                                                                    <AxisDiagram 
+                                                                    <EyeAxisDiagram 
                                                                         compact={true} 
-                                                                        axisValue={contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : 0}
+                                                                        rightEyeAxis={contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : 0}
+                                                                        leftEyeAxis={contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : 0}
+                                                                        onRightEyeAxisChange={(value) => {
+                                                                            setContactLensFormData(prev => ({ ...prev, right_axis: value.toString() }))
+                                                                        }}
+                                                                        onLeftEyeAxisChange={(value) => {
+                                                                            setContactLensFormData(prev => ({ ...prev, left_axis: value.toString() }))
+                                                                        }}
                                                                     />
                                                                 </div>
                                                             </div>

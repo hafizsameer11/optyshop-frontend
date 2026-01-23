@@ -26,7 +26,7 @@ import {
   type PrescriptionLensType as ApiPrescriptionLensType,
   type PrescriptionLensVariant
 } from '../../services/prescriptionLensService'
-import AxisDiagram from './AxisDiagram'
+import EyeAxisDiagram from './EyeAxisDiagram'
 import {
   getProductConfiguration,
   getLensThicknessMaterials,
@@ -5407,25 +5407,14 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     </div>
                   </div>
                   
-                  <div className="flex flex-col justify-center items-center gap-6">
-                    <div className="text-center flex-shrink-0">
-                      <div className="text-xs font-medium text-blue-600 mb-2">OS</div>
-                      <div className="mx-auto" style={{ minWidth: '300px', minHeight: '320px', maxWidth: '100vw' }}>
-                        <AxisDiagram 
-                          axisValue={Number(prescriptionData.os_axis) || 0} 
-                          compact={true}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-center flex-shrink-0">
-                      <div className="text-xs font-medium text-purple-600 mb-2">OD</div>
-                      <div className="mx-auto" style={{ minWidth: '300px', minHeight: '320px', maxWidth: '100vw' }}>
-                        <AxisDiagram 
-                          axisValue={Number(prescriptionData.od_axis) || 0} 
-                          compact={true}
-                        />
-                      </div>
-                    </div>
+                  <div className="flex justify-center items-center">
+                    <EyeAxisDiagram 
+                      rightEyeAxis={Number(prescriptionData.od_axis) || 0}
+                      leftEyeAxis={Number(prescriptionData.os_axis) || 0}
+                      compact={true}
+                      onRightEyeAxisChange={(value) => onPrescriptionChange('od_axis', value.toString())}
+                      onLeftEyeAxisChange={(value) => onPrescriptionChange('os_axis', value.toString())}
+                    />
                   </div>
                 </div>
               </div>

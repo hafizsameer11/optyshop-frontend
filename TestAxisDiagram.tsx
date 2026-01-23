@@ -1,20 +1,28 @@
 import React from 'react'
-import AxisDiagram from './src/components/shop/AxisDiagram'
+import EyeAxisDiagram from './src/components/shop/EyeAxisDiagram'
 
 const TestAxisDiagram = () => {
   return (
-    <div style={{ padding: '20px', display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-      <div>
-        <h3>Right Eye OD: Axis 135°</h3>
-        <AxisDiagram axisValue={135} compact={true} />
+    <div style={{ padding: '20px' }}>
+      <h2 className="text-xl font-bold mb-6">Axis Diagram</h2>
+      
+      {/* Main diagram matching the image */}
+      <div className="mb-8">
+        <EyeAxisDiagram 
+          rightEyeAxis={0} 
+          leftEyeAxis={30} 
+          compact={false} 
+        />
       </div>
+
+      {/* Compact version for comparison */}
       <div>
-        <h3>Left Eye OS: Axis 90°</h3>
-        <AxisDiagram axisValue={90} compact={true} />
-      </div>
-      <div>
-        <h3>Full Version - Axis 45°</h3>
-        <AxisDiagram axisValue={45} />
+        <h3 className="text-lg font-semibold mb-4">Compact Version:</h3>
+        <EyeAxisDiagram 
+          rightEyeAxis={0} 
+          leftEyeAxis={30} 
+          compact={true} 
+        />
       </div>
     </div>
   )
