@@ -330,13 +330,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           />
         )}
         
-        {/* Eye indicators - green R and I for right eye */}
+        {/* Eye indicators - green R and I for right eye (positioned upper left) */}
         {eyeType === 'right' && (
           <>
             <text
-              x={centerX - 40}
-              y={centerY - 30}
-              fontSize="16"
+              x={centerX - 50}
+              y={centerY - 90}
+              fontSize="14"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -344,9 +344,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               R
             </text>
             <text
-              x={centerX + 20}
-              y={centerY - 30}
-              fontSize="16"
+              x={centerX - 50}
+              y={centerY - 75}
+              fontSize="14"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -359,23 +359,27 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {/* Additional labels - TABO 0 and INT. for left eye */}
         {eyeType === 'left' && (
           <>
+            {/* TABO 0 - below the diagram, slightly to the left of center */}
             <text
-              x={centerX - 15}
-              y={centerY - 55}
+              x={centerX - 20}
+              y={centerY + 18}
               fontSize="9"
               fill="#333"
               fontWeight="normal"
               fontFamily="Arial, sans-serif"
+              textAnchor="middle"
             >
               TABO 0
             </text>
+            {/* INT. - at the far right, aligned with 180-degree mark */}
             <text
-              x={centerX + 75}
-              y={centerY - 35}
+              x={centerX + radius + 10}
+              y={centerY - 25}
               fontSize="9"
               fill="#333"
               fontWeight="normal"
               fontFamily="Arial, sans-serif"
+              textAnchor="start"
             >
               INT.
             </text>
