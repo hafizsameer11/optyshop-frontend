@@ -461,6 +461,13 @@
       "inStore": "IM LADEN",
       "producer": "HERSTELLER"
     }
+  },
+  "prescription": {
+    "rightEye": "Rechtes Auge",
+    "leftEye": "Linkes Auge",
+    "sphere": "Sphäre",
+    "cylinder": "Zyl.",
+    "axis": "Achse"
   }
 }
 

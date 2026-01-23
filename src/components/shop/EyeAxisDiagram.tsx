@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface PrescriptionValues {
   sphere?: number
@@ -14,6 +15,8 @@ interface EyeAxisDiagramProps {
   compact?: boolean
   onRightEyeAxisChange?: (value: number) => void
   onLeftEyeAxisChange?: (value: number) => void
+  onRightEyePrescriptionChange?: (prescription: PrescriptionValues) => void
+  onLeftEyePrescriptionChange?: (prescription: PrescriptionValues) => void
   interactive?: boolean
 }
 
@@ -25,8 +28,12 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   compact = false,
   onRightEyeAxisChange,
   onLeftEyeAxisChange,
+  onRightEyePrescriptionChange,
+  onLeftEyePrescriptionChange,
   interactive
 }) => {
+  const { t } = useTranslation()
+  
   // Normalize axis value to 0-180 range (handle negative values)
   const normalizeAxis = (value: number): number => {
     if (value < 0) {
@@ -51,6 +58,35 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   const [isDragging, setIsDragging] = useState<'right' | 'left' | null>(null)
   const rightSvgRef = useRef<SVGSVGElement>(null)
   const leftSvgRef = useRef<SVGSVGElement>(null)
+  
+  // Local state for editable prescription values
+  const [localRightPrescription, setLocalRightPrescription] = useState<PrescriptionValues>({
+    sphere: rightEyePrescription?.sphere,
+    cylinder: rightEyePrescription?.cylinder,
+    axis: rightEyePrescription?.axis ?? rightAxisValue
+  })
+  const [localLeftPrescription, setLocalLeftPrescription] = useState<PrescriptionValues>({
+    sphere: leftEyePrescription?.sphere,
+    cylinder: leftEyePrescription?.cylinder,
+    axis: leftEyePrescription?.axis ?? leftAxisValue
+  })
+  
+  // Update local prescription when props change
+  useEffect(() => {
+    setLocalRightPrescription({
+      sphere: rightEyePrescription?.sphere,
+      cylinder: rightEyePrescription?.cylinder,
+      axis: rightEyePrescription?.axis ?? rightAxisValue
+    })
+  }, [rightEyePrescription, rightAxisValue])
+  
+  useEffect(() => {
+    setLocalLeftPrescription({
+      sphere: leftEyePrescription?.sphere,
+      cylinder: leftEyePrescription?.cylinder,
+      axis: leftEyePrescription?.axis ?? leftAxisValue
+    })
+  }, [leftEyePrescription, leftAxisValue])
 
   useEffect(() => {
     setLocalRightAxis(rightAxisValue)
@@ -129,6 +165,31 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     setIsDragging(null)
   }
 
+  // Handlers for prescription value changes
+  const handlePrescriptionChange = (eyeType: 'right' | 'left', field: 'sphere' | 'cylinder' | 'axis', value: string) => {
+    const numValue = value === '' ? undefined : parseFloat(value.replace(',', '.'))
+    
+    if (eyeType === 'right') {
+      const updated = { ...localRightPrescription, [field]: numValue }
+      setLocalRightPrescription(updated)
+      onRightEyePrescriptionChange?.(updated)
+      if (field === 'axis' && numValue !== undefined) {
+        const normalized = normalizeAxis(numValue)
+        setLocalRightAxis(normalized)
+        onRightEyeAxisChange?.(normalized)
+      }
+    } else {
+      const updated = { ...localLeftPrescription, [field]: numValue }
+      setLocalLeftPrescription(updated)
+      onLeftEyePrescriptionChange?.(updated)
+      if (field === 'axis' && numValue !== undefined) {
+        const normalized = normalizeAxis(numValue)
+        setLocalLeftAxis(normalized)
+        onLeftEyeAxisChange?.(normalized)
+      }
+    }
+  }
+
   useEffect(() => {
     if (isDragging) {
       const handleGlobalMouseMove = (e: MouseEvent) => {
@@ -203,7 +264,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       return `M ${startX} ${startY} A ${r} ${r} 0 0 0 ${endX} ${endY}`
     }
 
-    // Generate concentric arcs (more arcs for better grid)
+    // Generate concentric arcs (more arcs for better grid) - improved visibility
     const concentricArcs = []
     for (let i = 1; i <= 5; i++) {
       const arcRadius = radius * (i / 5)
@@ -212,13 +273,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           key={`arc-${i}`}
           d={generateArcPath(arcRadius)}
           fill="none"
-          stroke="#999"
-          strokeWidth="0.4"
+          stroke="#ccc"
+          strokeWidth="0.6"
         />
       )
     }
 
-    // Generate radial lines (every 10 degrees, all the way to the edge)
+    // Generate radial lines (every 10 degrees, all the way to the edge) - improved visibility
     const radialLines = []
     for (let deg = 0; deg <= 180; deg += 10) {
       const angle = (deg * Math.PI) / 180
@@ -233,8 +294,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y1={centerY}
           x2={x}
           y2={y}
-          stroke={isMainLine ? "#666" : "#bbb"}
-          strokeWidth={isMainLine ? "0.8" : "0.4"}
+          stroke={isMainLine ? "#555" : "#aaa"}
+          strokeWidth={isMainLine ? "1.2" : "0.8"}
         />
       )
     }
@@ -257,8 +318,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y1={markY1}
           x2={markX2}
           y2={markY2}
-          stroke="#333"
-          strokeWidth={isMainMark ? "2" : "1.2"}
+          stroke="#000"
+          strokeWidth={isMainMark ? "2.5" : "1.5"}
         />
       )
 
@@ -514,13 +575,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       <div className="bg-white p-4 rounded border border-gray-300">
         <div className="flex gap-8 justify-center items-center mb-4">
           <div className="text-center">
-            <div className="font-bold text-sm mb-2 text-blue-600">Occhio Destro</div>
+            <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
             <div className="flex justify-center">
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
           <div className="text-center">
-            <div className="font-bold text-sm mb-2 text-blue-600">Occhio Sinistro</div>
+            <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
             <div className="flex justify-center">
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
@@ -533,34 +594,58 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             <thead>
               <tr className="bg-gray-100">
                 <th className="border border-gray-300 px-3 py-1 text-left font-semibold text-gray-700 text-xs"></th>
-                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Sfera</th>
-                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Cil.</th>
-                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">Asse</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.sphere', 'Sfera')}</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.cylinder', 'Cil.')}</th>
+                <th className="border border-gray-300 px-3 py-1 text-center font-semibold text-gray-700 text-xs">{t('prescription.axis', 'Asse')}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">Occhio Destro</td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
-                  {rightEyePrescription?.sphere !== undefined ? formatPrescriptionValue(rightEyePrescription.sphere) : ''}
+                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">{t('prescription.rightEye', 'Occhio Destro')}</td>
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="text"
+                    value={localRightPrescription.sphere !== undefined ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
+                    onChange={(e) => handlePrescriptionChange('right', 'sphere', e.target.value)}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    placeholder="0,00"
+                  />
                 </td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
-                  {rightEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(rightEyePrescription.cylinder) : ''}
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="text"
+                    value={localRightPrescription.cylinder !== undefined ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
+                    onChange={(e) => handlePrescriptionChange('right', 'cylinder', e.target.value)}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    placeholder="0,00"
+                  />
                 </td>
                 <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
-                  {rightEyePrescription?.axis !== undefined ? rightEyePrescription.axis : localRightAxis}
+                  {localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">Occhio Sinistro</td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
-                  {leftEyePrescription?.sphere !== undefined ? formatPrescriptionValue(leftEyePrescription.sphere) : ''}
+                <td className="border border-gray-300 px-3 py-1 font-semibold text-blue-600 text-xs">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="text"
+                    value={localLeftPrescription.sphere !== undefined ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
+                    onChange={(e) => handlePrescriptionChange('left', 'sphere', e.target.value)}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    placeholder="0,00"
+                  />
                 </td>
-                <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 text-xs">
-                  {leftEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(leftEyePrescription.cylinder) : ''}
+                <td className="border border-gray-300 px-3 py-1 text-center">
+                  <input
+                    type="text"
+                    value={localLeftPrescription.cylinder !== undefined ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
+                    onChange={(e) => handlePrescriptionChange('left', 'cylinder', e.target.value)}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    placeholder="0,00"
+                  />
                 </td>
                 <td className="border border-gray-300 px-3 py-1 text-center text-blue-600 font-semibold text-xs">
-                  {leftEyePrescription?.axis !== undefined ? leftEyePrescription.axis : localLeftAxis}
+                  {localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
                 </td>
               </tr>
             </tbody>
@@ -574,13 +659,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 max-w-2xl mx-auto">
       <div className="flex gap-12 justify-center items-center flex-wrap mb-6">
         <div className="text-center">
-          <div className="font-bold text-lg mb-4 text-blue-600">Occhio Destro</div>
+          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
           <div className="flex justify-center">
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
         <div className="text-center">
-          <div className="font-bold text-lg mb-4 text-blue-600">Occhio Sinistro</div>
+          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
           <div className="flex justify-center">
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
@@ -593,34 +678,58 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           <thead>
             <tr className="bg-gray-100">
               <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700"></th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Sfera</th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Cil.</th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">Asse</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.sphere', 'Sfera')}</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.cylinder', 'Cil.')}</th>
+              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700">{t('prescription.axis', 'Asse')}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">Occhio Destro</td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
-                {rightEyePrescription?.sphere !== undefined ? formatPrescriptionValue(rightEyePrescription.sphere) : ''}
+              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</td>
+              <td className="border border-gray-300 px-4 py-2 text-center">
+                <input
+                  type="text"
+                  value={localRightPrescription.sphere !== undefined ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
+                  onChange={(e) => handlePrescriptionChange('right', 'sphere', e.target.value)}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  placeholder="0,00"
+                />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
-                {rightEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(rightEyePrescription.cylinder) : ''}
+              <td className="border border-gray-300 px-4 py-2 text-center">
+                <input
+                  type="text"
+                  value={localRightPrescription.cylinder !== undefined ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
+                  onChange={(e) => handlePrescriptionChange('right', 'cylinder', e.target.value)}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  placeholder="0,00"
+                />
               </td>
               <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
-                {rightEyePrescription?.axis !== undefined ? rightEyePrescription.axis : localRightAxis}
+                {localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
               </td>
             </tr>
             <tr>
-              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">Occhio Sinistro</td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
-                {leftEyePrescription?.sphere !== undefined ? formatPrescriptionValue(leftEyePrescription.sphere) : ''}
+              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+              <td className="border border-gray-300 px-4 py-2 text-center">
+                <input
+                  type="text"
+                  value={localLeftPrescription.sphere !== undefined ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
+                  onChange={(e) => handlePrescriptionChange('left', 'sphere', e.target.value)}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  placeholder="0,00"
+                />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center text-blue-600">
-                {leftEyePrescription?.cylinder !== undefined ? formatPrescriptionValue(leftEyePrescription.cylinder) : ''}
+              <td className="border border-gray-300 px-4 py-2 text-center">
+                <input
+                  type="text"
+                  value={localLeftPrescription.cylinder !== undefined ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
+                  onChange={(e) => handlePrescriptionChange('left', 'cylinder', e.target.value)}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1"
+                  placeholder="0,00"
+                />
               </td>
               <td className="border border-gray-300 px-4 py-2 text-center text-blue-600 font-semibold">
-                {leftEyePrescription?.axis !== undefined ? leftEyePrescription.axis : localLeftAxis}
+                {localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis}
               </td>
             </tr>
           </tbody>

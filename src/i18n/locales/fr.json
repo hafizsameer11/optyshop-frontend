@@ -461,6 +461,13 @@
       "inStore": "EN MAGASIN",
       "producer": "PRODUCTEUR"
     }
+  },
+  "prescription": {
+    "rightEye": "Œil Droit",
+    "leftEye": "Œil Gauche",
+    "sphere": "Sphère",
+    "cylinder": "Cyl.",
+    "axis": "Axe"
   }
 }
 
