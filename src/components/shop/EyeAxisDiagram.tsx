@@ -36,14 +36,20 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   
   // TABO to International conversion: INT = 180 - TABO
   // Examples: TABO 30 → INT 150, TABO 120 → INT 60, TABO 100 → INT 80
-  const taboToInt = (taboValue: number): number => {
+  const taboToInt = (taboValue: number | undefined | null): number => {
+    if (taboValue === undefined || taboValue === null || isNaN(taboValue)) {
+      return 0
+    }
     const normalized = normalizeAxis(taboValue)
     return 180 - normalized
   }
   
   // International to TABO conversion: TABO = 180 - INT
   // Examples: INT 150 → TABO 30, INT 60 → TABO 120, INT 80 → TABO 100
-  const intToTabo = (intValue: number): number => {
+  const intToTabo = (intValue: number | undefined | null): number => {
+    if (intValue === undefined || intValue === null || isNaN(intValue)) {
+      return 0
+    }
     const normalized = normalizeAxis(intValue)
     return 180 - normalized
   }
@@ -557,7 +563,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           </>
         )}
         
-        {/* TABO 0 and INT. labels - shown only on left eye (Occhio Sinistro) */}
+        {/* TABO and INT. labels - shown only on left eye (Occhio Sinistro) */}
         {eyeType === 'left' && (
           <>
             {/* TABO 0 - below the diagram, aligned with the left side (180-degree mark) */}
@@ -593,19 +599,22 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             {/* Display TABO value for left eye - show the converted TABO value */}
             {(() => {
               const taboValue = intToTabo(normalizedAxis)
-              return (
-                <text
-                  x={centerX}
-                  y={centerY - radius - 25}
-                  fontSize="12"
-                  fill="#2563eb"
-                  fontWeight="bold"
-                  fontFamily="Arial, sans-serif"
-                  textAnchor="middle"
-                >
-                  TABO: {taboValue}°
-                </text>
-              )
+              if (!isNaN(taboValue) && taboValue !== undefined && taboValue !== null) {
+                return (
+                  <text
+                    x={centerX}
+                    y={centerY - radius - 25}
+                    fontSize="12"
+                    fill="#2563eb"
+                    fontWeight="bold"
+                    fontFamily="Arial, sans-serif"
+                    textAnchor="middle"
+                  >
+                    TABO: {taboValue}°
+                  </text>
+                )
+              }
+              return null
             })()}
           </>
         )}
@@ -616,14 +625,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   if (compact) {
     return (
       <div className="bg-white p-4 rounded border border-gray-300 overflow-visible">
-        <div className="flex gap-8 justify-center items-center mb-4 overflow-visible">
-          <div className="text-center overflow-visible">
+        <div className="flex gap-8 justify-center items-start mb-4 overflow-visible">
+          <div className="text-center overflow-visible flex-shrink-0">
             <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
             <div className="flex justify-center overflow-visible">
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
-          <div className="text-center overflow-visible">
+          <div className="text-center overflow-visible flex-shrink-0">
             <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
             <div className="flex justify-center overflow-visible">
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
@@ -709,7 +718,12 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       type="number"
                       min="0"
                       max="180"
-                      value={localLeftPrescription.axis !== undefined ? intToTabo(localLeftPrescription.axis) : (localLeftAxis !== undefined ? intToTabo(localLeftAxis) : '')}
+                      value={(() => {
+                        const axisValue = localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis
+                        if (axisValue === undefined || axisValue === null) return ''
+                        const taboValue = intToTabo(axisValue)
+                        return taboValue.toString()
+                      })()}
                       onChange={(e) => {
                         const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                         handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
@@ -730,14 +744,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 max-w-2xl mx-auto overflow-visible">
-      <div className="flex gap-12 justify-center items-center flex-wrap mb-6 overflow-visible">
-        <div className="text-center overflow-visible">
+      <div className="flex gap-12 justify-center items-start flex-wrap mb-6 overflow-visible">
+        <div className="text-center overflow-visible flex-shrink-0">
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
           <div className="flex justify-center overflow-visible">
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
-        <div className="text-center overflow-visible">
+        <div className="text-center overflow-visible flex-shrink-0">
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
           <div className="flex justify-center overflow-visible">
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
@@ -823,7 +837,12 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       type="number"
                       min="0"
                       max="180"
-                      value={localLeftPrescription.axis !== undefined ? intToTabo(localLeftPrescription.axis) : (localLeftAxis !== undefined ? intToTabo(localLeftAxis) : '')}
+                      value={(() => {
+                        const axisValue = localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis
+                        if (axisValue === undefined || axisValue === null) return ''
+                        const taboValue = intToTabo(axisValue)
+                        return taboValue.toString()
+                      })()}
                       onChange={(e) => {
                         const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                         handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
