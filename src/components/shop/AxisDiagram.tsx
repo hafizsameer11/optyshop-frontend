@@ -33,13 +33,8 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
 
   const centerX = 150;
   const centerY = 150;
-  const radius = 120;
+  const radius = 100;
   const needleLength = radius * 0.8;
-
-  // Calculate needle position
-  const needleAngleRad = (needleAngle - 90) * (Math.PI / 180);
-  const needleX = centerX + Math.cos(needleAngleRad) * needleLength;
-  const needleY = centerY + Math.sin(needleAngleRad) * needleLength;
 
   // Generate angle markings for circular protractor
   const generateMarkings = () => {
@@ -105,9 +100,9 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   
   if (compact) {
     return (
-      <div className="bg-gray-100 rounded-lg p-4 border border-gray-300 shadow-sm" style={{ width: '300px', height: '320px' }}>
+      <div className="bg-gray-100 rounded-lg p-3 border border-gray-300 shadow-sm" style={{ width: '240px', height: '260px' }}>
         <div className="flex justify-center items-center h-full">
-          <div className="relative" style={{ width: '280px', height: '280px' }}>
+          <div className="relative" style={{ width: '220px', height: '220px' }}>
             {/* Circular Protractor SVG */}
             <svg
               viewBox="0 0 300 300"
@@ -156,15 +151,21 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
               />
               
               {/* Needle */}
-              <line
-                x1={centerX}
-                y1={centerY}
-                x2={needleX}
-                y2={needleY}
-                stroke="#ff0000"
-                strokeWidth="3"
-                strokeLinecap="round"
-              />
+              <g style={{ 
+                transform: `rotate(${needleAngle - 90}deg)`,
+                transformOrigin: `${centerX}px ${centerY}px`,
+                transition: 'transform 0.6s ease-in-out'
+              }}>
+                <line
+                  x1={centerX}
+                  y1={centerY}
+                  x2={centerX + needleLength}
+                  y2={centerY}
+                  stroke="#ff0000"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+              </g>
               
               {/* Needle base circle */}
               <circle
@@ -181,7 +182,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   }
 
   return (
-    <div className="bg-gray-100 rounded-lg p-4 w-72 h-80 mx-auto border border-gray-300 shadow-sm">
+    <div className="bg-gray-100 rounded-lg p-3 w-56 h-64 mx-auto border border-gray-300 shadow-sm">
       {onClose && (
         <div className="flex justify-end mb-4">
           <button
@@ -197,7 +198,7 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
       )}
 
       <div className="flex justify-center items-center mb-2">
-        <div className="relative" style={{ width: '200px', height: '200px' }}>
+        <div className="relative" style={{ width: '180px', height: '180px' }}>
           {/* Circular Protractor SVG */}
           <svg
             viewBox="0 0 300 300"
@@ -246,15 +247,21 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
             />
             
             {/* Needle */}
-            <line
-              x1={centerX}
-              y1={centerY}
-              x2={needleX}
-              y2={needleY}
-              stroke="#ff0000"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
+            <g style={{ 
+              transform: `rotate(${needleAngle - 90}deg)`,
+              transformOrigin: `${centerX}px ${centerY}px`,
+              transition: 'transform 0.6s ease-in-out'
+            }}>
+              <line
+                x1={centerX}
+                y1={centerY}
+                x2={centerX + needleLength}
+                y2={centerY}
+                stroke="#ff0000"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </g>
             
             {/* Needle base circle */}
             <circle
