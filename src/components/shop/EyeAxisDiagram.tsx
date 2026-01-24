@@ -99,7 +99,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       axis: rightEyePrescription?.axis ?? rightAxisValue
     })
   }, [rightEyePrescription, rightAxisValue])
-  
+
   useEffect(() => {
     setLocalLeftPrescription({
       sphere: leftEyePrescription?.sphere,
@@ -116,10 +116,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     setLocalLeftAxis(leftAxisValue)
   }, [leftAxisValue])
 
-  const svgWidth = 240
-  const svgHeight = 145
+  const svgWidth = 280
+  const svgHeight = 180
   const centerX = svgWidth / 2
-  const centerY = svgHeight - 20
+  const centerY = svgHeight - 25
   const radius = 105
 
   const calculateAxisFromPoint = (clientX: number, clientY: number, svgElement: SVGSVGElement, eyeType: 'right' | 'left'): number => {
@@ -446,6 +446,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           height: 'auto',
           overflow: 'visible'
         }}
+        xmlns="http://www.w3.org/2000/svg"
         onClick={(e) => {
           if (isInteractive) {
             e.preventDefault()
@@ -603,7 +604,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 return (
                   <text
                     x={centerX}
-                    y={centerY - radius - 25}
+                    y={centerY - radius - 15}
                     fontSize="12"
                     fill="#2563eb"
                     fontWeight="bold"
