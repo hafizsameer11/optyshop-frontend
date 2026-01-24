@@ -29,10 +29,10 @@ const TransactionDetail: React.FC = () => {
     }
   }
 
-  const formatCurrency = (value: number | string | undefined, currency: string = 'USD'): string => {
-    if (value === undefined || value === null) return `$0.00`
+  const formatCurrency = (value: number | string | undefined, currency: string = 'EUR'): string => {
+    if (value === undefined || value === null) return `€0.00`
     const numValue = typeof value === 'number' ? value : Number(value) || 0
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: currency,
     }).format(numValue)

@@ -113,9 +113,9 @@ const OrderDetail: React.FC = () => {
   }
 
   const formatCurrency = (value: number | string | undefined): string => {
-    if (value === undefined || value === null) return '$0.00'
+    if (value === undefined || value === null) return '€0.00'
     const numValue = typeof value === 'number' ? value : Number(value) || 0
-    return `$${numValue.toFixed(2)}`
+    return `€${numValue.toFixed(2)}`
   }
 
   const getStatusColor = (status: string) => {

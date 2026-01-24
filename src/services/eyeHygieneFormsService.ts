@@ -70,6 +70,7 @@ export interface SizeVolumeVariant {
   sort_order: number
   created_at?: string
   updated_at?: string
+  images?: string[] // Variant-specific images
 }
 
 export interface SizeVolumeVariantsResponse {

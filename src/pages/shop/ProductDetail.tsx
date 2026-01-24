@@ -1948,7 +1948,7 @@ const ProductDetail: React.FC = () => {
         }
 
         // Calculate total: unit price (pack price) - quantity does NOT affect price
-        // Example: Unit 30 pack = $9.00 → Total = $9.00 (regardless of qty)
+        // Example: Unit 30 pack = €9.00 → Total = €9.00 (regardless of qty)
         // Note: Price is based on unit selection only, quantity is independent
         return pricePerPack
     }, [
@@ -2032,56 +2032,185 @@ const ProductDetail: React.FC = () => {
             (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
     }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs, fetchedVariants, selectedSizeVolumeVariant, isEyeHygiene])
 
-    // Helper function to get the color-specific image URL (with unit images support)
-    const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
+    // Debug: Log when selected variant changes (for development)
+    useEffect(() => {
+        if (import.meta.env.DEV && selectedSizeVolumeVariant && isEyeHygiene) {
+            console.log('🔄 [Eye Hygiene] Variant changed:', {
+                variantId: selectedSizeVolumeVariant.id,
+                sizeVolume: selectedSizeVolumeVariant.size_volume,
+                packType: selectedSizeVolumeVariant.pack_type,
+                price: selectedSizeVolumeVariant.price,
+                hasImages: !!(selectedSizeVolumeVariant.images && selectedSizeVolumeVariant.images.length > 0),
+                imageCount: selectedSizeVolumeVariant.images?.length || 0
+            })
+        }
+    }, [selectedSizeVolumeVariant, isEyeHygiene])
+
+    // Debug: Log when image index changes (for development)
+    useEffect(() => {
+        if (import.meta.env.DEV && isEyeHygiene && selectedSizeVolumeVariant) {
+            console.log('🔄 [Eye Hygiene] Image index changed:', {
+                imageIndex: selectedImageIndex,
+                variantId: selectedSizeVolumeVariant.id,
+                sizeVolume: selectedSizeVolumeVariant.size_volume
+            })
+        }
+    }, [selectedImageIndex, isEyeHygiene, selectedSizeVolumeVariant])
+
+    // Helper function to get the variant-specific image URL (supports color, unit, and ML variants)
+    const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
         // Priority 1: Use unit-specific images if available
         if (unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
 
-        if (!selectedColor) {
-            // Fallback to regular product image if no color selected
-            return getProductImageUrl(product, imageIndex)
-        }
-
-        const p = product as any
-        const selectedColorLower = (selectedColor || '').toLowerCase()
-
-        // First try 'colors' array (preferred format from API)
-        if (p.colors && Array.isArray(p.colors)) {
-            const colorData = p.colors.find((c: any) =>
-                (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
-                (c.name && c.name.toLowerCase() === selectedColorLower)
-            )
-            if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                if (colorData.images[imageIndex]) {
-                    return colorData.images[imageIndex]
-                } else if (colorData.images[0]) {
-                    // Fallback to first image of selected color if selected index doesn't exist
-                    return colorData.images[0]
+        // Priority 2: Use eye hygiene ML variant-specific images if variant is selected
+        if (isEyeHygiene && selectedSizeVolumeVariant) {
+            const p = product as any
+            
+            // Check if the selected variant has specific images
+            if (selectedSizeVolumeVariant.images && Array.isArray(selectedSizeVolumeVariant.images) && selectedSizeVolumeVariant.images.length > 0) {
+                if (selectedSizeVolumeVariant.images[imageIndex]) {
+                    if (import.meta.env.DEV) {
+                        console.log('🖼️ Using variant-specific image:', {
+                            variantId: selectedSizeVolumeVariant.id,
+                            sizeVolume: selectedSizeVolumeVariant.size_volume,
+                            imageIndex,
+                            imageUrl: selectedSizeVolumeVariant.images[imageIndex]
+                        })
+                    }
+                    return selectedSizeVolumeVariant.images[imageIndex]
+                } else if (selectedSizeVolumeVariant.images[0]) {
+                    // Fallback to first image of selected variant if selected index doesn't exist
+                    if (import.meta.env.DEV) {
+                        console.log('🖼️ Using variant-specific image (fallback to first):', {
+                            variantId: selectedSizeVolumeVariant.id,
+                            sizeVolume: selectedSizeVolumeVariant.size_volume,
+                            imageIndex: 0,
+                            imageUrl: selectedSizeVolumeVariant.images[0]
+                        })
+                    }
+                    return selectedSizeVolumeVariant.images[0]
                 }
+            }
+
+            // Check if product has variant_images mapping (variant_id -> images)
+            if (p.variant_images && typeof p.variant_images === 'object') {
+                const variantKey = selectedSizeVolumeVariant.id.toString()
+                const variantImageData = p.variant_images[variantKey]
+                
+                if (variantImageData && Array.isArray(variantImageData) && variantImageData.length > 0) {
+                    if (variantImageData[imageIndex]) {
+                        if (import.meta.env.DEV) {
+                            console.log('🖼️ Using product variant_images mapping:', {
+                                variantId: selectedSizeVolumeVariant.id,
+                                sizeVolume: selectedSizeVolumeVariant.size_volume,
+                                imageIndex,
+                                imageUrl: variantImageData[imageIndex]
+                            })
+                        }
+                        return variantImageData[imageIndex]
+                    } else if (variantImageData[0]) {
+                        if (import.meta.env.DEV) {
+                            console.log('🖼️ Using product variant_images mapping (fallback to first):', {
+                                variantId: selectedSizeVolumeVariant.id,
+                                sizeVolume: selectedSizeVolumeVariant.size_volume,
+                                imageIndex: 0,
+                                imageUrl: variantImageData[0]
+                            })
+                        }
+                        return variantImageData[0]
+                    }
+                }
+            }
+
+            // Check size_volume_images mapping (size_volume -> images)
+            if (p.size_volume_images && typeof p.size_volume_images === 'object') {
+                const sizeVolumeKey = selectedSizeVolumeVariant.size_volume
+                const sizeVolumeImageData = p.size_volume_images[sizeVolumeKey]
+                
+                if (sizeVolumeImageData && Array.isArray(sizeVolumeImageData) && sizeVolumeImageData.length > 0) {
+                    if (sizeVolumeImageData[imageIndex]) {
+                        if (import.meta.env.DEV) {
+                            console.log('🖼️ Using size_volume_images mapping:', {
+                                variantId: selectedSizeVolumeVariant.id,
+                                sizeVolume: selectedSizeVolumeVariant.size_volume,
+                                imageIndex,
+                                imageUrl: sizeVolumeImageData[imageIndex]
+                            })
+                        }
+                        return sizeVolumeImageData[imageIndex]
+                    } else if (sizeVolumeImageData[0]) {
+                        if (import.meta.env.DEV) {
+                            console.log('🖼️ Using size_volume_images mapping (fallback to first):', {
+                                variantId: selectedSizeVolumeVariant.id,
+                                sizeVolume: selectedSizeVolumeVariant.size_volume,
+                                imageIndex: 0,
+                                imageUrl: sizeVolumeImageData[0]
+                            })
+                        }
+                        return sizeVolumeImageData[0]
+                    }
+                }
+            }
+
+            if (import.meta.env.DEV) {
+                console.log('🖼️ No variant-specific images found for:', {
+                    variantId: selectedSizeVolumeVariant.id,
+                    sizeVolume: selectedSizeVolumeVariant.size_volume,
+                    hasVariantImages: !!selectedSizeVolumeVariant.images,
+                    hasProductVariantImages: !!p.variant_images,
+                    hasSizeVolumeImages: !!p.size_volume_images
+                })
             }
         }
 
-        // Fallback to 'color_images' array
-        if (product.color_images) {
-            const colorImage = product.color_images.find(ci =>
-                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                (ci.name && ci.name.toLowerCase() === selectedColorLower)
-            )
-            if (colorImage && colorImage.images) {
-                if (colorImage.images[imageIndex]) {
-                    return colorImage.images[imageIndex]
-                } else if (colorImage.images[0]) {
-                    // Fallback to first image of selected color if selected index doesn't exist
-                    return colorImage.images[0]
+        // Priority 3: Use color-specific images if color is selected
+        if (selectedColor) {
+            const p = product as any
+            const selectedColorLower = (selectedColor || '').toLowerCase()
+
+            // First try 'colors' array (preferred format from API)
+            if (p.colors && Array.isArray(p.colors)) {
+                const colorData = p.colors.find((c: any) =>
+                    (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                    (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                    (c.name && c.name.toLowerCase() === selectedColorLower)
+                )
+                if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                    if (colorData.images[imageIndex]) {
+                        return colorData.images[imageIndex]
+                    } else if (colorData.images[0]) {
+                        // Fallback to first image of selected color if selected index doesn't exist
+                        return colorData.images[0]
+                    }
+                }
+            }
+
+            // Fallback to 'color_images' array
+            if (product.color_images) {
+                const colorImage = product.color_images.find(ci =>
+                    (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
+                    (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                )
+                if (colorImage && colorImage.images) {
+                    if (colorImage.images[imageIndex]) {
+                        return colorImage.images[imageIndex]
+                    } else if (colorImage.images[0]) {
+                        // Fallback to first image of selected color if selected index doesn't exist
+                        return colorImage.images[0]
+                    }
                 }
             }
         }
 
         // Fallback to regular product image
         return getProductImageUrl(product, imageIndex)
+    }
+
+    // Helper function to get the color-specific image URL (with unit images support) - DEPRECATED, use getVariantSpecificImageUrl
+    const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
+        return getVariantSpecificImageUrl(product, imageIndex)
     }
 
 
@@ -2784,7 +2913,7 @@ const ProductDetail: React.FC = () => {
                                                                 Selected Pack Size: Unit {selectedUnit}
                                                                 {displayUnitPrice !== null && (
                                                                     <span className="ml-2 text-gray-600">
-                                                                        - ${displayUnitPrice.toFixed(2)} per pack
+                                                                        - €{displayUnitPrice.toFixed(2)} per pack
                                                                     </span>
                                                                 )}
                                                             </p>
@@ -2793,11 +2922,11 @@ const ProductDetail: React.FC = () => {
                                                             {calculateContactLensTotal > 0 ? (
                                                                 <>
                                                                     <p className="text-3xl font-bold text-blue-950">
-                                                                        ${calculateContactLensTotal.toFixed(2)}
+                                                                        €{calculateContactLensTotal.toFixed(2)}
                                                                     </p>
                                                                     {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Pack Size: Unit {selectedUnit} - ${displayUnitPrice.toFixed(2)})
+                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)})
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -2806,20 +2935,20 @@ const ProductDetail: React.FC = () => {
                                                                     {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum ? (
                                                                         <>
                                                                             <p className="text-3xl font-bold text-blue-950">
-                                                                                ${displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
+                                                                                €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (salePriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                             <p className="text-xl text-gray-400 line-through">
-                                                                                ${(regularPriceNum || 0).toFixed(2)}
+                                                                                €{(regularPriceNum || 0).toFixed(2)}
                                                                             </p>
                                                                         </>
                                                                     ) : (
                                                                         <p className="text-3xl font-bold text-blue-950">
-                                                                            ${displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
+                                                                            €{displayUnitPrice !== null ? displayUnitPrice.toFixed(2) : (regularPriceNum || 0).toFixed(2)}
                                                                         </p>
                                                                     )}
                                                                     {displayUnitPrice !== null && selectedUnit && (
                                                                         <p className="text-sm text-gray-500">
-                                                                            (Pack Size: Unit {selectedUnit} - ${displayUnitPrice.toFixed(2)} per pack)
+                                                                            (Pack Size: Unit {selectedUnit} - €{displayUnitPrice.toFixed(2)} per pack)
                                                                         </p>
                                                                     )}
                                                                 </>
@@ -4095,6 +4224,7 @@ const ProductDetail: React.FC = () => {
                                                 if (!sizeVol) {
                                                     setSelectedSizeVolumeVariant(null)
                                                     setVariantQuantity(1)
+                                                    setSelectedImageIndex(0) // Reset image index
                                                     return
                                                 }
 
@@ -4115,9 +4245,11 @@ const ProductDetail: React.FC = () => {
                                                     })
                                                     // Reset quantity to 1 when variant changes
                                                     setVariantQuantity(1)
+                                                    setSelectedImageIndex(0) // Reset image index to show variant's first image
                                                 } else {
                                                     setSelectedSizeVolumeVariant(null)
                                                     setVariantQuantity(1)
+                                                    setSelectedImageIndex(0) // Reset image index
                                                 }
                                             }
 
@@ -4310,7 +4442,7 @@ const ProductDetail: React.FC = () => {
                                         const p = product as any
                                         const hasAdditionalAttrs = p.color || p.frame_color || p.size || p.bridge || p.temples || p.clip || p.lens_color || p.lensColor || 
                                                                   (p.frameSizes && p.frameSizes.length > 0) || (p.color_images && p.color_images.length > 0) || (p.colors && p.colors.length > 0)
-                                        return (!isEyeHygiene || (product.frame_shape || product.frame_material || product.gender || hasAdditionalAttrs))
+                                        return (!isEyeHygiene || (product.frame_shape || product.frame_material || hasAdditionalAttrs))
                                     })() && (
                                         <div className="mb-8 grid grid-cols-2 gap-y-4 gap-x-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                             {product.frame_shape && (
@@ -4325,7 +4457,7 @@ const ProductDetail: React.FC = () => {
                                                     <span className="text-gray-700 font-semibold capitalize">{product.frame_material}</span>
                                                 </div>
                                             )}
-                                            {product.gender && (
+                                            {product.gender && !isEyeHygiene && (
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-bold text-gray-400 uppercase mb-1">Gender</span>
                                                     <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>

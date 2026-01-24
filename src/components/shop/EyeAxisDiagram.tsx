@@ -138,11 +138,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     setLocalLeftAxis(leftAxisValue)
   }, [leftAxisValue])
 
-  const svgWidth = 650
-  const svgHeight = 420
+  const svgWidth = 800
+  const svgHeight = 500
   const centerX = svgWidth / 2
   const centerY = svgHeight - 80
-  const radius = 195
+  const radius = 220
 
   const calculateAxisFromPoint = (clientX: number, clientY: number, svgElement: SVGSVGElement, eyeType: 'right' | 'left'): number => {
     const rect = svgElement.getBoundingClientRect()
@@ -381,15 +381,15 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
     // Generate concentric arcs (more arcs for better grid) - improved visibility
     const concentricArcs = []
-    for (let i = 1; i <= 5; i++) {
-      const arcRadius = radius * (i / 5)
+    for (let i = 1; i <= 6; i++) {
+      const arcRadius = radius * (i / 6)
       concentricArcs.push(
         <path
           key={`arc-${i}`}
           d={generateArcPath(arcRadius)}
           fill="none"
-          stroke="#ccc"
-          strokeWidth="0.6"
+          stroke={i === 6 ? "#999" : "#ccc"}
+          strokeWidth={i === 6 ? "1" : "0.8"}
         />
       )
     }
@@ -409,8 +409,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y1={centerY}
           x2={x}
           y2={y}
-          stroke={isMainLine ? "#555" : "#aaa"}
-          strokeWidth={isMainLine ? "1.2" : "0.8"}
+          stroke={isMainLine ? "#333" : "#aaa"}
+          strokeWidth={isMainLine ? "1.8" : "1"}
         />
       )
     }
@@ -434,7 +434,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           x2={markX2}
           y2={markY2}
           stroke="#000"
-          strokeWidth={isMainMark ? "4" : "2.5"}
+          strokeWidth={isMainMark ? "3.5" : "2.5"}
         />
       )
 
@@ -452,7 +452,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y={labelY}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={isMainMark ? "19" : "15"}
+          fontSize={isMainMark ? "22" : "16"}
           fill="#000"
           fontWeight={isMainMark ? "bold" : "600"}
           fontFamily="Arial, sans-serif"
@@ -479,8 +479,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y={innerLabelY}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={isMainMark ? "17" : "14"}
-          fill={isMainMark ? "#666" : "#aaa"}
+          fontSize={isMainMark ? "18" : "14"}
+          fill={isMainMark ? "#444" : "#999"}
           fontWeight={isMainMark ? "600" : "normal"}
           fontFamily="Arial, sans-serif"
         >
@@ -532,14 +532,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         <defs>
           <marker
             id={`arrowhead-${eyeType}`}
-            markerWidth="15"
-            markerHeight="15"
+            markerWidth="14"
+            markerHeight="14"
             refX="12"
-            refY="7.5"
+            refY="7"
             orient="auto"
           >
             <polygon
-              points="0 0, 15 7.5, 0 15"
+              points="0 0, 14 7, 0 14"
               fill="#2563eb"
             />
           </marker>
@@ -569,10 +569,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         <circle
           cx={centerX}
           cy={centerY}
-          r="4.5"
+          r="6"
           fill="#000"
           stroke="#fff"
-          strokeWidth="1.5"
+          strokeWidth="2"
         />
         
         {/* Arrow pointing to axis value - always show the needle */}
@@ -582,7 +582,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           x2={arrowX}
           y2={arrowY}
           stroke="#2563eb"
-          strokeWidth="4.5"
+          strokeWidth="6"
           markerEnd={`url(#arrowhead-${eyeType})`}
           style={{ pointerEvents: 'none' }}
         />
@@ -590,11 +590,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {/* 0° label below the diagram at center */}
         <text
           x={centerX}
-          y={centerY + 36}
+          y={centerY + 45}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize="20"
-          fill="#666"
+          fontSize="22"
+          fill="#333"
           fontFamily="Arial, sans-serif"
           fontWeight="600"
         >
@@ -605,9 +605,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {eyeType === 'right' && (
           <>
             <text
-              x={centerX - 95}
-              y={centerY - 180}
-              fontSize="22"
+              x={centerX - 110}
+              y={centerY - 200}
+              fontSize="26"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -615,9 +615,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               R
             </text>
             <text
-              x={centerX - 95}
-              y={centerY - 150}
-              fontSize="22"
+              x={centerX - 110}
+              y={centerY - 165}
+              fontSize="26"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -633,14 +633,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             {/* TABO 0 - below the diagram, aligned with the left side (180-degree mark) */}
             {(() => {
               const taboAngle = (180 * Math.PI) / 180
-              const taboX = centerX + Math.cos(taboAngle) * (radius - 45)
+              const taboX = centerX + Math.cos(taboAngle) * (radius - 50)
               return (
                 <text
                   x={taboX}
-                  y={centerY + 36}
-                  fontSize="20"
+                  y={centerY + 45}
+                  fontSize="22"
                   fill="#000"
-                  fontWeight="600"
+                  fontWeight="700"
                   fontFamily="Arial, sans-serif"
                   textAnchor="middle"
                 >
@@ -650,9 +650,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             })()}
             {/* INT. - at the far right, horizontally aligned with the 0-degree mark on outer scale */}
             <text
-              x={centerX + radius + 23}
-              y={centerY + 10}
-              fontSize="20"
+              x={centerX + radius + 30}
+              y={centerY + 15}
+              fontSize="22"
               fill="#000"
               fontWeight="700"
               fontFamily="Arial, sans-serif"
@@ -667,8 +667,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 return (
                   <text
                     x={centerX}
-                    y={centerY - radius - 78}
-                    fontSize="21"
+                    y={centerY - radius - 85}
+                    fontSize="24"
                     fill="#2563eb"
                     fontWeight="bold"
                     fontFamily="Arial, sans-serif"
@@ -688,43 +688,43 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   if (compact) {
     return (
-      <div className="bg-white p-4 rounded border border-gray-300" style={{ overflow: 'visible', width: '100%' }}>
-        <div className="flex gap-6 justify-center items-start mb-6" style={{ overflow: 'visible', width: '100%' }}>
-          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
-            <div className="font-bold text-sm mb-3 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
+      <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg" style={{ overflow: 'visible', width: '100%' }}>
+        <div className="flex gap-8 justify-center items-start mb-8" style={{ overflow: 'visible', width: '100%' }}>
+          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '400px' }}>
+            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Occhio Destro')}</div>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
-          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
-            <div className="font-bold text-sm mb-3 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
+          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '400px' }}>
+            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
-            <div className="mt-2 text-[10px] text-gray-600 italic">
+            <div className="mt-3 text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full inline-block">
               Uses TABO system
             </div>
           </div>
         </div>
         
         {/* Prescription Table */}
-        <div className="mt-4">
-          <table className="w-full border-collapse border border-gray-300 text-sm table-fixed">
+        <div className="mt-6">
+          <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-2 py-1.5 text-left font-semibold text-gray-700 text-xs w-[25%]"></th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">
+              <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
+                <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
+                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
+                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
+                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">
                   {t('prescription.axis', 'Asse')}
-                  <span className="block text-[8px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
+                  <span className="block text-xs font-normal text-blue-600 mt-1">(Left: TABO)</span>
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 font-semibold text-blue-600 text-xs">{t('prescription.rightEye', 'Occhio Destro')}</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+              <tr className="hover:bg-blue-50 transition-colors">
+                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Occhio Destro')}</td>
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -736,11 +736,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('right', 'sphere', '')
                       }
                     }}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -752,11 +752,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('right', 'cylinder', '')
                       }
                     }}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="number"
                     inputMode="numeric"
@@ -768,14 +768,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="--"
                   />
                 </td>
               </tr>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 font-semibold text-blue-600 text-xs">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+              <tr className="hover:bg-blue-50 transition-colors">
+                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -787,11 +787,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('left', 'sphere', '')
                       }
                     }}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -803,11 +803,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('left', 'cylinder', '')
                       }
                     }}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-2 py-1.5 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <div className="relative">
                     <input
                       type="number"
@@ -831,10 +831,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5 pr-10"
+                      className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 pr-12 transition-all"
                       placeholder="--"
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-700 font-medium whitespace-nowrap pointer-events-none">TABO</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
                   </div>
                 </td>
               </tr>
@@ -850,13 +850,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       <div className="flex gap-8 justify-center items-start mb-6" style={{ overflow: 'visible', width: '100%' }}>
         <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
-          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
         <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
-          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
           <div className="mt-2 text-xs text-gray-600 italic">

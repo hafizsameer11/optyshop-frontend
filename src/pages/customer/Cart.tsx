@@ -140,9 +140,9 @@ const Cart: React.FC = () => {
 
   // Helper function to format currency values (handles both number and string types)
   const formatCurrency = (value: number | string | undefined): string => {
-    if (value === undefined || value === null) return '$0.00'
+    if (value === undefined || value === null) return '€0.00'
     const numValue = typeof value === 'number' ? value : Number(value) || 0
-    return `$${numValue.toFixed(2)}`
+    return `€${numValue.toFixed(2)}`
   }
 
   if (loading) {
@@ -353,10 +353,10 @@ const Cart: React.FC = () => {
                                 const unit = item.contact_lens_details?.unit || 'unit'
                                 const unitPrice = Number(item.unit_price || 0)
                                 // Show price per unit/box/pack
-                                return `$${unitPrice.toFixed(2)} per ${unit}`
+                                return `€${unitPrice.toFixed(2)} per ${unit}`
                               }
                               // For regular products
-                              return `$${Number(item.unit_price || 0).toFixed(2)} each`
+                              return `€${Number(item.unit_price || 0).toFixed(2)} each`
                             })()}
                           </p>
                         </div>

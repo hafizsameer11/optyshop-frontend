@@ -33,6 +33,7 @@ import JobOpportunities from './pages/whoWeAre/JobOpportunities'
 import JobApplication from './pages/whoWeAre/JobApplication'
 import Products from './pages/shop/Products'
 import ProductDetail from './pages/shop/ProductDetail'
+import FlashOffers from './pages/shop/FlashOffers'
 import CategoryPage from './pages/shop/CategoryPage'
 import Cart from './pages/shop/Cart'
 import Checkout from './pages/shop/Checkout'
@@ -104,6 +105,7 @@ function App() {
         <Route path="/job-application/:jobId" element={<JobApplication />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/shop" element={<Products />} />
+        <Route path="/shop/flash-offers" element={<FlashOffers />} />
         {/* Product Section Routes */}
         <Route path="/shop/sunglasses" element={<Products />} />
         <Route path="/shop/eyeglasses" element={<Products />} />

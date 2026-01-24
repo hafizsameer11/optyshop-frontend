@@ -918,13 +918,13 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                                 )}
                                             </div>
                                             <span className={getShippingPrice() === 0 ? 'text-green-600 font-medium' : 'text-gray-900 font-medium'}>
-                                                {getShippingPrice() === 0 ? 'Free' : `$${getShippingPrice().toFixed(2)}`}
+                                                {getShippingPrice() === 0 ? 'Free' : `€${getShippingPrice().toFixed(2)}`}
                                             </span>
                                         </div>
                                     )}
                                     <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
                                         <span>Total</span>
-                                        <span>${Number(getFinalTotal()).toFixed(2)}</span>
+                                        <span>€{Number(getFinalTotal()).toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>

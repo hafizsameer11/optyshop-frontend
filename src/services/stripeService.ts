@@ -81,13 +81,13 @@ export const isStripeAvailable = (): boolean => {
 /**
  * Create a payment intent on the backend
  * This should be called from your backend API
- * @param amount - Amount in cents (e.g., 19999 for $199.99)
- * @param currency - Currency code (default: 'usd')
+ * @param amount - Amount in cents (e.g., 19999 for €199.99)
+ * @param currency - Currency code (default: 'eur')
  * @param metadata - Optional metadata to attach to the payment
  */
 export interface CreatePaymentIntentRequest {
   amount: number; // Amount in cents
-  currency?: string; // Default: 'usd'
+  currency?: string; // Default: 'eur'
   metadata?: Record<string, string>;
   order_id?: number;
   customer_id?: number;

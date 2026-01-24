@@ -671,7 +671,7 @@ const Cart: React.FC = () => {
                                                                 <div className="flex items-center justify-between">
                                                                     <span className="font-medium text-gray-900">{method.name}</span>
                                                                     <span className={`text-sm font-semibold ${method.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                                                                        {method.price === 0 ? t('shop.free', 'Free') : `$${method.price.toFixed(2)}`}
+                                                                        {method.price === 0 ? t('shop.free', 'Free') : `€${method.price.toFixed(2)}`}
                                                                     </span>
                                                                 </div>
                                                                 {method.description && (

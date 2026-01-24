@@ -8,7 +8,7 @@ interface ProductPageProps {
 
 const ProductPage: React.FC<ProductPageProps> = ({ 
   productName = 'Classic Round Frame',
-  price = '$129.99'
+  price = '€129.99'
 }) => {
   const [couponCode, setCouponCode] = useState('')
   const [pupillaryDistance, setPupillaryDistance] = useState('')
