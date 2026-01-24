@@ -93,20 +93,42 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   
   // Update local prescription when props change
   useEffect(() => {
-    setLocalRightPrescription({
-      sphere: rightEyePrescription?.sphere,
-      cylinder: rightEyePrescription?.cylinder,
-      axis: rightEyePrescription?.axis ?? rightAxisValue
+    setLocalRightPrescription(prev => {
+      const newPrescription = {
+        sphere: rightEyePrescription?.sphere !== undefined ? rightEyePrescription.sphere : prev.sphere,
+        cylinder: rightEyePrescription?.cylinder !== undefined ? rightEyePrescription.cylinder : prev.cylinder,
+        axis: rightEyePrescription?.axis !== undefined ? rightEyePrescription.axis : (prev.axis ?? rightAxisValue)
+      }
+      // Only update if values actually changed
+      if (
+        newPrescription.sphere !== prev.sphere ||
+        newPrescription.cylinder !== prev.cylinder ||
+        newPrescription.axis !== prev.axis
+      ) {
+        return newPrescription
+      }
+      return prev
     })
-  }, [rightEyePrescription, rightAxisValue])
+  }, [rightEyePrescription?.sphere, rightEyePrescription?.cylinder, rightEyePrescription?.axis, rightAxisValue])
 
   useEffect(() => {
-    setLocalLeftPrescription({
-      sphere: leftEyePrescription?.sphere,
-      cylinder: leftEyePrescription?.cylinder,
-      axis: leftEyePrescription?.axis ?? leftAxisValue
+    setLocalLeftPrescription(prev => {
+      const newPrescription = {
+        sphere: leftEyePrescription?.sphere !== undefined ? leftEyePrescription.sphere : prev.sphere,
+        cylinder: leftEyePrescription?.cylinder !== undefined ? leftEyePrescription.cylinder : prev.cylinder,
+        axis: leftEyePrescription?.axis !== undefined ? leftEyePrescription.axis : (prev.axis ?? leftAxisValue)
+      }
+      // Only update if values actually changed
+      if (
+        newPrescription.sphere !== prev.sphere ||
+        newPrescription.cylinder !== prev.cylinder ||
+        newPrescription.axis !== prev.axis
+      ) {
+        return newPrescription
+      }
+      return prev
     })
-  }, [leftEyePrescription, leftAxisValue])
+  }, [leftEyePrescription?.sphere, leftEyePrescription?.cylinder, leftEyePrescription?.axis, leftAxisValue])
 
   useEffect(() => {
     setLocalRightAxis(rightAxisValue)
@@ -116,11 +138,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     setLocalLeftAxis(leftAxisValue)
   }, [leftAxisValue])
 
-  const svgWidth = 280
-  const svgHeight = 180
+  const svgWidth = 650
+  const svgHeight = 420
   const centerX = svgWidth / 2
-  const centerY = svgHeight - 25
-  const radius = 105
+  const centerY = svgHeight - 80
+  const radius = 195
 
   const calculateAxisFromPoint = (clientX: number, clientY: number, svgElement: SVGSVGElement, eyeType: 'right' | 'left'): number => {
     const rect = svgElement.getBoundingClientRect()
@@ -207,22 +229,55 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   // Handlers for prescription value changes
   const handlePrescriptionChange = (eyeType: 'right' | 'left', field: 'sphere' | 'cylinder' | 'axis', value: string) => {
+    // Trim the value and handle empty strings
+    const trimmedValue = value.trim()
+    if (trimmedValue === '') {
+      const updated = eyeType === 'right' 
+        ? { ...localRightPrescription, [field]: undefined }
+        : { ...localLeftPrescription, [field]: undefined }
+      
+      if (eyeType === 'right') {
+        setLocalRightPrescription(updated)
+        onRightEyePrescriptionChange?.(updated)
+        if (field === 'axis') {
+          setLocalRightAxis(0)
+          onRightEyeAxisChange?.(0)
+        }
+      } else {
+        setLocalLeftPrescription(updated)
+        onLeftEyePrescriptionChange?.(updated)
+        if (field === 'axis') {
+          setLocalLeftAxis(0)
+          onLeftEyeAxisChange?.(0)
+        }
+      }
+      return
+    }
+    
     // For axis, use integer parsing; for sphere/cylinder, use float parsing
-    const numValue = value === '' ? undefined : (field === 'axis' ? parseInt(value.replace(',', '.')) : parseFloat(value.replace(',', '.')))
+    const normalizedValue = trimmedValue.replace(',', '.')
+    const numValue = field === 'axis' 
+      ? parseInt(normalizedValue, 10) 
+      : parseFloat(normalizedValue)
+    
+    // Check if parsing resulted in NaN
+    if (isNaN(numValue)) {
+      return // Don't update if value is invalid
+    }
     
     if (eyeType === 'right') {
       // Right eye uses International system - store directly
       const updated = { ...localRightPrescription, [field]: numValue }
       setLocalRightPrescription(updated)
       onRightEyePrescriptionChange?.(updated)
-      if (field === 'axis' && numValue !== undefined) {
+      if (field === 'axis') {
         const normalized = normalizeAxis(numValue)
         setLocalRightAxis(normalized)
         onRightEyeAxisChange?.(normalized)
       }
     } else {
       // Left eye uses TABO system - convert TABO input to INT for storage
-      if (field === 'axis' && numValue !== undefined) {
+      if (field === 'axis') {
         // User entered TABO value, convert to INT for storage
         const intValue = taboToInt(numValue)
         const updated = { ...localLeftPrescription, axis: intValue }
@@ -282,8 +337,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   // Format prescription value for display
   const formatPrescriptionValue = (value?: number): string => {
-    if (value === undefined || value === null) return ''
+    if (value === undefined || value === null || isNaN(value)) return ''
     // Show 0.00 as "0,00" instead of empty string
+    // Handle both positive and negative values
     return value.toFixed(2).replace('.', ',')
   }
 
@@ -307,8 +363,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     const angleRad = (normalizedAxis * Math.PI) / 180
     
     // Calculate arrow position (pointing from center towards the axis value on the outer scale)
-    // Use radius - 3 to ensure arrow stays well within the diagram bounds
-    const arrowLength = radius - 3
+    // Use radius - 5 to ensure arrow stays well within the diagram bounds
+    const arrowLength = radius - 5
     const arrowX = centerX + Math.cos(angleRad) * arrowLength
     const arrowY = centerY - Math.sin(angleRad) * arrowLength
 
@@ -378,13 +434,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           x2={markX2}
           y2={markY2}
           stroke="#000"
-          strokeWidth={isMainMark ? "2.5" : "1.5"}
+          strokeWidth={isMainMark ? "4" : "2.5"}
         />
       )
 
       // Outer scale (INT) - 0 to 180 from right to left
       // At right (deg=0): shows 0, at left (deg=180): shows 180
-      const labelRadius = radius + 15
+      const labelRadius = radius + 28
       const labelX = centerX + Math.cos(angle) * labelRadius
       const labelY = centerY - Math.sin(angle) * labelRadius
       
@@ -396,9 +452,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y={labelY}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={isMainMark ? "11" : "9"}
+          fontSize={isMainMark ? "19" : "15"}
           fill="#000"
-          fontWeight={isMainMark ? "bold" : "normal"}
+          fontWeight={isMainMark ? "bold" : "600"}
+          fontFamily="Arial, sans-serif"
         >
           {deg}
         </text>
@@ -410,7 +467,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       // At left (deg=180, INT=180): TABO shows 0
       // So TABO goes 180→0 from left to right
       const taboValue = 180 - deg
-      const innerLabelRadius = radius - 20
+      const innerLabelRadius = radius - 38
       const innerLabelX = centerX + Math.cos(angle) * innerLabelRadius
       const innerLabelY = centerY - Math.sin(angle) * innerLabelRadius
       
@@ -422,9 +479,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           y={innerLabelY}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize={isMainMark ? "10" : "8"}
+          fontSize={isMainMark ? "17" : "14"}
           fill={isMainMark ? "#666" : "#aaa"}
-          fontWeight="normal"
+          fontWeight={isMainMark ? "600" : "normal"}
+          fontFamily="Arial, sans-serif"
         >
           {taboValue}
         </text>
@@ -442,9 +500,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           cursor: isInteractive ? 'pointer' : 'default',
           userSelect: 'none',
           display: 'block',
+          width: '100%',
           maxWidth: '100%',
           height: 'auto',
-          overflow: 'visible'
+          overflow: 'visible',
+          margin: '0 auto'
         }}
         xmlns="http://www.w3.org/2000/svg"
         onClick={(e) => {
@@ -472,14 +532,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         <defs>
           <marker
             id={`arrowhead-${eyeType}`}
-            markerWidth="10"
-            markerHeight="10"
-            refX="9"
-            refY="5"
+            markerWidth="15"
+            markerHeight="15"
+            refX="12"
+            refY="7.5"
             orient="auto"
           >
             <polygon
-              points="0 0, 10 5, 0 10"
+              points="0 0, 15 7.5, 0 15"
               fill="#2563eb"
             />
           </marker>
@@ -499,7 +559,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           d={generateArcPath(radius)}
           fill="none"
           stroke="#000"
-          strokeWidth="2"
+          strokeWidth="3"
         />
         
         {/* Degree markings along the arc */}
@@ -509,8 +569,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         <circle
           cx={centerX}
           cy={centerY}
-          r="2.5"
+          r="4.5"
           fill="#000"
+          stroke="#fff"
+          strokeWidth="1.5"
         />
         
         {/* Arrow pointing to axis value - always show the needle */}
@@ -520,7 +582,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           x2={arrowX}
           y2={arrowY}
           stroke="#2563eb"
-          strokeWidth="2.5"
+          strokeWidth="4.5"
           markerEnd={`url(#arrowhead-${eyeType})`}
           style={{ pointerEvents: 'none' }}
         />
@@ -528,12 +590,13 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {/* 0° label below the diagram at center */}
         <text
           x={centerX}
-          y={centerY + 15}
+          y={centerY + 36}
           textAnchor="middle"
           dominantBaseline="middle"
-          fontSize="10"
-          fill="#999"
+          fontSize="20"
+          fill="#666"
           fontFamily="Arial, sans-serif"
+          fontWeight="600"
         >
           0°
         </text>
@@ -542,9 +605,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         {eyeType === 'right' && (
           <>
             <text
-              x={centerX - 50}
-              y={centerY - 90}
-              fontSize="14"
+              x={centerX - 95}
+              y={centerY - 180}
+              fontSize="22"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -552,9 +615,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               R
             </text>
             <text
-              x={centerX - 50}
-              y={centerY - 75}
-              fontSize="14"
+              x={centerX - 95}
+              y={centerY - 150}
+              fontSize="22"
               fill="#22c55e"
               fontWeight="bold"
               fontFamily="Arial, sans-serif"
@@ -570,14 +633,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             {/* TABO 0 - below the diagram, aligned with the left side (180-degree mark) */}
             {(() => {
               const taboAngle = (180 * Math.PI) / 180
-              const taboX = centerX + Math.cos(taboAngle) * (radius - 20)
+              const taboX = centerX + Math.cos(taboAngle) * (radius - 45)
               return (
                 <text
                   x={taboX}
-                  y={centerY + 12}
-                  fontSize="11"
+                  y={centerY + 36}
+                  fontSize="20"
                   fill="#000"
-                  fontWeight="normal"
+                  fontWeight="600"
                   fontFamily="Arial, sans-serif"
                   textAnchor="middle"
                 >
@@ -587,11 +650,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             })()}
             {/* INT. - at the far right, horizontally aligned with the 0-degree mark on outer scale */}
             <text
-              x={centerX + radius + 8}
-              y={centerY - 2}
-              fontSize="11"
+              x={centerX + radius + 23}
+              y={centerY + 10}
+              fontSize="20"
               fill="#000"
-              fontWeight="normal"
+              fontWeight="700"
               fontFamily="Arial, sans-serif"
               textAnchor="start"
             >
@@ -604,8 +667,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 return (
                   <text
                     x={centerX}
-                    y={centerY - radius - 15}
-                    fontSize="12"
+                    y={centerY - radius - 78}
+                    fontSize="21"
                     fill="#2563eb"
                     fontWeight="bold"
                     fontFamily="Arial, sans-serif"
@@ -625,100 +688,133 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   if (compact) {
     return (
-      <div className="bg-white p-4 rounded border border-gray-300 overflow-visible">
-        <div className="flex gap-8 justify-center items-start mb-4 overflow-visible">
-          <div className="text-center overflow-visible flex-shrink-0">
-            <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
-            <div className="flex justify-center overflow-visible">
+      <div className="bg-white p-4 rounded border border-gray-300" style={{ overflow: 'visible', width: '100%' }}>
+        <div className="flex gap-6 justify-center items-start mb-6" style={{ overflow: 'visible', width: '100%' }}>
+          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
+            <div className="font-bold text-sm mb-3 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
-          <div className="text-center overflow-visible flex-shrink-0">
-            <div className="font-bold text-sm mb-2 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
-            <div className="flex justify-center overflow-visible">
+          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
+            <div className="font-bold text-sm mb-3 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
-            <div className="mt-1 text-[10px] text-gray-600 italic">
+            <div className="mt-2 text-[10px] text-gray-600 italic">
               Uses TABO system
             </div>
           </div>
         </div>
         
         {/* Prescription Table */}
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 text-sm min-w-full">
+        <div className="mt-4">
+          <table className="w-full border-collapse border border-gray-300 text-sm table-fixed">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700 text-xs min-w-[100px]"></th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 text-xs min-w-[80px]">{t('prescription.sphere', 'Sfera')}</th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 text-xs min-w-[80px]">{t('prescription.cylinder', 'Cil.')}</th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 text-xs min-w-[100px]">
+                <th className="border border-gray-300 px-2 py-1.5 text-left font-semibold text-gray-700 text-xs w-[25%]"></th>
+                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
+                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
+                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-700 text-xs w-[25%]">
                   {t('prescription.axis', 'Asse')}
-                  <span className="block text-[9px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
+                  <span className="block text-[8px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600 text-xs">{t('prescription.rightEye', 'Occhio Destro')}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 font-semibold text-blue-600 text-xs">{t('prescription.rightEye', 'Occhio Destro')}</td>
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <input
                     type="text"
-                    value={localRightPrescription.sphere !== undefined && localRightPrescription.sphere !== null ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
+                    inputMode="decimal"
+                    value={localRightPrescription.sphere !== undefined && localRightPrescription.sphere !== null && !isNaN(localRightPrescription.sphere) ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
                     onChange={(e) => handlePrescriptionChange('right', 'sphere', e.target.value)}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[60px]"
+                    onBlur={(e) => {
+                      const value = e.target.value.trim()
+                      if (value === '') {
+                        handlePrescriptionChange('right', 'sphere', '')
+                      }
+                    }}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <input
                     type="text"
-                    value={localRightPrescription.cylinder !== undefined && localRightPrescription.cylinder !== null ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
+                    inputMode="decimal"
+                    value={localRightPrescription.cylinder !== undefined && localRightPrescription.cylinder !== null && !isNaN(localRightPrescription.cylinder) ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
                     onChange={(e) => handlePrescriptionChange('right', 'cylinder', e.target.value)}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[60px]"
+                    onBlur={(e) => {
+                      const value = e.target.value.trim()
+                      if (value === '') {
+                        handlePrescriptionChange('right', 'cylinder', '')
+                      }
+                    }}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     max="180"
-                    value={localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
+                    step="1"
+                    value={localRightPrescription.axis !== undefined && localRightPrescription.axis !== null ? localRightPrescription.axis : (localRightAxis !== undefined && localRightAxis !== null ? localRightAxis : '')}
                     onChange={(e) => {
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[50px]"
+                    className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
+                    placeholder="--"
                   />
                 </td>
               </tr>
               <tr>
-                <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600 text-xs">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 font-semibold text-blue-600 text-xs">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <input
                     type="text"
-                    value={localLeftPrescription.sphere !== undefined && localLeftPrescription.sphere !== null ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
+                    inputMode="decimal"
+                    value={localLeftPrescription.sphere !== undefined && localLeftPrescription.sphere !== null && !isNaN(localLeftPrescription.sphere) ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
                     onChange={(e) => handlePrescriptionChange('left', 'sphere', e.target.value)}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[60px]"
+                    onBlur={(e) => {
+                      const value = e.target.value.trim()
+                      if (value === '') {
+                        handlePrescriptionChange('left', 'sphere', '')
+                      }
+                    }}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <input
                     type="text"
-                    value={localLeftPrescription.cylinder !== undefined && localLeftPrescription.cylinder !== null ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
+                    inputMode="decimal"
+                    value={localLeftPrescription.cylinder !== undefined && localLeftPrescription.cylinder !== null && !isNaN(localLeftPrescription.cylinder) ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
                     onChange={(e) => handlePrescriptionChange('left', 'cylinder', e.target.value)}
-                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[60px]"
+                    onBlur={(e) => {
+                      const value = e.target.value.trim()
+                      if (value === '') {
+                        handlePrescriptionChange('left', 'cylinder', '')
+                      }
+                    }}
+                    className="w-full text-center text-blue-600 text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-2 py-1.5 text-center">
                   <div className="relative">
                     <input
                       type="number"
+                      inputMode="numeric"
                       min="0"
                       max="180"
+                      step="1"
                       value={(() => {
                         const axisValue = localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis
                         if (axisValue === undefined || axisValue === null) return ''
@@ -729,10 +825,16 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                         handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
                       }}
-                      className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 pr-10 min-w-[60px]"
+                      onBlur={(e) => {
+                        const value = e.target.value.trim()
+                        if (value === '') {
+                          handlePrescriptionChange('left', 'axis', '')
+                        }
+                      }}
+                      className="w-full text-center text-blue-600 font-semibold text-xs border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-0.5 pr-10"
                       placeholder="--"
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-500 font-normal whitespace-nowrap">TABO</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] text-gray-700 font-medium whitespace-nowrap pointer-events-none">TABO</span>
                   </div>
                 </td>
               </tr>
@@ -744,17 +846,17 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 max-w-2xl mx-auto overflow-visible">
-      <div className="flex gap-12 justify-center items-start flex-wrap mb-6 overflow-visible">
-        <div className="text-center overflow-visible flex-shrink-0">
+    <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full" style={{ overflow: 'visible', width: '100%' }}>
+      <div className="flex gap-8 justify-center items-start mb-6" style={{ overflow: 'visible', width: '100%' }}>
+        <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
-          <div className="flex justify-center overflow-visible">
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
-        <div className="text-center overflow-visible flex-shrink-0">
+        <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
-          <div className="flex justify-center overflow-visible">
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '420px' }}>
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
           <div className="mt-2 text-xs text-gray-600 italic">
@@ -764,80 +866,113 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       </div>
       
       {/* Prescription Table */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300 min-w-full">
+      <div className="mt-6">
+        <table className="w-full border-collapse border border-gray-300 table-fixed">
           <thead>
             <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-2 text-left font-semibold text-gray-700 min-w-[120px]"></th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 min-w-[100px]">{t('prescription.sphere', 'Sfera')}</th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 min-w-[100px]">{t('prescription.cylinder', 'Cil.')}</th>
-              <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-gray-700 min-w-[120px]">
+              <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-gray-700 w-[25%]"></th>
+              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
+              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
+              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">
                 {t('prescription.axis', 'Asse')}
-                <span className="block text-xs font-normal text-gray-500 mt-1">(Left: TABO)</span>
+                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
               </th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
+              <td className="border border-gray-300 px-3 py-2 font-semibold text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</td>
+              <td className="border border-gray-300 px-3 py-2 text-center">
                 <input
                   type="text"
-                  value={localRightPrescription.sphere !== undefined && localRightPrescription.sphere !== null ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
+                  inputMode="decimal"
+                  value={localRightPrescription.sphere !== undefined && localRightPrescription.sphere !== null && !isNaN(localRightPrescription.sphere) ? formatPrescriptionValue(localRightPrescription.sphere) : ''}
                   onChange={(e) => handlePrescriptionChange('right', 'sphere', e.target.value)}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[80px]"
+                  onBlur={(e) => {
+                    const value = e.target.value.trim()
+                    if (value === '') {
+                      handlePrescriptionChange('right', 'sphere', '')
+                    }
+                  }}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
+              <td className="border border-gray-300 px-3 py-2 text-center">
                 <input
                   type="text"
-                  value={localRightPrescription.cylinder !== undefined && localRightPrescription.cylinder !== null ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
+                  inputMode="decimal"
+                  value={localRightPrescription.cylinder !== undefined && localRightPrescription.cylinder !== null && !isNaN(localRightPrescription.cylinder) ? formatPrescriptionValue(localRightPrescription.cylinder) : ''}
                   onChange={(e) => handlePrescriptionChange('right', 'cylinder', e.target.value)}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[80px]"
+                  onBlur={(e) => {
+                    const value = e.target.value.trim()
+                    if (value === '') {
+                      handlePrescriptionChange('right', 'cylinder', '')
+                    }
+                  }}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-3 py-2 text-center">
                   <input
                     type="number"
+                    inputMode="numeric"
                     min="0"
                     max="180"
-                    value={localRightPrescription.axis !== undefined ? localRightPrescription.axis : localRightAxis}
+                    step="1"
+                    value={localRightPrescription.axis !== undefined && localRightPrescription.axis !== null ? localRightPrescription.axis : (localRightAxis !== undefined && localRightAxis !== null ? localRightAxis : '')}
                     onChange={(e) => {
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[60px]"
+                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                    placeholder="--"
                   />
                 </td>
             </tr>
             <tr>
-              <td className="border border-gray-300 px-4 py-2 font-semibold text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
+              <td className="border border-gray-300 px-3 py-2 font-semibold text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+              <td className="border border-gray-300 px-3 py-2 text-center">
                 <input
                   type="text"
-                  value={localLeftPrescription.sphere !== undefined && localLeftPrescription.sphere !== null ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
+                  inputMode="decimal"
+                  value={localLeftPrescription.sphere !== undefined && localLeftPrescription.sphere !== null && !isNaN(localLeftPrescription.sphere) ? formatPrescriptionValue(localLeftPrescription.sphere) : ''}
                   onChange={(e) => handlePrescriptionChange('left', 'sphere', e.target.value)}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[80px]"
+                  onBlur={(e) => {
+                    const value = e.target.value.trim()
+                    if (value === '') {
+                      handlePrescriptionChange('left', 'sphere', '')
+                    }
+                  }}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
+              <td className="border border-gray-300 px-3 py-2 text-center">
                 <input
                   type="text"
-                  value={localLeftPrescription.cylinder !== undefined && localLeftPrescription.cylinder !== null ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
+                  inputMode="decimal"
+                  value={localLeftPrescription.cylinder !== undefined && localLeftPrescription.cylinder !== null && !isNaN(localLeftPrescription.cylinder) ? formatPrescriptionValue(localLeftPrescription.cylinder) : ''}
                   onChange={(e) => handlePrescriptionChange('left', 'cylinder', e.target.value)}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 min-w-[80px]"
+                  onBlur={(e) => {
+                    const value = e.target.value.trim()
+                    if (value === '') {
+                      handlePrescriptionChange('left', 'cylinder', '')
+                    }
+                  }}
+                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
+                <td className="border border-gray-300 px-3 py-2 text-center">
                   <div className="relative">
                     <input
                       type="number"
+                      inputMode="numeric"
                       min="0"
                       max="180"
+                      step="1"
                       value={(() => {
                         const axisValue = localLeftPrescription.axis !== undefined ? localLeftPrescription.axis : localLeftAxis
                         if (axisValue === undefined || axisValue === null) return ''
@@ -848,10 +983,16 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                         handlePrescriptionChange('left', 'axis', value !== undefined ? value.toString() : '')
                       }}
-                      className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-2 py-1 pr-14 min-w-[80px]"
+                      onBlur={(e) => {
+                        const value = e.target.value.trim()
+                        if (value === '') {
+                          handlePrescriptionChange('left', 'axis', '')
+                        }
+                      }}
+                      className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1 pr-12"
                       placeholder="--"
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-normal whitespace-nowrap">TABO</span>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-700 font-medium whitespace-nowrap pointer-events-none">TABO</span>
                   </div>
                 </td>
             </tr>

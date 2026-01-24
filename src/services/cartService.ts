@@ -72,6 +72,14 @@ export interface CartItem {
     image?: string;
     images?: string[];
   };
+  gift_product?: {
+    id: number;
+    name: string;
+    price: number;
+    image?: string;
+    images?: string[];
+  };
+  is_gift?: boolean;
 }
 
 export interface Cart {
@@ -125,8 +133,8 @@ export interface AddToCartRequest {
 export interface CartResponse {
   success: boolean;
   message: string;
-  data?: Cart;
-  cart?: Cart;
+  data?: Cart & { gifts?: CartItem[] };
+  cart?: Cart & { gifts?: CartItem[] };
 }
 
 // ============================================

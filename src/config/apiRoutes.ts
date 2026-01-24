@@ -404,6 +404,22 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // FLASH OFFERS (PUBLIC)
+  // ============================================
+  FLASH_OFFERS: {
+    LIST: (activeOnly?: boolean) => `/flash-offers${activeOnly ? '?activeOnly=true' : ''}`, // PUBLIC
+    ACTIVE: `/flash-offers/active`, // PUBLIC - Get currently active flash offer with countdown
+  },
+
+  // ============================================
+  // PRODUCT GIFTS (PUBLIC)
+  // ============================================
+  PRODUCT_GIFTS: {
+    LIST: (productId?: number | string) => `/product-gifts${productId ? `?product_id=${productId}` : ''}`, // PUBLIC
+    BY_PRODUCT: (productId: number | string) => `/product-gifts/product/${productId}`, // PUBLIC - Get gifts for a specific product
+  },
+
+  // ============================================
   // HEALTH & API INFO (PUBLIC)
   // ============================================
   HEALTH: {

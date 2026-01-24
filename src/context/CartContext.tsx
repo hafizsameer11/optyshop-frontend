@@ -38,6 +38,8 @@ export interface CartProduct {
         }
     }
     isContactLens?: boolean // Flag to identify contact lens products
+    isGift?: boolean // Flag to identify free gift items
+    gift_product?: any // Original gift product data
 }
 
 export interface CartItem extends CartProduct {
@@ -111,7 +113,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                 // Transform backend cart items to CartItem format
                 const transformedItems: CartItem[] = backendCart.items.map(item => ({
                     id: item.id,
-                    name: item.product?.name || 'Unknown Product',
+                    name: item.is_gift ? `FREE GIFT: ${item.gift_product?.name || item.product?.name}` : (item.product?.name || 'Unknown Product'),
                     brand: (item.product as any)?.brand || 'Unknown',
                     category: (item.product as any)?.category || 'general',
                     price: item.unit_price,
@@ -119,6 +121,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     description: (item.product as any)?.description || '',
                     inStock: true,
                     quantity: item.quantity,
+                    isGift: item.is_gift,
+                    gift_product: item.gift_product,
                     // Store additional data for API operations
                     ...(item as any)
                 }))

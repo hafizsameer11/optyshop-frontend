@@ -66,7 +66,7 @@
 					  "register"
 					]
 				  },
-				  "description": "\u26a0\ufe0f WARNING: Admin registration only works if ALLOW_ADMIN_REGISTRATION=true in .env file. For production, use POST /api/admin/users instead. This endpoint will return 403 error if admin registration is disabled."
+				  "description": "⚠️ WARNING: Admin registration only works if ALLOW_ADMIN_REGISTRATION=true in .env file. For production, use POST /api/admin/users instead. This endpoint will return 403 error if admin registration is disabled."
 				}
 			  },
 			  {
@@ -679,7 +679,7 @@
 					  }
 					]
 				  },
-				  "description": "Get all active subcategories with pagination support.\n\n**3-Level Structure:**\nCategory \u2192 Subcategory \u2192 Sub-subcategory\n\n**Response Structure:**\n- `subcategories`: All subcategories with parent/children info\n- `topLevelSubcategories`: Subcategories (parent_id = null)\n- `nestedSubcategories`: Sub-subcategories (parent_id != null)\n- `pagination`: Pagination metadata\n\n**Features:**\n- Paginated results\n- Filter by category_id\n- Search by name\n- Includes category, parent, and children information"
+				  "description": "Get all active subcategories with pagination support.\n\n**3-Level Structure:**\nCategory → Subcategory → Sub-subcategory\n\n**Response Structure:**\n- `subcategories`: All subcategories with parent/children info\n- `topLevelSubcategories`: Subcategories (parent_id = null)\n- `nestedSubcategories`: Sub-subcategories (parent_id != null)\n- `pagination`: Pagination metadata\n\n**Features:**\n- Paginated results\n- Filter by category_id\n- Search by name\n- Includes category, parent, and children information"
 				}
 			  },
 			  {
@@ -746,7 +746,7 @@
 					  "1"
 					]
 				  },
-				  "description": "Get all active subcategories for a specific category with their sub-subcategories.\n\n**Returns:**\n- Subcategories (parent_id = null) for the category\n- Each subcategory includes its sub-subcategories in `children` array\n\n**Example Structure:**\n```\nCategory: Contact Lenses\n  \u251c\u2500 Subcategory: Giornaliere (parent_id: null)\n  \u2502   \u251c\u2500 Sub-subcategory: Sferiche (parent_id: Giornaliere.id)\n  \u2502   \u2514\u2500 Sub-subcategory: Astigmatismo (parent_id: Giornaliere.id)\n  \u2514\u2500 Subcategory: Settimanale (parent_id: null)\n```\n\n**Use Cases:**\n- Populate category/subcategory dropdown menus\n- Display navigation\n- Filter products by subcategory"
+				  "description": "Get all active subcategories for a specific category with their sub-subcategories.\n\n**Returns:**\n- Subcategories (parent_id = null) for the category\n- Each subcategory includes its sub-subcategories in `children` array\n\n**Example Structure:**\n```\nCategory: Contact Lenses\n  ├─ Subcategory: Giornaliere (parent_id: null)\n  │   ├─ Sub-subcategory: Sferiche (parent_id: Giornaliere.id)\n  │   └─ Sub-subcategory: Astigmatismo (parent_id: Giornaliere.id)\n  └─ Subcategory: Settimanale (parent_id: null)\n```\n\n**Use Cases:**\n- Populate category/subcategory dropdown menus\n- Display navigation\n- Filter products by subcategory"
 				}
 			  },
 			  {
@@ -830,7 +830,7 @@
 					],
 					"query": []
 				  },
-				  "description": "Get aggregated contact lens options (power, base curve, diameter) for Spherical or Astigmatism/Toric sub-subcategories.\n\n**Supported Sub-SubCategory Types:**\n- **Spherical**: Sub-subcategories with names containing \"spherical\", \"sferiche\", or \"sferica\"\n- **Astigmatism/Toric**: Sub-subcategories with names containing \"astigmatism\", \"astigmatismo\", \"toric\", or \"torica\"\n\n**Response for Spherical Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", \"-9.50\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, 8.90, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"productCount\": 15,\n    \"type\": \"spherical\"\n  }\n}\n```\n\n**Response for Astigmatism/Toric Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"cylinderOptions\": [-0.25, -0.50, -0.75, ..., -6.00],\n    \"axisOptions\": [0, 1, 2, ..., 180],\n    \"productCount\": 15,\n    \"type\": \"astigmatism\"\n  }\n}\n```\n\n**Features:**\n- Automatically detects if sub-subcategory is Spherical or Astigmatism/Toric\n- Aggregates all unique options from all products in the sub-subcategory\n- Returns sorted arrays ready for dropdown menus\n- For Astigmatism: Includes standard cylinder (-0.25 to -6.00) and axis (0-180\u00b0) options\n\n**Use Cases:**\n- Populate contact lens parameter forms\n- Build dropdown menus for power, base curve, diameter, cylinder, and axis\n- Validate available options before adding to cart\n\n**Error Cases:**\n- Returns 404 if subcategory not found\n- Returns 400 if subcategory is not a sub-subcategory (no parent_id)\n- Returns 400 if subcategory is not Spherical or Astigmatism/Toric type"
+				  "description": "Get aggregated contact lens options (power, base curve, diameter) for Spherical or Astigmatism/Toric sub-subcategories.\n\n**Supported Sub-SubCategory Types:**\n- **Spherical**: Sub-subcategories with names containing \"spherical\", \"sferiche\", or \"sferica\"\n- **Astigmatism/Toric**: Sub-subcategories with names containing \"astigmatism\", \"astigmatismo\", \"toric\", or \"torica\"\n\n**Response for Spherical Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", \"-9.50\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, 8.90, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"productCount\": 15,\n    \"type\": \"spherical\"\n  }\n}\n```\n\n**Response for Astigmatism/Toric Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"cylinderOptions\": [-0.25, -0.50, -0.75, ..., -6.00],\n    \"axisOptions\": [0, 1, 2, ..., 180],\n    \"productCount\": 15,\n    \"type\": \"astigmatism\"\n  }\n}\n```\n\n**Features:**\n- Automatically detects if sub-subcategory is Spherical or Astigmatism/Toric\n- Aggregates all unique options from all products in the sub-subcategory\n- Returns sorted arrays ready for dropdown menus\n- For Astigmatism: Includes standard cylinder (-0.25 to -6.00) and axis (0-180°) options\n\n**Use Cases:**\n- Populate contact lens parameter forms\n- Build dropdown menus for power, base curve, diameter, cylinder, and axis\n- Validate available options before adding to cart\n\n**Error Cases:**\n- Returns 404 if subcategory not found\n- Returns 400 if subcategory is not a sub-subcategory (no parent_id)\n- Returns 400 if subcategory is not Spherical or Astigmatism/Toric type"
 				}
 			  },
 			  {
@@ -852,7 +852,7 @@
 					],
 					"query": []
 				  },
-				  "description": "Get aggregated contact lens options (power, base curve, diameter) for Spherical or Astigmatism/Toric sub-subcategories by slug.\n\n**Supported Sub-SubCategory Types:**\n- **Spherical**: Sub-subcategories with names containing \"spherical\", \"sferiche\", or \"sferica\"\n- **Astigmatism/Toric**: Sub-subcategories with names containing \"astigmatism\", \"astigmatismo\", \"toric\", or \"torica\"\n\n**Response for Spherical Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", \"-9.50\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, 8.90, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"productCount\": 15,\n    \"type\": \"spherical\"\n  }\n}\n```\n\n**Response for Astigmatism/Toric Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"cylinderOptions\": [-0.25, -0.50, -0.75, ..., -6.00],\n    \"axisOptions\": [0, 1, 2, ..., 180],\n    \"productCount\": 15,\n    \"type\": \"astigmatism\"\n  }\n}\n```\n\n**Features:**\n- Same as ID endpoint but uses slug instead of ID\n- Automatically detects if sub-subcategory is Spherical or Astigmatism/Toric\n- Aggregates all unique options from all products in the sub-subcategory\n- Returns sorted arrays ready for dropdown menus\n- For Astigmatism: Includes standard cylinder (-0.25 to -6.00) and axis (0-180\u00b0) options\n\n**Use Cases:**\n- Populate contact lens parameter forms using URL-friendly slugs\n- Build dropdown menus for power, base curve, diameter, cylinder, and axis\n- Validate available options before adding to cart\n\n**Error Cases:**\n- Returns 404 if subcategory not found\n- Returns 400 if subcategory is not a sub-subcategory (no parent_id)\n- Returns 400 if subcategory is not Spherical or Astigmatism/Toric type"
+				  "description": "Get aggregated contact lens options (power, base curve, diameter) for Spherical or Astigmatism/Toric sub-subcategories by slug.\n\n**Supported Sub-SubCategory Types:**\n- **Spherical**: Sub-subcategories with names containing \"spherical\", \"sferiche\", or \"sferica\"\n- **Astigmatism/Toric**: Sub-subcategories with names containing \"astigmatism\", \"astigmatismo\", \"toric\", or \"torica\"\n\n**Response for Spherical Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", \"-9.50\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, 8.90, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"productCount\": 15,\n    \"type\": \"spherical\"\n  }\n}\n```\n\n**Response for Astigmatism/Toric Sub-SubCategories:**\n```json\n{\n  \"success\": true,\n  \"data\": {\n    \"subcategory\": { id, name, slug, parent, category },\n    \"powerOptions\": [\"-10.00\", \"-9.75\", ...],\n    \"baseCurveOptions\": [8.70, 8.80, ...],\n    \"diameterOptions\": [14.00, 14.20, ...],\n    \"cylinderOptions\": [-0.25, -0.50, -0.75, ..., -6.00],\n    \"axisOptions\": [0, 1, 2, ..., 180],\n    \"productCount\": 15,\n    \"type\": \"astigmatism\"\n  }\n}\n```\n\n**Features:**\n- Same as ID endpoint but uses slug instead of ID\n- Automatically detects if sub-subcategory is Spherical or Astigmatism/Toric\n- Aggregates all unique options from all products in the sub-subcategory\n- Returns sorted arrays ready for dropdown menus\n- For Astigmatism: Includes standard cylinder (-0.25 to -6.00) and axis (0-180°) options\n\n**Use Cases:**\n- Populate contact lens parameter forms using URL-friendly slugs\n- Build dropdown menus for power, base curve, diameter, cylinder, and axis\n- Validate available options before adding to cart\n\n**Error Cases:**\n- Returns 404 if subcategory not found\n- Returns 400 if subcategory is not a sub-subcategory (no parent_id)\n- Returns 400 if subcategory is not Spherical or Astigmatism/Toric type"
 				}
 			  },
 			  {
@@ -1909,7 +1909,7 @@
 					  "prescription-sun-lenses"
 					]
 				  },
-				  "description": "Get all prescription sun lenses organized by category (Polarized, Classic, Blokz\u00ae Sunglasses). Returns structured data with finishes (Classic, Mirror, Gradient, Fashion) and colors for each option. Public endpoint for website display."
+				  "description": "Get all prescription sun lenses organized by category (Polarized, Classic, Blokz® Sunglasses). Returns structured data with finishes (Classic, Mirror, Gradient, Fashion) and colors for each option. Public endpoint for website display."
 				}
 			  },
 			  {
@@ -1946,7 +1946,7 @@
 					  "photochromic-lenses"
 					]
 				  },
-				  "description": "Get all photochromic lenses organized by type (EyeQLenz\u2122 with Zenni ID Guard\u2122, EyeQLenz\u2122, Transitions\u00ae GEN S\u2122, Standard, Blokz Photochromic). Returns structured data with colors for each option. Public endpoint for website display."
+				  "description": "Get all photochromic lenses organized by type (EyeQLenz™ with Zenni ID Guard™, EyeQLenz™, Transitions® GEN S™, Standard, Blokz Photochromic). Returns structured data with colors for each option. Public endpoint for website display."
 				}
 			  },
 			  {
@@ -2778,6 +2778,96 @@
 					  "api"
 					]
 				  }
+				}
+			  }
+			]
+		  },
+		  {
+			"name": "Flash Offers (Public)",
+			"item": [
+			  {
+				"name": "Get All Flash Offers",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/flash-offers?activeOnly=true",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "flash-offers"
+					],
+					"query": [
+					  {
+						"key": "activeOnly",
+						"value": "true"
+					  }
+					]
+				  },
+				  "description": "Get all flash offers. Use activeOnly=true to get only currently active offers."
+				}
+			  },
+			  {
+				"name": "Get Active Flash Offer",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/flash-offers/active",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "flash-offers",
+					  "active"
+					]
+				  },
+				  "description": "Get the currently active flash offer with countdown timer (hours, minutes, seconds)."
+				}
+			  }
+			]
+		  },
+		  {
+			"name": "Product Gifts (Public)",
+			"item": [
+			  {
+				"name": "Get All Product Gifts",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/product-gifts",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "product-gifts"
+					]
+				  }
+				}
+			  },
+			  {
+				"name": "Get Gifts for Product",
+				"request": {
+				  "method": "GET",
+				  "header": [],
+				  "url": {
+					"raw": "{{base_url}}/api/product-gifts/product/1",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "product-gifts",
+					  "product",
+					  "1"
+					]
+				  },
+				  "description": "Get free gift rules for a specific product ID."
 				}
 			  }
 			]
@@ -10056,7 +10146,7 @@
 						  }
 						]
 					  },
-					  "description": "Get all prescription sun lenses (Polarized, Classic, Blokz\u00ae Sunglasses) with pagination and filters. Admin can view, add, update, and delete prescription sun lens options. Admin only."
+					  "description": "Get all prescription sun lenses (Polarized, Classic, Blokz® Sunglasses) with pagination and filters. Admin can view, add, update, and delete prescription sun lens options. Admin only."
 					}
 				  },
 				  {
@@ -10088,7 +10178,7 @@
 						  "prescription-sun-lenses"
 						]
 					  },
-					  "description": "Create a new prescription sun lens option (Polarized, Classic, or Blokz\u00ae Sunglasses). After creating, use lens-finishes and lens-colors endpoints to add finishes and colors. Admin only."
+					  "description": "Create a new prescription sun lens option (Polarized, Classic, or Blokz® Sunglasses). After creating, use lens-finishes and lens-colors endpoints to add finishes and colors. Admin only."
 					}
 				  },
 				  {
@@ -10191,7 +10281,7 @@
 						  }
 						]
 					  },
-					  "description": "Get all photochromic lenses (EyeQLenz\u2122 with Zenni ID Guard\u2122, EyeQLenz\u2122, Transitions\u00ae GEN S\u2122, Standard, Blokz Photochromic) with pagination and filters. Admin can view, add, update, and delete photochromic lens options. Admin only."
+					  "description": "Get all photochromic lenses (EyeQLenz™ with Zenni ID Guard™, EyeQLenz™, Transitions® GEN S™, Standard, Blokz Photochromic) with pagination and filters. Admin can view, add, update, and delete photochromic lens options. Admin only."
 					}
 				  },
 				  {
@@ -10210,7 +10300,7 @@
 					  ],
 					  "body": {
 						"mode": "raw",
-						"raw": "{\n  \"name\": \"EyeQLenz\u2122 with Zenni ID Guard\u2122\",\n  \"slug\": \"eyeqlenz-with-zenni-id-guard\",\n  \"description\": \"4-in-1 lens that reflects infrared light to disrupt unwanted tracking technology, filters blue light & blocks 100% UV. Stays clear indoors and darkens outdoors, with a subtle pink sheen.\",\n  \"base_price\": 0,\n  \"is_active\": true,\n  \"sort_order\": 0\n}"
+						"raw": "{\n  \"name\": \"EyeQLenz™ with Zenni ID Guard™\",\n  \"slug\": \"eyeqlenz-with-zenni-id-guard\",\n  \"description\": \"4-in-1 lens that reflects infrared light to disrupt unwanted tracking technology, filters blue light & blocks 100% UV. Stays clear indoors and darkens outdoors, with a subtle pink sheen.\",\n  \"base_price\": 0,\n  \"is_active\": true,\n  \"sort_order\": 0\n}"
 					  },
 					  "url": {
 						"raw": "{{base_url}}/api/admin/photochromic-lenses",
@@ -10242,7 +10332,7 @@
 					  ],
 					  "body": {
 						"mode": "raw",
-						"raw": "{\n  \"name\": \"EyeQLenz\u2122 with Zenni ID Guard\u2122\",\n  \"base_price\": 10.00,\n  \"is_active\": true\n}"
+						"raw": "{\n  \"name\": \"EyeQLenz™ with Zenni ID Guard™\",\n  \"base_price\": 10.00,\n  \"is_active\": true\n}"
 					  },
 					  "url": {
 						"raw": "{{base_url}}/api/admin/photochromic-lenses/1",
@@ -11577,6 +11667,124 @@
 					"path": [
 					  "api",
 					  "overview"
+					]
+				  }
+				}
+			  }
+			]
+		  },
+		  {
+			"name": "Flash Offers (Admin)",
+			"item": [
+			  {
+				"name": "Get All Flash Offers",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/flash-offers",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "flash-offers"
+					]
+				  }
+				}
+			  },
+			  {
+				"name": "Create Flash Offer",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					},
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"Flash Sale!\",\n  \"description\": \"Limited time offer\",\n  \"product_ids\": [\n    1,\n    2\n  ],\n  \"starts_at\": \"2026-01-24T12:00:00Z\",\n  \"ends_at\": \"2026-01-25T12:00:00Z\",\n  \"is_active\": true\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/flash-offers",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "flash-offers"
+					]
+				  }
+				}
+			  }
+			]
+		  },
+		  {
+			"name": "Product Gifts (Admin)",
+			"item": [
+			  {
+				"name": "Get All Product Gifts",
+				"request": {
+				  "method": "GET",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					}
+				  ],
+				  "url": {
+					"raw": "{{base_url}}/api/admin/product-gifts",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "product-gifts"
+					]
+				  }
+				}
+			  },
+			  {
+				"name": "Create Product Gift",
+				"request": {
+				  "method": "POST",
+				  "header": [
+					{
+					  "key": "Authorization",
+					  "value": "Bearer {{admin_token}}"
+					},
+					{
+					  "key": "Content-Type",
+					  "value": "application/json"
+					}
+				  ],
+				  "body": {
+					"mode": "raw",
+					"raw": "{\n  \"product_id\": 1,\n  \"gift_product_id\": 2,\n  \"min_quantity\": 1,\n  \"is_active\": true,\n  \"description\": \"Free gift with purchase\"\n}"
+				  },
+				  "url": {
+					"raw": "{{base_url}}/api/admin/product-gifts",
+					"host": [
+					  "{{base_url}}"
+					],
+					"path": [
+					  "api",
+					  "admin",
+					  "product-gifts"
 					]
 				  }
 				}

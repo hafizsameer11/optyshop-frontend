@@ -28,6 +28,7 @@ import {
     type AstigmatismConfig,
     type ContactLensCheckoutRequest
 } from '../../services/contactLensFormsService'
+import { getGiftsByProduct, type ProductGift } from '../../services/productGiftsService'
 import {
     getEyeHygieneOptions,
     getSizeVolumeVariants,
@@ -54,6 +55,7 @@ const ProductDetail: React.FC = () => {
     const [showSpecsDescription, setShowSpecsDescription] = useState(false)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<'distance_vision' | 'near_vision' | 'progressive' | ''>('') // Proper lens type enum
+    const [productGifts, setProductGifts] = useState<ProductGift[]>([])
     const lastProductIdRef = useRef<number | null>(null)
     const formInitializedRef = useRef<number | null>(null)
 
@@ -61,6 +63,15 @@ const ProductDetail: React.FC = () => {
     const [contactLensFormConfig, setContactLensFormConfig] = useState<ContactLensFormConfig | null>(null)
     // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
     const [sphericalPowerValues, setSphericalPowerValues] = useState<string[]>([])
+
+    // Fetch product gifts
+    useEffect(() => {
+        if (product?.id) {
+            getGiftsByProduct(product.id).then(gifts => {
+                setProductGifts(gifts)
+            })
+        }
+    }, [product?.id])
 
     // Sync checkout modal state with URL
     useEffect(() => {
@@ -3952,8 +3963,24 @@ const ProductDetail: React.FC = () => {
                                         {product.brand || product.category?.name || 'Brand'}
                                     </p>
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
-                                        {product.name}
-                                    </h1>
+                                                {product.name}
+                                            </h1>
+
+                                            {/* Free Gift Badge */}
+                                            {productGifts.length > 0 && (
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {productGifts.map(gift => (
+                                                        <div key={gift.id} className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100 shadow-sm">
+                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0H5.5A2.5 2.5 0 003 10.5v2a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5v-2a2.5 2.5 0 00-2.5-2.5H12z" />
+                                                            </svg>
+                                                            <span className="text-xs font-bold uppercase tracking-wider">
+                                                                Free Gift: {gift.gift_product?.name || 'Bonus Item'}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
 
                                     {/* Price */}
                                     <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">

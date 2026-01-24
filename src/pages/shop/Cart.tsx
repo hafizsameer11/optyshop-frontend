@@ -278,9 +278,16 @@ const Cart: React.FC = () => {
                                     {/* Product Details */}
                                     <div className="flex-grow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                         <div className="flex-grow">
-                                            <h3 className="text-lg md:text-xl font-bold text-gray-900">
-                                                {item.name}
-                                            </h3>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="text-lg md:text-xl font-bold text-gray-900">
+                                                    {item.name}
+                                                </h3>
+                                                {item.isGift && (
+                                                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+                                                        Free Gift
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-sm text-gray-500">
                                                 {item.brand} - {item.category}
                                             </p>
@@ -455,23 +462,29 @@ const Cart: React.FC = () => {
 
                                         {/* Quantity Controls */}
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center border border-gray-300 rounded-lg">
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="px-4 py-2 min-w-[3rem] text-center">
-                                                    {item.quantity}
-                                                </span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
+                                            {!item.isGift ? (
+                                                <div className="flex items-center border border-gray-300 rounded-lg">
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                                        className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="px-4 py-2 min-w-[3rem] text-center">
+                                                        {item.quantity}
+                                                    </span>
+                                                    <button
+                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                                        className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 text-sm font-medium">
+                                                    Qty: {item.quantity}
+                                                </div>
+                                            )}
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
                                                 className="text-red-600 hover:text-red-700 p-2"

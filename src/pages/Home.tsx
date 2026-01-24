@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Banner from '../components/home/Banner'
+import FlashOfferBanner from '../components/home/FlashOfferBanner'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import TrustedBrands from '../components/home/TrustedBrands'
 import StatsHighlight from '../components/home/StatsHighlight'
@@ -51,6 +52,9 @@ const Home: React.FC = () => {
                 autoSlideInterval={5000}
                 height="60vh"
             />
+            <div className="container mx-auto px-4">
+                <FlashOfferBanner />
+            </div>
             <SmallSlidingBanners />
             <TrustedBrands />
             <StatsHighlight />
