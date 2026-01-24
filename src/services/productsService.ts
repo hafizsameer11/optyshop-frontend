@@ -84,6 +84,34 @@ export interface SizeVolumeVariant {
   sort_order: number; // Display order (lower = first)
 }
 
+export interface MMCaliber {
+  mm: number; // e.g., 58, 62, 64
+  image: string; // URL to caliber-specific image
+  price?: number; // Optional price adjustment for this caliber
+  stock_quantity?: number; // Stock for this specific caliber
+  is_active?: boolean; // Whether this caliber is available
+}
+
+export interface EyeHygieneVariant {
+  id: number;
+  product_id: number;
+  name: string; // e.g., "5ml Single", "10ml Pack of 2"
+  size_volume: string; // e.g., "5ml", "10ml", "30ml"
+  pack_type?: string | null; // e.g., "Single", "Pack of 2"
+  price: number; // Price for this variant
+  compare_at_price?: number | null; // Compare at price (for showing discounts)
+  cost_price?: number | null; // Cost price (internal use)
+  stock_quantity: number; // Available quantity for this variant
+  stock_status: 'in_stock' | 'out_of_stock' | 'backorder'; // Stock status
+  sku?: string | null; // SKU for this variant
+  expiry_date?: string | null; // Expiry date (ISO 8601 format)
+  image?: string; // Variant-specific image
+  is_active: boolean; // Whether variant is active
+  sort_order: number; // Display order (lower = first)
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -117,6 +145,9 @@ export interface Product {
   frameSizes?: FrameSize[];
   lensTypes?: LensType[];
   lensCoatings?: LensCoating[];
+  
+  // MM Caliber System (for frames/glasses)
+  mm_calibers?: MMCaliber[]; // Array of caliber options with images
   
   // Eye Hygiene specific fields (legacy - for backward compatibility)
   size_volume?: string | null; // e.g., "5ml", "10ml", "30ml"
@@ -461,97 +492,305 @@ export const getRelatedProducts = async (
   }
 };
 
+// ============================================
+// ADMIN API FUNCTIONS (FOR ADMIN PANEL)
+// ============================================
+
 /**
- * Get products by section
- * Matches Postman collection structure: GET /api/products/section/:section
+ * Admin: Get all calibers for a product
+ * Matches Postman collection structure: GET /api/admin/products/:id/calibers
  * 
- * Sections:
- * - 'sunglasses' → product_type: 'sunglasses'
- * - 'eyeglasses' → product_type: 'frame'
- * - 'contact-lenses' → product_type: 'contact_lens'
- * - 'eye-hygiene' → product_type: 'eye_hygiene'
- * 
- * Supports all standard product filters (category, subCategory, frameShape, frameMaterial, 
- * minPrice, maxPrice, search, sortBy, sortOrder, isFeatured)
- * 
- * ⚠️ Product Deletion Integration:
- * - Deleted products are automatically excluded from section endpoints
- * - The backend filters out deleted products automatically
- * 
- * @param section - Product section (sunglasses, eyeglasses, contact-lenses, eye-hygiene)
- * @param filters - Filter parameters matching Postman collection
- * @returns Products list with pagination or null if error
+ * @param productId - Product ID
+ * @returns Array of MMCaliber objects or null if error
  */
-export const getProductsBySection = async (
-  section: ProductSection,
-  filters: ProductFilters = {}
-): Promise<{
-  products: Product[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    pages: number;
-  };
-} | null> => {
+export const adminGetProductCalibers = async (productId: number | string): Promise<MMCaliber[] | null> => {
   try {
-    // Map subcategory to subCategory (API expects capital C as per Postman collection)
-    const apiFilters: Record<string, any> = { ...filters };
-    if (apiFilters.subcategory !== undefined) {
-      apiFilters.subCategory = apiFilters.subcategory;
-      delete apiFilters.subcategory;
-    }
-    
-    // Ensure boolean filters are properly formatted
-    if (apiFilters.isFeatured !== undefined) {
-      apiFilters.isFeatured = apiFilters.isFeatured === true || apiFilters.isFeatured === 'true';
-    }
-    
-    const baseEndpoint = API_ROUTES.PRODUCTS.SECTION(section);
-    const endpoint = buildQueryString(baseEndpoint, apiFilters);
-    
-    if (import.meta.env.DEV) {
-      console.log(`🔍 [Section API] GET ${endpoint}`, { section, filters: apiFilters });
-    }
-    
-    const response = await apiClient.get<ProductsListResponse>(
-      endpoint,
-      false // PUBLIC endpoint
+    const response = await apiClient.get<{ calibers: MMCaliber[] }>(
+      API_ROUTES.ADMIN.MM_CALIBERS.BY_PRODUCT(productId),
+      true // ADMIN endpoint - requires admin authentication
     );
 
     if (response.success && response.data) {
-      const data = response.data as any;
-      // Handle Postman collection response structure:
-      // { success: true, data: { products: [...], pagination: {...} } }
-      const products = data.products || (data.data && data.data.products) || [];
-      const pagination = data.pagination || (data.data && data.data.pagination) || {
-        total: 0,
-        page: 1,
-        limit: 12,
-        pages: 0
-      };
-      
-      return {
-        products,
-        pagination,
-      };
+      return (response.data as any).calibers || [];
     }
 
-    // Log detailed error information for debugging
-    if (import.meta.env.DEV) {
-      console.error(`❌ Failed to fetch ${section} products:`, {
-        message: response.message,
-        error: response.error,
-        filters: filters,
-        endpoint: endpoint
-      });
-    } else {
-      console.error(`Failed to fetch ${section} products:`, response.message || response.error);
-    }
+    console.error('Failed to fetch product calibers:', response.message);
     return null;
   } catch (error) {
-    console.error(`Error fetching ${section} products:`, error);
+    console.error('Error fetching product calibers:', error);
     return null;
   }
 };
+
+/**
+ * Admin: Create a new caliber for a product
+ * Matches Postman collection structure: POST /api/admin/products/:id/calibers/:mm
+ * 
+ * @param productId - Product ID
+ * @param mm - Caliber size (e.g., 58, 62, 64)
+ * @param caliberData - Caliber data including image URL
+ * @returns Created MMCaliber object or null if error
+ */
+export const adminCreateProductCaliber = async (
+  productId: number | string,
+  mm: number,
+  caliberData: {
+    image: string;
+    price?: number;
+    stock_quantity?: number;
+    is_active?: boolean;
+  }
+): Promise<MMCaliber | null> => {
+  try {
+    const response = await apiClient.post<MMCaliber>(
+      API_ROUTES.ADMIN.MM_CALIBERS.CREATE(productId, mm),
+      caliberData,
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return response.data as MMCaliber;
+    }
+
+    console.error('Failed to create product caliber:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error creating product caliber:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Update a caliber for a product
+ * Matches Postman collection structure: PUT /api/admin/products/:id/calibers/:mm
+ * 
+ * @param productId - Product ID
+ * @param mm - Caliber size (e.g., 58, 62, 64)
+ * @param caliberData - Updated caliber data
+ * @returns Updated MMCaliber object or null if error
+ */
+export const adminUpdateProductCaliber = async (
+  productId: number | string,
+  mm: number,
+  caliberData: {
+    image?: string;
+    price?: number;
+    stock_quantity?: number;
+    is_active?: boolean;
+  }
+): Promise<MMCaliber | null> => {
+  try {
+    const response = await apiClient.put<MMCaliber>(
+      API_ROUTES.ADMIN.MM_CALIBERS.UPDATE(productId, mm),
+      caliberData,
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return response.data as MMCaliber;
+    }
+
+    console.error('Failed to update product caliber:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error updating product caliber:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Delete a caliber for a product
+ * Matches Postman collection structure: DELETE /api/admin/products/:id/calibers/:mm
+ * 
+ * @param productId - Product ID
+ * @param mm - Caliber size (e.g., 58, 62, 64)
+ * @returns Success boolean or null if error
+ */
+export const adminDeleteProductCaliber = async (
+  productId: number | string,
+  mm: number
+): Promise<boolean | null> => {
+  try {
+    const response = await apiClient.delete(
+      API_ROUTES.ADMIN.MM_CALIBERS.DELETE(productId, mm),
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success) {
+      return true;
+    }
+
+    console.error('Failed to delete product caliber:', response.message);
+    return false;
+  } catch (error) {
+    console.error('Error deleting product caliber:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Get all eye hygiene variants (optionally by product)
+ * Matches Postman collection structure: GET /api/admin/eye-hygiene-variants
+ * 
+ * @param productId - Optional product ID to filter variants
+ * @returns Array of EyeHygieneVariant objects or null if error
+ */
+export const adminGetEyeHygieneVariants = async (productId?: number | string): Promise<EyeHygieneVariant[] | null> => {
+  try {
+    const response = await apiClient.get<{ variants: EyeHygieneVariant[] }>(
+      API_ROUTES.ADMIN.EYE_HYGIENE_VARIANTS.LIST(productId),
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return (response.data as any).variants || [];
+    }
+
+    console.error('Failed to fetch eye hygiene variants:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching eye hygiene variants:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Get eye hygiene variant by ID
+ * Matches Postman collection structure: GET /api/admin/eye-hygiene-variants/:id
+ * 
+ * @param id - Variant ID
+ * @returns EyeHygieneVariant object or null if error
+ */
+export const adminGetEyeHygieneVariantById = async (id: number | string): Promise<EyeHygieneVariant | null> => {
+  try {
+    const response = await apiClient.get<EyeHygieneVariant>(
+      API_ROUTES.ADMIN.EYE_HYGIENE_VARIANTS.BY_ID(id),
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return response.data as EyeHygieneVariant;
+    }
+
+    console.error('Failed to fetch eye hygiene variant:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching eye hygiene variant:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Create a new eye hygiene variant
+ * Matches Postman collection structure: POST /api/admin/eye-hygiene-variants
+ * 
+ * @param variantData - Variant data
+ * @returns Created EyeHygieneVariant object or null if error
+ */
+export const adminCreateEyeHygieneVariant = async (
+  variantData: {
+    product_id: number;
+    name: string;
+    size_volume: string;
+    pack_type?: string | null;
+    price: number;
+    compare_at_price?: number | null;
+    cost_price?: number | null;
+    stock_quantity: number;
+    sku?: string | null;
+    expiry_date?: string | null;
+    image?: string;
+    is_active?: boolean;
+    sort_order?: number;
+  }
+): Promise<EyeHygieneVariant | null> => {
+  try {
+    const response = await apiClient.post<EyeHygieneVariant>(
+      API_ROUTES.ADMIN.EYE_HYGIENE_VARIANTS.CREATE,
+      variantData,
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return response.data as EyeHygieneVariant;
+    }
+
+    console.error('Failed to create eye hygiene variant:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error creating eye hygiene variant:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Update an eye hygiene variant
+ * Matches Postman collection structure: PUT /api/admin/eye-hygiene-variants/:id
+ * 
+ * @param id - Variant ID
+ * @param variantData - Updated variant data
+ * @returns Updated EyeHygieneVariant object or null if error
+ */
+export const adminUpdateEyeHygieneVariant = async (
+  id: number | string,
+  variantData: {
+    name?: string;
+    size_volume?: string;
+    pack_type?: string | null;
+    price?: number;
+    compare_at_price?: number | null;
+    cost_price?: number | null;
+    stock_quantity?: number;
+    sku?: string | null;
+    expiry_date?: string | null;
+    image?: string;
+    is_active?: boolean;
+    sort_order?: number;
+  }
+): Promise<EyeHygieneVariant | null> => {
+  try {
+    const response = await apiClient.put<EyeHygieneVariant>(
+      API_ROUTES.ADMIN.EYE_HYGIENE_VARIANTS.UPDATE(id),
+      variantData,
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success && response.data) {
+      return response.data as EyeHygieneVariant;
+    }
+
+    console.error('Failed to update eye hygiene variant:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error updating eye hygiene variant:', error);
+    return null;
+  }
+};
+
+/**
+ * Admin: Delete an eye hygiene variant
+ * Matches Postman collection structure: DELETE /api/admin/eye-hygiene-variants/:id
+ * 
+ * @param id - Variant ID
+ * @returns Success boolean or null if error
+ */
+export const adminDeleteEyeHygieneVariant = async (id: number | string): Promise<boolean | null> => {
+  try {
+    const response = await apiClient.delete(
+      API_ROUTES.ADMIN.EYE_HYGIENE_VARIANTS.DELETE(id),
+      true // ADMIN endpoint - requires admin authentication
+    );
+
+    if (response.success) {
+      return true;
+    }
+
+    console.error('Failed to delete eye hygiene variant:', response.message);
+    return false;
+  } catch (error) {
+    console.error('Error deleting eye hygiene variant:', error);
+    return null;
+  }
+};
+
 

@@ -39,6 +39,8 @@ export const API_ROUTES = {
     RELATED: (id: number | string) => `/products/${id}/related`,  // PUBLIC
     CONFIGURATION: (id: number | string) => `/products/${id}/configuration`, // PUBLIC - Get product configuration
     CONFIGURATION_LENS_TYPES: `/products/configuration/lens-types`, // PUBLIC - Get all prescription lens types with variants and colors
+    // MM Caliber endpoints
+    CALIBERS: (id: number | string) => `/products/${id}/calibers`, // PUBLIC - Get product with caliber options
     // Section-specific endpoints (filters by product_type)
     SECTION: (section: 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene') => `/products/section/${section}`, // PUBLIC - Get products by section
   },
@@ -63,6 +65,15 @@ export const API_ROUTES = {
       const queryString = params.toString();
       return `/categories/${id}/related${queryString ? `?${queryString}` : ''}`;
     }, // PUBLIC - Get related categories
+    PRODUCTS: (id: number | string, page?: number, limit?: number, sortBy?: string, sortOrder?: 'asc' | 'desc') => {
+      const params = new URLSearchParams();
+      if (page) params.append('page', String(page));
+      if (limit) params.append('limit', String(limit));
+      if (sortBy) params.append('sortBy', sortBy);
+      if (sortOrder) params.append('sortOrder', sortOrder);
+      const queryString = params.toString();
+      return `/categories/${id}/products${queryString ? `?${queryString}` : ''}`;
+    }, // PUBLIC - Get category products with calibers
   },
 
   // ============================================
@@ -425,6 +436,28 @@ export const API_ROUTES = {
   HEALTH: {
     CHECK: `/health`,                                   // PUBLIC - Health check endpoint
     API_INFO: `/api`,                                  // PUBLIC - API information endpoint
+  },
+
+  // ============================================
+  // ADMIN API ENDPOINTS (FOR ADMIN PANEL)
+  // ============================================
+  ADMIN: {
+    // MM Caliber Management
+    MM_CALIBERS: {
+      BY_PRODUCT: (productId: number | string) => `/admin/products/${productId}/calibers`, // GET all calibers for a product
+      CREATE: (productId: number | string, mm: number) => `/admin/products/${productId}/calibers/${mm}`, // POST create caliber
+      UPDATE: (productId: number | string, mm: number) => `/admin/products/${productId}/calibers/${mm}`, // PUT update caliber
+      DELETE: (productId: number | string, mm: number) => `/admin/products/${productId}/calibers/${mm}`, // DELETE caliber
+    },
+    
+    // Eye Hygiene Variant Management
+    EYE_HYGIENE_VARIANTS: {
+      LIST: (productId?: number | string) => `/admin/eye-hygiene-variants${productId ? `?product_id=${productId}` : ''}`, // GET variants (optionally by product)
+      BY_ID: (id: number | string) => `/admin/eye-hygiene-variants/${id}`, // GET variant by ID
+      CREATE: `/admin/eye-hygiene-variants`, // POST create variant
+      UPDATE: (id: number | string) => `/admin/eye-hygiene-variants/${id}`, // PUT update variant
+      DELETE: (id: number | string) => `/admin/eye-hygiene-variants/${id}`, // DELETE variant
+    },
   },
 };
 

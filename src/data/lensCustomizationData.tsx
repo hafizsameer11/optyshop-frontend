@@ -3,8 +3,6 @@
  * Sample data for treatments, lens types, and colors based on UI designs
  */
 
-import React from 'react'
-
 // Treatment Icons
 export const TreatmentIcons = {
   scratchProof: (
@@ -86,7 +84,7 @@ export const lensTypeOptions = [
     id: 'transitions_gen_s',
     name: 'Transitions® GEN S™',
     description: 'Darken outdoors in seconds and come in 8 vibrant colors. The perfect everyday lens.',
-    priceLabel: '+$60.90',
+    priceLabel: '+€60.90',
     colors: [
       { id: 'gray2', name: 'Gray', color: '#6b7280', gradient: false },
       { id: 'charcoal', name: 'Charcoal', color: '#374151', gradient: false },
