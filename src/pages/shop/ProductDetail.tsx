@@ -2017,11 +2017,20 @@ const ProductDetail: React.FC = () => {
         const stockStatus = p.stock_status
         const stockQty = product.stock_quantity
 
+        // Fix for Eye Hygiene products showing "Out of Stock" incorrectly
+        if (isEyeHygiene && !hasVariants) {
+            // If it's eye hygiene without variants, only show out of stock if stock_status is explicitly 'out_of_stock'
+            // or if stock_quantity is explicitly 0
+            if (stockStatus === 'out_of_stock') return true
+            if (stockQty !== undefined && stockQty <= 0) return true
+            return false
+        }
+
         return stockStatus === 'out_of_stock' ||
             (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
             (stockStatus === undefined && product.in_stock === false) ||
             (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs, fetchedVariants, selectedSizeVolumeVariant])
+    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs, fetchedVariants, selectedSizeVolumeVariant, isEyeHygiene])
 
     // Helper function to get the color-specific image URL (with unit images support)
     const getColorSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
@@ -4269,7 +4278,7 @@ const ProductDetail: React.FC = () => {
                                                     </div>
 
                                                     {/* Stock Quantity Display */}
-                                                    {product.stock_quantity !== undefined && (
+                                                    {product.stock_quantity !== undefined && product.stock_quantity !== null && (
                                                         <div className="flex flex-col justify-end">
                                                             <span className="text-xs font-bold text-gray-500 uppercase mb-1">Available Stock</span>
                                                             <span className={`font-semibold text-lg ${product.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
