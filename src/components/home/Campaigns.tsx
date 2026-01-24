@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { getCampaigns } from '../../services/campaignsService'
 import type { Campaign } from '../../services/campaignsService'
 
@@ -9,11 +8,8 @@ interface CampaignsComponentProps {
 }
 
 const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null, variant = 'full' }) => {
-    const { t } = useTranslation()
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [loading, setLoading] = useState(true)
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
     useEffect(() => {
         let isCancelled = false
@@ -144,32 +140,16 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
         return cleanedUrl || ''
     }
 
-    // Auto-rotate campaigns if there are multiple
-    // This hook must be called before any early returns to maintain hook order
-    useEffect(() => {
-        if (campaigns.length <= 1 || !isAutoPlaying) return
-
-        const interval = setInterval(() => {
-            setCurrentIndex((prev) => {
-                // Smooth infinite loop - automatically wraps to 0 when reaching the end
-                return (prev + 1) % campaigns.length
-            })
-        }, 5000) // Change campaign every 5 seconds
-
-        return () => clearInterval(interval)
-    }, [campaigns.length, isAutoPlaying])
-
-    // Reset to first slide when campaigns change or are loaded
+    // Reset auto-play when campaigns change or are loaded
     useEffect(() => {
         if (campaigns.length > 0) {
-            setCurrentIndex(0)
-            setIsAutoPlaying(true) // Ensure auto-play is enabled when campaigns load
+            // Auto-play is handled by CSS animation
         }
     }, [campaigns.length])
 
     if (loading) {
         return (
-            <section className="w-full py-8 md:py-12 bg-[#F8F3ED]">
+            <section className="w-full py-8 md:py-12 bg-white">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="h-64 md:h-96 bg-slate-200 animate-pulse rounded-lg shadow-lg"></div>
                 </div>
@@ -206,54 +186,178 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
         }
     }
 
-    const goToSlide = (index: number) => {
-        setCurrentIndex(index)
-        setIsAutoPlaying(false) // Pause auto-play when user manually navigates
-        // Resume auto-play after 10 seconds
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
+    // Continuous scrolling strip implementation
 
-    const goToPrevious = () => {
-        setCurrentIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length)
-        setIsAutoPlaying(false)
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    const goToNext = () => {
-        setCurrentIndex((prev) => (prev + 1) % campaigns.length)
-        setIsAutoPlaying(false)
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    // Hero banner style for current campaign, grid for others
-    const currentCampaign = campaigns[currentIndex]
-    const otherCampaigns = campaigns.filter((_, index) => index !== currentIndex)
-
-    // Compact variant for shop page with auto-scroll
+    // Compact variant for shop page with continuous scrolling
     if (variant === 'compact' && campaigns.length > 0) {
         return (
             <section
-                className="w-full py-6 md:py-8 bg-[#F8F3ED] relative overflow-hidden shadow-inner"
+                className="w-full py-6 md:py-8 bg-white relative overflow-hidden shadow-inner"
             >
-                <div className="w-[90%] mx-auto max-w-7xl relative overflow-hidden">
-                    {/* Auto-scrolling container */}
-                    <div
-                        className="flex transition-transform duration-700 ease-in-out"
+                <div className="w-[90%] mx-auto max-w-7xl">
+                    {/* Continuous Scrolling Campaign Strip */}
+                    <div className="relative overflow-hidden">
+                        <div 
+                            className="flex animate-scroll"
+                            style={{
+                                animation: 'scroll 25s linear infinite',
+                                width: `${campaigns.length * 100}%`
+                            }}
+                        >
+                            {/* Render campaigns twice for seamless loop */}
+                            {[...campaigns, ...campaigns].map((campaign, index) => {
+                                const imageUrl = getImageUrl(campaign.image_url)
+                                return (
+                                    <div
+                                        key={`${campaign.id}-${index}`}
+                                        className={`flex-shrink-0 w-full px-2 ${campaign.link_url ? 'cursor-pointer' : ''}`}
+                                        style={{ width: `${100 / campaigns.length}%` }}
+                                        onClick={() => handleCampaignClick(campaign)}
+                                    >
+                                        {imageUrl ? (
+                                            <div className="relative w-full h-48 md:h-60 lg:h-72 bg-gray-100 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                                                <img
+                                                    src={imageUrl}
+                                                    alt={campaign.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        const target = e.target as HTMLImageElement
+                                                        target.style.display = 'none'
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-slate-800/80 via-slate-800/50 to-transparent" />
+                                                <div className="absolute inset-0 flex items-center px-4 md:px-6">
+                                                    <div className="max-w-xl w-full">
+                                                        <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                                                            {campaign.name}
+                                                        </h3>
+                                                        {campaign.description && (
+                                                            <p className="text-white/90 text-xs md:text-sm line-clamp-1 mb-2">
+                                                                {campaign.description}
+                                                            </p>
+                                                        )}
+                                                        {/* Date Range for Compact */}
+                                                        {(campaign.starts_at || campaign.ends_at) && (
+                                                            <div className="flex items-center gap-1.5 mb-2 text-xs text-white/80">
+                                                                {campaign.starts_at && (
+                                                                    <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                        {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                                    </span>
+                                                                )}
+                                                                {campaign.starts_at && campaign.ends_at && (
+                                                                    <span className="text-white/60">-</span>
+                                                                )}
+                                                                {campaign.ends_at && (
+                                                                    <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                        {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {campaign.link_url && (
+                                                            <button className="inline-flex items-center bg-slate-800 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-slate-900 transition-colors text-xs md:text-sm shadow-md">
+                                                                Shop Now
+                                                                <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 md:p-6 rounded-lg shadow-lg">
+                                                <h3 className="text-lg md:text-xl font-bold text-white mb-2">
+                                                    {campaign.name}
+                                                </h3>
+                                                {campaign.description && (
+                                                    <p className="text-white/90 text-xs md:text-sm mb-3">{campaign.description}</p>
+                                                )}
+                                                {/* Date Range for Compact (no image) */}
+                                                {(campaign.starts_at || campaign.ends_at) && (
+                                                    <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-white/80">
+                                                        {campaign.starts_at && (
+                                                            <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                            </span>
+                                                        )}
+                                                        {campaign.starts_at && campaign.ends_at && (
+                                                            <span className="text-white/60">-</span>
+                                                        )}
+                                                        {campaign.ends_at && (
+                                                            <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {campaign.link_url && (
+                                                    <button className="inline-flex items-center bg-white text-slate-800 px-4 py-1.5 rounded-full font-semibold hover:bg-slate-100 transition-colors text-xs md:text-sm shadow-md">
+                                                        Shop Now
+                                                        <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Add CSS for continuous scrolling animation */}
+                <style>{`
+                    @keyframes scroll {
+                        0% {
+                            transform: translateX(0);
+                        }
+                        100% {
+                            transform: translateX(-50%);
+                        }
+                    }
+                    
+                    .animate-scroll {
+                        display: flex;
+                    }
+                    
+                    .animate-scroll:hover {
+                        animation-play-state: paused;
+                    }
+                `}</style>
+            </section>
+        )
+    }
+
+    // Continuous scrolling strip implementation
+    return (
+        <section
+            className="w-full py-8 md:py-12 bg-white shadow-inner"
+        >
+            <div className="w-[90%] mx-auto max-w-7xl">
+                {/* Continuous Scrolling Campaign Strip */}
+                <div className="relative overflow-hidden">
+                    <div 
+                        className="flex animate-scroll"
                         style={{
-                            transform: `translateX(-${currentIndex * 100}%)`
+                            animation: 'scroll 30s linear infinite',
+                            width: `${campaigns.length * 100}%`
                         }}
                     >
-                        {campaigns.map((campaign) => {
+                        {/* Render campaigns twice for seamless loop */}
+                        {[...campaigns, ...campaigns].map((campaign, index) => {
                             const imageUrl = getImageUrl(campaign.image_url)
                             return (
                                 <div
-                                    key={campaign.id}
-                                    className={`flex-shrink-0 w-full rounded-lg overflow-hidden transition-all duration-300 ${campaign.link_url ? 'cursor-pointer hover:shadow-xl hover:scale-[1.01]' : ''
-                                        }`}
+                                    key={`${campaign.id}-${index}`}
+                                    className={`flex-shrink-0 w-full px-2 ${campaign.link_url ? 'cursor-pointer' : ''}`}
+                                    style={{ width: `${100 / campaigns.length}%` }}
                                     onClick={() => handleCampaignClick(campaign)}
                                 >
                                     {imageUrl ? (
-                                        <div className="relative w-full h-64 md:h-80 lg:h-96 bg-white overflow-hidden shadow-lg">
+                                        <div className="relative w-full h-48 md:h-64 lg:h-80 bg-gray-100 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                                             <img
                                                 src={imageUrl}
                                                 alt={campaign.name}
@@ -263,88 +367,40 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                     target.style.display = 'none'
                                                 }}
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-r from-slate-800/80 via-slate-800/50 to-transparent" />
-                                            <div className="absolute inset-0 flex items-center px-4 md:px-6">
-                                                <div className="max-w-xl w-full">
-                                                    <h3 className="text-lg md:text-xl font-bold text-white mb-1">
-                                                        {campaign.name}
-                                                    </h3>
-                                                    {campaign.description && (
-                                                        <p className="text-white/90 text-xs md:text-sm line-clamp-1 mb-2">
-                                                            {campaign.description}
-                                                        </p>
-                                                    )}
-                                                    {/* Date Range for Compact */}
-                                                    {(campaign.starts_at || campaign.ends_at) && (
-                                                        <div className="flex items-center gap-1.5 mb-2 text-xs text-white/80">
-                                                            {campaign.starts_at && (
-                                                                <span className="bg-black/40 px-2 py-0.5 rounded">
-                                                                    {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                                                </span>
-                                                            )}
-                                                            {campaign.starts_at && campaign.ends_at && (
-                                                                <span className="text-white/60">-</span>
-                                                            )}
-                                                            {campaign.ends_at && (
-                                                                <span className="bg-black/40 px-2 py-0.5 rounded">
-                                                                    {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {campaign.link_url && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                handleCampaignClick(campaign)
-                                                            }}
-                                                            className="inline-flex items-center bg-slate-800 text-white px-4 py-1.5 rounded-full font-semibold hover:bg-slate-900 transition-colors text-xs md:text-sm shadow-md"
-                                                        >
-                                                            Shop Now
-                                                            <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        </button>
-                                                    )}
-                                                </div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                            <div className="absolute bottom-0 left-0 right-0 p-4">
+                                                <h3 className="text-white font-bold text-lg md:text-xl mb-1">
+                                                    {campaign.name}
+                                                </h3>
+                                                {campaign.description && (
+                                                    <p className="text-white/90 text-sm mb-2 line-clamp-2">
+                                                        {campaign.description}
+                                                    </p>
+                                                )}
+                                                {campaign.link_url && (
+                                                    <button className="inline-flex items-center bg-white text-gray-900 px-3 py-1 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
+                                                        Shop Now
+                                                        <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 md:p-6 rounded-lg shadow-lg">
-                                            <h3 className="text-lg md:text-xl font-bold text-white mb-2">
+                                        <div className="bg-gray-200 rounded-lg p-6 text-center h-48 md:h-64 lg:h-80 flex flex-col justify-center">
+                                            <h3 className="text-gray-800 font-bold text-lg md:text-xl mb-2">
                                                 {campaign.name}
                                             </h3>
                                             {campaign.description && (
-                                                <p className="text-white/90 text-xs md:text-sm mb-3">{campaign.description}</p>
-                                            )}
-                                            {/* Date Range for Compact (no image) */}
-                                            {(campaign.starts_at || campaign.ends_at) && (
-                                                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-white/80">
-                                                    {campaign.starts_at && (
-                                                        <span className="bg-black/40 px-2 py-0.5 rounded">
-                                                            {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                                        </span>
-                                                    )}
-                                                    {campaign.starts_at && campaign.ends_at && (
-                                                        <span className="text-white/60">-</span>
-                                                    )}
-                                                    {campaign.ends_at && (
-                                                        <span className="bg-black/40 px-2 py-0.5 rounded">
-                                                            {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                                <p className="text-gray-600 text-sm mb-3">
+                                                    {campaign.description}
+                                                </p>
                                             )}
                                             {campaign.link_url && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        handleCampaignClick(campaign)
-                                                    }}
-                                                    className="inline-flex items-center bg-white text-slate-800 px-4 py-1.5 rounded-full font-semibold hover:bg-slate-100 transition-colors text-xs md:text-sm shadow-md"
-                                                >
+                                                <button className="inline-flex items-center bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-semibold hover:bg-gray-900 transition-colors">
                                                     Shop Now
-                                                    <svg className="w-3 h-3 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                                     </svg>
                                                 </button>
@@ -355,369 +411,28 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                             )
                         })}
                     </div>
-
-                    {/* Navigation arrows */}
-                    {campaigns.length > 1 && (
-                        <>
-                            <button
-                                onClick={goToPrevious}
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
-                                aria-label="Previous campaign"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={goToNext}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
-                                aria-label="Next campaign"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                </svg>
-                            </button>
-                        </>
-                    )}
-
-                    {/* Dots indicator */}
-                    {campaigns.length > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
-                            {campaigns.map((_, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => goToSlide(index)}
-                                    className={`h-2 rounded-full transition-all ${index === currentIndex
-                                        ? 'bg-white w-8'
-                                        : 'bg-white/40 w-2 hover:bg-white/60'
-                                        }`}
-                                    aria-label={`Go to campaign ${index + 1}`}
-                                />
-                            ))}
-                        </div>
-                    )}
                 </div>
-            </section>
-        )
-    }
-
-    // Full variant for homepage with auto-scroll
-    return (
-        <section
-            className="w-full py-8 md:py-12 bg-[#F8F3ED] shadow-inner"
-        >
-            <div className="w-[90%] mx-auto max-w-7xl">
-                {/* Hero Banner for Current Campaign */}
-                {currentCampaign && (
-                    <div className="mb-8 md:mb-12 relative">
-                        <div className="relative overflow-hidden rounded-lg">
-                            <div
-                                className="flex transition-transform duration-700 ease-in-out will-change-transform"
-                                style={{
-                                    transform: `translateX(-${currentIndex * 100}%)`
-                                }}
-                            >
-                                {campaigns.map((campaign) => (
-                                    <div
-                                        key={campaign.id}
-                                        className="flex-shrink-0 w-full"
-                                    >
-                                        {campaign.image_url ? (
-                                            <div
-                                                className={`relative w-full rounded-lg overflow-hidden transition-all duration-300 ${campaign.link_url ? 'cursor-pointer hover:shadow-2xl' : ''
-                                                    }`}
-                                                style={{ minHeight: '300px', maxHeight: '400px' }}
-                                                onClick={() => handleCampaignClick(campaign)}
-                                            >
-                                                {/* Background Image */}
-                                                <div
-                                                    className="absolute inset-0 w-full h-full bg-slate-900"
-                                                    style={{
-                                                        backgroundImage: `url(${getImageUrl(campaign.image_url)})`,
-                                                        backgroundSize: 'cover',
-                                                        backgroundPosition: 'center',
-                                                        backgroundRepeat: 'no-repeat',
-                                                    }}
-                                                />
-
-                                                {/* Fallback Image Tag */}
-                                                <img
-                                                    src={getImageUrl(campaign.image_url)}
-                                                    alt={campaign.name}
-                                                    className="absolute inset-0 w-full h-full object-cover"
-                                                    style={{
-                                                        objectFit: 'cover',
-                                                        objectPosition: 'center',
-                                                    }}
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.style.display = 'none'
-                                                    }}
-                                                />
-
-                                                {/* Gradient Overlay */}
-                                                <div className="absolute inset-0 bg-gradient-to-b from-slate-800/70 via-slate-800/50 to-slate-800/80 z-10" />
-
-                                                {/* Content Overlay */}
-                                                <div className="relative z-20 flex flex-col justify-center items-center text-center px-6 py-8 md:py-10 h-full min-h-[300px]">
-                                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3">
-                                                        {campaign.name}
-                                                    </h2>
-
-                                                    {campaign.description && (
-                                                        <p className="text-base md:text-lg text-slate-100/90 mb-4 max-w-2xl">
-                                                            {campaign.description}
-                                                        </p>
-                                                    )}
-
-                                                    {/* Date Range */}
-                                                    {(campaign.starts_at || campaign.ends_at) && (
-                                                        <div className="flex items-center justify-center gap-2 mb-4 text-sm text-white/80">
-                                                            {campaign.starts_at && (
-                                                                <span className="bg-black/40 px-3 py-1 rounded-full">
-                                                                    Start: {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                                </span>
-                                                            )}
-                                                            {campaign.starts_at && campaign.ends_at && (
-                                                                <span className="text-white/60">-</span>
-                                                            )}
-                                                            {campaign.ends_at && (
-                                                                <span className="bg-black/40 px-3 py-1 rounded-full">
-                                                                    End: {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    )}
-
-                                                    {campaign.link_url && (
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                handleCampaignClick(campaign)
-                                                            }}
-                                                            className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-900 transition-all duration-300 hover:scale-105"
-                                                        >
-                                                            Shop Now
-                                                            <svg
-                                                                className="w-4 h-4 ml-2"
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                viewBox="0 0 24 24"
-                                                            >
-                                                                <path
-                                                                    strokeLinecap="round"
-                                                                    strokeLinejoin="round"
-                                                                    strokeWidth={2}
-                                                                    d="M9 5l7 7-7 7"
-                                                                />
-                                                            </svg>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            // Fallback card style if no image
-                                            <div
-                                                className={`bg-slate-700 rounded-lg p-6 md:p-8 text-center transition-all duration-300 shadow-lg ${campaign.link_url ? 'cursor-pointer hover:shadow-xl' : ''
-                                                    }`}
-                                                style={{ minHeight: '300px' }}
-                                                onClick={() => handleCampaignClick(campaign)}
-                                            >
-                                                <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">
-                                                    {campaign.name}
-                                                </h2>
-
-                                                {campaign.description && (
-                                                    <p className="text-base md:text-lg text-slate-300 mb-4 max-w-2xl mx-auto">
-                                                        {campaign.description}
-                                                    </p>
-                                                )}
-
-                                                {/* Date Range */}
-                                                {(campaign.starts_at || campaign.ends_at) && (
-                                                    <div className="flex items-center justify-center gap-2 mb-4 text-sm text-white/80">
-                                                        {campaign.starts_at && (
-                                                            <span className="bg-slate-700/60 px-3 py-1 rounded-full">
-                                                                Start: {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                            </span>
-                                                        )}
-                                                        {campaign.starts_at && campaign.ends_at && (
-                                                            <span className="text-white/60">-</span>
-                                                        )}
-                                                        {campaign.ends_at && (
-                                                            <span className="bg-slate-700/60 px-3 py-1 rounded-full">
-                                                                End: {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {campaign.link_url && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            handleCampaignClick(campaign)
-                                                        }}
-                                                        className="inline-flex items-center justify-center rounded-full bg-slate-800 text-white px-6 py-2 text-sm md:text-base font-semibold shadow-lg hover:bg-slate-900 transition-all duration-300 hover:scale-105"
-                                                    >
-                                                        Shop Now
-                                                        <svg
-                                                            className="w-4 h-4 ml-2"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M9 5l7 7-7 7"
-                                                            />
-                                                        </svg>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Navigation arrows */}
-                            {campaigns.length > 1 && (
-                                <>
-                                    <button
-                                        onClick={goToPrevious}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all z-20"
-                                        aria-label="Previous campaign"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={goToNext}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all z-20"
-                                        aria-label="Next campaign"
-                                    >
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                </>
-                            )}
-
-                            {/* Dots indicator */}
-                            {campaigns.length > 1 && (
-                                <div className="flex justify-center gap-2 mt-6">
-                                    {campaigns.map((_, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => goToSlide(index)}
-                                            className={`h-2 rounded-full transition-all ${index === currentIndex
-                                                ? 'bg-white w-8'
-                                                : 'bg-white/40 w-2 hover:bg-white/60'
-                                                }`}
-                                            aria-label={`Go to campaign ${index + 1}`}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Grid Layout for Additional Campaigns */}
-                {otherCampaigns.length > 0 && (
-                    <>
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6 md:mb-8 text-center">
-                            {t('home.campaigns.title', { defaultValue: 'More Campaigns' })}
-                        </h2>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {otherCampaigns.map((campaign) => {
-                                const imageUrl = getImageUrl(campaign.image_url)
-
-                                return (
-                                    <div
-                                        key={campaign.id}
-                                        className={`bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02] shadow-md ${campaign.link_url ? 'cursor-pointer' : ''
-                                            }`}
-                                        onClick={() => handleCampaignClick(campaign)}
-                                    >
-                                        {imageUrl ? (
-                                            <div className="relative h-32 bg-slate-100 overflow-hidden">
-                                                <img
-                                                    src={imageUrl}
-                                                    alt={campaign.name}
-                                                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.style.display = 'none'
-                                                    }}
-                                                />
-                                            </div>
-                                        ) : (
-                                            <div className="relative h-32 bg-slate-100 flex items-center justify-center">
-                                                <span className="text-slate-400 text-xs">No Image</span>
-                                            </div>
-                                        )}
-
-                                        <div className="p-4">
-                                            <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                                                {campaign.name}
-                                            </h3>
-
-                                            {campaign.description && (
-                                                <p className="text-slate-600 text-xs mb-3 line-clamp-2">
-                                                    {campaign.description}
-                                                </p>
-                                            )}
-
-                                            {/* Date Range */}
-                                            {(campaign.starts_at || campaign.ends_at) && (
-                                                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs text-slate-500">
-                                                    {campaign.starts_at && (
-                                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                                                            {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                        </span>
-                                                    )}
-                                                    {campaign.starts_at && campaign.ends_at && (
-                                                        <span className="text-slate-400">-</span>
-                                                    )}
-                                                    {campaign.ends_at && (
-                                                        <span className="bg-slate-100 px-2 py-0.5 rounded text-slate-600">
-                                                            {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {campaign.link_url && (
-                                                <div className="flex items-center text-slate-600 font-medium text-xs hover:text-slate-800 transition-colors">
-                                                    <span>Learn More</span>
-                                                    <svg
-                                                        className="w-3 h-3 ml-1.5"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M9 5l7 7-7 7"
-                                                        />
-                                                    </svg>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    </>
-                )}
             </div>
+            
+            {/* Add CSS for continuous scrolling animation */}
+            <style>{`
+                @keyframes scroll {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    100% {
+                        transform: translateX(-50%);
+                    }
+                }
+                
+                .animate-scroll {
+                    display: flex;
+                }
+                
+                .animate-scroll:hover {
+                    animation-play-state: paused;
+                }
+            `}</style>
         </section>
     )
 }

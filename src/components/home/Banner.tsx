@@ -332,16 +332,16 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                 />
 
                                 {/* Overlay for better text readability with attractive background */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-[#F8F3ED]/90 via-[#F8F3ED]/70 to-[#F8F3ED]/90 z-10" />
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
 
                                 {/* Banner Content */}
                                 <main className="relative z-20 flex items-center justify-center px-6 lg:px-20 h-full" style={{ height }}>
                                     <div className="max-w-3xl text-center">
                                         {banner.title && (
-                                            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold leading-tight text-slate-900">
+                                            <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-semibold leading-tight text-white">
                                                 <span className="block">{banner.title}</span>
                                                 {bannerMeta?.description && (
-                                                    <span className="block font-light italic mt-0.5 text-sm sm:text-base md:text-lg lg:text-xl text-slate-700">
+                                                    <span className="block font-light italic mt-0.5 text-sm sm:text-base md:text-lg lg:text-xl text-white/90">
                                                         {bannerMeta.description}
                                                     </span>
                                                 )}
@@ -349,7 +349,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                         )}
 
                                         {bannerMeta?.description && !banner.title && (
-                                            <p className="mt-2 text-xs sm:text-sm md:text-base text-slate-700/90">
+                                            <p className="mt-2 text-xs sm:text-sm md:text-base text-white/80">
                                                 {bannerMeta.description}
                                             </p>
                                         )}
