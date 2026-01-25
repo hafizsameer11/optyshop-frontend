@@ -492,6 +492,52 @@ export const getRelatedProducts = async (
   }
 };
 
+/**
+ * Get products by section (sunglasses, eyeglasses, contact-lenses, eye-hygiene)
+ * @param section - Product section type
+ * @param filters - Product filters
+ * @returns Products list with pagination or null if error
+ */
+export const getProductsBySection = async (
+  section: ProductSection,
+  filters: ProductFilters = {}
+): Promise<{
+  products: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
+} | null> => {
+  try {
+    // Add section filter to existing filters
+    const sectionFilters: Record<string, any> = { ...filters };
+    
+    // Map section to appropriate category or filter
+    switch (section) {
+      case 'sunglasses':
+        sectionFilters.category = 'sunglasses';
+        break;
+      case 'eyeglasses':
+        sectionFilters.category = 'eyeglasses';
+        break;
+      case 'contact-lenses':
+        sectionFilters.category = 'contact-lenses';
+        break;
+      case 'eye-hygiene':
+        sectionFilters.category = 'eye-hygiene';
+        break;
+    }
+    
+    // Use the existing getProducts function with section filters
+    return await getProducts(sectionFilters);
+  } catch (error) {
+    console.error('Error fetching products by section:', error);
+    return null;
+  }
+};
+
 // ============================================
 // ADMIN API FUNCTIONS (FOR ADMIN PANEL)
 // ============================================

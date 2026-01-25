@@ -5,7 +5,7 @@
 
 import { apiClient } from '../utils/api';
 import { API_ROUTES } from '../config/apiRoutes';
-import { Product } from './productsService';
+import type { Product } from './productsService';
 
 export interface ProductGift {
   id: number;
@@ -26,18 +26,26 @@ export interface ProductGiftsResponse {
   };
 }
 
+export interface ProductGiftResponse {
+  success: boolean;
+  message: string;
+  data: {
+    gift?: ProductGift;
+  };
+}
+
 /**
  * Get all active product gifts
  */
 export const getProductGifts = async (productId?: number | string): Promise<ProductGift[]> => {
   try {
-    const response = await apiClient.get<ProductGiftsResponse>(
+    const response = await apiClient.get<{success: boolean; message: string; data: {gifts: ProductGift[]}}>(
       API_ROUTES.PRODUCT_GIFTS.LIST(productId),
       false // PUBLIC endpoint
     );
 
     if (response.success && response.data) {
-      return response.data.gifts || [];
+      return (response.data as any).gifts || [];
     }
     return [];
   } catch (error) {
@@ -51,13 +59,13 @@ export const getProductGifts = async (productId?: number | string): Promise<Prod
  */
 export const getGiftsByProduct = async (productId: number | string): Promise<ProductGift[]> => {
   try {
-    const response = await apiClient.get<ProductGiftsResponse>(
+    const response = await apiClient.get<{success: boolean; message: string; data: {gifts: ProductGift[]}}>(
       API_ROUTES.PRODUCT_GIFTS.BY_PRODUCT(productId),
       false // PUBLIC endpoint
     );
 
     if (response.success && response.data) {
-      return response.data.gifts || [];
+      return (response.data as any).gifts || [];
     }
     return [];
   } catch (error) {
@@ -75,13 +83,13 @@ export const getGiftsByProduct = async (productId: number | string): Promise<Pro
  */
 export const adminGetProductGifts = async (): Promise<ProductGift[]> => {
   try {
-    const response = await apiClient.get<ProductGiftsResponse>(
+    const response = await apiClient.get<{success: boolean; message: string; data: {gifts: ProductGift[]}}>(
       '/admin/product-gifts',
       true // ADMIN endpoint
     );
 
     if (response.success && response.data) {
-      return response.data.gifts || [];
+      return (response.data as any).gifts || [];
     }
     return [];
   } catch (error) {
@@ -95,13 +103,13 @@ export const adminGetProductGifts = async (): Promise<ProductGift[]> => {
  */
 export const adminGetProductGift = async (id: number | string): Promise<ProductGift | null> => {
   try {
-    const response = await apiClient.get<{success: boolean; data: {gift?: ProductGift}}>(
+    const response = await apiClient.get<{success: boolean; message: string; data: {gift?: ProductGift}}>(
       `/admin/product-gifts/${id}`,
       true // ADMIN endpoint
     );
 
-    if (response.success && response.data && response.data.gift) {
-      return response.data.gift;
+    if (response.success && response.data && (response.data as any).gift) {
+      return (response.data as any).gift;
     }
     return null;
   } catch (error) {
@@ -115,14 +123,14 @@ export const adminGetProductGift = async (id: number | string): Promise<ProductG
  */
 export const adminCreateProductGift = async (giftData: Omit<ProductGift, 'id' | 'gift_product'>): Promise<ProductGift | null> => {
   try {
-    const response = await apiClient.post<{success: boolean; data: {gift?: ProductGift}}>(
+    const response = await apiClient.post<{success: boolean; message: string; data: {gift?: ProductGift}}>(
       '/admin/product-gifts',
       giftData,
       true // ADMIN endpoint
     );
 
-    if (response.success && response.data && response.data.gift) {
-      return response.data.gift;
+    if (response.success && response.data && (response.data as any).gift) {
+      return (response.data as any).gift;
     }
     return null;
   } catch (error) {
@@ -136,14 +144,14 @@ export const adminCreateProductGift = async (giftData: Omit<ProductGift, 'id' | 
  */
 export const adminUpdateProductGift = async (id: number | string, giftData: Partial<ProductGift>): Promise<ProductGift | null> => {
   try {
-    const response = await apiClient.put<{success: boolean; data: {gift?: ProductGift}}>(
+    const response = await apiClient.put<{success: boolean; message: string; data: {gift?: ProductGift}}>(
       `/admin/product-gifts/${id}`,
       giftData,
       true // ADMIN endpoint
     );
 
-    if (response.success && response.data && response.data.gift) {
-      return response.data.gift;
+    if (response.success && response.data && (response.data as any).gift) {
+      return (response.data as any).gift;
     }
     return null;
   } catch (error) {
