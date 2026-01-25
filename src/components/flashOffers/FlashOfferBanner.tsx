@@ -73,12 +73,12 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
   const formatTime = (value: number) => value.toString().padStart(2, '0');
 
   return (
-    <div className={`bg-gradient-to-r from-red-500 to-orange-500 text-white ${className}`}>
+    <div className={`bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-2xl ${className}`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-4">
-            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide bg-white/20 px-2 py-1 rounded">
-              Flash Sale
+            <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide bg-white/30 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-lg border border-white/20">
+              ⚡ Flash Sale
             </span>
             <div>
               <h3 className="text-sm sm:text-base font-bold">{flashOffer.title}</h3>
@@ -90,19 +90,19 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
           
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm">Ends in:</span>
+              <span className="text-xs sm:text-sm font-semibold text-white/90">Ends in:</span>
               <div className="flex gap-1">
-                <div className="bg-white/20 px-2 py-1 rounded text-center">
-                  <div className="text-sm sm:text-base font-bold">{formatTime(timeLeft.hours)}</div>
-                  <div className="text-xs">H</div>
+                <div className="bg-white/25 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg text-center shadow-lg">
+                  <div className="text-sm sm:text-base font-bold text-white">{formatTime(timeLeft.hours)}</div>
+                  <div className="text-xs text-white/80 uppercase">HRS</div>
                 </div>
-                <div className="bg-white/20 px-2 py-1 rounded text-center">
-                  <div className="text-sm sm:text-base font-bold">{formatTime(timeLeft.minutes)}</div>
-                  <div className="text-xs">M</div>
+                <div className="bg-white/25 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg text-center shadow-lg">
+                  <div className="text-sm sm:text-base font-bold text-white">{formatTime(timeLeft.minutes)}</div>
+                  <div className="text-xs text-white/80 uppercase">MIN</div>
                 </div>
-                <div className="bg-white/20 px-2 py-1 rounded text-center">
-                  <div className="text-sm sm:text-base font-bold">{formatTime(timeLeft.seconds)}</div>
-                  <div className="text-xs">S</div>
+                <div className="bg-white/25 backdrop-blur-sm border border-white/30 px-3 py-2 rounded-lg text-center shadow-lg">
+                  <div className="text-sm sm:text-base font-bold text-white">{formatTime(timeLeft.seconds)}</div>
+                  <div className="text-xs text-white/80 uppercase">SEC</div>
                 </div>
               </div>
             </div>
@@ -110,9 +110,9 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
             {flashOffer.link_url && (
               <Link
                 to={flashOffer.link_url}
-                className="bg-white text-red-500 px-3 py-1 rounded text-sm font-semibold hover:bg-gray-100 transition-colors"
+                className="bg-white text-emerald-600 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-50 transition-all transform hover:scale-105 shadow-lg border-2 border-white/30"
               >
-                Shop Now
+                Shop Now →
               </Link>
             )}
           </div>
