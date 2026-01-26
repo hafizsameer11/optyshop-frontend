@@ -8,7 +8,9 @@ import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import {
     getProductBySlug,
     getRelatedProducts,
-    type Product
+    getProductCalibers,
+    type Product,
+    type MMCaliber
 } from '../../services/productsService'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
@@ -36,7 +38,7 @@ import {
     type SizeVolumeVariant
 } from '../../services/eyeHygieneFormsService'
 
-const ProductDetail: React.FC = () => {
+const ProductDetail = () => {
     const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
@@ -168,10 +170,17 @@ const ProductDetail: React.FC = () => {
         stock_status?: 'in_stock' | 'out_of_stock' | 'backorder';
         expiry_date?: string | null;
         image_url?: string | null; // New field for variant image URL
+        is_active: boolean;
+        sort_order: number;
     } | null>(null)
     
     // Quantity state for variant-based products
     const [variantQuantity, setVariantQuantity] = useState(1)
+
+    // MM Caliber State (for frames/glasses)
+    const [fetchedCalibers, setFetchedCalibers] = useState<MMCaliber[]>([])
+    const [calibersLoading, setCalibersLoading] = useState(false)
+    const [selectedCaliber, setSelectedCaliber] = useState<MMCaliber | null>(null)
 
     // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
     const selectedColorVariant = useMemo(() => {
@@ -218,12 +227,25 @@ const ProductDetail: React.FC = () => {
             }
         }
 
+        // Apply caliber price adjustment if selected
+        if (selectedCaliber && selectedCaliber.price) {
+            basePrice += Number(selectedCaliber.price)
+        }
+
         // For size/volume variants, use compare_at_price if available for sale display
         let salePrice: number | null = null
         if (selectedSizeVolumeVariant && selectedSizeVolumeVariant.compare_at_price) {
             salePrice = Number(selectedSizeVolumeVariant.compare_at_price)
+            // Apply caliber price adjustment to sale price as well
+            if (selectedCaliber && selectedCaliber.price) {
+                salePrice += Number(selectedCaliber.price)
+            }
         } else {
             salePrice = product.sale_price ? Number(product.sale_price) : null
+            // Apply caliber price adjustment to sale price as well
+            if (salePrice && selectedCaliber && selectedCaliber.price) {
+                salePrice += Number(selectedCaliber.price)
+            }
         }
 
         const isValidSale = !!(salePrice && salePrice < basePrice)
@@ -234,7 +256,7 @@ const ProductDetail: React.FC = () => {
             originalPrice: isValidSale ? basePrice : null,
             hasValidSale: isValidSale
         }
-    }, [product, selectedColorVariant, selectedSizeVolumeVariant])
+    }, [product, selectedColorVariant, selectedSizeVolumeVariant, selectedCaliber])
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -1002,7 +1024,9 @@ const ProductDetail: React.FC = () => {
                             stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
                             stock_status: firstActiveVariant.stock_status || 'in_stock',
                             expiry_date: firstActiveVariant.expiry_date || null,
-                            image_url: firstActiveVariant.image_url || null // Include image_url field
+                            image_url: firstActiveVariant.image_url || null, // Include image_url field
+                            is_active: firstActiveVariant.is_active !== false,
+                            sort_order: firstActiveVariant.sort_order || 0
                         })
                     }
                 } else {
@@ -1020,6 +1044,52 @@ const ProductDetail: React.FC = () => {
 
         fetchVariants()
     }, [product?.id, isEyeHygiene])
+
+    // Fetch calibers for frames/glasses products
+    useEffect(() => {
+        const fetchCalibers = async () => {
+            if (!product || !product.id) {
+                setFetchedCalibers([])
+                setSelectedCaliber(null)
+                return
+            }
+
+            // Check if product has mm_calibers or is a frame/glasses product
+            const p = product as any
+            const hasCalibers = p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0
+            const isFrameProduct = product?.category?.slug === 'eyeglasses' || product?.category?.slug === 'sunglasses'
+
+            if (!hasCalibers && !isFrameProduct) {
+                setFetchedCalibers([])
+                setSelectedCaliber(null)
+                return
+            }
+
+            setCalibersLoading(true)
+            try {
+                const calibers = await getProductCalibers(product.id)
+                if (calibers && calibers.length > 0) {
+                    setFetchedCalibers(calibers)
+                    // Auto-select first active caliber
+                    const firstActiveCaliber = calibers.find((c) => c.is_active !== false)
+                    if (firstActiveCaliber) {
+                        setSelectedCaliber(firstActiveCaliber)
+                    }
+                } else {
+                    setFetchedCalibers([])
+                    setSelectedCaliber(null)
+                }
+            } catch (error) {
+                console.error('Error fetching calibers:', error)
+                setFetchedCalibers([])
+                setSelectedCaliber(null)
+            } finally {
+                setCalibersLoading(false)
+            }
+        }
+
+        fetchCalibers()
+    }, [product?.id, product.category?.slug])
 
     // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
     useEffect(() => {
@@ -2042,8 +2112,8 @@ const ProductDetail: React.FC = () => {
                 sizeVolume: selectedSizeVolumeVariant.size_volume,
                 packType: selectedSizeVolumeVariant.pack_type,
                 price: selectedSizeVolumeVariant.price,
-                hasImages: !!(selectedSizeVolumeVariant.images && selectedSizeVolumeVariant.images.length > 0),
-                imageCount: selectedSizeVolumeVariant.images?.length || 0,
+                hasImages: !!((selectedSizeVolumeVariant as any).images && (selectedSizeVolumeVariant as any).images.length > 0),
+                imageCount: (selectedSizeVolumeVariant as any).images?.length || 0,
                 hasImageUrl: !!selectedSizeVolumeVariant.image_url,
                 imageUrl: selectedSizeVolumeVariant.image_url
             })
@@ -2061,19 +2131,47 @@ const ProductDetail: React.FC = () => {
         }
     }, [selectedImageIndex, isEyeHygiene, selectedSizeVolumeVariant])
 
-    // Helper function to get the variant-specific image URL (supports color, unit, and ML variants)
+    // ... (rest of the code remains the same)
+        }
+    }, [selectedSizeVolumeVariant, isEyeHygiene])
+
+    // Handler for caliber change
+    const handleCaliberChange = (mm: number) => {
+        const matchingCaliber = fetchedCalibers.find(c => c.mm === mm)
+        if (matchingCaliber) {
+            setSelectedCaliber(matchingCaliber)
+            setSelectedImageIndex(0) // Reset image index to show caliber's image
+        } else {
+            setSelectedCaliber(null)
+            setSelectedImageIndex(0) // Reset image index
+        }
+    }
+
+    // Reset image index when caliber changes to show caliber-specific image
+    useEffect(() => {
+        if (selectedCaliber) {
+            setSelectedImageIndex(0)
+        }
+    }, [selectedCaliber])
+
+    // Helper function to get the variant-specific image URL (supports color, unit, ML variants, and caliber)
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
         // Priority 1: Use unit-specific images if available
         if (unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use eye hygiene variant-specific images if variant is selected
+        // Priority 2: Use caliber-specific images if caliber is selected
+        if (selectedCaliber && selectedCaliber.image) {
+            return selectedCaliber.image
+        }
+
+        // Priority 3: Use eye hygiene variant-specific images if variant is selected
         if (isEyeHygiene && selectedSizeVolumeVariant) {
             return getVariantImageUrl(product, selectedSizeVolumeVariant, imageIndex)
         }
 
-        // Priority 3: Use color-specific images if color is selected
+        // Priority 4: Use color-specific images if color is selected
         if (selectedColor) {
             const p = product as any
             const selectedColorLower = (selectedColor || '').toLowerCase()
@@ -3819,10 +3917,17 @@ const ProductDetail: React.FC = () => {
                                     if (unitImages.length > 0) {
                                         imagesArray = unitImages
                                     } else {
-                                        // For eye hygiene products with variants, use variant-specific image
+                                        // For eye hygiene products with variants, use variant-specific images
                                         if (isEyeHygiene && selectedSizeVolumeVariant) {
-                                            const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant, 0)
-                                            imagesArray = [variantImageUrl]
+                                            // Check if variant has multiple images (legacy support)
+                                            const variantImages = (selectedSizeVolumeVariant as any).images
+                                            if (variantImages && Array.isArray(variantImages) && variantImages.length > 0) {
+                                                imagesArray = variantImages
+                                            } else {
+                                                // Use single variant image (image_url)
+                                                const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant, 0)
+                                                imagesArray = [variantImageUrl]
+                                            }
                                         } else if (selectedColor) {
                                             // First try 'colors' array (preferred)
                                             if (p.colors && Array.isArray(p.colors)) {
@@ -3879,7 +3984,7 @@ const ProductDetail: React.FC = () => {
                                             <div className="flex flex-col gap-3">
                                                 {imagesArray.map((image, index) => (
                                                     <button
-                                                        key={index}
+                                                        key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}`}
                                                         onClick={() => setSelectedImageIndex(index)}
                                                         className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${index === safeSelectedIndex
                                                             ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
@@ -3903,7 +4008,7 @@ const ProductDetail: React.FC = () => {
                                             <div className="flex-1">
                                                 <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center">
                                                     <img
-                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}`}
+                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}`}
                                                         src={selectedImage}
                                                         alt={product.name}
                                                         className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
@@ -4013,24 +4118,35 @@ const ProductDetail: React.FC = () => {
                                         {product.brand || product.category?.name || 'Brand'}
                                     </p>
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
-                                                {product.name}
-                                            </h1>
+                                        {product.name}
+                                        {/* Caliber Display */}
+                                        {selectedCaliber && !isEyeHygiene && !isContactLens && (
+                                            <div className="inline-flex items-center ml-3 px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg shadow-sm">
+                                                <span className="text-lg font-bold text-blue-900">{selectedCaliber.mm}</span>
+                                                <span className="text-sm font-medium text-blue-700 ml-1">mm</span>
+                                                <svg className="w-4 h-4 ml-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </h1>
 
-                                            {/* Free Gift Badge */}
-                                            {productGifts.length > 0 && (
-                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                    {productGifts.map(gift => (
-                                                        <div key={gift.id} className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100 shadow-sm">
-                                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0H5.5A2.5 2.5 0 003 10.5v2a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5v-2a2.5 2.5 0 00-2.5-2.5H12z" />
-                                                            </svg>
-                                                            <span className="text-xs font-bold uppercase tracking-wider">
-                                                                Free Gift: {gift.gift_product?.name || 'Bonus Item'}
-                                                            </span>
-                                                        </div>
-                                                    ))}
+                                    {/* Free Gift Badge */}
+                                    {productGifts.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            {productGifts.map(gift => (
+                                                <div key={gift.id} className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full border border-green-100 shadow-sm">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 0H5.5A2.5 2.5 0 003 10.5v2a2.5 2.5 0 002.5 2.5h13a2.5 2.5 0 002.5-2.5v-2a2.5 2.5 0 00-2.5-2.5H12z" />
+                                                    </svg>
+                                                    <span className="text-xs font-bold uppercase tracking-wider">
+                                                        Free Gift: {gift.gift_product?.name || 'Bonus Item'}
+                                                    </span>
                                                 </div>
-                                            )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
 
                                     {/* Price */}
                                     <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
@@ -4154,7 +4270,9 @@ const ProductDetail: React.FC = () => {
                                                         stock_quantity: Number(variant.stock_quantity || 0),
                                                         stock_status: variant.stock_status || 'in_stock',
                                                         expiry_date: variant.expiry_date || null,
-                                                        image_url: variant.image_url || null // Include image_url field
+                                                        image_url: variant.image_url || null, // Include image_url field
+                                                        is_active: variant.is_active !== false,
+                                                        sort_order: variant.sort_order || 0
                                                     })
                                                     // Reset quantity to 1 when variant changes
                                                     setVariantQuantity(1)
@@ -4191,6 +4309,31 @@ const ProductDetail: React.FC = () => {
                                                                             {option}
                                                                         </option>
                                                                     ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Caliber (MM) Selector for Frames/Glasses */}
+                                                        {fetchedCalibers.length > 0 && (
+                                                            <div className="flex flex-col">
+                                                                <label className="text-xs font-bold text-gray-700 uppercase mb-2">
+                                                                    Frame Size (mm) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={selectedCaliber?.mm || ''}
+                                                                    onChange={(e) => handleCaliberChange(parseInt(e.target.value) || 0)}
+                                                                    className="w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium"
+                                                                    required
+                                                                >
+                                                                    <option value="">Select Frame Size</option>
+                                                                    {fetchedCalibers
+                                                                        .filter(c => c.is_active !== false)
+                                                                        .sort((a, b) => a.mm - b.mm)
+                                                                        .map((caliber) => (
+                                                                            <option key={caliber.mm} value={caliber.mm}>
+                                                                                {caliber.mm}mm
+                                                                            </option>
+                                                                        ))}
                                                                 </select>
                                                             </div>
                                                         )}
@@ -4349,6 +4492,66 @@ const ProductDetail: React.FC = () => {
                                             </div>
                                         )
                                     })()}
+
+                                    {/* Caliber (MM) Selection for Frames/Glasses */}
+                                    {fetchedCalibers.length > 0 && !isEyeHygiene && !isContactLens && (
+                                        <div className="mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h3 className="text-lg font-bold text-gray-900">Frame Size</h3>
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span>Choose the perfect fit</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-wrap gap-3">
+                                                {fetchedCalibers
+                                                    .filter(c => c.is_active !== false)
+                                                    .sort((a, b) => a.mm - b.mm)
+                                                    .map((caliber) => (
+                                                        <button
+                                                            key={caliber.mm}
+                                                            onClick={() => handleCaliberChange(caliber.mm)}
+                                                            className={`relative px-6 py-3 rounded-xl border-2 transition-all duration-200 font-semibold text-base ${
+                                                                selectedCaliber?.mm === caliber.mm
+                                                                    ? 'border-blue-950 bg-blue-50 text-blue-950 ring-2 ring-blue-100 shadow-md'
+                                                                    : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700 hover:shadow-sm'
+                                                            }`}
+                                                        >
+                                                            <span className="text-lg font-bold">{caliber.mm}</span>
+                                                            <span className="text-sm font-normal ml-1">mm</span>
+                                                            {caliber.price && (
+                                                                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                                    +${caliber.price}
+                                                                </span>
+                                                            )}
+                                                        </button>
+                                                    ))}
+                                            </div>
+                                            
+                                            {selectedCaliber && (
+                                                <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                        </svg>
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-blue-900">
+                                                                Selected: {selectedCaliber.mm}mm frame size
+                                                            </p>
+                                                            {selectedCaliber.price && (
+                                                                <p className="text-xs text-blue-700">
+                                                                    Price adjustment: +${selectedCaliber.price}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Product Details Grid (for non-Eye Hygiene products or additional details) */}
                                     {(() => {

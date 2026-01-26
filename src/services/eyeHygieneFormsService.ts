@@ -66,6 +66,7 @@ export interface SizeVolumeVariant {
   stock_status: 'in_stock' | 'out_of_stock' | 'backorder'
   sku?: string | null
   expiry_date?: string | null
+  image_url?: string | null
   is_active: boolean
   sort_order: number
   created_at?: string

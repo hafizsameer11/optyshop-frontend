@@ -60,7 +60,7 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
         p.photo ||                                         // photo
         p.photo_url ||                                     // photo_url
         p.image_path ||                                    // image_path
-        (typeof product.images === 'string' && !product.images.startsWith('[') ? product.images : null) || // Direct string URL (not an array)
+        (typeof product.images === 'string' && (product.images as string).startsWith('[') === false ? product.images : null) || // Direct string URL (not an array)
         imagesArray[imageIndex] ||                          // Selected image from parsed array
         imagesArray[0] ||                                   // First image from parsed array
         p.media?.[imageIndex] ||                            // media array at index
@@ -83,7 +83,7 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
         else if (p.photo) selectedField = 'photo'
         else if (p.photo_url) selectedField = 'photo_url'
         else if (p.image_path) selectedField = 'image_path'
-        else if (typeof product.images === 'string' && !product.images.startsWith('[')) selectedField = 'product.images (string)'
+        else if (typeof product.images === 'string' && (product.images as string).startsWith('[') === false) selectedField = 'product.images (string)'
         else if (imagesArray[imageIndex]) selectedField = `imagesArray[${imageIndex}]`
         else if (imagesArray[0]) selectedField = 'imagesArray[0]'
         else if (p.media?.[imageIndex]) selectedField = `media[${imageIndex}]`
@@ -150,29 +150,30 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
         return variant.image_url
     }
     
-    // Priority 2: Use variant images array (legacy)
-    if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
-        if (variant.images[imageIndex]) {
+    // Priority 2: Use variant images array (legacy - check if variant has images property)
+    if ((variant as any).images && Array.isArray((variant as any).images) && (variant as any).images.length > 0) {
+        const variantImages = (variant as any).images as string[]
+        if (variantImages[imageIndex]) {
             if (import.meta.env.DEV) {
                 console.log('🖼️ Using variant images array:', {
                     variantId: variant.id,
                     sizeVolume: variant.size_volume,
                     imageIndex,
-                    imageUrl: variant.images[imageIndex]
+                    imageUrl: variantImages[imageIndex]
                 })
             }
-            return variant.images[imageIndex]
-        } else if (variant.images[0]) {
+            return variantImages[imageIndex]
+        } else if (variantImages[0]) {
             // Fallback to first image if index doesn't exist
             if (import.meta.env.DEV) {
                 console.log('🖼️ Using variant images array (fallback to first):', {
                     variantId: variant.id,
                     sizeVolume: variant.size_volume,
                     imageIndex: 0,
-                    imageUrl: variant.images[0]
+                    imageUrl: variantImages[0]
                 })
             }
-            return variant.images[0]
+            return variantImages[0]
         }
     }
     
@@ -182,7 +183,7 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
             variantId: variant.id,
             sizeVolume: variant.size_volume,
             hasImageUrl: !!variant.image_url,
-            hasImages: !!(variant.images && variant.images.length > 0)
+            hasImages: !!((variant as any).images && (variant as any).images.length > 0)
         })
     }
     

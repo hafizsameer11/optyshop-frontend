@@ -544,6 +544,32 @@ export const getProductsBySection = async (
 // ============================================
 
 /**
+ * Get product calibers (mm sizes) for frames/glasses
+ * Matches Postman collection structure: GET /api/products/:id/calibers
+ * 
+ * @param id - Product ID
+ * @returns Array of MMCaliber objects or null if error
+ */
+export const getProductCalibers = async (id: number | string): Promise<MMCaliber[] | null> => {
+  try {
+    const response = await apiClient.get<{ calibers: MMCaliber[] }>(
+      API_ROUTES.PRODUCTS.CALIBERS(id),
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return (response.data as any).calibers || [];
+    }
+
+    console.error('Failed to fetch product calibers:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching product calibers:', error);
+    return null;
+  }
+};
+
+/**
  * Admin: Get all calibers for a product
  * Matches Postman collection structure: GET /api/admin/products/:id/calibers
  * 
