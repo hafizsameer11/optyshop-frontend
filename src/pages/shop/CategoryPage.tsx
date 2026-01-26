@@ -20,6 +20,7 @@ import {
 import CategoryBanner from '../../components/home/CategoryBanner'
 import RelatedCategories from '../../components/shop/RelatedCategories'
 import ProductCard from '../../components/products/ProductCard'
+import BannerDebug from '../../components/debug/BannerDebug'
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
@@ -404,13 +405,23 @@ const CategoryPage: React.FC = () => {
                         categoryInfo.subcategory || 
                         categoryInfo.category
                     )}
-                    categoryId={
+                    categoryId={categoryInfo.category?.id || 0}
+                    subcategoryId={
                         categoryInfo.subSubcategory?.id || 
-                        categoryInfo.subcategory?.id || 
-                        categoryInfo.category?.id || 0
+                        categoryInfo.subcategory?.id
                     }
                     position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
                 />
+            )}
+
+            {/* Debug Banner Information - Only in development */}
+            {import.meta.env.DEV && categoryInfo.category && (
+                <div className="max-w-screen-2xl mx-auto px-4 mb-8">
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Banner Debug Information</h3>
+                        <BannerDebug />
+                    </div>
+                </div>
             )}
 
             {/* Page Content */}

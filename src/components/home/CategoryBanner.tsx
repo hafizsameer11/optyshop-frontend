@@ -4,12 +4,14 @@ import { getBanners, type Banner } from '../../services/bannersService'
 interface CategoryBannerProps {
     categoryName: string
     categoryId: number
+    subcategoryId?: number
     position?: string
 }
 
 const CategoryBanner: React.FC<CategoryBannerProps> = ({ 
     categoryName, 
     categoryId, 
+    subcategoryId,
     position = 'category_section' 
 }) => {
     const [banners, setBanners] = useState<Banner[]>([])
@@ -23,54 +25,93 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
             try {
                 setLoading(true)
                 
+                // Debug: Log the parameters being used
+                console.log(`Fetching banners for ${categoryName} - Category ID: ${categoryId}, Subcategory ID: ${subcategoryId}, Position: ${position}`)
+                
                 // Fetch banners for category position
                 // For different category levels, we use different strategies
                 let data
                 
                 if (position === 'sub_subcategory_page') {
                     // For sub-subcategory pages, try to get banners specific to this level
+                    console.log('Trying sub-subcategory specific banners...')
                     data = await getBanners({
                         page_type: 'category',
                         category_id: categoryId,
+                        sub_category_id: subcategoryId,
                         position: 'sub_subcategory_page'
                     })
+                    console.log('Sub-subcategory specific banners result:', data?.length || 0)
                     
-                    // If no specific banners found, fallback to general category banners
+                    // If no specific banners found, try with just sub_category_id
                     if (!data || data.length === 0) {
+                        console.log('Trying banners with sub_category_id only...')
+                        data = await getBanners({
+                            page_type: 'category',
+                            category_id: categoryId,
+                            sub_category_id: subcategoryId
+                        })
+                        console.log('Sub_category_id only banners result:', data?.length || 0)
+                    }
+                    
+                    // If still no banners, fallback to general category banners
+                    if (!data || data.length === 0) {
+                        console.log('Trying general category banners...')
                         data = await getBanners({
                             page_type: 'category',
                             category_id: categoryId
                         })
+                        console.log('General category banners result:', data?.length || 0)
                     }
                 } else if (position === 'subcategory_page') {
                     // For subcategory pages, try to get banners specific to this level
+                    console.log('Trying subcategory specific banners...')
                     data = await getBanners({
                         page_type: 'category',
                         category_id: categoryId,
+                        sub_category_id: subcategoryId,
                         position: 'subcategory_page'
                     })
+                    console.log('Subcategory specific banners result:', data?.length || 0)
                     
-                    // If no specific banners found, fallback to general category banners
+                    // If no specific banners found, try with just sub_category_id
                     if (!data || data.length === 0) {
+                        console.log('Trying banners with sub_category_id only...')
+                        data = await getBanners({
+                            page_type: 'category',
+                            category_id: categoryId,
+                            sub_category_id: subcategoryId
+                        })
+                        console.log('Sub_category_id only banners result:', data?.length || 0)
+                    }
+                    
+                    // If still no banners, fallback to general category banners
+                    if (!data || data.length === 0) {
+                        console.log('Trying general category banners...')
                         data = await getBanners({
                             page_type: 'category',
                             category_id: categoryId
                         })
+                        console.log('General category banners result:', data?.length || 0)
                     }
                 } else {
                     // For main category pages, get general category banners
+                    console.log('Trying main category page banners...')
                     data = await getBanners({
                         page_type: 'category',
                         category_id: categoryId,
                         position: 'category_page'
                     })
+                    console.log('Main category page banners result:', data?.length || 0)
                     
                     // If no specific category page banners found, try without position filter
                     if (!data || data.length === 0) {
+                        console.log('Trying category banners without position filter...')
                         data = await getBanners({
                             page_type: 'category',
                             category_id: categoryId
                         })
+                        console.log('Category banners without position result:', data?.length || 0)
                     }
                 }
                 
@@ -100,7 +141,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
         return () => {
             isCancelled = true
         }
-    }, [categoryName, categoryId, position])
+    }, [categoryName, categoryId, subcategoryId, position])
 
     // Auto-rotate banners if there are multiple
     useEffect(() => {
