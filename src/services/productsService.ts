@@ -80,6 +80,7 @@ export interface SizeVolumeVariant {
   stock_status: 'in_stock' | 'out_of_stock' | 'backorder'; // Stock status
   sku?: string | null; // SKU for this variant
   expiry_date?: string | null; // Expiry date (ISO 8601 format)
+  image_url?: string | null; // Image URL for this variant (max 500 characters, optional)
   is_active: boolean; // Whether variant is active
   sort_order: number; // Display order (lower = first)
 }

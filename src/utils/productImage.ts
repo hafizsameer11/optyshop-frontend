@@ -1,4 +1,4 @@
-import type { Product } from '../services/productsService'
+import type { Product, SizeVolumeVariant } from '../services/productsService'
 
 /**
  * Extracts the primary product image URL using the same comprehensive logic
@@ -121,5 +121,71 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
     }
     
     return imgUrl || '/assets/images/frame1.png'
+}
+
+/**
+ * Gets the appropriate image URL for a size/volume variant
+ * Priority: variant.image_url > variant.images > product images
+ * 
+ * @param product - The product object
+ * @param variant - The selected size/volume variant
+ * @param imageIndex - Optional index for selecting a specific image from variant images array (default: 0)
+ * @returns The image URL string
+ */
+export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant | null, imageIndex: number = 0): string {
+    // If no variant, fall back to product image
+    if (!variant) {
+        return getProductImageUrl(product, imageIndex)
+    }
+    
+    // Priority 1: Use variant image_url (new field)
+    if (variant.image_url) {
+        if (import.meta.env.DEV) {
+            console.log('🖼️ Using variant image_url:', {
+                variantId: variant.id,
+                sizeVolume: variant.size_volume,
+                imageUrl: variant.image_url
+            })
+        }
+        return variant.image_url
+    }
+    
+    // Priority 2: Use variant images array (legacy)
+    if (variant.images && Array.isArray(variant.images) && variant.images.length > 0) {
+        if (variant.images[imageIndex]) {
+            if (import.meta.env.DEV) {
+                console.log('🖼️ Using variant images array:', {
+                    variantId: variant.id,
+                    sizeVolume: variant.size_volume,
+                    imageIndex,
+                    imageUrl: variant.images[imageIndex]
+                })
+            }
+            return variant.images[imageIndex]
+        } else if (variant.images[0]) {
+            // Fallback to first image if index doesn't exist
+            if (import.meta.env.DEV) {
+                console.log('🖼️ Using variant images array (fallback to first):', {
+                    variantId: variant.id,
+                    sizeVolume: variant.size_volume,
+                    imageIndex: 0,
+                    imageUrl: variant.images[0]
+                })
+            }
+            return variant.images[0]
+        }
+    }
+    
+    // Priority 3: Fall back to product image
+    if (import.meta.env.DEV) {
+        console.log('🖼️ No variant image found, using product image:', {
+            variantId: variant.id,
+            sizeVolume: variant.size_volume,
+            hasImageUrl: !!variant.image_url,
+            hasImages: !!(variant.images && variant.images.length > 0)
+        })
+    }
+    
+    return getProductImageUrl(product, imageIndex)
 }
 

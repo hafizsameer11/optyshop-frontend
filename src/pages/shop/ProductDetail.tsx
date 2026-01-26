@@ -11,7 +11,7 @@ import {
     type Product
 } from '../../services/productsService'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
-import { getProductImageUrl } from '../../utils/productImage'
+import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import EyeAxisDiagram from '../../components/shop/EyeAxisDiagram'
@@ -165,8 +165,9 @@ const ProductDetail: React.FC = () => {
         price: number;
         compare_at_price?: number | null;
         stock_quantity: number;
-        stock_status: string;
+        stock_status?: 'in_stock' | 'out_of_stock' | 'backorder';
         expiry_date?: string | null;
+        image_url?: string | null; // New field for variant image URL
     } | null>(null)
     
     // Quantity state for variant-based products
@@ -1000,7 +1001,8 @@ const ProductDetail: React.FC = () => {
                             compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
                             stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
                             stock_status: firstActiveVariant.stock_status || 'in_stock',
-                            expiry_date: firstActiveVariant.expiry_date || null
+                            expiry_date: firstActiveVariant.expiry_date || null,
+                            image_url: firstActiveVariant.image_url || null // Include image_url field
                         })
                     }
                 } else {
@@ -2041,7 +2043,9 @@ const ProductDetail: React.FC = () => {
                 packType: selectedSizeVolumeVariant.pack_type,
                 price: selectedSizeVolumeVariant.price,
                 hasImages: !!(selectedSizeVolumeVariant.images && selectedSizeVolumeVariant.images.length > 0),
-                imageCount: selectedSizeVolumeVariant.images?.length || 0
+                imageCount: selectedSizeVolumeVariant.images?.length || 0,
+                hasImageUrl: !!selectedSizeVolumeVariant.image_url,
+                imageUrl: selectedSizeVolumeVariant.image_url
             })
         }
     }, [selectedSizeVolumeVariant, isEyeHygiene])
@@ -2064,105 +2068,9 @@ const ProductDetail: React.FC = () => {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use eye hygiene ML variant-specific images if variant is selected
+        // Priority 2: Use eye hygiene variant-specific images if variant is selected
         if (isEyeHygiene && selectedSizeVolumeVariant) {
-            const p = product as any
-            
-            // Check if the selected variant has specific images
-            if (selectedSizeVolumeVariant.images && Array.isArray(selectedSizeVolumeVariant.images) && selectedSizeVolumeVariant.images.length > 0) {
-                if (selectedSizeVolumeVariant.images[imageIndex]) {
-                    if (import.meta.env.DEV) {
-                        console.log('🖼️ Using variant-specific image:', {
-                            variantId: selectedSizeVolumeVariant.id,
-                            sizeVolume: selectedSizeVolumeVariant.size_volume,
-                            imageIndex,
-                            imageUrl: selectedSizeVolumeVariant.images[imageIndex]
-                        })
-                    }
-                    return selectedSizeVolumeVariant.images[imageIndex]
-                } else if (selectedSizeVolumeVariant.images[0]) {
-                    // Fallback to first image of selected variant if selected index doesn't exist
-                    if (import.meta.env.DEV) {
-                        console.log('🖼️ Using variant-specific image (fallback to first):', {
-                            variantId: selectedSizeVolumeVariant.id,
-                            sizeVolume: selectedSizeVolumeVariant.size_volume,
-                            imageIndex: 0,
-                            imageUrl: selectedSizeVolumeVariant.images[0]
-                        })
-                    }
-                    return selectedSizeVolumeVariant.images[0]
-                }
-            }
-
-            // Check if product has variant_images mapping (variant_id -> images)
-            if (p.variant_images && typeof p.variant_images === 'object') {
-                const variantKey = selectedSizeVolumeVariant.id.toString()
-                const variantImageData = p.variant_images[variantKey]
-                
-                if (variantImageData && Array.isArray(variantImageData) && variantImageData.length > 0) {
-                    if (variantImageData[imageIndex]) {
-                        if (import.meta.env.DEV) {
-                            console.log('🖼️ Using product variant_images mapping:', {
-                                variantId: selectedSizeVolumeVariant.id,
-                                sizeVolume: selectedSizeVolumeVariant.size_volume,
-                                imageIndex,
-                                imageUrl: variantImageData[imageIndex]
-                            })
-                        }
-                        return variantImageData[imageIndex]
-                    } else if (variantImageData[0]) {
-                        if (import.meta.env.DEV) {
-                            console.log('🖼️ Using product variant_images mapping (fallback to first):', {
-                                variantId: selectedSizeVolumeVariant.id,
-                                sizeVolume: selectedSizeVolumeVariant.size_volume,
-                                imageIndex: 0,
-                                imageUrl: variantImageData[0]
-                            })
-                        }
-                        return variantImageData[0]
-                    }
-                }
-            }
-
-            // Check size_volume_images mapping (size_volume -> images)
-            if (p.size_volume_images && typeof p.size_volume_images === 'object') {
-                const sizeVolumeKey = selectedSizeVolumeVariant.size_volume
-                const sizeVolumeImageData = p.size_volume_images[sizeVolumeKey]
-                
-                if (sizeVolumeImageData && Array.isArray(sizeVolumeImageData) && sizeVolumeImageData.length > 0) {
-                    if (sizeVolumeImageData[imageIndex]) {
-                        if (import.meta.env.DEV) {
-                            console.log('🖼️ Using size_volume_images mapping:', {
-                                variantId: selectedSizeVolumeVariant.id,
-                                sizeVolume: selectedSizeVolumeVariant.size_volume,
-                                imageIndex,
-                                imageUrl: sizeVolumeImageData[imageIndex]
-                            })
-                        }
-                        return sizeVolumeImageData[imageIndex]
-                    } else if (sizeVolumeImageData[0]) {
-                        if (import.meta.env.DEV) {
-                            console.log('🖼️ Using size_volume_images mapping (fallback to first):', {
-                                variantId: selectedSizeVolumeVariant.id,
-                                sizeVolume: selectedSizeVolumeVariant.size_volume,
-                                imageIndex: 0,
-                                imageUrl: sizeVolumeImageData[0]
-                            })
-                        }
-                        return sizeVolumeImageData[0]
-                    }
-                }
-            }
-
-            if (import.meta.env.DEV) {
-                console.log('🖼️ No variant-specific images found for:', {
-                    variantId: selectedSizeVolumeVariant.id,
-                    sizeVolume: selectedSizeVolumeVariant.size_volume,
-                    hasVariantImages: !!selectedSizeVolumeVariant.images,
-                    hasProductVariantImages: !!p.variant_images,
-                    hasSizeVolumeImages: !!p.size_volume_images
-                })
-            }
+            return getVariantImageUrl(product, selectedSizeVolumeVariant, imageIndex)
         }
 
         // Priority 3: Use color-specific images if color is selected
@@ -3911,7 +3819,11 @@ const ProductDetail: React.FC = () => {
                                     if (unitImages.length > 0) {
                                         imagesArray = unitImages
                                     } else {
-                                        if (selectedColor) {
+                                        // For eye hygiene products with variants, use variant-specific image
+                                        if (isEyeHygiene && selectedSizeVolumeVariant) {
+                                            const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant, 0)
+                                            imagesArray = [variantImageUrl]
+                                        } else if (selectedColor) {
                                             // First try 'colors' array (preferred)
                                             if (p.colors && Array.isArray(p.colors)) {
                                                 const selectedColorLower = (selectedColor || '').toLowerCase()
@@ -4241,7 +4153,8 @@ const ProductDetail: React.FC = () => {
                                                         compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
                                                         stock_quantity: Number(variant.stock_quantity || 0),
                                                         stock_status: variant.stock_status || 'in_stock',
-                                                        expiry_date: variant.expiry_date || null
+                                                        expiry_date: variant.expiry_date || null,
+                                                        image_url: variant.image_url || null // Include image_url field
                                                     })
                                                     // Reset quantity to 1 when variant changes
                                                     setVariantQuantity(1)
