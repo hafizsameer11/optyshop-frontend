@@ -8,7 +8,6 @@ import TrustedBrands from '../components/home/TrustedBrands'
 import StatsHighlight from '../components/home/StatsHighlight'
 import ShopCategories from '../components/home/ShopCategories'
 import LatestArrivals from '../components/home/LatestArrivals'
-import FeaturedArrivals from '../components/home/FeaturedArrivals'
 import LiveDemoSection from '../components/home/LiveDemoSection'
 import Testimonials from '../components/home/Testimonials'
 import PurchasingJourneySection from '../components/home/PurchasingJourneySection'
@@ -52,6 +51,7 @@ const Home: React.FC = () => {
                 autoSlideInterval={5000}
                 height="60vh"
             />
+            
             <div className="container mx-auto px-4">
                 <FlashOfferBanner />
             </div>
