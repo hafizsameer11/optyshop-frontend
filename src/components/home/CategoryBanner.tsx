@@ -26,7 +26,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                 setLoading(true)
                 
                 // Debug: Log the parameters being used
-                console.log(`Fetching banners for ${categoryName} - Category ID: ${categoryId}, Subcategory ID: ${subcategoryId}, Position: ${position}`)
+                console.log(`🔍 CategoryBanner - Fetching banners for ${categoryName} - Category ID: ${categoryId}, Subcategory ID: ${subcategoryId}, Position: ${position}`)
                 
                 // Fetch banners for category position
                 // For different category levels, we use different strategies
@@ -96,9 +96,10 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                 setBanners(data || [])
                 
                 if (data && data.length > 0) {
-                    console.log(`Loaded ${data.length} banner(s) for ${categoryName} (${position}) - Category ID: ${categoryId}`)
+                    console.log(`✅ CategoryBanner - Loaded ${data.length} banner(s) for ${categoryName} (${position}) - Category ID: ${categoryId}`)
+                    console.log('🎯 CategoryBanner - Banner details:', data.map(b => ({ id: b.id, title: b.title, category_id: b.category_id, page_type: b.page_type })))
                 } else {
-                    console.log(`No banners found for ${categoryName} (${position}) - Category ID: ${categoryId}`)
+                    console.log(`⚠️ CategoryBanner - No banners found for ${categoryName} (${position}) - Category ID: ${categoryId}`)
                 }
             } catch (error) {
                 if (!isCancelled) {

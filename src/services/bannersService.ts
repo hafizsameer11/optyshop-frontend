@@ -113,16 +113,25 @@ export const getBanners = async (options?: GetBannersOptions | string | null): P
 
       // Filter by page_type if specified
       if (filters.page_type) {
+        const beforePageTypeFilter = filteredBanners.length;
         filteredBanners = filteredBanners.filter(
           (banner) => banner.page_type === filters.page_type
         );
+        if (import.meta.env.DEV) {
+          console.log(`🎯 Page type filter (${filters.page_type}): ${beforePageTypeFilter} -> ${filteredBanners.length}`);
+        }
       }
 
       // Filter by category_id if specified
       if (filters.category_id !== undefined && filters.category_id !== null) {
+        const beforeCategoryFilter = filteredBanners.length;
         filteredBanners = filteredBanners.filter(
-          (banner) => banner.category_id === filters.category_id || banner.category_id === null
+          (banner) => banner.category_id === filters.category_id || banner.category_id === null || banner.category_id === undefined
         );
+        if (import.meta.env.DEV) {
+          console.log(`🎯 Category ID filter (${filters.category_id}): ${beforeCategoryFilter} -> ${filteredBanners.length}`);
+          console.log('🎯 Banner category_ids in filtered list:', filteredBanners.map(b => ({ id: b.id, title: b.title, category_id: b.category_id })));
+        }
       }
 
       // Filter by sub_category_id if specified
