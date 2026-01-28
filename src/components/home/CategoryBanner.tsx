@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { getBanners, type Banner } from '../../services/bannersService'
 
+// Simple request cache to prevent duplicate concurrent requests
+const bannerRequestCache = new Map<string, Promise<Banner[]>>()
+const REQUEST_THROTTLE_DELAY = 100 // 100ms between requests
+
 interface CategoryBannerProps {
     categoryName: string
     categoryId: number
@@ -21,6 +25,32 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     useEffect(() => {
         let isCancelled = false
         
+        const fetchBannersWithThrottle = async (options: any, cacheKey: string): Promise<Banner[]> => {
+            // Check if we already have a pending request for this cache key
+            if (bannerRequestCache.has(cacheKey)) {
+                console.log(`🔄 CategoryBanner - Using cached request for ${categoryName}`)
+                return bannerRequestCache.get(cacheKey)!
+            }
+
+            // Create new request and cache it
+            const requestPromise = (async () => {
+                try {
+                    // Add small delay to throttle requests
+                    await new Promise(resolve => setTimeout(resolve, REQUEST_THROTTLE_DELAY))
+                    const result = await getBanners(options)
+                    return result
+                } finally {
+                    // Clean up cache after request completes
+                    setTimeout(() => {
+                        bannerRequestCache.delete(cacheKey)
+                    }, 1000) // Keep in cache for 1 second
+                }
+            })()
+
+            bannerRequestCache.set(cacheKey, requestPromise)
+            return requestPromise
+        }
+
         const fetchBanners = async () => {
             try {
                 setLoading(true)
@@ -30,64 +60,64 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                 
                 // Fetch banners for category position
                 // For different category levels, we use different strategies
-                let data
+                let data: Banner[] = []
                 
                 if (position === 'sub_subcategory_page') {
                     // For sub-subcategory pages, try to get banners specific to this level
                     console.log('Trying sub-subcategory specific banners...')
-                    data = await getBanners({
+                    data = await fetchBannersWithThrottle({
                         page_type: 'sub_subcategory',
                         category_id: categoryId,
                         sub_category_id: subcategoryId
-                    })
+                    }, `sub_sub_${categoryId}_${subcategoryId}`)
                     console.log('Sub-subcategory specific banners result:', data?.length || 0)
                     
                     // If no specific banners found, try subcategory banners as fallback
                     if (!data || data.length === 0) {
                         console.log('Trying subcategory banners as fallback...')
-                        data = await getBanners({
+                        data = await fetchBannersWithThrottle({
                             page_type: 'subcategory',
                             category_id: categoryId,
                             sub_category_id: subcategoryId
-                        })
+                        }, `sub_${categoryId}_${subcategoryId}`)
                         console.log('Subcategory fallback banners result:', data?.length || 0)
                     }
                     
                     // If still no banners, fallback to general category banners
                     if (!data || data.length === 0) {
                         console.log('Trying general category banners as final fallback...')
-                        data = await getBanners({
+                        data = await fetchBannersWithThrottle({
                             page_type: 'category',
                             category_id: categoryId
-                        })
+                        }, `cat_${categoryId}`)
                         console.log('General category fallback banners result:', data?.length || 0)
                     }
                 } else if (position === 'subcategory_page') {
                     // For subcategory pages, try to get banners specific to this level
                     console.log('Trying subcategory specific banners...')
-                    data = await getBanners({
+                    data = await fetchBannersWithThrottle({
                         page_type: 'subcategory',
                         category_id: categoryId,
                         sub_category_id: subcategoryId
-                    })
+                    }, `sub_${categoryId}_${subcategoryId}`)
                     console.log('Subcategory specific banners result:', data?.length || 0)
                     
                     // If no specific banners found, fallback to general category banners
                     if (!data || data.length === 0) {
                         console.log('Trying general category banners as fallback...')
-                        data = await getBanners({
+                        data = await fetchBannersWithThrottle({
                             page_type: 'category',
                             category_id: categoryId
-                        })
+                        }, `cat_${categoryId}`)
                         console.log('General category fallback banners result:', data?.length || 0)
                     }
                 } else {
                     // For main category pages, get general category banners
                     console.log('Trying main category page banners...')
-                    data = await getBanners({
+                    data = await fetchBannersWithThrottle({
                         page_type: 'category',
                         category_id: categoryId
-                    })
+                    }, `cat_${categoryId}`)
                     console.log('Main category page banners result:', data?.length || 0)
                 }
                 

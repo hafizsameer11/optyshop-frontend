@@ -86,10 +86,37 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
     const queryString = params.toString();
     const endpoint = queryString ? `${API_ROUTES.BANNERS.LIST}?${queryString}` : API_ROUTES.BANNERS.LIST;
 
-    const response = await apiClient.get<BannersResponse | Banner[]>(
-      endpoint,
-      false // PUBLIC endpoint
-    );
+    // Add retry logic for network errors
+    let response;
+    let retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        response = await apiClient.get<BannersResponse | Banner[]>(
+          endpoint,
+          false // PUBLIC endpoint
+        );
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        retryCount++;
+        if (retryCount > maxRetries) {
+          console.error(`Failed to fetch banners after ${maxRetries} retries:`, error);
+          return []; // Return empty array on final failure
+        }
+        
+        // Wait before retry (exponential backoff)
+        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 3000);
+        console.log(`Retrying banner request in ${delay}ms... (attempt ${retryCount}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+
+    // Ensure response is defined
+    if (!response) {
+      console.error('No response received from banner API');
+      return [];
+    }
 
     if (response.success) {
       // Handle case where response is successful but data is null/undefined
