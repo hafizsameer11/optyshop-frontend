@@ -61,7 +61,7 @@ export interface GetBannersOptions {
  * @param options.sub_category_id - Filter by subcategory ID (required for subcategory/sub_subcategory page types)
  * @returns Array of active banners, sorted by sort_order
  */
-export const getBanners = async (options?: GetBannersOptions | string | null): Promise<Banner[]> => {
+export const getBanners = async (options?: GetBannersOptions | string | null, _isFallback: boolean = false): Promise<Banner[]> => {
   try {
     // Handle legacy position parameter for backwards compatibility
     let filters: GetBannersOptions = {};
@@ -91,21 +91,72 @@ export const getBanners = async (options?: GetBannersOptions | string | null): P
       false // PUBLIC endpoint
     );
 
-    if (response.success && response.data) {
+    if (response.success) {
+      // Handle case where response is successful but data is null/undefined
+      if (!response.data) {
+        if (import.meta.env.DEV) {
+          console.log('📋 Response successful but no data available');
+        }
+        return [];
+      }
+
+      // Debug: Log the raw response structure
+      if (import.meta.env.DEV) {
+        console.log('🔍 Raw API Response:', {
+          success: response.success,
+          dataKeys: Object.keys(response.data || {}),
+          dataType: Array.isArray(response.data) ? 'array' : typeof response.data,
+          data: response.data
+        });
+      }
+
       // Handle different response structures
       let banners: Banner[] = [];
       
       // Check if response.data is an array directly
       if (Array.isArray(response.data)) {
         banners = response.data;
+        if (import.meta.env.DEV) {
+          console.log('📋 Response data is direct array:', banners.length, 'banners');
+        }
       } 
       // Check if response.data has a banners property
       else if ('banners' in response.data && Array.isArray((response.data as BannersResponse).banners)) {
         banners = (response.data as BannersResponse).banners as Banner[];
+        if (import.meta.env.DEV) {
+          console.log('📋 Response data has banners property:', banners.length, 'banners');
+        }
       }
       // Check if response.data is a single banner object
       else if ('id' in response.data && 'image_url' in response.data) {
         banners = [response.data as Banner];
+        if (import.meta.env.DEV) {
+          console.log('📋 Response data is single banner object');
+        }
+      }
+      // Handle case where response.data exists but doesn't match expected structure
+      else {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ Unexpected response data structure:', response.data);
+        }
+        return [];
+      }
+
+      // Check if banners array is empty after parsing
+      if (banners.length === 0) {
+        if (import.meta.env.DEV) {
+          console.log('📋 No banners found in response');
+        }
+        
+        // If we got an empty response but have filters, try without filters as fallback (only once)
+        if (!_isFallback && (filters.page_type || filters.category_id || filters.sub_category_id)) {
+          if (import.meta.env.DEV) {
+            console.log('🔄 Trying fallback: fetch all banners without filters');
+          }
+          return await getBanners(null, true); // Recursive call without filters, with fallback flag
+        }
+        
+        return [];
       }
 
       // Filter active banners
