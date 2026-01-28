@@ -240,14 +240,16 @@ const Cart: React.FC = () => {
                                     {/* Product Image */}
                                     {/* 
                                         Image Priority (per API documentation):
-                                        1. display_image - From API, shows selected color variant image if color was selected, otherwise product image
-                                        2. customization.variant_images[0] - Fallback for local cart items
-                                        3. item.image - Final fallback
+                                        1. caliber_image_url - From customization, shows selected caliber image if caliber was selected
+                                        2. display_image - From API, shows selected color variant image if color was selected, otherwise product image
+                                        3. customization.variant_images[0] - Fallback for local cart items
+                                        4. item.image - Final fallback
                                     */}
                                     <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                         <img
                                             src={
-                                                // Priority: display_image (from API) > variant_images > item.image
+                                                // Priority: caliber_image_url > display_image (from API) > variant_images > item.image
+                                                (item.customization as any)?.caliber_image_url ||
                                                 (item as any).display_image ||
                                                 (item.customization as any)?.variant_images?.[0] || 
                                                 item.image
@@ -273,6 +275,12 @@ const Cart: React.FC = () => {
                                                 />
                                             </div>
                                         )}
+                                        {/* Caliber Badge (if applicable) */}
+                                        {(item.customization as any)?.selected_mm_caliber && (
+                                            <div className="absolute top-2 left-2 bg-blue-950 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                                {(item.customization as any).selected_mm_caliber}mm
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Product Details */}
@@ -291,6 +299,12 @@ const Cart: React.FC = () => {
                                             <p className="text-sm text-gray-500">
                                                 {item.brand} - {item.category}
                                             </p>
+                                            {/* Show selected caliber if applicable */}
+                                            {(item.customization as any)?.selected_mm_caliber && (
+                                                <p className="text-xs text-blue-950 font-medium mt-1">
+                                                    Size: {(item.customization as any).selected_mm_caliber}mm
+                                                </p>
+                                            )}
                                             <div className="mt-2">
                                                 <p className="text-lg font-semibold text-blue-950">
                                                     ${(() => {

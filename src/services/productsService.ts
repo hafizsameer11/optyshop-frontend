@@ -86,8 +86,8 @@ export interface SizeVolumeVariant {
 }
 
 export interface MMCaliber {
-  mm: number; // e.g., 58, 62, 64
-  image: string; // URL to caliber-specific image
+  mm: number | string; // e.g., 58, "78" - handle both number and string from API
+  image_url: string; // URL to caliber-specific image (matches API response)
   price?: number; // Optional price adjustment for this caliber
   stock_quantity?: number; // Stock for this specific caliber
   is_active?: boolean; // Whether this caliber is available

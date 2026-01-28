@@ -61,6 +61,9 @@ const ProductDetail = () => {
     const lastProductIdRef = useRef<number | null>(null)
     const formInitializedRef = useRef<number | null>(null)
 
+    // MM Caliber State
+    const [productCalibers, setProductCalibers] = useState<MMCaliber[]>([])
+
     // Contact Lens Forms API Integration State
     const [contactLensFormConfig, setContactLensFormConfig] = useState<ContactLensFormConfig | null>(null)
     // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
@@ -72,6 +75,31 @@ const ProductDetail = () => {
             getGiftsByProduct(product.id).then(gifts => {
                 setProductGifts(gifts)
             })
+        }
+    }, [product?.id])
+
+    // Fetch product calibers
+    useEffect(() => {
+        if (product?.id) {
+            setCalibersLoading(true)
+            getProductCalibers(product.id).then(calibers => {
+                if (calibers) {
+                    setProductCalibers(calibers)
+                    if (import.meta.env.DEV) {
+                        console.log('[ProductDetail] Product calibers loaded:', calibers.length)
+                    }
+                } else {
+                    setProductCalibers([])
+                }
+            }).catch(error => {
+                console.error('[ProductDetail] Error fetching product calibers:', error)
+                setProductCalibers([])
+            }).finally(() => {
+                setCalibersLoading(false)
+            })
+        } else {
+            setProductCalibers([])
+            setSelectedCaliber(null)
         }
     }, [product?.id])
 
@@ -1022,7 +1050,7 @@ const ProductDetail = () => {
                             price: Number(firstActiveVariant.price || 0),
                             compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
                             stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
-                            stock_status: firstActiveVariant.stock_status || 'in_stock',
+                            stock_status: (firstActiveVariant.stock_status || 'in_stock') as 'in_stock' | 'out_of_stock' | 'backorder',
                             expiry_date: firstActiveVariant.expiry_date || null,
                             image_url: firstActiveVariant.image_url || null, // Include image_url field
                             is_active: firstActiveVariant.is_active !== false,
@@ -1068,16 +1096,25 @@ const ProductDetail = () => {
             setCalibersLoading(true)
             try {
                 const calibers = await getProductCalibers(product.id)
+                if (import.meta.env.DEV) {
+                    console.log('🔍 Fetched calibers:', calibers)
+                }
                 if (calibers && calibers.length > 0) {
                     setFetchedCalibers(calibers)
                     // Auto-select first active caliber
                     const firstActiveCaliber = calibers.find((c) => c.is_active !== false)
                     if (firstActiveCaliber) {
                         setSelectedCaliber(firstActiveCaliber)
+                        if (import.meta.env.DEV) {
+                            console.log('✅ Auto-selected caliber:', firstActiveCaliber)
+                        }
                     }
                 } else {
                     setFetchedCalibers([])
                     setSelectedCaliber(null)
+                    if (import.meta.env.DEV) {
+                        console.log('ℹ️ No calibers found for product:', product.id)
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching calibers:', error)
@@ -2131,12 +2168,8 @@ const ProductDetail = () => {
         }
     }, [selectedImageIndex, isEyeHygiene, selectedSizeVolumeVariant])
 
-    // ... (rest of the code remains the same)
-        }
-    }, [selectedSizeVolumeVariant, isEyeHygiene])
-
     // Handler for caliber change
-    const handleCaliberChange = (mm: number) => {
+    const handleCaliberChange = (mm: number | string) => {
         const matchingCaliber = fetchedCalibers.find(c => c.mm === mm)
         if (matchingCaliber) {
             setSelectedCaliber(matchingCaliber)
@@ -2162,8 +2195,8 @@ const ProductDetail = () => {
         }
 
         // Priority 2: Use caliber-specific images if caliber is selected
-        if (selectedCaliber && selectedCaliber.image) {
-            return selectedCaliber.image
+        if (selectedCaliber && selectedCaliber.image_url) {
+            return selectedCaliber.image_url
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
@@ -2547,10 +2580,16 @@ const ProductDetail = () => {
                     product_id: cartProduct.id,
                     quantity: productQuantity,
                     selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
+                    selected_mm_caliber: selectedCaliber || undefined, // Pass selected MM caliber
                     size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // Variant ID for Eye Hygiene products
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
+                        // Store caliber selection in customization
+                        ...(selectedCaliber && {
+                            selected_mm_caliber: selectedCaliber,
+                            caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber)?.image_url
+                        }),
                         // Store color variant details if available
                         ...(selectedColorVariant ? {
                             color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
@@ -3074,6 +3113,56 @@ const ProductDetail = () => {
                                                 </div>
                                             )
                                         })()}
+
+                                        {/* MM Caliber Selection */}
+                                        {productCalibers.length > 0 && (
+                                            <div className="mb-4">
+                                                <label className="block text-sm font-semibold text-blue-950 mb-2">
+                                                    {t('shop.selectCaliber', 'Select Size (MM)')}
+                                                </label>
+                                                <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
+                                                    {productCalibers.map((caliber: MMCaliber, index: number) => {
+                                                        const isSelected = selectedCaliber?.mm === caliber.mm
+
+                                                        return (
+                                                            <button
+                                                                key={index}
+                                                                onClick={() => {
+                                                                    setSelectedCaliber(caliber)
+                                                                    setSelectedImageIndex(0) // Reset to first image when caliber changes
+                                                                }}
+                                                                className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all duration-200 flex-shrink-0 min-w-[60px] ${isSelected
+                                                                    ? 'border-blue-950 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-blue-950/20'
+                                                                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                                                                    }`}
+                                                                title={`${caliber.mm}mm`}
+                                                            >
+                                                                {/* Caliber Image */}
+                                                                <div className="w-8 h-8 rounded overflow-hidden bg-gray-50 border border-gray-200">
+                                                                    <img
+                                                                        src={caliber.image_url}
+                                                                        alt={`${caliber.mm}mm`}
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => {
+                                                                            const target = e.target as HTMLImageElement
+                                                                            target.style.display = 'none'
+                                                                            const fallback = target.nextElementSibling as HTMLElement
+                                                                            if (fallback) fallback.style.display = 'flex'
+                                                                        }}
+                                                                    />
+                                                                    <div className="w-full h-full items-center justify-center text-xs text-gray-400" style={{ display: 'none' }}>
+                                                                        {caliber.mm}
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-xs font-semibold whitespace-nowrap">
+                                                                    {caliber.mm}mm
+                                                                </span>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Thumbnail Images */}
                                         {(() => {
@@ -4092,7 +4181,7 @@ const ProductDetail = () => {
                                                                                 <span className="text-xs font-semibold capitalize whitespace-nowrap">
                                                                                     {displayName}
                                                                                 </span>
-                                                                                {variantPrice !== null && variantPrice !== Number(product.price) && (
+                                                                                {variantPrice !== null && variantPrice !== Number(product.price || 0) && (
                                                                                     <span className="text-[10px] opacity-70 mt-0.5">
                                                                                         ${variantPrice.toFixed(2)}
                                                                                     </span>
@@ -4268,7 +4357,7 @@ const ProductDetail = () => {
                                                         price: Number(variant.price || 0),
                                                         compare_at_price: variant.compare_at_price ? Number(variant.compare_at_price) : null,
                                                         stock_quantity: Number(variant.stock_quantity || 0),
-                                                        stock_status: variant.stock_status || 'in_stock',
+                                                        stock_status: (variant.stock_status || 'in_stock') as 'in_stock' | 'out_of_stock' | 'backorder',
                                                         expiry_date: variant.expiry_date || null,
                                                         image_url: variant.image_url || null, // Include image_url field
                                                         is_active: variant.is_active !== false,
@@ -4509,7 +4598,7 @@ const ProductDetail = () => {
                                             <div className="flex flex-wrap gap-3">
                                                 {fetchedCalibers
                                                     .filter(c => c.is_active !== false)
-                                                    .sort((a, b) => a.mm - b.mm)
+                                                    .sort((a, b) => Number(a.mm) - Number(b.mm))
                                                     .map((caliber) => (
                                                         <button
                                                             key={caliber.mm}
