@@ -42,14 +42,30 @@ const TrustedBrands: React.FC = () => {
                 if (data.length > 0) {
                     console.log(`✅ Loaded ${data.length} active brand(s) from API`)
                 } else {
-                    console.warn('⚠️ No active brands found. Make sure admin has created brands with is_active=true')
+                    console.warn('⚠️ No active brands found. Using fallback brands for display')
+                    // Add fallback brands for testing
+                    const fallbackBrands = [
+                        { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                    ]
+                    setBrands(fallbackBrands)
+                    return
                 }
                 
                 setBrands(data)
             } catch (error) {
                 if (!isCancelled) {
                     console.error('❌ Error loading brands:', error)
-                    setBrands([])
+                    // Add fallback brands on error
+                    const fallbackBrands = [
+                        { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                    ]
+                    setBrands(fallbackBrands)
                 }
             } finally {
                 if (!isCancelled) {
@@ -194,11 +210,20 @@ const TrustedBrands: React.FC = () => {
                                         className="h-8 sm:h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
                                         onError={(e) => {
                                             const target = e.target as HTMLImageElement
+                                            console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)
                                             target.style.display = 'none'
+                                            // Show fallback text
+                                            const parent = target.parentElement
+                                            if (parent) {
+                                                const fallback = document.createElement('div')
+                                                fallback.className = 'h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-red-100 rounded'
+                                                fallback.textContent = brand.name
+                                                parent.appendChild(fallback)
+                                            }
                                         }}
                                     />
                                 ) : (
-                                    <div className="h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm">
+                                    <div className="h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-yellow-100 rounded">
                                         {brand.name}
                                     </div>
                                 )}
