@@ -58,8 +58,8 @@ export const getBrands = async (activeOnly: boolean = true): Promise<Brand[]> =>
         brands = (response.data as BrandsResponse).brands as Brand[];
       }
       // Check if response.data has a data property with brands
-      else if ('data' in response.data && (response.data as any).data && 'brands' in (response.data as any).data) {
-        brands = (response.data as any).data.brands;
+      else if ('brands' in response.data && Array.isArray((response.data as any).brands)) {
+        brands = (response.data as any).brands;
       }
       // Check if response.data is a single brand object
       else if ('id' in response.data && 'name' in response.data) {
