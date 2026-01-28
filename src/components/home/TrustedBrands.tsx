@@ -41,6 +41,10 @@ const TrustedBrands: React.FC = () => {
                 // Log for debugging
                 if (data.length > 0) {
                     console.log(`✅ Loaded ${data.length} active brand(s) from API`)
+                    console.log('Brand data:', data)
+                    data.forEach(brand => {
+                        console.log(`Brand: ${brand.name}, logo_image: ${brand.logo_image}`)
+                    })
                 } else {
                     console.warn('⚠️ No active brands found. Using fallback brands for display')
                     // Add fallback brands for testing
@@ -97,6 +101,21 @@ const TrustedBrands: React.FC = () => {
                     const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
                     if (pathMatch && pathMatch[1]) {
                         return pathMatch[1]
+                    }
+                    return ''
+                }
+            }
+
+            // If it's an external HTTPS URL (like optyshop-frontend.hmstech.org), use the proxy
+            if (cleanedUrl.startsWith('https://optyshop-frontend.hmstech.org')) {
+                try {
+                    const url = new URL(cleanedUrl)
+                    return `/external-images${url.pathname}`
+                } catch {
+                    // If URL parsing fails, try to extract path manually
+                    const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
+                    if (pathMatch && pathMatch[1]) {
+                        return `/external-images${pathMatch[1]}`
                     }
                     return ''
                 }
@@ -197,6 +216,8 @@ const TrustedBrands: React.FC = () => {
                         const imageUrl = getImageUrl(brand.logo_image || brand.logo_url, brand.name)
                         const hasLink = !!brand.website_url
                         
+                        console.log(`Rendering brand: ${brand.name}, imageUrl: ${imageUrl}`)
+                        
                         return (
                             <div
                                 key={`${brand.id}-${index}`}
@@ -208,6 +229,7 @@ const TrustedBrands: React.FC = () => {
                                         src={imageUrl}
                                         alt={brand.name}
                                         className="h-8 sm:h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
+                                        crossOrigin="anonymous"
                                         onError={(e) => {
                                             const target = e.target as HTMLImageElement
                                             console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)

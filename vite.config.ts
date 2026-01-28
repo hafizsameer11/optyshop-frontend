@@ -15,6 +15,11 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
+      },
+      '/external-images': {
+        target: 'https://optyshop-frontend.hmstech.org',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/external-images/, ''),
       }
     },
     hmr: {
