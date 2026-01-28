@@ -1126,7 +1126,7 @@ const ProductDetail = () => {
         }
 
         fetchCalibers()
-    }, [product?.id, product.category?.slug])
+    }, [product?.id, product?.category?.slug])
 
     // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
     useEffect(() => {
@@ -2201,7 +2201,7 @@ const ProductDetail = () => {
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
         if (isEyeHygiene && selectedSizeVolumeVariant) {
-            return getVariantImageUrl(product, selectedSizeVolumeVariant, imageIndex)
+            return getVariantImageUrl(product, selectedSizeVolumeVariant as SizeVolumeVariant, imageIndex)
         }
 
         // Priority 4: Use color-specific images if color is selected
@@ -2580,15 +2580,15 @@ const ProductDetail = () => {
                     product_id: cartProduct.id,
                     quantity: productQuantity,
                     selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
-                    selected_mm_caliber: selectedCaliber || undefined, // Pass selected MM caliber
+                    selected_mm_caliber: selectedCaliber?.toString() || undefined, // Pass selected MM caliber
                     size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // Variant ID for Eye Hygiene products
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
                         // Store caliber selection in customization
                         ...(selectedCaliber && {
-                            selected_mm_caliber: selectedCaliber,
-                            caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber)?.image_url
+                            selected_mm_caliber: selectedCaliber.toString(),
+                            caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber.toString())?.image_url
                         }),
                         // Store color variant details if available
                         ...(selectedColorVariant ? {
@@ -4014,7 +4014,7 @@ const ProductDetail = () => {
                                                 imagesArray = variantImages
                                             } else {
                                                 // Use single variant image (image_url)
-                                                const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant, 0)
+                                                const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant as SizeVolumeVariant, 0)
                                                 imagesArray = [variantImageUrl]
                                             }
                                         } else if (selectedColor) {
@@ -4417,7 +4417,7 @@ const ProductDetail = () => {
                                                                     <option value="">Select Frame Size</option>
                                                                     {fetchedCalibers
                                                                         .filter(c => c.is_active !== false)
-                                                                        .sort((a, b) => a.mm - b.mm)
+                                                                        .sort((a, b) => Number(a.mm) - Number(b.mm))
                                                                         .map((caliber) => (
                                                                             <option key={caliber.mm} value={caliber.mm}>
                                                                                 {caliber.mm}mm

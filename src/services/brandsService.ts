@@ -14,6 +14,7 @@ export interface Brand {
   slug: string;
   description?: string | null;
   logo_url?: string | null;
+  logo_image?: string | null;
   website_url?: string | null;
   sort_order?: number;
   is_active: boolean;

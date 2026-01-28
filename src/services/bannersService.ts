@@ -111,6 +111,27 @@ export const getBanners = async (options?: GetBannersOptions | string | null): P
       // Filter active banners
       let filteredBanners = banners.filter((banner) => banner.is_active);
 
+      // Filter by page_type if specified
+      if (filters.page_type) {
+        filteredBanners = filteredBanners.filter(
+          (banner) => banner.page_type === filters.page_type
+        );
+      }
+
+      // Filter by category_id if specified
+      if (filters.category_id !== undefined && filters.category_id !== null) {
+        filteredBanners = filteredBanners.filter(
+          (banner) => banner.category_id === filters.category_id || banner.category_id === null
+        );
+      }
+
+      // Filter by sub_category_id if specified
+      if (filters.sub_category_id !== undefined && filters.sub_category_id !== null) {
+        filteredBanners = filteredBanners.filter(
+          (banner) => banner.sub_category_id === filters.sub_category_id || banner.sub_category_id === null
+        );
+      }
+
       // Filter by position if specified (legacy support)
       if (filters.position) {
         filteredBanners = filteredBanners.filter(
@@ -119,7 +140,21 @@ export const getBanners = async (options?: GetBannersOptions | string | null): P
       }
 
       // Sort by sort_order
-      return filteredBanners.sort((a, b) => a.sort_order - b.sort_order);
+      const sortedBanners = filteredBanners.sort((a, b) => a.sort_order - b.sort_order);
+      
+      // Debug logging in development
+      if (import.meta.env.DEV) {
+        console.log('🎯 Banner Filtering Results:', {
+          totalBanners: banners.length,
+          activeBanners: banners.filter(b => b.is_active).length,
+          filteredBanners: filteredBanners.length,
+          finalBanners: sortedBanners.length,
+          filters: filters,
+          finalBannerIds: sortedBanners.map(b => ({ id: b.id, title: b.title, sort_order: b.sort_order, page_type: b.page_type, category_id: b.category_id }))
+        });
+      }
+
+      return sortedBanners;
     }
 
     console.error('Failed to fetch banners:', response.message);

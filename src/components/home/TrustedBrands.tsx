@@ -147,7 +147,7 @@ const TrustedBrands: React.FC = () => {
             <div className="overflow-hidden pb-6">
                 <div className="flex gap-16 px-8 items-center marquee-track">
                     {track.map((brand, index) => {
-                        const imageUrl = getImageUrl(brand.logo_url)
+                        const imageUrl = getImageUrl(brand.logo_image || brand.logo_url)
                         const hasLink = !!brand.website_url
                         
                         return (
