@@ -49,17 +49,17 @@ export const getBrands = async (activeOnly: boolean = true): Promise<Brand[]> =>
       // Handle different response structures
       let brands: Brand[] = [];
       
+      // Check if response.data has a brands property (your API structure)
+      if ('brands' in response.data && Array.isArray(response.data.brands)) {
+        brands = response.data.brands;
+      }
       // Check if response.data is an array directly
-      if (Array.isArray(response.data)) {
+      else if (Array.isArray(response.data)) {
         brands = response.data;
       } 
-      // Check if response.data has a brands property
-      else if ('brands' in response.data && Array.isArray((response.data as BrandsResponse).brands)) {
-        brands = (response.data as BrandsResponse).brands as Brand[];
-      }
       // Check if response.data has a data property with brands
-      else if ('brands' in response.data && Array.isArray((response.data as any).brands)) {
-        brands = (response.data as any).brands;
+      else if ('data' in response.data && response.data.data && 'brands' in response.data.data && Array.isArray(response.data.data.brands)) {
+        brands = response.data.data.brands;
       }
       // Check if response.data is a single brand object
       else if ('id' in response.data && 'name' in response.data) {
