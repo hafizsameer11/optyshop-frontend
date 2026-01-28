@@ -36,83 +36,59 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                     // For sub-subcategory pages, try to get banners specific to this level
                     console.log('Trying sub-subcategory specific banners...')
                     data = await getBanners({
-                        page_type: 'category',
+                        page_type: 'sub_subcategory',
                         category_id: categoryId,
-                        sub_category_id: subcategoryId,
-                        position: 'sub_subcategory_page'
+                        sub_category_id: subcategoryId
                     })
                     console.log('Sub-subcategory specific banners result:', data?.length || 0)
                     
-                    // If no specific banners found, try with just sub_category_id
+                    // If no specific banners found, try subcategory banners as fallback
                     if (!data || data.length === 0) {
-                        console.log('Trying banners with sub_category_id only...')
+                        console.log('Trying subcategory banners as fallback...')
                         data = await getBanners({
-                            page_type: 'category',
+                            page_type: 'subcategory',
                             category_id: categoryId,
                             sub_category_id: subcategoryId
                         })
-                        console.log('Sub_category_id only banners result:', data?.length || 0)
+                        console.log('Subcategory fallback banners result:', data?.length || 0)
                     }
                     
                     // If still no banners, fallback to general category banners
                     if (!data || data.length === 0) {
-                        console.log('Trying general category banners...')
+                        console.log('Trying general category banners as final fallback...')
                         data = await getBanners({
                             page_type: 'category',
                             category_id: categoryId
                         })
-                        console.log('General category banners result:', data?.length || 0)
+                        console.log('General category fallback banners result:', data?.length || 0)
                     }
                 } else if (position === 'subcategory_page') {
                     // For subcategory pages, try to get banners specific to this level
                     console.log('Trying subcategory specific banners...')
                     data = await getBanners({
-                        page_type: 'category',
+                        page_type: 'subcategory',
                         category_id: categoryId,
-                        sub_category_id: subcategoryId,
-                        position: 'subcategory_page'
+                        sub_category_id: subcategoryId
                     })
                     console.log('Subcategory specific banners result:', data?.length || 0)
                     
-                    // If no specific banners found, try with just sub_category_id
+                    // If no specific banners found, fallback to general category banners
                     if (!data || data.length === 0) {
-                        console.log('Trying banners with sub_category_id only...')
-                        data = await getBanners({
-                            page_type: 'category',
-                            category_id: categoryId,
-                            sub_category_id: subcategoryId
-                        })
-                        console.log('Sub_category_id only banners result:', data?.length || 0)
-                    }
-                    
-                    // If still no banners, fallback to general category banners
-                    if (!data || data.length === 0) {
-                        console.log('Trying general category banners...')
+                        console.log('Trying general category banners as fallback...')
                         data = await getBanners({
                             page_type: 'category',
                             category_id: categoryId
                         })
-                        console.log('General category banners result:', data?.length || 0)
+                        console.log('General category fallback banners result:', data?.length || 0)
                     }
                 } else {
                     // For main category pages, get general category banners
                     console.log('Trying main category page banners...')
                     data = await getBanners({
                         page_type: 'category',
-                        category_id: categoryId,
-                        position: 'category_page'
+                        category_id: categoryId
                     })
                     console.log('Main category page banners result:', data?.length || 0)
-                    
-                    // If no specific category page banners found, try without position filter
-                    if (!data || data.length === 0) {
-                        console.log('Trying category banners without position filter...')
-                        data = await getBanners({
-                            page_type: 'category',
-                            category_id: categoryId
-                        })
-                        console.log('Category banners without position result:', data?.length || 0)
-                    }
                 }
                 
                 if (isCancelled) return
