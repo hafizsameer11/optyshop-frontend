@@ -39,7 +39,7 @@ const TrustedBrands: React.FC = () => {
                 if (isCancelled) return
                 
                 // Log for debugging
-                if (data.length > 0) {
+                if (Array.isArray(data) && data.length > 0) {
                     console.log(`✅ Loaded ${data.length} active brand(s) from API`)
                     console.log('Brand data:', data)
                     data.forEach(brand => {
@@ -124,7 +124,7 @@ const TrustedBrands: React.FC = () => {
                         }
                     }).filter(brand => brand !== null) // Remove filtered out brands
                     
-                    if (processedBrands.length > 0) {
+                    if (Array.isArray(processedBrands) && processedBrands.length > 0) {
                         console.log(`✅ Using ${processedBrands.length} valid brands from API`)
                         setBrands(processedBrands)
                     } else {
@@ -160,7 +160,7 @@ const TrustedBrands: React.FC = () => {
                     return
                 }
                 
-                setBrands(data)
+                setBrands(Array.isArray(data) ? data : [])
             } catch (error) {
                 if (!isCancelled) {
                     console.error('❌ Error loading brands:', error)
@@ -299,12 +299,12 @@ const TrustedBrands: React.FC = () => {
         )
     }
 
-    if (brands.length === 0) {
+    if (!Array.isArray(brands) || brands.length === 0) {
         return null // Don't render anything if no brands
     }
 
     // Duplicate the array for seamless infinite scroll (only if we have brands)
-    const track = brands.length > 0 ? [...brands, ...brands] : brands
+    const track = Array.isArray(brands) && brands.length > 0 ? [...brands, ...brands] : []
 
     return (
         <section className="bg-white text-slate-900">
