@@ -45,14 +45,58 @@ const TrustedBrands: React.FC = () => {
                     data.forEach(brand => {
                         console.log(`Brand: ${brand.name}, logo_image: ${brand.logo_image}`)
                     })
+                    
+                    // Filter out placeholder brands (names that look like random text or test data)
+                    const placeholderPatterns = [
+                        /^lkjkl/i,  // Matches "lkjkljkljkj"
+                        /test/i,
+                        /demo/i,
+                        /placeholder/i,
+                        /sample/i,
+                        /unity gallegos/i  // Matches "Unity Gallegos"
+                    ]
+                    
+                    const validBrands = data.filter(brand => {
+                        const isPlaceholder = placeholderPatterns.some(pattern => 
+                            pattern.test(brand.name.toLowerCase().trim())
+                        )
+                        if (isPlaceholder) {
+                            console.warn(`⚠️ Filtering out placeholder brand: ${brand.name}`)
+                        }
+                        return !isPlaceholder
+                    })
+                    
+                    if (validBrands.length > 0) {
+                        console.log(`✅ Using ${validBrands.length} valid brands from API`)
+                        setBrands(validBrands)
+                    } else {
+                        console.warn('⚠️ No valid brands found in API response. Using fallback brands for display')
+                        // Add fallback brands with proper names and available logos
+                        const fallbackBrands = [
+                            { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 5, name: 'JINS', slug: 'jins', logo_url: '/assets/images/Logo JINS BW.webp', logo_image: '/assets/images/Logo JINS BW.webp', website_url: '', sort_order: 5, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 6, name: 'Marchon', slug: 'marchon', logo_url: '/assets/images/Logo Marchon-3.webp', logo_image: '/assets/images/Logo Marchon-3.webp', website_url: '', sort_order: 6, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 7, name: 'Transitions', slug: 'transitions', logo_url: '/assets/images/Logo Transitions BW.webp', logo_image: '/assets/images/Logo Transitions BW.webp', website_url: '', sort_order: 7, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 8, name: 'Zeiss', slug: 'zeiss', logo_url: '/assets/images/logo_zeiss.webp', logo_image: '/assets/images/logo_zeiss.webp', website_url: '', sort_order: 8, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                        ]
+                        setBrands(fallbackBrands)
+                        return
+                    }
                 } else {
                     console.warn('⚠️ No active brands found. Using fallback brands for display')
-                    // Add fallback brands for testing
+                    // Add fallback brands with proper names and available logos
                     const fallbackBrands = [
                         { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
                         { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
                         { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 5, name: 'JINS', slug: 'jins', logo_url: '/assets/images/Logo JINS BW.webp', logo_image: '/assets/images/Logo JINS BW.webp', website_url: '', sort_order: 5, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 6, name: 'Marchon', slug: 'marchon', logo_url: '/assets/images/Logo Marchon-3.webp', logo_image: '/assets/images/Logo Marchon-3.webp', website_url: '', sort_order: 6, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 7, name: 'Transitions', slug: 'transitions', logo_url: '/assets/images/Logo Transitions BW.webp', logo_image: '/assets/images/Logo Transitions BW.webp', website_url: '', sort_order: 7, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 8, name: 'Zeiss', slug: 'zeiss', logo_url: '/assets/images/logo_zeiss.webp', logo_image: '/assets/images/logo_zeiss.webp', website_url: '', sort_order: 8, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
                     ]
                     setBrands(fallbackBrands)
                     return
@@ -67,7 +111,11 @@ const TrustedBrands: React.FC = () => {
                         { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
                         { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
                         { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                        { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 5, name: 'JINS', slug: 'jins', logo_url: '/assets/images/Logo JINS BW.webp', logo_image: '/assets/images/Logo JINS BW.webp', website_url: '', sort_order: 5, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 6, name: 'Marchon', slug: 'marchon', logo_url: '/assets/images/Logo Marchon-3.webp', logo_image: '/assets/images/Logo Marchon-3.webp', website_url: '', sort_order: 6, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 7, name: 'Transitions', slug: 'transitions', logo_url: '/assets/images/Logo Transitions BW.webp', logo_image: '/assets/images/Logo Transitions BW.webp', website_url: '', sort_order: 7, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                        { id: 8, name: 'Zeiss', slug: 'zeiss', logo_url: '/assets/images/logo_zeiss.webp', logo_image: '/assets/images/logo_zeiss.webp', website_url: '', sort_order: 8, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
                     ]
                     setBrands(fallbackBrands)
                 }
