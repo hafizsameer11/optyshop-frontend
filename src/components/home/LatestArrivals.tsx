@@ -187,7 +187,8 @@ const LatestArrivals: React.FC = () => {
                         
                         // Get calibers for this product (if available)
                         const getCalibers = (): MMCaliber[] => {
-                            return p.mm_calibers || []
+                            const calibers = p.mm_calibers
+                            return Array.isArray(calibers) ? calibers : []
                         }
 
                         const calibers = getCalibers()

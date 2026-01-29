@@ -53,7 +53,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     // Get calibers for this product (if available)
     const getCalibers = (): MMCaliber[] => {
         const p = product as any
-        return p.mm_calibers || []
+        const calibers = p.mm_calibers
+        return Array.isArray(calibers) ? calibers : []
     }
 
     const calibers = getCalibers()
