@@ -207,9 +207,6 @@ const ShopCategories: React.FC = () => {
     return (
         <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8 text-center">
-                    Shop Categories
-                </h2>
                 
                 {categories.length > 0 ? (
                     <div className="space-y-16">
@@ -219,19 +216,6 @@ const ShopCategories: React.FC = () => {
                                 <CategoryBanner 
                                     categoryName={translateCategory(category)}
                                     categoryId={category.id}
-                                    position="category_section"
-                                />
-                                
-                                {/* Category Header */}
-                                <div className="flex items-center justify-between mb-6">
-                                    <div>
-                                        <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                                            {translateCategory(category)}
-                                        </h3>
-                                        {category.description && (
-                                            <p className="text-gray-600">{category.description}</p>
-                                        )}
-                                    </div>
                                     <Link
                                         to={`/category/${category.slug}`}
                                         className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { getProducts, type Product } from '../../services/productsService'
+import { getProducts, type Product, type MMCaliber } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import VirtualTryOnModal from './VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
@@ -22,7 +22,7 @@ const LatestArrivals: React.FC = () => {
     const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
     const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
     const [imageOpacity, setImageOpacity] = useState<Record<number, number>>({}) // Track image opacity for fade effect
-    const hoverIntervals = useRef<Record<number, NodeJS.Timeout>>({}) // Store intervals for cleanup
+    const hoverIntervals = useRef<Record<number, ReturnType<typeof setInterval>>>({}) // Store intervals for cleanup
 
     // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
     // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
@@ -184,6 +184,14 @@ const LatestArrivals: React.FC = () => {
                                     images: ci.images || []
                                 }))
                                 : [])
+                        
+                        // Get calibers for this product (if available)
+                        const getCalibers = (): MMCaliber[] => {
+                            return p.mm_calibers || []
+                        }
+
+                        const calibers = getCalibers()
+                        const hasCalibers = calibers && calibers.length > 0
                         
                         // Get selected color or default to first color if available
                         const selectedColor = productColorSelections[product.id] || 
@@ -368,6 +376,13 @@ const LatestArrivals: React.FC = () => {
                                         </div>
                                     ) : null
                                 })()}
+
+                                {/* Caliber Badge - Show if product has calibers */}
+                                {hasCalibers && (
+                                    <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                                        {calibers.length} Sizes
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Product Info */}
@@ -477,6 +492,28 @@ const LatestArrivals: React.FC = () => {
                                         )}
                                     </button>
                                 </div>
+
+                                {/* Caliber Sizes - Show available calibers if product has them */}
+                                {hasCalibers && (
+                                    <div className="mb-3">
+                                        <div className="text-xs text-gray-500 mb-1">Available sizes:</div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {calibers.slice(0, 3).map((caliber, index) => (
+                                                <span 
+                                                    key={index}
+                                                    className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+                                                >
+                                                    {caliber.mm}mm
+                                                </span>
+                                            ))}
+                                            {calibers.length > 3 && (
+                                                <span className="inline-block bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">
+                                                    +{calibers.length - 3} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Try On Button - Only for Glasses - HIDDEN */}
                                 {false && isGlassesProduct(product) && (

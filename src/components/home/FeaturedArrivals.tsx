@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { getProducts, type Product } from '../../services/productsService'
+import { getProducts, type Product, type MMCaliber } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
-import { getCategoriesWithSubcategories, type Category } from '../../services/categoriesService'
 import VirtualTryOnModal from './VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
@@ -184,6 +183,15 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                 ? product.color_images[0].color 
                                 : null)
                         
+                        // Get calibers for this product (if available)
+                        const getCalibers = (): MMCaliber[] => {
+                            const p = product as any
+                            return p.mm_calibers || []
+                        }
+
+                        const calibers = getCalibers()
+                        const hasCalibers = calibers && calibers.length > 0
+                        
                         // Get image URL based on selected color
                         const productImageUrl = selectedColor && product.color_images
                             ? (() => {
@@ -237,6 +245,7 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                         </svg>
                                     )}
                                 </button>
+                                {/* Out of Stock Badge */}
                                 {(() => {
                                     const p = product as any
                                     const stockStatus = p.stock_status
@@ -254,6 +263,13 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                         </div>
                                     ) : null
                                 })()}
+
+                                {/* Caliber Badge - Show if product has calibers */}
+                                {hasCalibers && (
+                                    <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                                        {calibers.length} Sizes
+                                    </div>
+                                )}
                             </div>
                             
                             {/* Product Info */}
@@ -382,6 +398,28 @@ const FeaturedArrivals: React.FC<FeaturedArrivalsProps> = ({
                                         )}
                                     </button>
                                 </div>
+
+                                {/* Caliber Sizes - Show available calibers if product has them */}
+                                {hasCalibers && (
+                                    <div className="mb-3">
+                                        <div className="text-xs text-gray-500 mb-1">Available sizes:</div>
+                                        <div className="flex flex-wrap gap-1">
+                                            {calibers.slice(0, 3).map((caliber, index) => (
+                                                <span 
+                                                    key={index}
+                                                    className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+                                                >
+                                                    {caliber.mm}mm
+                                                </span>
+                                            ))}
+                                            {calibers.length > 3 && (
+                                                <span className="inline-block bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">
+                                                    +{calibers.length - 3} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Try On Button - Only for Glasses - HIDDEN */}
                                 {false && isGlassesProduct(product) && (

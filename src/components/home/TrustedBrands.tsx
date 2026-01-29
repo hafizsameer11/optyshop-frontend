@@ -46,31 +46,51 @@ const TrustedBrands: React.FC = () => {
                         console.log(`Brand: ${brand.name}, logo_image: ${brand.logo_image}`)
                     })
                     
-                    // Filter out placeholder brands (names that look like random text or test data)
-                    const placeholderPatterns = [
-                        /^lkjkl/i,  // Matches "lkjkljkljkj"
-                        /test/i,
-                        /demo/i,
-                        /placeholder/i,
-                        /sample/i,
-                        /unity gallegos/i  // Matches "Unity Gallegos"
-                    ]
-                    
-                    const validBrands = data.filter(brand => {
+                    // Process brands - keep those with images even if names are placeholders
+                    const processedBrands = data.map(brand => {
+                        // Check if this is a placeholder brand name
+                        const placeholderPatterns = [
+                            /^lkjkl/i,  // Matches "lkjkljkljkj"
+                            /test/i,
+                            /demo/i,
+                            /placeholder/i,
+                            /sample/i,
+                            /unity gallegos/i  // Matches "Unity Gallegos"
+                        ]
+                        
                         const isPlaceholder = placeholderPatterns.some(pattern => 
                             pattern.test(brand.name.toLowerCase().trim())
                         )
-                        if (isPlaceholder) {
-                            console.warn(`⚠️ Filtering out placeholder brand: ${brand.name}`)
+                        
+                        // If it's a placeholder but has an image, hide the name but keep the image
+                        if (isPlaceholder && brand.logo_image) {
+                            console.log(`✅ Using placeholder brand with image: ${brand.name}`)
+                            return {
+                                ...brand,
+                                displayName: '', // Hide the placeholder name
+                                showImageOnly: true
+                            }
                         }
-                        return !isPlaceholder
-                    })
+                        
+                        // If it's a placeholder without an image, filter it out
+                        if (isPlaceholder && !brand.logo_image) {
+                            console.warn(`⚠️ Filtering out placeholder brand without image: ${brand.name}`)
+                            return null
+                        }
+                        
+                        // Normal brand - keep as is
+                        return {
+                            ...brand,
+                            displayName: brand.name,
+                            showImageOnly: false
+                        }
+                    }).filter(brand => brand !== null) // Remove filtered out brands
                     
-                    if (validBrands.length > 0) {
-                        console.log(`✅ Using ${validBrands.length} valid brands from API`)
-                        setBrands(validBrands)
+                    if (processedBrands.length > 0) {
+                        console.log(`✅ Using ${processedBrands.length} brands from API`)
+                        setBrands(processedBrands)
                     } else {
-                        console.warn('⚠️ No valid brands found in API response. Using fallback brands for display')
+                        console.warn('⚠️ No brands with images found in API response. Using fallback brands for display')
                         // Add fallback brands with proper names and available logos
                         const fallbackBrands = [
                             { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -263,8 +283,10 @@ const TrustedBrands: React.FC = () => {
                     {track.map((brand, index) => {
                         const imageUrl = getImageUrl(brand.logo_image || brand.logo_url, brand.name)
                         const hasLink = !!brand.website_url
+                        const displayName = (brand as any).displayName || brand.name
+                        const showImageOnly = (brand as any).showImageOnly || false
                         
-                        console.log(`Rendering brand: ${brand.name}, imageUrl: ${imageUrl}`)
+                        console.log(`Rendering brand: ${brand.name}, imageUrl: ${imageUrl}, displayName: ${displayName}, showImageOnly: ${showImageOnly}`)
                         
                         return (
                             <div
@@ -282,20 +304,25 @@ const TrustedBrands: React.FC = () => {
                                             const target = e.target as HTMLImageElement
                                             console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)
                                             target.style.display = 'none'
-                                            // Show fallback text
-                                            const parent = target.parentElement
-                                            if (parent) {
-                                                const fallback = document.createElement('div')
-                                                fallback.className = 'h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-red-100 rounded'
-                                                fallback.textContent = brand.name
-                                                parent.appendChild(fallback)
+                                            // Show fallback text only if not a placeholder
+                                            if (!showImageOnly) {
+                                                const parent = target.parentElement
+                                                if (parent) {
+                                                    const fallback = document.createElement('div')
+                                                    fallback.className = 'h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-red-100 rounded'
+                                                    fallback.textContent = displayName
+                                                    parent.appendChild(fallback)
+                                                }
                                             }
                                         }}
                                     />
                                 ) : (
-                                    <div className="h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-yellow-100 rounded">
-                                        {brand.name}
-                                    </div>
+                                    // Show fallback text only if not a placeholder
+                                    !showImageOnly && (
+                                        <div className="h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-yellow-100 rounded">
+                                            {displayName}
+                                        </div>
+                                    )
                                 )}
                             </div>
                         )

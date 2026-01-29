@@ -36,6 +36,9 @@ export interface CartProduct {
                 axis?: number // For astigmatism only
             }
         }
+        selected_color?: string // Selected color for glasses
+        color_name?: string // Display name of selected color
+        variant_images?: string[] // Images for selected variant
     }
     isContactLens?: boolean // Flag to identify contact lens products
     isGift?: boolean // Flag to identify free gift items

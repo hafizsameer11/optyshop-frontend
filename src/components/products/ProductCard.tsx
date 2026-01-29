@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
-import type { Product } from '../../services/productsService'
+import type { Product, MMCaliber } from '../../services/productsService'
 
 interface ProductCardProps {
     product: Product
@@ -49,6 +49,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     }
 
     const isOutOfStock = product.in_stock === false
+
+    // Get calibers for this product (if available)
+    const getCalibers = (): MMCaliber[] => {
+        const p = product as any
+        return p.mm_calibers || []
+    }
+
+    const calibers = getCalibers()
+    const hasCalibers = calibers && calibers.length > 0
 
     return (
         <div className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col group ${className}`}>
@@ -96,6 +105,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                         Sale
                     </div>
                 )}
+
+                {/* Caliber Badge - Show if product has calibers */}
+                {hasCalibers && (
+                    <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                        {calibers.length} Sizes
+                    </div>
+                )}
             </div>
 
             {/* Product Info */}
@@ -106,6 +122,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                         {product.name}
                     </h3>
                 </Link>
+
+                {/* Caliber Sizes - Show available calibers if product has them */}
+                {hasCalibers && (
+                    <div className="mb-3">
+                        <div className="text-xs text-gray-500 mb-1">Available sizes:</div>
+                        <div className="flex flex-wrap gap-1">
+                            {calibers.slice(0, 3).map((caliber, index) => (
+                                <span 
+                                    key={index}
+                                    className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+                                >
+                                    {caliber.mm}mm
+                                </span>
+                            ))}
+                            {calibers.length > 3 && (
+                                <span className="inline-block bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">
+                                    +{calibers.length - 3} more
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Price */}
                 <div className="mb-4">
