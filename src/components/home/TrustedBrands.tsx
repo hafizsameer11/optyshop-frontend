@@ -46,11 +46,44 @@ const TrustedBrands: React.FC = () => {
                         console.log(`Brand: ${brand.name}, logo_image: ${brand.logo_image}`)
                     })
                     
+                    // Check for placeholder brands immediately and use fallback if any are found
+                    const hasPlaceholdersInApi = data.some(brand => {
+                        const placeholderPatterns = [
+                            /^lkj/i,  // Matches "lkjkljkljkj"
+                            /test/i,
+                            /demo/i,
+                            /placeholder/i,
+                            /sample/i,
+                            /unity gallegos/i  // Matches "Unity Gallegos"
+                        ]
+                        return placeholderPatterns.some(pattern => 
+                            pattern.test(brand.name.toLowerCase().trim())
+                        )
+                    })
+                    
+                    if (hasPlaceholdersInApi) {
+                        console.warn('⚠️ Placeholder brands detected in API response. Using fallback brands instead.')
+                        // Use fallback brands immediately when placeholders are detected
+                        const fallbackBrands = [
+                            { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 2, name: 'De Rigo', slug: 'de-rigo', logo_url: '/assets/images/Logo De Rigo-1.webp', logo_image: '/assets/images/Logo De Rigo-1.webp', website_url: '', sort_order: 2, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 3, name: 'Eyerim', slug: 'eyerim', logo_url: '/assets/images/Logo Eyerim.webp', logo_image: '/assets/images/Logo Eyerim.webp', website_url: '', sort_order: 3, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 4, name: 'Fielmann', slug: 'fielmann', logo_url: '/assets/images/Logo Fielmann.webp', logo_image: '/assets/images/Logo Fielmann.webp', website_url: '', sort_order: 4, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 5, name: 'JINS', slug: 'jins', logo_url: '/assets/images/Logo JINS BW.webp', logo_image: '/assets/images/Logo JINS BW.webp', website_url: '', sort_order: 5, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 6, name: 'Marchon', slug: 'marchon', logo_url: '/assets/images/Logo Marchon-3.webp', logo_image: '/assets/images/Logo Marchon-3.webp', website_url: '', sort_order: 6, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 7, name: 'Transitions', slug: 'transitions', logo_url: '/assets/images/Logo Transitions BW.webp', logo_image: '/assets/images/Logo Transitions BW.webp', website_url: '', sort_order: 7, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+                            { id: 8, name: 'Zeiss', slug: 'zeiss', logo_url: '/assets/images/logo_zeiss.webp', logo_image: '/assets/images/logo_zeiss.webp', website_url: '', sort_order: 8, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+                        ]
+                        console.log(`✅ Using ${fallbackBrands.length} fallback brands (no placeholders)`)
+                        setBrands(fallbackBrands)
+                        return
+                    }
+                    
                     // Process brands - keep those with images even if names are placeholders
                     const processedBrands = data.map(brand => {
                         // Check if this is a placeholder brand name
                         const placeholderPatterns = [
-                            /^lkjkl/i,  // Matches "lkjkljkljkj"
+                            /^lkj/i,  // Matches "lkjkljkljkj"
                             /test/i,
                             /demo/i,
                             /placeholder/i,
@@ -61,6 +94,8 @@ const TrustedBrands: React.FC = () => {
                         const isPlaceholder = placeholderPatterns.some(pattern => 
                             pattern.test(brand.name.toLowerCase().trim())
                         )
+                        
+                        console.log(`🔍 Checking brand: "${brand.name}" - isPlaceholder: ${isPlaceholder}, hasImage: ${!!brand.logo_image}`)
                         
                         // If it's a placeholder but has an image, hide the name but keep the image
                         if (isPlaceholder && brand.logo_image) {
@@ -87,7 +122,7 @@ const TrustedBrands: React.FC = () => {
                     }).filter(brand => brand !== null) // Remove filtered out brands
                     
                     if (processedBrands.length > 0) {
-                        console.log(`✅ Using ${processedBrands.length} brands from API`)
+                        console.log(`✅ Using ${processedBrands.length} valid brands from API`)
                         setBrands(processedBrands)
                     } else {
                         console.warn('⚠️ No brands with images found in API response. Using fallback brands for display')
