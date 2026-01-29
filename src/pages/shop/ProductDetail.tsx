@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -9,8 +9,10 @@ import {
     getProductBySlug,
     getRelatedProducts,
     getProductCalibers,
+    getProductEyeHygieneVariants,
     type Product,
-    type MMCaliber
+    type MMCaliber,
+    type EyeHygieneVariant
 } from '../../services/productsService'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
@@ -64,6 +66,10 @@ const ProductDetail = () => {
     // MM Caliber State
     const [productCalibers, setProductCalibers] = useState<MMCaliber[]>([])
 
+    // Eye Hygiene Variants State
+    const [productEyeHygieneVariants, setProductEyeHygieneVariants] = useState<EyeHygieneVariant[]>([])
+    const [selectedEyeHygieneVariant, setSelectedEyeHygieneVariant] = useState<EyeHygieneVariant | null>(null)
+
     // Contact Lens Forms API Integration State
     const [contactLensFormConfig, setContactLensFormConfig] = useState<ContactLensFormConfig | null>(null)
     // Separate state for spherical power values (from spherical configs, not astigmatism dropdown API)
@@ -81,7 +87,6 @@ const ProductDetail = () => {
     // Fetch product calibers
     useEffect(() => {
         if (product?.id) {
-            setCalibersLoading(true)
             getProductCalibers(product.id).then(calibers => {
                 if (calibers) {
                     setProductCalibers(calibers)
@@ -94,12 +99,38 @@ const ProductDetail = () => {
             }).catch(error => {
                 console.error('[ProductDetail] Error fetching product calibers:', error)
                 setProductCalibers([])
-            }).finally(() => {
-                setCalibersLoading(false)
             })
         } else {
             setProductCalibers([])
             setSelectedCaliber(null)
+        }
+    }, [product?.id])
+
+    // Fetch eye hygiene variants
+    useEffect(() => {
+        if (product?.id) {
+            getProductEyeHygieneVariants(product.id).then(variants => {
+                if (variants) {
+                    setProductEyeHygieneVariants(variants)
+                    // Auto-select first variant if none selected and variants are available
+                    if (!selectedEyeHygieneVariant && variants.length > 0) {
+                        setSelectedEyeHygieneVariant(variants[0])
+                    }
+                    if (import.meta.env.DEV) {
+                        console.log('[ProductDetail] Product eye hygiene variants loaded:', variants.length)
+                    }
+                } else {
+                    setProductEyeHygieneVariants([])
+                    setSelectedEyeHygieneVariant(null)
+                }
+            }).catch(error => {
+                console.error('[ProductDetail] Error fetching product eye hygiene variants:', error)
+                setProductEyeHygieneVariants([])
+                setSelectedEyeHygieneVariant(null)
+            })
+        } else {
+            setProductEyeHygieneVariants([])
+            setSelectedEyeHygieneVariant(null)
         }
     }, [product?.id])
 
@@ -207,7 +238,6 @@ const ProductDetail = () => {
 
     // MM Caliber State (for frames/glasses)
     const [fetchedCalibers, setFetchedCalibers] = useState<MMCaliber[]>([])
-    const [calibersLoading, setCalibersLoading] = useState(false)
     const [selectedCaliber, setSelectedCaliber] = useState<MMCaliber | null>(null)
 
     // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
@@ -238,17 +268,20 @@ const ProductDetail = () => {
         return null
     }, [product, selectedColor])
 
-    // Price calculation - uses variant price if size/volume variant or color is selected
-    // Priority: size/volume variant price > color variant price > product price
+    // Price calculation - uses variant price if size/volume variant, eye hygiene variant, or color is selected
+    // Priority: eye hygiene variant > size/volume variant > color variant > product price
     const { displayPrice, originalPrice, hasValidSale } = useMemo(() => {
         if (!product) return { displayPrice: 0, originalPrice: null, hasValidSale: false }
 
-        // Priority 1: Use size/volume variant price if selected
+        // Priority 1: Use eye hygiene variant price if selected
         let basePrice = Number(product.price || 0)
-        if (selectedSizeVolumeVariant) {
+        if (selectedEyeHygieneVariant) {
+            basePrice = Number(selectedEyeHygieneVariant.price || 0)
+        } else if (selectedSizeVolumeVariant) {
+            // Priority 2: Use size/volume variant price if selected
             basePrice = Number(selectedSizeVolumeVariant.price || 0)
         } else if (selectedColorVariant) {
-            // Priority 2: Use color variant price if selected
+            // Priority 3: Use color variant price if selected
             const variantPrice = (selectedColorVariant as any).price
             if (variantPrice !== undefined && variantPrice !== null) {
                 basePrice = Number(variantPrice)
@@ -260,9 +293,15 @@ const ProductDetail = () => {
             basePrice += Number(selectedCaliber.price)
         }
 
-        // For size/volume variants, use compare_at_price if available for sale display
+        // For variants, use compare_at_price if available for sale display
         let salePrice: number | null = null
-        if (selectedSizeVolumeVariant && selectedSizeVolumeVariant.compare_at_price) {
+        if (selectedEyeHygieneVariant && (selectedEyeHygieneVariant as any).compare_at_price) {
+            salePrice = Number((selectedEyeHygieneVariant as any).compare_at_price)
+            // Apply caliber price adjustment to sale price as well
+            if (selectedCaliber && selectedCaliber.price) {
+                salePrice += Number(selectedCaliber.price)
+            }
+        } else if (selectedSizeVolumeVariant && selectedSizeVolumeVariant.compare_at_price) {
             salePrice = Number(selectedSizeVolumeVariant.compare_at_price)
             // Apply caliber price adjustment to sale price as well
             if (selectedCaliber && selectedCaliber.price) {
@@ -284,7 +323,7 @@ const ProductDetail = () => {
             originalPrice: isValidSale ? basePrice : null,
             hasValidSale: isValidSale
         }
-    }, [product, selectedColorVariant, selectedSizeVolumeVariant, selectedCaliber])
+    }, [product, selectedColorVariant, selectedSizeVolumeVariant, selectedEyeHygieneVariant, selectedCaliber])
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -1093,35 +1132,20 @@ const ProductDetail = () => {
                 return
             }
 
-            setCalibersLoading(true)
             try {
                 const calibers = await getProductCalibers(product.id)
                 if (import.meta.env.DEV) {
                     console.log('🔍 Fetched calibers:', calibers)
                 }
-                if (calibers && calibers.length > 0) {
-                    setFetchedCalibers(calibers)
-                    // Auto-select first active caliber
-                    const firstActiveCaliber = calibers.find((c) => c.is_active !== false)
-                    if (firstActiveCaliber) {
-                        setSelectedCaliber(firstActiveCaliber)
-                        if (import.meta.env.DEV) {
-                            console.log('✅ Auto-selected caliber:', firstActiveCaliber)
-                        }
-                    }
-                } else {
-                    setFetchedCalibers([])
-                    setSelectedCaliber(null)
-                    if (import.meta.env.DEV) {
-                        console.log('ℹ️ No calibers found for product:', product.id)
-                    }
+                setFetchedCalibers(calibers || [])
+                // Auto-select first caliber if none selected and calibers are available
+                if (!selectedCaliber && calibers && calibers.length > 0) {
+                    setSelectedCaliber(calibers[0])
                 }
             } catch (error) {
                 console.error('Error fetching calibers:', error)
                 setFetchedCalibers([])
                 setSelectedCaliber(null)
-            } finally {
-                setCalibersLoading(false)
             }
         }
 
@@ -2180,6 +2204,18 @@ const ProductDetail = () => {
         }
     }
 
+    // Handler for eye hygiene variant change
+    const handleEyeHygieneVariantChange = (variantId: number) => {
+        const matchingVariant = productEyeHygieneVariants.find(v => v.id === variantId)
+        if (matchingVariant) {
+            setSelectedEyeHygieneVariant(matchingVariant)
+            setSelectedImageIndex(0) // Reset image index to show variant's image
+        } else {
+            setSelectedEyeHygieneVariant(null)
+            setSelectedImageIndex(0) // Reset image index
+        }
+    }
+
     // Reset image index when caliber changes to show caliber-specific image
     useEffect(() => {
         if (selectedCaliber) {
@@ -2187,7 +2223,14 @@ const ProductDetail = () => {
         }
     }, [selectedCaliber])
 
-    // Helper function to get the variant-specific image URL (supports color, unit, ML variants, and caliber)
+    // Reset image index when eye hygiene variant changes to show variant-specific image
+    useEffect(() => {
+        if (selectedEyeHygieneVariant) {
+            setSelectedImageIndex(0)
+        }
+    }, [selectedEyeHygieneVariant])
+
+    // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
         // Priority 1: Use unit-specific images if available
         if (unitImages.length > 0 && imageIndex < unitImages.length) {
@@ -2200,11 +2243,16 @@ const ProductDetail = () => {
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
-        if (isEyeHygiene && selectedSizeVolumeVariant) {
-            return getVariantImageUrl(product, selectedSizeVolumeVariant as SizeVolumeVariant, imageIndex)
+        if (selectedEyeHygieneVariant && selectedEyeHygieneVariant.image_url) {
+            return selectedEyeHygieneVariant.image_url
         }
 
-        // Priority 4: Use color-specific images if color is selected
+        // Priority 4: Use eye hygiene size/volume variant-specific images if variant is selected
+        if (isEyeHygiene && selectedSizeVolumeVariant) {
+            return getVariantImageUrl(product, selectedSizeVolumeVariant as any, imageIndex)
+        }
+
+        // Priority 5: Use color-specific images if color is selected
         if (selectedColor) {
             const p = product as any
             const selectedColorLower = (selectedColor || '').toLowerCase()
@@ -2582,6 +2630,7 @@ const ProductDetail = () => {
                     selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
                     selected_mm_caliber: selectedCaliber?.toString() || undefined, // Pass selected MM caliber
                     size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // Variant ID for Eye Hygiene products
+                    eye_hygiene_variant_id: selectedEyeHygieneVariant?.id || undefined, // Eye hygiene variant ID
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
@@ -2597,6 +2646,13 @@ const ProductDetail = () => {
                             variant_price: (selectedColorVariant as any).price,
                             variant_images: (selectedColorVariant as any).images || []
                         } : {}),
+                        // Store eye hygiene variant details if available
+                        ...(selectedEyeHygieneVariant && {
+                            eye_hygiene_variant_id: selectedEyeHygieneVariant.id,
+                            eye_hygiene_variant_name: selectedEyeHygieneVariant.name,
+                            eye_hygiene_variant_price: selectedEyeHygieneVariant.price,
+                            eye_hygiene_variant_image_url: selectedEyeHygieneVariant.image_url
+                        }),
                         // Eye Hygiene specific customization (legacy - for backward compatibility)
                         ...(isEyeHygiene && !hasVariants && {
                             size_volume: eyeHygieneFormData.size_volume || undefined,
@@ -3157,6 +3213,72 @@ const ProductDetail = () => {
                                                                 <span className="text-xs font-semibold whitespace-nowrap">
                                                                     {caliber.mm}mm
                                                                 </span>
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Eye Hygiene Variants Selection */}
+                                        {productEyeHygieneVariants.length > 0 && (
+                                            <div className="mb-4">
+                                                <label className="block text-sm font-semibold text-blue-950 mb-2">
+                                                    {t('shop.selectVariant', 'Select Variant')}
+                                                </label>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                    {productEyeHygieneVariants.map((variant: EyeHygieneVariant) => {
+                                                        const isSelected = selectedEyeHygieneVariant?.id === variant.id
+
+                                                        return (
+                                                            <button
+                                                                key={variant.id}
+                                                                onClick={() => handleEyeHygieneVariantChange(variant.id)}
+                                                                className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                                                    isSelected
+                                                                        ? 'border-blue-950 bg-blue-50 text-blue-950 shadow-sm ring-2 ring-blue-950/20'
+                                                                        : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700 hover:shadow-sm'
+                                                                    }`}
+                                                            >
+                                                                {/* Variant Image */}
+                                                                {variant.image_url && (
+                                                                    <div className="w-full h-24 rounded-lg overflow-hidden bg-gray-50 border border-gray-200 mb-3">
+                                                                        <img
+                                                                            src={variant.image_url}
+                                                                            alt={variant.name}
+                                                                            className="w-full h-full object-cover"
+                                                                            onError={(e) => {
+                                                                                const target = e.target as HTMLImageElement
+                                                                                target.style.display = 'none'
+                                                                                const fallback = target.nextElementSibling as HTMLElement
+                                                                                if (fallback) fallback.style.display = 'flex'
+                                                                            }}
+                                                                        />
+                                                                        <div className="w-full h-full items-center justify-center text-gray-400" style={{ display: 'none' }}>
+                                                                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {/* Variant Info */}
+                                                                <div className="space-y-1">
+                                                                    <h4 className="font-semibold text-sm leading-tight">{variant.name}</h4>
+                                                                    {variant.description && (
+                                                                        <p className="text-xs text-gray-600 line-clamp-2">{variant.description}</p>
+                                                                    )}
+                                                                    <p className="font-bold text-base">€{variant.price.toFixed(2)}</p>
+                                                                </div>
+
+                                                                {/* Selected Badge */}
+                                                                {isSelected && (
+                                                                    <div className="absolute top-2 right-2 w-6 h-6 bg-blue-950 text-white rounded-full flex items-center justify-center">
+                                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                                        </svg>
+                                                                    </div>
+                                                                )}
                                                             </button>
                                                         )
                                                     })}
@@ -3994,11 +4116,12 @@ const ProductDetail = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+                        <>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
                             {/* Product Images (Left Column) */}
                             <div>
                                 {(() => {
-                                    // Get all images for the selected color
+                                    // Get all images for the selected color/fallback
                                     let imagesArray: string[] = []
                                     const p = product as any
 
@@ -4014,7 +4137,7 @@ const ProductDetail = () => {
                                                 imagesArray = variantImages
                                             } else {
                                                 // Use single variant image (image_url)
-                                                const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant as SizeVolumeVariant, 0)
+                                                const variantImageUrl = getVariantImageUrl(product, selectedSizeVolumeVariant as any, 0)
                                                 imagesArray = [variantImageUrl]
                                             }
                                         } else if (selectedColor) {
@@ -4064,8 +4187,12 @@ const ProductDetail = () => {
                                     }
 
                                     // Ensure selectedImageIndex is within bounds
-                                    const safeSelectedIndex = Math.min(selectedImageIndex, imagesArray.length - 1)
-                                    const selectedImage = imagesArray[safeSelectedIndex]
+                                    const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
+                                    
+                                    // Use variant-specific image if caliber or eye hygiene variant is selected, otherwise use images array
+                                    const selectedImage = (selectedCaliber || selectedEyeHygieneVariant) 
+                                        ? getVariantSpecificImageUrl(product, selectedImageIndex)
+                                        : imagesArray[safeSelectedIndex]
 
                                     return (
                                         <div className="flex gap-4 mb-6">
@@ -4073,7 +4200,7 @@ const ProductDetail = () => {
                                             <div className="flex flex-col gap-3">
                                                 {imagesArray.map((image, index) => (
                                                     <button
-                                                        key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}`}
+                                                        key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         onClick={() => setSelectedImageIndex(index)}
                                                         className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${index === safeSelectedIndex
                                                             ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
@@ -4097,7 +4224,7 @@ const ProductDetail = () => {
                                             <div className="flex-1">
                                                 <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center">
                                                     <img
-                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}`}
+                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         src={selectedImage}
                                                         alt={product.name}
                                                         className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
@@ -4297,24 +4424,6 @@ const ProductDetail = () => {
                                             )).sort()
 
                                             const selectedSizeVolume = selectedSizeVolumeVariant?.size_volume || ''
-
-                                            // Filter pack_type options based on selected size_volume
-                                            const variantsForSize = selectedSizeVolume
-                                                ? activeVariants.filter((v: SizeVolumeVariant | any) =>
-                                                    v.size_volume === selectedSizeVolume
-                                                )
-                                                : []
-
-                                            const packTypeOptions = selectedSizeVolume && variantsForSize.length > 0
-                                                ? Array.from(new Set(
-                                                    variantsForSize
-                                                        .map((v: any) => v.pack_type)
-                                                        .filter(Boolean)
-                                                )).sort()
-                                                : []
-
-                                            const hasVariantsWithoutPackType = variantsForSize.some((v: any) => !v.pack_type)
-                                            const selectedPackType = selectedSizeVolumeVariant?.pack_type || ''
 
                                             // Find matching variant
                                             const findMatchingVariant = (sizeVol: string, packType: string | null) => {
@@ -4744,7 +4853,8 @@ const ProductDetail = () => {
                                     {/* Actions */}
                                     <div className="space-y-4">
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
-                                        {isEyeHygiene ? (() => {
+                                        <>
+                                            {isEyeHygiene ? (() => {
                                             const p = product as any
 
                                             // Check if product has variants - prioritize fetched variants, then check product object
@@ -4844,6 +4954,7 @@ const ProductDetail = () => {
                                                 </div>
                                             </>
                                         )}
+                                        </>
                                     </div>
 
                                     {/* Description Section with Toggle Button */}
@@ -4870,9 +4981,10 @@ const ProductDetail = () => {
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                            </>
+                        )}
                 </div>
+                
             </section>
 
             {/* Product Specifications for Contact Lenses */}
@@ -5153,4 +5265,5 @@ const ProductDetail = () => {
 }
 
 export default ProductDetail
+
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCategories, type Category } from '../../services/categoriesService'
-import { getProducts, type Product } from '../../services/productsService'
+import { getCategories, type Category, type CategoryProduct } from '../../services/categoriesService'
+import { type Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { useTranslation } from 'react-i18next'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
@@ -13,7 +13,7 @@ import { addItemToCart } from '../../services/cartService'
 import CategoryBanner from './CategoryBanner'
 
 interface CategoryWithProducts extends Category {
-    fetchedProducts?: Product[]
+    fetchedProducts?: CategoryProduct[]
 }
 
 const ShopCategories: React.FC = () => {
@@ -37,8 +37,8 @@ const ShopCategories: React.FC = () => {
         const productName = (product.name || '').toLowerCase()
         const isApiProduct = 'image' in product || 'image_url' in product || 'images' in product
         const productImage = isApiProduct
-            ? getProductImageUrl(product as Product).toLowerCase()
-            : getImageUrl(product as Category['products'][0]).toLowerCase()
+            ? getProductImageUrl(product as any as Product).toLowerCase()
+            : (Array.isArray(product) && product[0] ? getImageUrl(product[0]) : '/assets/images/frame1.png').toLowerCase()
         
         // Check for Opty Kids category (kids glasses)
         const isOptyKids = categoryName.includes('opty kids') || 
@@ -114,7 +114,7 @@ const ShopCategories: React.FC = () => {
                         ...category,
                         fetchedProducts: categoryProducts,
                         products: categoryProducts
-                    } as CategoryWithProducts
+                    }
                 })
                 
                 if (isCancelled) return
@@ -172,7 +172,7 @@ const ShopCategories: React.FC = () => {
     }, [categories]) // Only depend on categories, not productColorSelections
 
     // Helper function to parse product images
-    const getProductImages = (product: Category['products'][0]): string[] => {
+    const getProductImages = (product: CategoryProduct): string[] => {
         if (!product.images) return []
         try {
             const parsed = JSON.parse(product.images)
@@ -183,7 +183,7 @@ const ShopCategories: React.FC = () => {
     }
 
     // Helper function to get product image URL
-    const getImageUrl = (product: Category['products'][0]): string => {
+    const getImageUrl = (product: CategoryProduct): string => {
         const images = getProductImages(product)
         if (images.length > 0 && images[0]) {
             return images[0]
@@ -216,16 +216,16 @@ const ShopCategories: React.FC = () => {
                                 <CategoryBanner 
                                     categoryName={translateCategory(category)}
                                     categoryId={category.id}
-                                    <Link
-                                        to={`/category/${category.slug}`}
-                                        className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"
-                                    >
-                                        {t('navbar.viewAll')}
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </Link>
-                                </div>
+                                />
+                                <Link
+                                    to={`/category/${category.slug}`}
+                                    className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"
+                                >
+                                    {t('navbar.viewAll')}
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </Link>
 
                                 {/* Products Grid */}
                                 {(() => {
@@ -259,9 +259,9 @@ const ShopCategories: React.FC = () => {
                                                         const colorImage = productColorImages.find((ci: any) => 
                                                             ci.color && ci.color.toLowerCase() === selectedColorLower
                                                         )
-                                                        return colorImage?.images?.[0] || (isApiProduct ? getProductImageUrl(productAsProduct) : getImageUrl(product as Category['products'][0]))
+                                                        return colorImage?.images?.[0] || (isApiProduct ? getProductImageUrl(productAsProduct) : (Array.isArray(product) && product[0] ? getImageUrl(product[0]) : '/assets/images/frame1.png'))
                                                     })()
-                                                    : (isApiProduct ? getProductImageUrl(productAsProduct) : getImageUrl(product as Category['products'][0]))
+                                                    : (isApiProduct ? getProductImageUrl(productAsProduct) : (Array.isArray(product) && product[0] ? getImageUrl(product[0]) : '/assets/images/frame1.png'))
                                                 const productName = (product as any).name || product.name
                                                 const productPrice = (product as any).price || product.price || '0'
                                                 const productSlug = (product as any).slug || (product as any).id || product.id

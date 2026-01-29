@@ -46,23 +46,25 @@ const TrustedBrands: React.FC = () => {
                         console.log(`Brand: ${brand.name}, logo_image: ${brand.logo_image}`)
                     })
                     
-                    // Check for placeholder brands immediately and use fallback if any are found
-                    const hasPlaceholdersInApi = data.some(brand => {
+                    // Check if all brands are placeholders without images (then use fallback)
+                    const hasOnlyPlaceholdersWithoutImages = data.every(brand => {
                         const placeholderPatterns = [
                             /^lkj/i,  // Matches "lkjkljkljkj"
                             /test/i,
                             /demo/i,
                             /placeholder/i,
                             /sample/i,
-                            /unity gallegos/i  // Matches "Unity Gallegos"
+                            /unity gallegos/i,  // Matches "Unity Gallegos"
+                            /^nm$/i  // Matches exactly "nm"
                         ]
-                        return placeholderPatterns.some(pattern => 
+                        const isPlaceholder = placeholderPatterns.some(pattern => 
                             pattern.test(brand.name.toLowerCase().trim())
                         )
+                        return isPlaceholder && !brand.logo_image
                     })
                     
-                    if (hasPlaceholdersInApi) {
-                        console.warn('⚠️ Placeholder brands detected in API response. Using fallback brands instead.')
+                    if (hasOnlyPlaceholdersWithoutImages) {
+                        console.warn('⚠️ All brands are placeholders without images. Using fallback brands instead.')
                         // Use fallback brands immediately when placeholders are detected
                         const fallbackBrands = [
                             { id: 1, name: 'Charmant', slug: 'charmant', logo_url: '/assets/images/Logo Charmant2-1.webp', logo_image: '/assets/images/Logo Charmant2-1.webp', website_url: '', sort_order: 1, is_active: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
@@ -88,7 +90,8 @@ const TrustedBrands: React.FC = () => {
                             /demo/i,
                             /placeholder/i,
                             /sample/i,
-                            /unity gallegos/i  // Matches "Unity Gallegos"
+                            /unity gallegos/i,  // Matches "Unity Gallegos"
+                            /^nm$/i  // Matches exactly "nm"
                         ]
                         
                         const isPlaceholder = placeholderPatterns.some(pattern => 
@@ -102,7 +105,7 @@ const TrustedBrands: React.FC = () => {
                             console.log(`✅ Using placeholder brand with image: ${brand.name}`)
                             return {
                                 ...brand,
-                                displayName: '', // Hide the placeholder name
+                                displayName: '', // Hide the placeholder name completely
                                 showImageOnly: true
                             }
                         }
@@ -339,25 +342,12 @@ const TrustedBrands: React.FC = () => {
                                             const target = e.target as HTMLImageElement
                                             console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)
                                             target.style.display = 'none'
-                                            // Show fallback text only if not a placeholder
-                                            if (!showImageOnly) {
-                                                const parent = target.parentElement
-                                                if (parent) {
-                                                    const fallback = document.createElement('div')
-                                                    fallback.className = 'h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-red-100 rounded'
-                                                    fallback.textContent = displayName
-                                                    parent.appendChild(fallback)
-                                                }
-                                            }
+                                            // Don't show any fallback text - just hide the failed image
                                         }}
                                     />
                                 ) : (
-                                    // Show fallback text only if not a placeholder
-                                    !showImageOnly && (
-                                        <div className="h-8 sm:h-12 flex items-center justify-center text-slate-400 text-xs sm:text-sm bg-yellow-100 rounded">
-                                            {displayName}
-                                        </div>
-                                    )
+                                    // Don't show any fallback text when no image is available
+                                    null
                                 )}
                             </div>
                         )

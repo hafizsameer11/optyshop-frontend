@@ -97,6 +97,7 @@ export interface EyeHygieneVariant {
   id: number;
   product_id: number;
   name: string; // e.g., "5ml Single", "10ml Pack of 2"
+  description?: string; // Description of the variant
   size_volume: string; // e.g., "5ml", "10ml", "30ml"
   pack_type?: string | null; // e.g., "Single", "Pack of 2"
   price: number; // Price for this variant
@@ -106,7 +107,8 @@ export interface EyeHygieneVariant {
   stock_status: 'in_stock' | 'out_of_stock' | 'backorder'; // Stock status
   sku?: string | null; // SKU for this variant
   expiry_date?: string | null; // Expiry date (ISO 8601 format)
-  image?: string; // Variant-specific image
+  image_url?: string; // Variant-specific image URL (matches API guide)
+  image?: string; // Legacy image field (for backward compatibility)
   is_active: boolean; // Whether variant is active
   sort_order: number; // Display order (lower = first)
   created_at?: string;
@@ -157,6 +159,9 @@ export interface Product {
   
   // Size/Volume Variants (new - only for Eye Hygiene products with variants)
   size_volume_variants?: SizeVolumeVariant[]; // Array of size/volume variants (only active variants in public endpoints)
+  
+  // Eye Hygiene Variants (new - for Eye Hygiene products with variants)
+  eyeHygieneVariants?: EyeHygieneVariant[]; // Array of eye hygiene variants (only active variants in public endpoints)
   
   [key: string]: any; // Allow for additional product properties
 }
@@ -565,6 +570,32 @@ export const getProductCalibers = async (id: number | string): Promise<MMCaliber
     return null;
   } catch (error) {
     console.error('Error fetching product calibers:', error);
+    return null;
+  }
+};
+
+/**
+ * Get eye hygiene variants for a product
+ * Matches API guide: GET /api/products/:id/eye-hygiene-variants
+ * 
+ * @param id - Product ID
+ * @returns Array of EyeHygieneVariant objects or null if error
+ */
+export const getProductEyeHygieneVariants = async (id: number | string): Promise<EyeHygieneVariant[] | null> => {
+  try {
+    const response = await apiClient.get<{ variants: EyeHygieneVariant[] }>(
+      `/products/${id}/eye-hygiene-variants`,
+      false // PUBLIC endpoint
+    );
+
+    if (response.success && response.data) {
+      return (response.data as any).variants || [];
+    }
+
+    console.error('Failed to fetch product eye hygiene variants:', response.message);
+    return null;
+  } catch (error) {
+    console.error('Error fetching product eye hygiene variants:', error);
     return null;
   }
 };

@@ -122,6 +122,7 @@ export interface AddToCartRequest {
   selected_color?: string; // Color value from product's color_images (e.g., "black", "brown")
   selected_mm_caliber?: string; // MM caliber value (e.g., "78", "58", "62")
   size_volume_variant_id?: number | null; // Size/Volume variant ID for Eye Hygiene products
+  eye_hygiene_variant_id?: number | null; // Eye hygiene variant ID
   // Legacy fields for backward compatibility
   lens_index?: number | string;
   lens_coating?: string;

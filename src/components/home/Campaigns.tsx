@@ -200,7 +200,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                         <div 
                             className="flex animate-scroll"
                             style={{
-                                animation: 'scroll 25s linear infinite',
+                                animation: 'scroll 20s linear infinite',
                                 width: `${campaigns.length * 100}%`
                             }}
                         >
@@ -321,10 +321,12 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                     
                     .animate-scroll {
                         display: flex;
+                        transition: transform 0.3s ease-out;
                     }
                     
                     .animate-scroll:hover {
                         animation-play-state: paused;
+                        transform: translateX(var(--scroll-position, 0));
                     }
                 `}</style>
             </section>
@@ -342,7 +344,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                     <div 
                         className="flex animate-scroll"
                         style={{
-                            animation: 'scroll 30s linear infinite',
+                            animation: 'scroll 25s linear infinite',
                             width: `${campaigns.length * 100}%`
                         }}
                     >
@@ -427,10 +429,12 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                 
                 .animate-scroll {
                     display: flex;
+                    transition: transform 0.3s ease-out;
                 }
                 
                 .animate-scroll:hover {
                     animation-play-state: paused;
+                    transform: translateX(var(--scroll-position, 0));
                 }
             `}</style>
         </section>

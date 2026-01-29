@@ -689,15 +689,15 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   if (compact) {
     return (
       <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg" style={{ overflow: 'visible', width: '100%' }}>
-        <div className="flex gap-8 justify-center items-start mb-8" style={{ overflow: 'visible', width: '100%' }}>
-          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '400px' }}>
-            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Occhio Destro')}</div>
+        <div className="flex flex-col gap-8 justify-center items-center mb-8" style={{ overflow: 'visible', width: '100%' }}>
+          <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
+            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Right Eye OD')}</div>
             <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
-          <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '400px' }}>
-            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
+          <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
+            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.leftEye', 'Left Eye OS')}</div>
             <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
@@ -713,17 +713,17 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             <thead>
               <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
                 <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
-                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
-                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
+                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
+                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
                 <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">
-                  {t('prescription.axis', 'Asse')}
+                  {t('prescription.axis', 'Axis')}
                   <span className="block text-xs font-normal text-blue-600 mt-1">(Left: TABO)</span>
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr className="hover:bg-blue-50 transition-colors">
-                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Occhio Destro')}</td>
+                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
                 <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
@@ -774,7 +774,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 </td>
               </tr>
               <tr className="hover:bg-blue-50 transition-colors">
-                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
+                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
                 <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="text"
@@ -847,15 +847,15 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full" style={{ overflow: 'visible', width: '100%' }}>
-      <div className="flex gap-8 justify-center items-start mb-6" style={{ overflow: 'visible', width: '100%' }}>
-        <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
-          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</div>
+      <div className="flex flex-col gap-8 justify-center items-center mb-6" style={{ overflow: 'visible', width: '100%' }}>
+        <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '0' }}>
+          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Right Eye OD')}</div>
           <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
-        <div className="text-center flex-1" style={{ overflow: 'visible', minWidth: '0' }}>
-          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</div>
+        <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '0' }}>
+          <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Left Eye OS')}</div>
           <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
@@ -867,22 +867,22 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       
       {/* Prescription Table */}
       <div className="mt-6">
-        <table className="w-full border-collapse border border-gray-300 table-fixed">
+        <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-3 py-2 text-left font-semibold text-gray-700 w-[25%]"></th>
-              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">{t('prescription.sphere', 'Sfera')}</th>
-              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">{t('prescription.cylinder', 'Cil.')}</th>
-              <th className="border border-gray-300 px-3 py-2 text-center font-semibold text-gray-700 w-[25%]">
-                {t('prescription.axis', 'Asse')}
-                <span className="block text-[10px] font-normal text-gray-500 mt-0.5">(Left: TABO)</span>
+            <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
+              <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
+              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
+              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
+              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">
+                {t('prescription.axis', 'Axis')}
+                <span className="block text-xs font-normal text-blue-600 mt-1">(Left: TABO)</span>
               </th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td className="border border-gray-300 px-3 py-2 font-semibold text-blue-600">{t('prescription.rightEye', 'Occhio Destro')}</td>
-              <td className="border border-gray-300 px-3 py-2 text-center">
+            <tr className="hover:bg-blue-50 transition-colors">
+              <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
+              <td className="border-2 border-gray-300 px-4 py-3 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -894,11 +894,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('right', 'sphere', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-3 py-2 text-center">
+              <td className="border-2 border-gray-300 px-4 py-3 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -910,11 +910,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('right', 'cylinder', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border border-gray-300 px-3 py-2 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <input
                     type="number"
                     inputMode="numeric"
@@ -926,14 +926,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                    className="w-full text-center text-blue-600 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                     placeholder="--"
                   />
                 </td>
             </tr>
-            <tr>
-              <td className="border border-gray-300 px-3 py-2 font-semibold text-blue-600">{t('prescription.leftEye', 'Occhio Sinistro')}</td>
-              <td className="border border-gray-300 px-3 py-2 text-center">
+            <tr className="hover:bg-blue-50 transition-colors">
+              <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
+              <td className="border-2 border-gray-300 px-4 py-3 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -945,11 +945,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('left', 'sphere', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border border-gray-300 px-3 py-2 text-center">
+              <td className="border-2 border-gray-300 px-4 py-3 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -961,11 +961,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('left', 'cylinder', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border border-gray-300 px-3 py-2 text-center">
+                <td className="border-2 border-gray-300 px-4 py-3 text-center">
                   <div className="relative">
                     <input
                       type="number"
@@ -989,10 +989,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-600 font-semibold border-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-400 rounded px-1 py-1 pr-12"
+                      className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 pr-12 transition-all"
                       placeholder="--"
                     />
-                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-gray-700 font-medium whitespace-nowrap pointer-events-none">TABO</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
                   </div>
                 </td>
             </tr>

@@ -41,7 +41,6 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     const [banners, setBanners] = useState<Banner[]>([])
     const [loading, setLoading] = useState(true)
     const [currentIndex, setCurrentIndex] = useState(0)
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true)
 
     useEffect(() => {
         let isCancelled = false
@@ -96,14 +95,14 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
     // Auto-rotate banners if there are multiple
     useEffect(() => {
-        if (banners.length <= 1 || !isAutoPlaying) return
+        if (banners.length <= 1) return
 
         const interval = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % banners.length)
         }, autoSlideInterval) // Auto-slide interval
 
         return () => clearInterval(interval)
-    }, [banners.length, isAutoPlaying, autoSlideInterval])
+    }, [banners.length, autoSlideInterval])
 
     if (loading) {
         return (
@@ -210,57 +209,9 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
         return null
     }
 
-    // Handle button click
-    const handleButtonClick = (button: BannerMeta['button1'] | BannerMeta['button2']) => {
-        if (!button || !button.link) return
 
-        const action = button.action || 'link'
 
-        if (action === 'scroll') {
-            // Scroll to element (e.g., #live-demo)
-            setTimeout(() => {
-                const element = document.getElementById(button.link!.replace('#', ''))
-                if (element) {
-                    const offset = 100
-                    const elementPosition = element.getBoundingClientRect().top
-                    const offsetPosition = elementPosition + window.pageYOffset - offset
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    })
-                }
-            }, 50)
-        } else if (action === 'navigate') {
-            // Navigate using React Router
-            navigate(button.link)
-        } else {
-            // External link or default
-            if (button.link.startsWith('http')) {
-                window.open(button.link, '_blank', 'noopener,noreferrer')
-            } else {
-                window.location.href = button.link
-            }
-        }
-    }
 
-    const goToSlide = (index: number) => {
-        setCurrentIndex(index)
-        setIsAutoPlaying(false) // Pause auto-play when user manually navigates
-        // Resume auto-play after 10 seconds
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    const goToPrevious = () => {
-        setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length)
-        setIsAutoPlaying(false)
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    const goToNext = () => {
-        setCurrentIndex((prev) => (prev + 1) % banners.length)
-        setIsAutoPlaying(false)
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
 
     return (
         <div className="relative text-slate-800 w-full" style={{ height }}>
@@ -282,7 +233,6 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                     }}
                 >
                     {banners.map((banner, index) => {
-                        const bannerMeta = parseMeta(banner.meta)
                         const imageUrl = getImageUrl(banner.image_url)
                         return (
                             <div
@@ -342,78 +292,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                     })}
                 </div>
 
-                {/* Navigation Arrows - Always show if there are multiple banners */}
-                {banners.length > 1 && (
-                    <>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                goToPrevious()
-                            }}
-                            className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-30 bg-white hover:bg-gray-50 text-gray-900 rounded-full p-2.5 md:p-3.5 shadow-xl border-2 border-gray-200 transition-all hover:scale-110 active:scale-95"
-                            aria-label="Previous banner"
-                            type="button"
-                        >
-                            <svg
-                                className="w-5 h-5 md:w-6 md:h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={3}
-                                    d="M15 19l-7-7 7-7"
-                                />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                goToNext()
-                            }}
-                            className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-30 bg-white hover:bg-gray-50 text-gray-900 rounded-full p-2.5 md:p-3.5 shadow-xl border-2 border-gray-200 transition-all hover:scale-110 active:scale-95"
-                            aria-label="Next banner"
-                            type="button"
-                        >
-                            <svg
-                                className="w-5 h-5 md:w-6 md:h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={3}
-                                    d="M9 5l7 7-7 7"
-                                />
-                            </svg>
-                        </button>
-                    </>
-                )}
 
-                {/* Dots Indicator - Always show if there are multiple banners */}
-                {banners.length > 1 && (
-                    <div className="absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 z-30 flex gap-2 px-2 py-1 bg-black/20 rounded-full backdrop-blur-sm">
-                        {banners.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    goToSlide(index)
-                                }}
-                                className={`rounded-full transition-all duration-300 ${index === currentIndex
-                                    ? 'w-8 md:w-10 h-2.5 md:h-3 bg-white shadow-lg'
-                                    : 'w-2.5 md:w-3 h-2.5 md:h-3 bg-white/70 hover:bg-white/90'
-                                    }`}
-                                aria-label={`Go to banner ${index + 1}`}
-                                type="button"
-                            />
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     )
