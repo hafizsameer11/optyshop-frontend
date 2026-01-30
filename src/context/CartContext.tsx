@@ -17,7 +17,7 @@ export interface CartProduct {
     unit?: string // Unit for contact lenses (unit, box, pack)
     caliber?: string | number // Selected MM caliber for frames
     caliberImageUrl?: string // Image URL for selected caliber
-    type?: 'main_product' | 'eye_hgiene_variant' | 'contact_lens' // Product type for handling different displays
+    type?: 'main_product' | 'eye_hygiene_variant' | 'contact_lens' // Product type for handling different displays
     customization?: {
         contactLens?: {
             unit?: string

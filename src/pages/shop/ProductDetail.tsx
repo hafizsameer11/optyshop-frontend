@@ -89,10 +89,8 @@ const ProductDetail = () => {
     useEffect(() => {
         if (product?.id) {
             const p = product as any
-            if (import.meta.env.DEV) {
-                console.log('[ProductDetail] Loading calibers for product:', p.id, p.name)
-                console.log('[ProductDetail] Product mm_calibers:', p.mm_calibers)
-            }
+            console.log('[ProductDetail] Loading calibers for product:', p.id, p.name)
+            console.log('[ProductDetail] Product mm_calibers:', p.mm_calibers)
             
             // Use mm_calibers from product data directly
             if (p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0) {
@@ -108,21 +106,15 @@ const ProductDetail = () => {
                 }))
                 setProductCalibers(calibers)
                 
-                if (import.meta.env.DEV) {
-                    console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
-                }
+                console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
                 
                 // Auto-select first caliber if none selected
                 if (!selectedCaliber && calibers.length > 0) {
                     setSelectedCaliber(calibers[0])
-                    if (import.meta.env.DEV) {
-                        console.log('[ProductDetail] Auto-selected first caliber:', calibers[0])
-                    }
+                    console.log('[ProductDetail] Auto-selected first caliber:', calibers[0])
                 }
             } else {
-                if (import.meta.env.DEV) {
-                    console.log('[ProductDetail] No mm_calibers in product data, trying API fallback')
-                }
+                console.log('[ProductDetail] No mm_calibers in product data, trying API fallback')
                 // Fallback: try to fetch from API if product doesn't have mm_calibers
                 getProductCalibers(product.id).then(calibers => {
                     if (calibers) {
@@ -130,15 +122,12 @@ const ProductDetail = () => {
                         if (!selectedCaliber && calibers.length > 0) {
                             setSelectedCaliber(calibers[0])
                         }
-                        if (import.meta.env.DEV) {
-                            console.log('[ProductDetail] Product calibers loaded from API fallback:', calibers.length)
-                        }
+                        console.log('[ProductDetail] Product calibers loaded from API fallback:', calibers.length)
                     } else {
-                        setProductCalibers([])
+                        console.log('[ProductDetail] No calibers found from API fallback')
                     }
                 }).catch(error => {
-                    console.error('[ProductDetail] Error fetching product calibers:', error)
-                    setProductCalibers([])
+                    console.error('[ProductDetail] Error fetching calibers:', error)
                 })
             }
         } else {
@@ -441,7 +430,26 @@ const ProductDetail = () => {
 
     // Helper function to determine if calibers should be shown
     const shouldShowCalibers = useMemo(() => {
-        if (!product || productCalibers.length === 0) return false
+        if (!product) {
+            console.log('[ProductDetail] shouldShowCalibers: No product')
+            return false
+        }
+        
+        // TEMPORARY DEBUG: Always show calibers if they exist, regardless of product type
+        if (productCalibers.length > 0) {
+            console.log('[ProductDetail] shouldShowCalibers: Showing calibers (DEBUG MODE)', productCalibers.length)
+            return true
+        }
+        
+        console.log('[ProductDetail] shouldShowCalibers: No calibers loaded', productCalibers)
+        return false
+        
+        // Original logic (commented out for debugging)
+        /*
+        if (productCalibers.length === 0) {
+            console.log('[ProductDetail] shouldShowCalibers: No calibers loaded', productCalibers)
+            return false
+        }
         
         const p = product as any
         const productType = p.product_type || ''
@@ -455,20 +463,19 @@ const ProductDetail = () => {
         
         const result = isFrameProduct || shouldShow
         
-        if (import.meta.env.DEV) {
-            console.log('[ProductDetail] shouldShowCalibers calculation:', {
-                productName: p.name,
-                productType,
-                isFrameProduct,
-                isEyeHygiene,
-                isContactLens,
-                shouldShow,
-                result,
-                productCalibersLength: productCalibers.length
-            })
-        }
+        console.log('[ProductDetail] shouldShowCalibers calculation:', {
+            productName: p.name,
+            productType,
+            isFrameProduct,
+            isEyeHygiene,
+            isContactLens,
+            shouldShow,
+            result,
+            productCalibersLength: productCalibers.length
+        })
         
         return result
+        */
     }, [product, productCalibers.length, isEyeHygiene, isContactLens])
 
     // Helper function to check if product belongs to astigmatism sub-subcategory
@@ -2955,6 +2962,35 @@ const ProductDetail = () => {
         <div className="bg-white min-h-screen">
             <Navbar />
 
+            {/* DEBUG SECTION - TEMPORARY */}
+            {import.meta.env.DEV && (
+                <div className="bg-yellow-50 border-2 border-yellow-300 p-4 m-4 rounded-lg">
+                    <h3 className="font-bold text-lg mb-2">🔍 DEBUG INFO - Calibers</h3>
+                    <div className="text-sm space-y-1">
+                        <p><strong>Product ID:</strong> {product?.id}</p>
+                        <p><strong>Product Name:</strong> {product?.name}</p>
+                        <p><strong>Product Type:</strong> {(product as any)?.product_type}</p>
+                        <p><strong>Calibers Count:</strong> {productCalibers.length}</p>
+                        <p><strong>shouldShowCalibers:</strong> {shouldShowCalibers ? 'TRUE' : 'FALSE'}</p>
+                        <p><strong>isEyeHygiene:</strong> {isEyeHygiene ? 'TRUE' : 'FALSE'}</p>
+                        <p><strong>isContactLens:</strong> {isContactLens ? 'TRUE' : 'FALSE'}</p>
+                        <p><strong>Selected Caliber:</strong> {selectedCaliber ? `${selectedCaliber.mm}mm` : 'None'}</p>
+                        <details className="mt-2">
+                            <summary className="cursor-pointer font-semibold">Raw mm_calibers data:</summary>
+                            <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32">
+                                {JSON.stringify((product as any)?.mm_calibers, null, 2)}
+                            </pre>
+                        </details>
+                        <details className="mt-2">
+                            <summary className="cursor-pointer font-semibold">Processed calibers:</summary>
+                            <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32">
+                                {JSON.stringify(productCalibers, null, 2)}
+                            </pre>
+                        </details>
+                    </div>
+                </div>
+            )}
+
             {/* Breadcrumbs */}
             <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
                 <div className="w-[90%] mx-auto max-w-7xl">
@@ -3236,7 +3272,7 @@ const ProductDetail = () => {
                                         })()}
 
                                         {/* MM Caliber Selection */}
-                                        {productCalibers.length > 0 && (
+                                        {shouldShowCalibers && (
                                             <div className="mb-4">
                                                 <label className="block text-sm font-semibold text-blue-950 mb-2">
                                                     {t('shop.selectCaliber', 'Select Size (MM)')}
@@ -5361,7 +5397,7 @@ const ProductDetail = () => {
                                                     customization: {
                                                         variant_id: variant.id,
                                                         size_volume: variant.size_volume,
-                                                        pack_type: variant.pack_type
+                                                        pack_type: variant.pack_type || undefined
                                                     }
                                                 }
                                                 addToCart(cartProduct as unknown as CartProduct)

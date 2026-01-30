@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Calibers</title>
+</head>
+<body>
+    <h1>Debug Calibers Issue</h1>
+    <p>Open the browser console on the product page to see debug messages.</p>
+    <p>Navigate to: <a href="http://localhost:5173/shop/product/new" target="_blank">http://localhost:5173/shop/product/new</a></p>
+    
+    <h2>Expected Debug Messages:</h2>
+    <ul>
+        <li>[ProductDetail] Loading calibers for product: 116 new</li>
+        <li>[ProductDetail] Product mm_calibers: [array with 2 items]</li>
+        <li>[ProductDetail] Product calibers loaded from product data: 2 [array]</li>
+        <li>[ProductDetail] Auto-selected first caliber: {mm: "78", ...}</li>
+        <li>[ProductDetail] shouldShowCalibers calculation: {result: true, ...}</li>
+    </ul>
+    
+    <h2>If calibers are not showing, check for:</h2>
+    <ul>
+        <li>"No calibers loaded" message - means productCalibers is empty</li>
+        <li>"No product" message - means product data is not loaded</li>
+        <li>result: false in shouldShowCalibers calculation</li>
+    </ul>
+</body>
+</html>

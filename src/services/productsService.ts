@@ -592,10 +592,25 @@ export const getProductEyeHygieneVariants = async (id: number | string): Promise
       return (response.data as any).variants || [];
     }
 
+    // Handle 500 errors and other server issues gracefully
+    if (response.error && response.error.includes('500')) {
+      console.warn('⚠️ Backend server error (500) for eye hygiene variants. This endpoint may not be implemented on the backend yet.');
+      // Return empty array instead of null to prevent frontend crashes
+      return [];
+    }
+
     console.error('Failed to fetch product eye hygiene variants:', response.message);
     return null;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching product eye hygiene variants:', error);
+    
+    // Check if it's a network error or 500 error
+    if (error.message && error.message.includes('500')) {
+      console.warn('⚠️ Backend server error (500) for eye hygiene variants. This endpoint may not be implemented on the backend yet.');
+      // Return empty array instead of null to prevent frontend crashes
+      return [];
+    }
+    
     return null;
   }
 };

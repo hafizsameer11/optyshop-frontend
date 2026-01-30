@@ -111,7 +111,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             </div>
 
             {/* Product Info */}
-            <div className="p-3 flex-1 flex flex-col">
+            <div className="p-2 flex-1 flex flex-col">
                 {/* Product Name */}
                 <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-2">
                     <h3 className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
@@ -120,10 +120,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 </Link>
 
                 {/* Price */}
-                <div className="mb-3">
+                <div className="mb-2">
                     {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
                         <div className="flex items-center gap-1">
-                            <span className="text-sm font-bold text-gray-900">
+                            <span className="text-xs font-bold text-gray-900">
                                 €{Number(product.sale_price).toFixed(2)}
                             </span>
                             <span className="text-xs text-gray-400 line-through">
@@ -131,7 +131,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                             </span>
                         </div>
                     ) : (
-                        <span className="text-sm font-bold text-gray-900">
+                        <span className="text-xs font-bold text-gray-900">
                             €{Number(product.price).toFixed(2)}
                         </span>
                     )}
@@ -141,7 +141,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 <button
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
-                    className={`w-full py-2 px-3 rounded-lg font-semibold text-xs transition-all duration-200 ${
+                    className={`w-full py-1.5 px-2 rounded-lg font-semibold text-xs transition-all duration-200 ${
                         isOutOfStock
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                             : 'bg-blue-600 text-white hover:bg-blue-700'
