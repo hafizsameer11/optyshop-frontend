@@ -169,7 +169,7 @@ const SmallSlidingBanners: React.FC = () => {
                                                         target.style.display = 'none'
                                                     }}
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                                                {/* Removed gradient overlay for clean image display */}
                                             </>
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-br from-blue-900 to-blue-800 flex items-center justify-center">
@@ -186,25 +186,7 @@ const SmallSlidingBanners: React.FC = () => {
                                             </div>
                                         )}
                                         
-                                        {/* Content Overlay */}
-                                        <div className="absolute inset-0 flex flex-col justify-end p-3 md:p-4">
-                                            <h3 className="text-white font-semibold text-sm md:text-base mb-1 line-clamp-1">
-                                                {campaign.name}
-                                            </h3>
-                                            {campaign.description && (
-                                                <p className="text-white/90 text-xs line-clamp-2 mb-2">
-                                                    {campaign.description}
-                                                </p>
-                                            )}
-                                            {campaign.link_url && (
-                                                <span className="inline-flex items-center text-white text-xs font-medium hover:underline">
-                                                    View More
-                                                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                    </svg>
-                                                </span>
-                                            )}
-                                        </div>
+                                        {/* Content Overlay - Removed for clean image display */}
                                     </div>
                                 </div>
                             )

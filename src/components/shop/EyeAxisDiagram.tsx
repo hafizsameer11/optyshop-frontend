@@ -689,16 +689,16 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   if (compact) {
     return (
       <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg" style={{ overflow: 'visible', width: '100%' }}>
-        <div className="flex flex-col gap-8 justify-center items-center mb-8" style={{ overflow: 'visible', width: '100%' }}>
+        <div className="flex flex-col gap-4 justify-center items-center mb-6" style={{ overflow: 'visible', width: '100%' }}>
           <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
             <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Right Eye OD')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
           <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
             <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.leftEye', 'Left Eye OS')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '520px' }}>
+            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
             <div className="mt-3 text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full inline-block">
@@ -708,8 +708,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         </div>
         
         {/* Prescription Table */}
-        <div className="mt-6">
-          <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
+        <div className="mt-4 overflow-x-auto">
+          <div className="min-w-full">
+            <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
             <thead>
               <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
                 <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
@@ -840,6 +841,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     )
@@ -847,16 +849,16 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full" style={{ overflow: 'visible', width: '100%' }}>
-      <div className="flex flex-col gap-8 justify-center items-center mb-6" style={{ overflow: 'visible', width: '100%' }}>
+      <div className="flex flex-col gap-4 justify-center items-center mb-4" style={{ overflow: 'visible', width: '100%' }}>
         <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Right Eye OD')}</div>
-          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
             {generateProtractor(localRightAxis, 'right', rightSvgRef)}
           </div>
         </div>
         <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.leftEye', 'Left Eye OS')}</div>
-          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '400px' }}>
+          <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
             {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
           </div>
           <div className="mt-2 text-xs text-gray-600 italic">
@@ -866,8 +868,9 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       </div>
       
       {/* Prescription Table */}
-      <div className="mt-6">
-        <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
+      <div className="mt-4 overflow-x-auto">
+        <div className="min-w-full">
+          <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
           <thead>
             <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
               <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
@@ -998,6 +1001,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             </tr>
           </tbody>
         </table>
+        </div>
       </div>
       
       {isInteractive && (

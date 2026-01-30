@@ -5392,8 +5392,8 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
             
             {showAxisDiagram && (
               <div className="mt-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-200 overflow-visible">
-                  <div className="text-center mb-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-200" style={{ overflow: 'visible', width: '100%' }}>
+                  <div className="text-center mb-3">
                     <h3 className="text-base font-semibold text-gray-800 mb-2">Axis Measurements</h3>
                     <div className="flex justify-center items-center gap-6">
                       <div className="text-center">
@@ -5407,7 +5407,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                     </div>
                   </div>
                   
-                  <div className="flex justify-center items-center">
+                  <div className="w-full overflow-x-auto">
                     <EyeAxisDiagram 
                       rightEyeAxis={Number(prescriptionData.od_axis) || 0}
                       leftEyeAxis={Number(prescriptionData.os_axis) || 0}

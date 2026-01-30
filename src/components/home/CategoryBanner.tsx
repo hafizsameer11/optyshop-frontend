@@ -224,25 +224,6 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
         return cleanedUrl || '/assets/images/banner-placeholder.jpg'
     }
 
-    // Parse meta field for banner metadata
-    const parseMeta = (meta: unknown) => {
-        if (!meta) return null
-
-        if (typeof meta === 'object') {
-            return meta
-        }
-
-        if (typeof meta === 'string') {
-            try {
-                return JSON.parse(meta)
-            } catch {
-                return { description: meta }
-            }
-        }
-
-        return null
-    }
-
     const handleBannerClick = (banner: Banner) => {
         if (banner.link_url) {
             if (banner.link_url.startsWith('http')) {
@@ -278,7 +259,6 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                     }}
                 >
                     {banners.map((banner, index) => {
-                        const bannerMeta = parseMeta(banner.meta)
                         const imageUrl = getImageUrl(banner.image_url)
                         
                         return (
@@ -312,20 +292,8 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 {/* Overlay for better text readability */}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60 z-10" />
 
-                                {/* Banner Content */}
+                                {/* Banner Content - Removed text overlay for clean image display */}
                                 <div className="relative z-20 flex items-center justify-center h-full px-6">
-                                    <div className="text-center">
-                                        {banner.title && (
-                                            <h3 className="text-lg md:text-xl font-bold text-white mb-1">
-                                                {banner.title}
-                                            </h3>
-                                        )}
-                                        {bannerMeta?.description && (
-                                            <p className="text-sm md:text-base text-white/90">
-                                                {bannerMeta.description}
-                                            </p>
-                                        )}
-                                    </div>
                                 </div>
                             </div>
                         )

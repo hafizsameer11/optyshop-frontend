@@ -89,6 +89,11 @@ const ProductDetail = () => {
     useEffect(() => {
         if (product?.id) {
             const p = product as any
+            if (import.meta.env.DEV) {
+                console.log('[ProductDetail] Loading calibers for product:', p.id, p.name)
+                console.log('[ProductDetail] Product mm_calibers:', p.mm_calibers)
+            }
+            
             // Use mm_calibers from product data directly
             if (p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0) {
                 const calibers = p.mm_calibers.map((caliber: any) => ({
@@ -100,15 +105,21 @@ const ProductDetail = () => {
                 }))
                 setProductCalibers(calibers)
                 
+                if (import.meta.env.DEV) {
+                    console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
+                }
+                
                 // Auto-select first caliber if none selected
                 if (!selectedCaliber && calibers.length > 0) {
                     setSelectedCaliber(calibers[0])
-                }
-                
-                if (import.meta.env.DEV) {
-                    console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length)
+                    if (import.meta.env.DEV) {
+                        console.log('[ProductDetail] Auto-selected first caliber:', calibers[0])
+                    }
                 }
             } else {
+                if (import.meta.env.DEV) {
+                    console.log('[ProductDetail] No mm_calibers in product data, trying API fallback')
+                }
                 // Fallback: try to fetch from API if product doesn't have mm_calibers
                 getProductCalibers(product.id).then(calibers => {
                     if (calibers) {
@@ -383,7 +394,23 @@ const ProductDetail = () => {
         // Check if product has sizeVolumeVariants (indicates it's an eye hygiene product)
         const hasVariants = p.sizeVolumeVariants && Array.isArray(p.sizeVolumeVariants) && p.sizeVolumeVariants.length > 0
 
-        return isEyeHygieneType || categoryMatch || subCategoryMatch || hasEyeHygieneFields || hasVariants
+        const result = isEyeHygieneType || categoryMatch || subCategoryMatch || hasEyeHygieneFields || hasVariants
+        
+        if (import.meta.env.DEV) {
+            console.log('[ProductDetail] isEyeHygiene calculation:', {
+                product_type: p.product_type,
+                categorySlug,
+                categoryName,
+                isEyeHygieneType,
+                categoryMatch,
+                subCategoryMatch,
+                hasEyeHygieneFields,
+                hasVariants,
+                result
+            })
+        }
+
+        return result
     }, [product])
 
     const isContactLens = useMemo(() => {
@@ -391,11 +418,53 @@ const ProductDetail = () => {
         const p = product as any
         const categorySlug = product.category?.slug || ''
         const categoryName = product.category?.name || ''
-        return categorySlug.toLowerCase().includes('contact') ||
+        const result = categorySlug.toLowerCase().includes('contact') ||
             categoryName.toLowerCase().includes('contact') ||
             categorySlug.toLowerCase().includes('lens') ||
             (p.contact_lens_type && p.contact_lens_type.length > 0)
+            
+        if (import.meta.env.DEV) {
+            console.log('[ProductDetail] isContactLens calculation:', {
+                product_type: p.product_type,
+                categorySlug,
+                categoryName,
+                contact_lens_type: p.contact_lens_type,
+                result
+            })
+        }
+        
+        return result
     }, [product])
+
+    // Helper function to determine if calibers should be shown
+    const shouldShowCalibers = useMemo(() => {
+        if (!product || productCalibers.length === 0) return false
+        
+        const p = product as any
+        const productType = p.product_type || ''
+        
+        // Always show calibers for these product types
+        const frameProductTypes = ['sunglasses', 'eyeglasses', 'glasses', 'frames', 'eyewear']
+        const isFrameProduct = frameProductTypes.includes(productType.toLowerCase())
+        
+        // Also show for any product that's not eye hygiene or contact lens
+        const shouldShow = !isEyeHygiene && !isContactLens
+        
+        const result = isFrameProduct || shouldShow
+        
+        if (import.meta.env.DEV) {
+            console.log('[ProductDetail] shouldShowCalibers calculation:', {
+                productType,
+                isFrameProduct,
+                isEyeHygiene,
+                isContactLens,
+                shouldShow,
+                result
+            })
+        }
+        
+        return result
+    }, [product, productCalibers.length, isEyeHygiene, isContactLens])
 
     // Helper function to check if product belongs to astigmatism sub-subcategory
     // Priority: Configuration type > Sub-subcategory options > Product data
@@ -4677,7 +4746,9 @@ const ProductDetail = () => {
                                     })()}
 
                                     {/* Caliber (MM) Selection for Frames/Glasses */}
-                                    {productCalibers.length > 0 && !isEyeHygiene && !isContactLens && (
+                                    {shouldShowCalibers && (
+                                        <>
+                                            {import.meta.env.DEV && console.log('[ProductDetail] Showing calibers - productCalibers.length:', productCalibers.length, 'isEyeHygiene:', isEyeHygiene, 'isContactLens:', isContactLens, 'productType:', (product as any).product_type, 'shouldShowCalibers:', shouldShowCalibers)}
                                         <div className="mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-900">Frame Size</h3>
@@ -4735,6 +4806,28 @@ const ProductDetail = () => {
                                                     </div>
                                                 </div>
                                             )}
+                                        </div>
+                                        </>
+                                    )}
+
+                                    {/* DEBUG: Always show calibers when they exist (for debugging) */}
+                                    {import.meta.env.DEV && productCalibers.length > 0 && (
+                                        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                            <h4 className="font-semibold text-yellow-800 mb-2">DEBUG: Calibers Found ({productCalibers.length})</h4>
+                                            <div className="text-xs text-yellow-700">
+                                                <p>isEyeHygiene: {isEyeHygiene.toString()}</p>
+                                                <p>isContactLens: {isContactLens.toString()}</p>
+                                                <p>Condition result: {(productCalibers.length > 0 && !isEyeHygiene && !isContactLens).toString()}</p>
+                                                <p>Product type: {(product as any).product_type}</p>
+                                                <p>Category: {(product as any).category?.name}</p>
+                                            </div>
+                                            <div className="mt-2 flex gap-2">
+                                                {productCalibers.map((caliber, index) => (
+                                                    <div key={index} className="p-2 bg-yellow-100 rounded text-xs">
+                                                        {caliber.mm}mm
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
 
