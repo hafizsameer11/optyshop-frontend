@@ -93,8 +93,23 @@ const ProductDetail = () => {
             console.log('[ProductDetail] Product mm_calibers:', p.mm_calibers)
             
             // Use mm_calibers from product data directly
-            if (p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0) {
-                const calibers = p.mm_calibers.map((caliber: any, index: number) => ({
+            if (p.mm_calibers) {
+                let calibersData = [];
+                
+                // Parse mm_calibers if it's a string, otherwise use as-is
+                try {
+                    if (typeof p.mm_calibers === 'string') {
+                        calibersData = JSON.parse(p.mm_calibers);
+                    } else if (Array.isArray(p.mm_calibers)) {
+                        calibersData = p.mm_calibers;
+                    }
+                } catch (error) {
+                    console.error('[ProductDetail] Error parsing mm_calibers:', error);
+                    calibersData = [];
+                }
+                
+                if (calibersData.length > 0) {
+                    const calibers = calibersData.map((caliber: any, index: number) => ({
                     mm: caliber.mm,
                     // Handle blob URLs - use fallback images
                     image_url: caliber.image_url && !caliber.image_url.startsWith('blob:') 
@@ -113,8 +128,9 @@ const ProductDetail = () => {
                     setSelectedCaliber(calibers[0])
                     console.log('[ProductDetail] Auto-selected first caliber:', calibers[0])
                 }
+                }
             } else {
-                console.log('[ProductDetail] No mm_calibers in product data, trying API fallback')
+                console.log('[ProductDetail] No valid calibers data found, trying API fallback')
                 // Fallback: try to fetch from API if product doesn't have mm_calibers
                 getProductCalibers(product.id).then(calibers => {
                     if (calibers) {
