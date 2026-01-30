@@ -176,7 +176,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     // Helper function to handle image URLs
     const getImageUrl = (imageUrl: string | null | undefined): string => {
         if (!imageUrl || imageUrl.trim() === '') {
-            return '/assets/images/banner-placeholder.jpg'
+            return '/assets/images/Banner-join-us-tewt-2.webp'
         }
 
         const cleanedUrl = imageUrl.trim()
@@ -185,13 +185,13 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
         if (cleanedUrl.includes('http://localhost:5000') || cleanedUrl.includes('http://127.0.0.1:5000')) {
             try {
                 const url = new URL(cleanedUrl)
-                return url.pathname || '/assets/images/banner-placeholder.jpg'
+                return url.pathname || '/assets/images/Banner-join-us-tewt-2.webp'
             } catch {
                 const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
                 if (pathMatch && pathMatch[1]) {
                     return pathMatch[1]
                 }
-                return '/assets/images/banner-placeholder.jpg'
+                return '/assets/images/Banner-join-us-tewt-2.webp'
             }
         }
 
@@ -204,6 +204,17 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
             } catch {
                 return cleanedUrl.replace('http://', 'https://')
             }
+        }
+
+        // Handle external-images URLs - ensure they work with proxy
+        if (cleanedUrl.startsWith('/external-images/')) {
+            // In development, Vite proxy should handle this
+            // In production, these might need to be converted to full URLs
+            if (import.meta.env.PROD) {
+                // In production, try to use the full URL to the server
+                return `https://optyshop-frontend.hmstech.org${cleanedUrl}`
+            }
+            return cleanedUrl
         }
 
         // If it's already a relative path, return as is
@@ -221,7 +232,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
             return '/' + cleanedUrl
         }
 
-        return cleanedUrl || '/assets/images/banner-placeholder.jpg'
+        return cleanedUrl || '/assets/images/Banner-join-us-tewt-2.webp'
     }
 
     const handleBannerClick = (banner: Banner) => {
@@ -261,6 +272,16 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                     {banners.map((banner, index) => {
                         const imageUrl = getImageUrl(banner.image_url)
                         
+                        // Debug: Log image URL information
+                        if (import.meta.env.DEV) {
+                            console.log(`🖼️ Banner ${index + 1} image info:`, {
+                                originalUrl: banner.image_url,
+                                processedUrl: imageUrl,
+                                bannerId: banner.id,
+                                bannerTitle: banner.title
+                            })
+                        }
+                        
                         return (
                             <div
                                 key={banner.id || index}
@@ -285,7 +306,23 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                     className="absolute inset-0 w-full h-full object-cover"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement
-                                        target.style.display = 'none'
+                                        // Try fallback images in order of preference
+                                        if (!target.dataset.fallbackTried) {
+                                            target.dataset.fallbackTried = '1'
+                                            // First try a generic banner placeholder
+                                            target.src = '/assets/images/Banner-join-us-tewt-2.webp'
+                                        } else if (!target.dataset.secondFallback) {
+                                            target.dataset.secondFallback = '1'
+                                            // Try another banner
+                                            target.src = '/assets/images/banner-mobile-footwear-blog.webp'
+                                        } else if (!target.dataset.thirdFallback) {
+                                            target.dataset.thirdFallback = '1'
+                                            // Finally try a hero image
+                                            target.src = '/assets/images/hero3.avif'
+                                        } else {
+                                            // If all fail, hide the image and show gradient background
+                                            target.style.display = 'none'
+                                        }
                                     }}
                                 />
                                 

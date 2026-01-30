@@ -134,16 +134,19 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
         }
         // If it's a full URL (other domain), handle CORS via proxy or use directly
         if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
-            // For external images from optyshop-frontend.hmstech.org, use the proxy
+            // For external images from optyshop-frontend.hmstech.org, use direct URL
             if (imgUrl.includes('optyshop-frontend.hmstech.org')) {
-                // Convert to proxy path to avoid CORS issues
-                return imgUrl.replace('https://optyshop-frontend.hmstech.org', '/external-images')
+                // Use the direct URL as requested
+                if (import.meta.env.DEV) {
+                    console.log('🌐 Using direct URL for optyshop images:', imgUrl);
+                }
+                return imgUrl;
             }
             // For other external URLs, use fallback to avoid CORS issues
             if (import.meta.env.DEV) {
-                console.warn('🌐 External URL detected, using fallback to avoid CORS:', imgUrl)
+                console.warn('🌐 External URL detected, using fallback to avoid CORS:', imgUrl);
             }
-            return '/assets/images/frame1.png'
+            return '/assets/images/frame1.png';
         }
         // If it's a relative path without leading slash, add it
         return '/' + imgUrl
@@ -175,6 +178,33 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
                 console.warn('🚫 Blob URL or problematic image detected in variant, using fallback:', variant.image_url)
             }
             // Use fallback based on size_volume
+            let fallbackImage = '/assets/images/frame1.png';
+            if (variant.size_volume) {
+                const sizeVolume = variant.size_volume.toLowerCase();
+                if (sizeVolume.includes('5ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-5ml.png';
+                } else if (sizeVolume.includes('10ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-10ml.png';
+                } else if (sizeVolume.includes('30ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png';
+                }
+            }
+            return fallbackImage;
+        }
+        
+        // Handle external URLs for variant images
+        if (variant.image_url.startsWith('http://') || variant.image_url.startsWith('https://')) {
+            if (variant.image_url.includes('optyshop-frontend.hmstech.org')) {
+                // Use the direct URL as requested
+                if (import.meta.env.DEV) {
+                    console.log('🌐 Using direct URL for variant image:', variant.image_url);
+                }
+                return variant.image_url;
+            }
+            // For other external URLs, use fallback
+            if (import.meta.env.DEV) {
+                console.warn('🌐 External variant URL detected, using fallback:', variant.image_url);
+            }
             let fallbackImage = '/assets/images/frame1.png';
             if (variant.size_volume) {
                 const sizeVolume = variant.size_volume.toLowerCase();
