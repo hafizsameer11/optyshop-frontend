@@ -178,14 +178,11 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
 
     if (loading) {
         return (
-            <div className="bg-white rounded-lg shadow-md p-3 mb-4">
-                <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                        {[...Array(8)].map((_, i) => (
-                            <div key={i} className="h-12 bg-gray-200 rounded"></div>
-                        ))}
-                    </div>
+            <div className="animate-pulse mb-4">
+                <div className="flex flex-wrap gap-1">
+                    {[...Array(8)].map((_, i) => (
+                        <div key={i} className="h-8 w-20 bg-gray-200 rounded"></div>
+                    ))}
                 </div>
             </div>
         )
@@ -200,9 +197,7 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-md p-3 mb-4">
-            <h3 className="text-sm font-bold text-gray-900 mb-3">Related Pages</h3>
-            
+        <div className="mb-4">
             {/* All related items in one line */}
             <div className="flex flex-wrap gap-1">
                 {/* Related Categories */}
@@ -210,7 +205,7 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                     <Link
                         key={`cat-${relatedCat.id}`}
                         to={`/category/${relatedCat.slug}`}
-                        className="block p-1 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-sm group"
+                        className="block p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded hover:from-blue-100 hover:to-indigo-100 transition-all duration-200 hover:shadow-sm group"
                     >
                         <div className="text-xs font-medium text-blue-900 group-hover:text-blue-700 text-center truncate px-2">
                             {translateCategory(relatedCat)}
@@ -223,7 +218,7 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                     <Link
                         key={`sub-${relatedSub.id}`}
                         to={`/category/${category?.slug}/${relatedSub.slug}`}
-                        className="block p-1 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-sm group"
+                        className="block p-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded hover:from-green-100 hover:to-emerald-100 transition-all duration-200 hover:shadow-sm group"
                     >
                         <div className="text-xs font-medium text-green-900 group-hover:text-green-700 text-center truncate px-2">
                             {translateCategory(relatedSub)}
@@ -240,7 +235,7 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
                                 ? `/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`
                                 : `/category/${category?.slug}/${sibling.slug}`
                         }
-                        className="block p-1 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-sm group"
+                        className="block p-2 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded hover:from-purple-100 hover:to-pink-100 transition-all duration-200 hover:shadow-sm group"
                     >
                         <div className="text-xs font-medium text-purple-900 group-hover:text-purple-700 text-center truncate px-2">
                             {translateCategory(sibling)}

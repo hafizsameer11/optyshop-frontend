@@ -414,6 +414,15 @@ const CategoryPage: React.FC = () => {
                 />
             )}
 
+            {/* Related Categories Section - Moved directly under banner */}
+            <div className="w-full max-w-screen-2xl mx-auto px-8 sm:px-12 lg:px-16">
+                <RelatedCategories 
+                    category={categoryInfo.category}
+                    subcategory={categoryInfo.subcategory}
+                    subSubcategory={categoryInfo.subSubcategory}
+                />
+            </div>
+
             {/* Debug Banner Information - Only in development */}
             {import.meta.env.DEV && categoryInfo.category && (
                 <div className="max-w-screen-2xl mx-auto px-4 mb-8">
@@ -425,11 +434,11 @@ const CategoryPage: React.FC = () => {
             )}
 
             {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-8 md:py-12 lg:py-16 px-8 sm:px-12 lg:px-16">
+            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-4 px-8 sm:px-12 lg:px-16">
                 <div className="w-full max-w-screen-2xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                        <div className="mb-8 bg-white rounded-2xl shadow-lg p-6 border-l-4 border-blue-600">
+                        <div className="mb-4 bg-white rounded-2xl shadow-lg p-4 border-l-4 border-blue-600">
                             <div className="flex items-center justify-between flex-wrap gap-4">
                                 <div>
                                     <h2 className="text-lg md:text-xl font-bold text-gray-900">
@@ -442,16 +451,9 @@ const CategoryPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Related Categories Section */}
-                    <RelatedCategories 
-                        category={categoryInfo.category}
-                        subcategory={categoryInfo.subcategory}
-                        subSubcategory={categoryInfo.subSubcategory}
-                    />
-
-                    {/* Filters and Search */}
-                    <div className="mb-6">
-                        <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 mb-3">
+                    {/* Filters and Search - Reduced size and lifted up */}
+                    <div className="mb-4">
+                        <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 mb-2">
                             {/* Sort Dropdown */}
                             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
                                 <div className="flex items-center gap-2">
@@ -462,7 +464,7 @@ const CategoryPage: React.FC = () => {
                                             setSortBy(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                        className="px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="newest">Newest</option>
                                         <option value="oldest">Oldest</option>
@@ -483,13 +485,13 @@ const CategoryPage: React.FC = () => {
                                         setSearchTerm(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 />
                             </div>
                         </div>
 
-                        {/* Filter Options Row */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                        {/* Filter Options Row - Smaller and more compact */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
                             {/* Lens Type Filter */}
                             <div>
                                 <label className="block text-xs font-semibold text-gray-800 mb-1">Type</label>
@@ -499,7 +501,7 @@ const CategoryPage: React.FC = () => {
                                         setLensType(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All</option>
                                     {productOptions?.lensTypes?.map((lensType) => (
@@ -519,7 +521,7 @@ const CategoryPage: React.FC = () => {
                                         setLensCoating(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All</option>
                                     {productOptions?.lensCoatings?.map((coating) => (
@@ -539,7 +541,7 @@ const CategoryPage: React.FC = () => {
                                         setGender(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All</option>
                                     {productOptions?.genders?.map((g) => (
@@ -559,7 +561,7 @@ const CategoryPage: React.FC = () => {
                                         setSelectedColor(e.target.value)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All</option>
                                     {availableColors.map((color) => (
@@ -582,7 +584,7 @@ const CategoryPage: React.FC = () => {
                                             setMinPrice(e.target.value ? Number(e.target.value) : undefined)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     />
                                     <input
                                         type="number"
@@ -592,7 +594,7 @@ const CategoryPage: React.FC = () => {
                                             setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-2 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     />
                                 </div>
                             </div>

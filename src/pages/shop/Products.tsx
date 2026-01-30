@@ -601,10 +601,10 @@ const Products: React.FC = () => {
             </div>
 
             {/* Filters and Search */}
-            <section className="bg-gray-50 py-3 px-4 sm:px-6">
+            <section className="bg-gray-50 py-2 px-4 sm:px-6">
                 <div className="w-full max-w-7xl mx-auto">
                     {/* Top Filter Row */}
-                    <div className="flex flex-col lg:flex-row gap-2 lg:gap-4 mb-3">
+                    <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 mb-2">
                         {/* Sort Dropdown */}
                         <div className="flex items-center gap-2">
                             <label className="text-xs font-medium text-gray-700">Sort</label>
@@ -614,7 +614,7 @@ const Products: React.FC = () => {
                                     setSortBy(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[120px]"
+                                className="px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[120px] text-xs"
                             >
                                 <option value="newest">Newest</option>
                                 <option value="oldest">Oldest First</option>
@@ -639,10 +639,10 @@ const Products: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Filter Options Row */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+                    {/* Filter Options Row - More compact */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1">
                         {/* Category Filter */}
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
                             <select
                                 value={selectedCategory}
@@ -663,7 +663,7 @@ const Products: React.FC = () => {
 
                         {/* Subcategory Filter */}
                         {selectedCategory !== 'all' && availableSubcategories.length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                 <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Subcategory</label>
                                 <select
                                     value={selectedSubcategory || ''}
@@ -685,7 +685,7 @@ const Products: React.FC = () => {
 
                         {/* Sub-subcategory Filter */}
                         {selectedSubcategory && availableSubSubcategories.length > 0 && (
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                                 <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                 <select
                                     value={selectedSubSubcategory || ''}
@@ -710,7 +710,7 @@ const Products: React.FC = () => {
                             // Contact Lens Specific Filters
                             <>
                                 {/* Lens Type Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                     <select
                                         value={lensType}
@@ -730,7 +730,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Base Curve Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Base Curve</label>
                                     <select
                                         value={baseCurve}
@@ -752,7 +752,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Diameter Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Diameter</label>
                                     <select
                                         value={diameter}
@@ -773,7 +773,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Replacement Period Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Replacement</label>
                                     <select
                                         value={replacementPeriod}
@@ -796,7 +796,7 @@ const Products: React.FC = () => {
                             // Regular Eyeglasses/Sunglasses Filters
                             <>
                                 {/* Frame Shape Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                     <select
                                         value={frameShape}
@@ -816,7 +816,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Frame Material Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Coating</label>
                                     <select
                                         value={frameMaterial}
@@ -836,7 +836,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Gender Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Gender</label>
                                     <select
                                         value={gender}
@@ -856,7 +856,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Colors Filter */}
-                                <div className="space-y-2">
+                                <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Color</label>
                                     <select
                                         value={selectedColor}
@@ -878,9 +878,9 @@ const Products: React.FC = () => {
                         )}
 
                         {/* Price Range - Common for all product types */}
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price</label>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
                                 <div>
                                     <input
                                         type="number"
@@ -909,7 +909,7 @@ const Products: React.FC = () => {
                         </div>
                     </div>
                     {/* Add spacer div for visual separation */}
-                    <div className="mb-8"></div>
+                    <div className="mb-4"></div>
                 </div>
             </section>
 
