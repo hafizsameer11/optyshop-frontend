@@ -11,4 +11,6 @@
 .marquee-track {
     animation: marquee 25s linear infinite;
     will-change: transform;
+    display: flex;
+    width: fit-content;
 }

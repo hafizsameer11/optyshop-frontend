@@ -275,7 +275,13 @@ const TrustedBrands: React.FC = () => {
             </div>
 
             <div className="overflow-hidden pb-6">
-                <div className="flex gap-16 px-8 items-center marquee-track">
+                <div 
+                    className="flex gap-16 px-8 items-center marquee-track"
+                    style={{
+                        width: 'fit-content', // Let content determine width
+                        minWidth: '200%' // Ensure at least double width for seamless loop
+                    }}
+                >
                     {duplicatedTrack.map((brand: Brand, index: number) => {
                         const imageUrl = getImageUrl(brand.logo_image || brand.logo_url, brand.name)
                         const hasLink = !!brand.website_url
