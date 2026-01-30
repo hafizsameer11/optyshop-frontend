@@ -276,9 +276,10 @@ const TrustedBrands: React.FC = () => {
 
             <div className="overflow-hidden pb-6 relative bg-slate-50">
                 <div 
-                    className="flex items-center marquee-track border-2 border-red-500"
+                    className="flex items-center animate-scroll"
                     style={{
-                        width: 'fit-content' // Let content determine width
+                        animation: 'scroll 30s linear infinite',
+                        width: `${duplicatedTrack.length * 200}px` // Give each brand more space
                     }}
                 >
                     {duplicatedTrack.map((brand: Brand, index: number) => {
@@ -293,14 +294,15 @@ const TrustedBrands: React.FC = () => {
                         return (
                             <div
                                 key={`${brand.id}-${index}`}
-                                className={`flex-shrink-0 flex items-center justify-center px-8 ${hasLink ? 'cursor-pointer' : ''}`}
+                                className={`flex-shrink-0 flex items-center justify-center px-4 ${hasLink ? 'cursor-pointer' : ''}`}
+                                style={{ width: '200px' }} // Fixed width like campaign section
                                 onClick={() => hasLink && handleBrandClick(brand)}
                             >
                                 {imageUrl ? (
                                     <img
                                         src={imageUrl}
                                         alt={brand.name}
-                                        className="h-8 sm:h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
+                                        className="h-16 sm:h-20 md:h-24 lg:h-32 object-contain opacity-80 hover:opacity-100 transition-opacity"
                                         onLoad={() => {
                                             console.log(`✅ Image loaded successfully: ${brand.name} -> ${imageUrl}`)
                                         }}
@@ -327,7 +329,7 @@ const TrustedBrands: React.FC = () => {
                                     />
                                 ) : (
                                     // Show a placeholder div when no image is available to maintain spacing
-                                    <div className="h-8 sm:h-12 w-24 sm:w-32 bg-slate-100 rounded flex items-center justify-center">
+                                    <div className="h-16 sm:h-20 md:h-24 lg:h-32 w-24 sm:w-32 md:w-40 lg:w-48 bg-slate-100 rounded flex items-center justify-center">
                                         <span className="text-xs text-slate-400 text-center px-2">
                                             {showImageOnly ? '' : displayName}
                                         </span>
@@ -338,6 +340,28 @@ const TrustedBrands: React.FC = () => {
                     })}
                 </div>
             </div>
+            
+            {/* Add CSS for continuous scrolling animation */}
+            <style>{`
+                @keyframes scroll {
+                    0% {
+                        transform: translateX(0);
+                    }
+                    100% {
+                        transform: translateX(-50%);
+                    }
+                }
+                
+                .animate-scroll {
+                    display: flex;
+                    transition: transform 0.3s ease-out;
+                }
+                
+                .animate-scroll:hover {
+                    animation-play-state: paused;
+                    transform: translateX(var(--scroll-position, 0));
+                }
+            `}</style>
         </section>
     )
 }
