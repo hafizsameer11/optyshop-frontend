@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './styles/calibers-and-variants.css'
 import './i18n/config'
 import App from './App.tsx'
 import { CartProvider } from './context/CartContext'

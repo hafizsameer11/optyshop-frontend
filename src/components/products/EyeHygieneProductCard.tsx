@@ -2,57 +2,22 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
-import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
-import type { Product, MMCaliber } from '../../services/productsService'
+import type { Product } from '../../services/productsService'
 
-interface ProductCardProps {
+interface EyeHygieneProductCardProps {
     product: Product
+    onAddToCart: (product: Product, variant?: any) => void
     className?: string
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) => {
+const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({ 
+    product, 
+    onAddToCart, 
+    className = '' 
+}) => {
     const { t } = useTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
-    const { addToCart } = useCart()
-
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        
-        try {
-            const salePrice = product?.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product?.price ? Number(product.price) : 0
-            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
-            
-            // Get calibers for this product
-            const p = product as any
-            const calibers = Array.isArray(p.mm_calibers) ? p.mm_calibers : []
-            const firstCaliber = calibers.length > 0 ? calibers[0] : null
-            
-            const cartProduct = {
-                id: product?.id || 0,
-                name: product?.name || '',
-                brand: product?.brand || '',
-                category: product?.category?.slug || 'contact-lenses',
-                price: finalPrice,
-                image: firstCaliber?.image_url || getProductImageUrl(product),
-                description: product?.description || '',
-                inStock: product?.in_stock !== false,
-                rating: product?.rating ? Number(product.rating) : undefined,
-                caliber: firstCaliber?.mm,
-                caliberImageUrl: firstCaliber?.image_url,
-                type: 'main_product' as const,
-                customization: {
-                    selected_mm_caliber: firstCaliber?.mm,
-                    caliber_image_url: firstCaliber?.image_url
-                }
-            }
-            addToCart(cartProduct)
-        } catch (error) {
-            console.error('Error adding to cart:', error)
-        }
-    }
 
     const handleWishlistToggle = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -60,17 +25,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         toggleWishlist(product)
     }
 
-    const isOutOfStock = product.in_stock === false
-
-    // Get calibers for this product (if available)
-    const getCalibers = (): MMCaliber[] => {
-        const p = product as any
-        const calibers = p.mm_calibers
-        return Array.isArray(calibers) ? calibers : []
+    const handleAddToCartClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onAddToCart(product)
     }
 
-    const calibers = getCalibers()
-    const hasCalibers = calibers && calibers.length > 0
+    const isOutOfStock = product.in_stock === false
+
+    // Get variants for this product (if available)
+    const getVariants = () => {
+        const p = product as any
+        const variants = p.eyeHygieneVariants || p.size_volume_variants || []
+        return Array.isArray(variants) ? variants : []
+    }
+
+    const variants = getVariants()
+    const hasVariants = variants && variants.length > 0
 
     return (
         <div className={`bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col group ${className}`}>
@@ -112,17 +83,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </div>
                 )}
 
-                {/* Sale Badge */}
-                {product.sale_price && Number(product.sale_price) < Number(product.price) && (
-                    <div className="absolute bottom-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
-                        Sale
-                    </div>
-                )}
+                {/* Eye Hygiene Badge */}
+                <div className="absolute bottom-3 left-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
+                    Eye Care
+                </div>
 
-                {/* Caliber Badge - Show if product has calibers */}
-                {hasCalibers && (
+                {/* Variants Badge */}
+                {hasVariants && (
                     <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
-                        {calibers.length} Sizes
+                        {variants.length} Variants
                     </div>
                 )}
             </div>
@@ -136,22 +105,56 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </h3>
                 </Link>
 
-                {/* Caliber Sizes - Show available calibers if product has them */}
-                {hasCalibers && (
+                {/* Eye Hygiene Specific Fields */}
+                <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="space-y-1">
+                        {product.size_volume && (
+                            <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Size:</span>
+                                <span className="font-medium text-gray-900">{product.size_volume}</span>
+                            </div>
+                        )}
+                        {product.pack_type && (
+                            <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Pack:</span>
+                                <span className="font-medium text-gray-900">{product.pack_type}</span>
+                            </div>
+                        )}
+                        {(product as any).expiry_date && (
+                            <div className="flex justify-between text-xs">
+                                <span className="text-gray-600">Expires:</span>
+                                <span className="font-medium text-gray-900">
+                                    {new Date((product as any).expiry_date).toLocaleDateString()}
+                                </span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-xs">
+                            <span className="text-gray-600">Stock:</span>
+                            <span className={`font-medium ${
+                                (product.stock_quantity || 0) > 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                                {(product.stock_quantity || 0)} available
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Variants Preview */}
+                {hasVariants && (
                     <div className="mb-3">
-                        <div className="text-xs text-gray-500 mb-1">Available sizes:</div>
+                        <div className="text-xs text-gray-500 mb-1">Available variants:</div>
                         <div className="flex flex-wrap gap-1">
-                            {calibers.slice(0, 3).map((caliber, index) => (
+                            {variants.slice(0, 2).map((variant: any, index: number) => (
                                 <span 
                                     key={index}
-                                    className="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium"
+                                    className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium"
                                 >
-                                    {caliber.mm}mm
+                                    {variant.size_volume} {variant.pack_type}
                                 </span>
                             ))}
-                            {calibers.length > 3 && (
+                            {variants.length > 2 && (
                                 <span className="inline-block bg-gray-100 text-gray-500 px-2 py-1 rounded text-xs">
-                                    +{calibers.length - 3} more
+                                    +{variants.length - 2} more
                                 </span>
                             )}
                         </div>
@@ -178,12 +181,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
 
                 {/* Add to Cart Button */}
                 <button
-                    onClick={handleAddToCart}
+                    onClick={handleAddToCartClick}
                     disabled={isOutOfStock}
                     className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                         isOutOfStock
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                            : 'bg-green-600 text-white hover:bg-green-700 shadow-md hover:shadow-lg'
                     }`}
                 >
                     {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}
@@ -193,4 +196,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     )
 }
 
-export default ProductCard
+export default EyeHygieneProductCard

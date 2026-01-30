@@ -15,6 +15,9 @@ export interface CartProduct {
     inStock: boolean
     rating?: number
     unit?: string // Unit for contact lenses (unit, box, pack)
+    caliber?: string | number // Selected MM caliber for frames
+    caliberImageUrl?: string // Image URL for selected caliber
+    type?: 'main_product' | 'eye_hgiene_variant' | 'contact_lens' // Product type for handling different displays
     customization?: {
         contactLens?: {
             unit?: string
@@ -39,6 +42,13 @@ export interface CartProduct {
         selected_color?: string // Selected color for glasses
         color_name?: string // Display name of selected color
         variant_images?: string[] // Images for selected variant
+        // Store caliber selection in customization
+        selected_mm_caliber?: string | number
+        caliber_image_url?: string
+        // Eye hygiene variant specific properties
+        variant_id?: number
+        size_volume?: string
+        pack_type?: string
     }
     isContactLens?: boolean // Flag to identify contact lens products
     isGift?: boolean // Flag to identify free gift items

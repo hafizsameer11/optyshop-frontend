@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { useCart } from '../../context/CartContext'
+import { useCart, type CartProduct } from '../../context/CartContext'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import {
     getProductBySlug,
@@ -3330,12 +3330,52 @@ const ProductDetail = () => {
                                                                 )}
                                                                 
                                                                 {/* Variant Info */}
-                                                                <div className="space-y-1">
+                                                                <div className="space-y-2">
                                                                     <h4 className="font-semibold text-sm leading-tight">{variant.name}</h4>
                                                                     {variant.description && (
                                                                         <p className="text-xs text-gray-600 line-clamp-2">{variant.description}</p>
                                                                     )}
-                                                                    <p className="font-bold text-base">€{variant.price.toFixed(2)}</p>
+                                                                    
+                                                                    {/* Eye Hygiene Specific Details */}
+                                                                    <div className="text-xs space-y-1">
+                                                                        {variant.size_volume && (
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-gray-600">Size:</span>
+                                                                                <span className="font-medium text-gray-900">{variant.size_volume}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {variant.pack_type && (
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-gray-600">Pack:</span>
+                                                                                <span className="font-medium text-gray-900">{variant.pack_type}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {variant.expiry_date && (
+                                                                            <div className="flex justify-between">
+                                                                                <span className="text-gray-600">Expires:</span>
+                                                                                <span className="font-medium text-gray-900">
+                                                                                    {new Date(variant.expiry_date).toLocaleDateString()}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex justify-between">
+                                                                            <span className="text-gray-600">Stock:</span>
+                                                                            <span className={`font-medium ${
+                                                                                variant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'
+                                                                            }`}>
+                                                                                {variant.stock_quantity} available
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                                                        <p className="font-bold text-base">€{variant.price.toFixed(2)}</p>
+                                                                        {variant.compare_at_price && variant.compare_at_price > variant.price && (
+                                                                            <span className="text-xs text-green-600 font-medium">
+                                                                                Save €{(variant.compare_at_price - variant.price).toFixed(2)}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
 
                                                                 {/* Selected Badge */}
@@ -5195,6 +5235,149 @@ const ProductDetail = () => {
                                     )
                                 })()}
                             </div>
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            {/* Eye Hygiene Variants Section */}
+            {productEyeHygieneVariants.length > 0 && (
+                <section className="py-12 bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4">
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                {t('shop.completeEyeCare', 'Complete Your Eye Care Routine')}
+                            </h2>
+                            <p className="text-gray-600">
+                                {t('shop.eyeHygieneDescription', 'Enhance your eye health with these complementary products')}
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {productEyeHygieneVariants.map((variant: EyeHygieneVariant) => (
+                                <div 
+                                    key={variant.id}
+                                    className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group"
+                                >
+                                    {/* Variant Image */}
+                                    <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+                                        {variant.image_url ? (
+                                            <img
+                                                src={variant.image_url}
+                                                alt={variant.name}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement
+                                                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDMwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjUgMTI1SDc1VjE3NUgxMjVWMTI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDEyNUgxNzVWMTc1SDIyNVYxMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMjUgMjI1SDc1VjI3NUgxMjVWMjI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDIyNUgxNzVWMjc1SDIyNVYyMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMDAgMTUwSDE1MFYxNzVIMTAwVjE1MFoiIGZpbGw9IiNBMkEyQTQiLz4KPHA+PC9wPgo8L3N2Zz4='
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    {/* Variant Info */}
+                                    <div className="p-4">
+                                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                                            {variant.name}
+                                        </h3>
+                                        
+                                        {variant.description && (
+                                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                                {variant.description}
+                                            </p>
+                                        )}
+                                        
+                                        {/* Eye Hygiene Details */}
+                                        <div className="space-y-1 mb-3 text-xs">
+                                            {variant.size_volume && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Size:</span>
+                                                    <span className="font-medium text-gray-900">{variant.size_volume}</span>
+                                                </div>
+                                            )}
+                                            {variant.pack_type && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Pack:</span>
+                                                    <span className="font-medium text-gray-900">{variant.pack_type}</span>
+                                                </div>
+                                            )}
+                                            {variant.expiry_date && (
+                                                <div className="flex justify-between">
+                                                    <span className="text-gray-600">Expires:</span>
+                                                    <span className="font-medium text-gray-900">
+                                                        {new Date(variant.expiry_date).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                            <div className="flex justify-between">
+                                                <span className="text-gray-600">Stock:</span>
+                                                <span className={`font-medium ${
+                                                    variant.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'
+                                                }`}>
+                                                    {variant.stock_quantity} available
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Price and Add to Cart */}
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div>
+                                                {variant.compare_at_price && variant.compare_at_price > variant.price ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg font-bold text-gray-900">
+                                                            €{variant.price.toFixed(2)}
+                                                        </span>
+                                                        <span className="text-sm text-gray-400 line-through">
+                                                            €{variant.compare_at_price.toFixed(2)}
+                                                        </span>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-lg font-bold text-gray-900">
+                                                        €{variant.price.toFixed(2)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        <button
+                                            onClick={() => {
+                                                // Add variant to cart
+                                                const cartProduct: CartProduct = {
+                                                    id: product?.id || 0,
+                                                    name: variant.name,
+                                                    brand: product?.brand || '',
+                                                    category: 'eye-hygiene',
+                                                    price: variant.price,
+                                                    image: variant.image_url || getProductImageUrl(product),
+                                                    description: variant.description || '',
+                                                    inStock: variant.stock_quantity > 0,
+                                                    rating: product?.rating ? Number(product.rating) : undefined,
+                                                    type: 'eye_hygiene_variant',
+                                                    customization: {
+                                                        variant_id: variant.id,
+                                                        size_volume: variant.size_volume,
+                                                        pack_type: variant.pack_type
+                                                    }
+                                                }
+                                                addToCart(cartProduct as unknown as CartProduct)
+                                            }}
+                                            disabled={variant.stock_quantity <= 0}
+                                            className={`w-full py-2 px-4 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                                variant.stock_quantity <= 0
+                                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-green-600 text-white hover:bg-green-700 transform hover:scale-105'
+                                            }`}
+                                        >
+                                            {variant.stock_quantity <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </section>
