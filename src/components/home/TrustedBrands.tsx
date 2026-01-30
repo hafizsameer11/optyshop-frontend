@@ -261,7 +261,7 @@ const TrustedBrands: React.FC = () => {
         return null // Don't render anything if no brands
     }
 
-    // Duplicate brands for seamless marquee effect
+    // Duplicate brands for seamless marquee effect (only 2 copies total)
     const duplicatedTrack = Array.isArray(brands) && brands.length > 0 ? [...brands, ...brands] : []
 
     return (
@@ -278,8 +278,7 @@ const TrustedBrands: React.FC = () => {
                 <div 
                     className="flex gap-16 px-8 items-center marquee-track"
                     style={{
-                        width: 'fit-content', // Let content determine width
-                        minWidth: '200%' // Ensure at least double width for seamless loop
+                        width: 'fit-content' // Let content determine width
                     }}
                 >
                     {duplicatedTrack.map((brand: Brand, index: number) => {
@@ -327,8 +326,12 @@ const TrustedBrands: React.FC = () => {
                                         }}
                                     />
                                 ) : (
-                                    // Don't show any fallback text when no image is available
-                                    null
+                                    // Show a placeholder div when no image is available to maintain spacing
+                                    <div className="h-8 sm:h-12 w-24 sm:w-32 bg-slate-100 rounded flex items-center justify-center">
+                                        <span className="text-xs text-slate-400 text-center px-2">
+                                            {showImageOnly ? '' : displayName}
+                                        </span>
+                                    </div>
                                 )}
                             </div>
                         )

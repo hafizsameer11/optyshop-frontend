@@ -4,7 +4,7 @@
     }
 
     100% {
-        transform: translateX(-50%);
+        transform: translateX(-50%); /* Move by 50% since we have 2 copies */
     }
 }
 
@@ -13,4 +13,6 @@
     will-change: transform;
     display: flex;
     width: fit-content;
+    backface-visibility: hidden; /* Prevent flickering during animation */
+    perspective: 1000px; /* Hardware acceleration */
 }
