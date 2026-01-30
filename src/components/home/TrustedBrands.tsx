@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getBrands } from '../../services/brandsService'
+import { getProxiedImageUrl, convertToDataUrl } from '../../services/imageProxyService'
 import type { Brand } from '../../services/brandsService'
 
 // Brand logo mapping for fallback when backend doesn't provide logo images
@@ -97,6 +98,9 @@ const TrustedBrands: React.FC = () => {
                         )
                         
                         console.log(`🔍 Checking brand: "${brand.name}" - isPlaceholder: ${isPlaceholder}, hasImage: ${!!brand.logo_image}`)
+                        console.log(`📸 Original logo_image URL: ${brand.logo_image}`)
+                        const processedUrl = getImageUrl(brand.logo_image || brand.logo_url, brand.name)
+                        console.log(`🔄 Processed image URL: ${processedUrl}`)
                         
                         // If it's a placeholder but has an image, hide the name but keep the image
                         if (isPlaceholder && brand.logo_image) {
@@ -189,79 +193,14 @@ const TrustedBrands: React.FC = () => {
         }
     }, [])
 
-    // Helper function to handle image URLs (convert full URLs to relative paths for proxy)
+    // Helper function to handle image URLs (use proxy service)
     const getImageUrl = (imageUrl: string | null | undefined, brandName?: string): string => {
-        // First try the provided image URL
-        if (imageUrl && imageUrl.trim() !== '') {
-            const cleanedUrl = imageUrl.trim()
-
-            // If it's a full URL with localhost:5000, convert to relative path (dev environment)
-            if (cleanedUrl.includes('http://localhost:5000') || cleanedUrl.includes('http://127.0.0.1:5000')) {
-                try {
-                    const url = new URL(cleanedUrl)
-                    return url.pathname || ''
-                } catch {
-                    // If URL parsing fails, try to extract path manually
-                    const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
-                    if (pathMatch && pathMatch[1]) {
-                        return pathMatch[1]
-                    }
-                    return ''
-                }
-            }
-
-            // If it's an external HTTPS URL (like optyshop-frontend.hmstech.org), use the proxy
-            if (cleanedUrl.startsWith('https://optyshop-frontend.hmstech.org')) {
-                try {
-                    const url = new URL(cleanedUrl)
-                    return `/external-images${url.pathname}`
-                } catch {
-                    // If URL parsing fails, try to extract path manually
-                    const pathMatch = cleanedUrl.match(/\/\/[^\/]+(\/.*)/)
-                    if (pathMatch && pathMatch[1]) {
-                        return `/external-images${pathMatch[1]}`
-                    }
-                    return ''
-                }
-            }
-
-            // If backend returned an insecure http URL on a https site, upgrade to https
-            if (cleanedUrl.startsWith('http://')) {
-                try {
-                    const url = new URL(cleanedUrl)
-                    url.protocol = 'https:'
-                    return url.toString()
-                } catch {
-                    // If parsing fails, try to manually convert
-                    if (cleanedUrl.startsWith('http://')) {
-                        return cleanedUrl.replace('http://', 'https://')
-                    }
-                    return ''
-                }
-            }
-
-            // If it's already a relative path, return as is
-            if (cleanedUrl.startsWith('/')) {
-                return cleanedUrl
-            }
-
-            // If it's a data URL, return as is
-            if (cleanedUrl.startsWith('data:')) {
-                return cleanedUrl
-            }
-
-            // If it starts with https://, return as is
-            if (cleanedUrl.startsWith('https://')) {
-                return cleanedUrl
-            }
-
-            // If it's a relative path without leading slash, add it
-            if (!cleanedUrl.startsWith('http') && !cleanedUrl.startsWith('/')) {
-                return '/' + cleanedUrl
-            }
-
-            // Otherwise return the full URL or cleaned URL
-            return cleanedUrl || ''
+        // Use the proxy service for external images
+        const proxiedUrl = getProxiedImageUrl(imageUrl);
+        
+        if (proxiedUrl) {
+            console.log(`🖼️ Using proxied URL: ${proxiedUrl}`)
+            return proxiedUrl;
         }
 
         // If no image URL provided, try to find a fallback logo based on brand name
@@ -284,6 +223,27 @@ const TrustedBrands: React.FC = () => {
                 window.location.href = brand.website_url
             }
         }
+    }
+
+    const handleCorsFallback = async (target: HTMLImageElement, brand: Brand) => {
+        console.error(`🔄 Trying data URL conversion for: ${brand.name}`)
+        try {
+            const originalUrl = brand.logo_image || brand.logo_url || ''
+            if (originalUrl) {
+                const dataUrl = await convertToDataUrl(originalUrl)
+                if (dataUrl !== originalUrl) {
+                    console.log(`✅ Successfully converted to data URL: ${brand.name}`)
+                    target.src = dataUrl
+                    return
+                }
+            }
+        } catch (error) {
+            console.error(`❌ Data URL conversion failed for: ${brand.name}`, error)
+        }
+        
+        // Final fallback: hide the image
+        console.error(`🚫 All fallbacks failed for: ${brand.name}. Hiding image.`)
+        target.style.display = 'none'
     }
 
     if (loading) {
@@ -323,6 +283,7 @@ const TrustedBrands: React.FC = () => {
                         const showImageOnly = (brand as any).showImageOnly || false
                         
                         console.log(`Rendering brand: ${brand.name}, imageUrl: ${imageUrl}, displayName: ${displayName}, showImageOnly: ${showImageOnly}`)
+                        console.log(`🖼️ Final image src: ${imageUrl}`)
                         
                         return (
                             <div
@@ -335,12 +296,28 @@ const TrustedBrands: React.FC = () => {
                                         src={imageUrl}
                                         alt={brand.name}
                                         className="h-8 sm:h-12 object-contain opacity-80 hover:opacity-100 transition-opacity"
-                                        crossOrigin="anonymous"
-                                        onError={(e) => {
+                                        onLoad={() => {
+                                            console.log(`✅ Image loaded successfully: ${brand.name} -> ${imageUrl}`)
+                                        }}
+                                        onError={async (e) => {
                                             const target = e.target as HTMLImageElement
                                             console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)
-                                            target.style.display = 'none'
-                                            // Don't show any fallback text - just hide the failed image
+                                            console.error(`🔍 Image element src: ${target.src}`)
+                                            
+                                            // Try the original URL as fallback
+                                            const originalUrl = brand.logo_image || brand.logo_url || ''
+                                            if (originalUrl && target.src !== originalUrl) {
+                                                console.error(`🌐 Trying original URL as fallback...`)
+                                                target.src = originalUrl
+                                                target.onerror = () => {
+                                                    console.error(`❌ Original URL also failed for: ${brand.name}`)
+                                                    // Try to convert to data URL as last resort
+                                                    handleCorsFallback(target, brand)
+                                                }
+                                            } else {
+                                                // Try to convert to data URL as last resort
+                                                handleCorsFallback(target, brand)
+                                            }
                                         }}
                                     />
                                 ) : (

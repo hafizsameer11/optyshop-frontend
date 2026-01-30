@@ -431,6 +431,13 @@ export const API_ROUTES = {
   },
 
   // ============================================
+  // IMAGE PROXY (PUBLIC)
+  // ============================================
+  IMAGE_PROXY: {
+    PROXY: (imageUrl: string) => `/proxy/image?url=${encodeURIComponent(imageUrl)}`, // PUBLIC - Proxy external images
+  },
+
+  // ============================================
   // HEALTH & API INFO (PUBLIC)
   // ============================================
   HEALTH: {
