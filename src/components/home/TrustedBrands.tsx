@@ -54,8 +54,7 @@ const TrustedBrands: React.FC = () => {
                             /demo/i,
                             /placeholder/i,
                             /sample/i,
-                            /unity gallegos/i,  // Matches "Unity Gallegos"
-                            /^nm$/i  // Matches exactly "nm"
+                            /unity gallegos/i  // Matches "Unity Gallegos"
                         ]
                         const isPlaceholder = placeholderPatterns.some(pattern => 
                             pattern.test(brand.name.toLowerCase().trim())
@@ -90,8 +89,7 @@ const TrustedBrands: React.FC = () => {
                             /demo/i,
                             /placeholder/i,
                             /sample/i,
-                            /unity gallegos/i,  // Matches "Unity Gallegos"
-                            /^nm$/i  // Matches exactly "nm"
+                            /unity gallegos/i  // Matches "Unity Gallegos"
                         ]
                         
                         const isPlaceholder = placeholderPatterns.some(pattern => 
