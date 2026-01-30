@@ -5,27 +5,7 @@ import type { Campaign } from '../../services/campaignsService'
 const SmallSlidingBanners: React.FC = () => {
     const [campaigns, setCampaigns] = useState<Campaign[]>([])
     const [loading, setLoading] = useState(true)
-    const [currentIndex, setCurrentIndex] = useState(0)
-    const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-    const [itemsPerView, setItemsPerView] = useState(3)
-    const [touchStart, setTouchStart] = useState<number | null>(null)
-    const [touchEnd, setTouchEnd] = useState<number | null>(null)
 
-    // Detect screen size and calculate items per view
-    useEffect(() => {
-        const updateItemsPerView = () => {
-            if (window.innerWidth < 768) {
-                setItemsPerView(1) // Mobile: 1 item
-            } else if (window.innerWidth >= 1024) {
-                setItemsPerView(4) // Large desktop: 4 items
-            } else {
-                setItemsPerView(3) // Tablet: 3 items
-            }
-        }
-        updateItemsPerView()
-        window.addEventListener('resize', updateItemsPerView)
-        return () => window.removeEventListener('resize', updateItemsPerView)
-    }, [])
 
     // Fetch campaigns
     useEffect(() => {
@@ -50,7 +30,6 @@ const SmallSlidingBanners: React.FC = () => {
                 if (isCancelled) return
                 
                 setCampaigns(bannersToShow)
-                setIsAutoPlaying(true) // Ensure auto-play is enabled when campaigns load
                 
                 if (import.meta.env.DEV && bannersToShow.length > 0) {
                     console.log(`✅ [Small Sliding Banners] Loaded ${bannersToShow.length} banner(s)`)
@@ -74,29 +53,6 @@ const SmallSlidingBanners: React.FC = () => {
         }
     }, [])
 
-    // Reset to first slide and enable auto-play when campaigns are loaded
-    useEffect(() => {
-        if (campaigns.length > 0) {
-            setCurrentIndex(0)
-            setIsAutoPlaying(true)
-        }
-    }, [campaigns.length])
-
-    // Auto-rotate banners - slide one item at a time like hero banner
-    useEffect(() => {
-        // Only auto-slide if we have more than 1 campaign and auto-play is enabled
-        if (campaigns.length <= 1 || !isAutoPlaying) return
-
-        const interval = setInterval(() => {
-            setCurrentIndex((prev) => {
-                // For infinite loop carousel, use modulo
-                // This ensures smooth continuous sliding
-                return (prev + 1) % Math.max(1, campaigns.length)
-            })
-        }, 5000) // Change every 5 seconds (matching hero banner)
-
-        return () => clearInterval(interval)
-    }, [campaigns.length, isAutoPlaying])
 
     // Helper function to handle image URLs
     const getImageUrl = (imageUrl: string | null | undefined): string => {
@@ -159,48 +115,6 @@ const SmallSlidingBanners: React.FC = () => {
         }
     }
 
-    const goToPrevious = () => {
-        setCurrentIndex((prev) => {
-            const newIndex = prev - 1
-            return newIndex < 0 ? campaigns.length - 1 : newIndex
-        })
-        setIsAutoPlaying(false)
-        // Resume auto-play after 10 seconds
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    const goToNext = () => {
-        setCurrentIndex((prev) => (prev + 1) % Math.max(1, campaigns.length))
-        setIsAutoPlaying(false)
-        // Resume auto-play after 10 seconds
-        setTimeout(() => setIsAutoPlaying(true), 10000)
-    }
-
-    // Touch handlers for swipe
-    const minSwipeDistance = 50
-
-    const onTouchStart = (e: React.TouchEvent) => {
-        setTouchEnd(null)
-        setTouchStart(e.targetTouches[0].clientX)
-    }
-
-    const onTouchMove = (e: React.TouchEvent) => {
-        setTouchEnd(e.targetTouches[0].clientX)
-    }
-
-    const onTouchEnd = () => {
-        if (!touchStart || !touchEnd) return
-        const distance = touchStart - touchEnd
-        const isLeftSwipe = distance > minSwipeDistance
-        const isRightSwipe = distance < -minSwipeDistance
-
-        if (isLeftSwipe) {
-            goToNext()
-        }
-        if (isRightSwipe) {
-            goToPrevious()
-        }
-    }
 
     if (loading) {
         return (
@@ -220,33 +134,23 @@ const SmallSlidingBanners: React.FC = () => {
         return null // Don't render anything if no banners
     }
 
-    const slideWidth = 100 / itemsPerView
+    // Duplicate the campaigns array for seamless infinite scroll
+    const track = [...campaigns, ...campaigns]
 
     return (
         <section 
             className="w-full py-6 md:py-8 bg-slate-950"
         >
-            <div className="w-[90%] mx-auto max-w-7xl relative overflow-hidden">
-                {/* Carousel Container */}
-                <div
-                    className="relative overflow-hidden"
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={onTouchEnd}
-                >
-                    <div
-                        className="flex transition-transform duration-700 ease-in-out"
-                        style={{
-                            transform: `translateX(-${currentIndex * slideWidth}%)`,
-                        }}
-                    >
-                        {campaigns.map((campaign) => {
+            <div className="w-[90%] mx-auto max-w-7xl">
+                {/* Auto-moving banners carousel - continuous scroll like brands */}
+                <div className="overflow-hidden py-2">
+                    <div className="flex gap-4 items-center marquee-track">
+                        {track.map((campaign, index) => {
                             const imageUrl = getImageUrl(campaign.image_url)
                             return (
                                 <div
-                                    key={campaign.id}
-                                    className="flex-shrink-0 px-2"
-                                    style={{ width: `${slideWidth}%` }}
+                                    key={`${campaign.id}-${index}`}
+                                    className="flex-shrink-0 w-72 md:w-80"
                                 >
                                     <div
                                         className={`relative rounded-lg overflow-hidden transition-all duration-300 h-32 md:h-40 ${
@@ -307,53 +211,6 @@ const SmallSlidingBanners: React.FC = () => {
                         })}
                     </div>
                 </div>
-
-                {/* Navigation Arrows - Always show if there are multiple campaigns */}
-                {campaigns.length > 1 && (
-                    <>
-                        <button
-                            onClick={goToPrevious}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
-                            aria-label="Previous banners"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <button
-                            onClick={goToNext}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full transition-all z-10"
-                            aria-label="Next banners"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
-                        </button>
-                    </>
-                )}
-
-                {/* Dots Indicator - Always show if there are multiple campaigns */}
-                {campaigns.length > 1 && (
-                    <div className="flex justify-center gap-2 mt-4">
-                        {campaigns.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => {
-                                    setCurrentIndex(index)
-                                    setIsAutoPlaying(false)
-                                    // Resume auto-play after 10 seconds
-                                    setTimeout(() => setIsAutoPlaying(true), 10000)
-                                }}
-                                className={`h-2 rounded-full transition-all ${
-                                    index === currentIndex
-                                        ? 'bg-white w-8'
-                                        : 'bg-white/40 w-2 hover:bg-white/60'
-                                }`}
-                                aria-label={`Go to slide ${index + 1}`}
-                            />
-                        ))}
-                    </div>
-                )}
             </div>
         </section>
     )
