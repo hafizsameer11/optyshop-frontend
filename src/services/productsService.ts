@@ -584,7 +584,7 @@ export const getProductCalibers = async (id: number | string): Promise<MMCaliber
 export const getProductEyeHygieneVariants = async (id: number | string): Promise<EyeHygieneVariant[] | null> => {
   try {
     const response = await apiClient.get<{ variants: EyeHygieneVariant[] }>(
-      `/products/${id}/eye-hygiene-variants`,
+      API_ROUTES.EYE_HYGIENE_FORMS.GET_VARIANTS(id),
       false // PUBLIC endpoint
     );
 

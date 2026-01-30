@@ -3,7 +3,7 @@
  * Handles API calls for lens treatments/coatings
  */
 
-import apiClient from '../utils/api';
+import { apiClient } from '../utils/api';
 import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
 
 // ============================================
@@ -86,7 +86,7 @@ export const getLensTreatmentById = async (id: number | string): Promise<LensTre
     );
 
     if (response.success && response.data) {
-      return response.data;
+      return response.data.data;
     }
 
     console.error('Failed to fetch lens treatment:', response.message);
