@@ -104,6 +104,14 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
             return '/assets/images/frame1.png'
         }
         
+        // Handle null/empty URLs
+        if (!imgUrl || imgUrl.trim() === '') {
+            if (import.meta.env.DEV) {
+                console.warn('🚫 Empty URL detected, using fallback image')
+            }
+            return '/assets/images/frame1.png'
+        }
+        
         // If it's a full URL pointing to localhost:5000, convert to proxy path
         if (imgUrl.includes('http://localhost:5000/') || imgUrl.includes('https://localhost:5000/')) {
             // Extract the path after localhost:5000
@@ -113,8 +121,12 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
             } catch (e) {
                 // If URL parsing fails, try manual extraction
                 const match = imgUrl.match(/https?:\/\/localhost:5000(\/.*)/)
-                return match ? match[1] : imgUrl
+                return match ? match[1] : '/assets/images/frame1.png'
             }
+        }
+        // If it's already a relative path starting with /assets/, use it as is
+        if (imgUrl.startsWith('/assets/')) {
+            return imgUrl
         }
         // If it's already a relative path, use it as is
         if (imgUrl.startsWith('/')) {
@@ -127,8 +139,11 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
                 // Convert to proxy path to avoid CORS issues
                 return imgUrl.replace('https://optyshop-frontend.hmstech.org', '/external-images')
             }
-            // For other external URLs, use directly (may have CORS issues but that's expected)
-            return imgUrl
+            // For other external URLs, use fallback to avoid CORS issues
+            if (import.meta.env.DEV) {
+                console.warn('🌐 External URL detected, using fallback to avoid CORS:', imgUrl)
+            }
+            return '/assets/images/frame1.png'
         }
         // If it's a relative path without leading slash, add it
         return '/' + imgUrl
