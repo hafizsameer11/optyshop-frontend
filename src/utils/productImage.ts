@@ -1,4 +1,5 @@
 import type { Product, SizeVolumeVariant } from '../services/productsService'
+import { getProxiedImageUrl } from '../services/imageProxyService'
 
 /**
  * Extracts the primary product image URL using the same comprehensive logic
@@ -132,21 +133,17 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
         if (imgUrl.startsWith('/')) {
             return imgUrl
         }
-        // If it's a full URL (other domain), handle CORS via proxy or use directly
+        // If it's a full URL (other domain), use the image proxy service
         if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
-            // For external images from optyshop-frontend.hmstech.org, use direct URL
-            if (imgUrl.includes('optyshop-frontend.hmstech.org')) {
-                // Use the direct URL as requested
-                if (import.meta.env.DEV) {
-                    console.log('🌐 Using direct URL for optyshop images:', imgUrl);
-                }
-                return imgUrl;
-            }
-            // For other external URLs, use fallback to avoid CORS issues
+            // Use the image proxy service for all external images
+            const proxiedUrl = getProxiedImageUrl(imgUrl)
             if (import.meta.env.DEV) {
-                console.warn('🌐 External URL detected, using fallback to avoid CORS:', imgUrl);
+                console.log('🌐 Using proxied URL:', {
+                    original: imgUrl,
+                    proxied: proxiedUrl
+                })
             }
-            return '/assets/images/frame1.png';
+            return proxiedUrl || '/assets/images/frame1.png'
         }
         // If it's a relative path without leading slash, add it
         return '/' + imgUrl
@@ -194,17 +191,18 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
         
         // Handle external URLs for variant images
         if (variant.image_url.startsWith('http://') || variant.image_url.startsWith('https://')) {
-            if (variant.image_url.includes('optyshop-frontend.hmstech.org')) {
-                // Use the direct URL as requested
-                if (import.meta.env.DEV) {
-                    console.log('🌐 Using direct URL for variant image:', variant.image_url);
-                }
-                return variant.image_url;
-            }
-            // For other external URLs, use fallback
+            // Use the image proxy service for all external variant images
+            const proxiedUrl = getProxiedImageUrl(variant.image_url)
             if (import.meta.env.DEV) {
-                console.warn('🌐 External variant URL detected, using fallback:', variant.image_url);
+                console.log('🌐 Using proxied URL for variant image:', {
+                    original: variant.image_url,
+                    proxied: proxiedUrl
+                })
             }
+            if (proxiedUrl) {
+                return proxiedUrl
+            }
+            // Fallback if proxy fails
             let fallbackImage = '/assets/images/frame1.png';
             if (variant.size_volume) {
                 const sizeVolume = variant.size_volume.toLowerCase();
