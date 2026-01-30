@@ -3780,7 +3780,6 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   prescriptionSunColors: apiPrescriptionSunColors = [],
   lensColors: apiLensColors = [],
   onTreatmentToggle,
-  onColorSelect,
   onNext,
   onBack,
   loading = false,
@@ -4396,7 +4395,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
 
   // Use mapped API options or fallback
   const photochromicOptions = mapPhotochromicOptions()
-  const prescriptionSunOptions = mapPrescriptionSunOptions()
+  // const prescriptionSunOptions = mapPrescriptionSunOptions() // Uncomment when prescription sun section is enabled
 
   // Debug logging
   console.log('🎨 [UI] Final photochromicOptions:', photochromicOptions.length, 'options')
@@ -4413,15 +4412,15 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
     })
   }
 
-  const handlePhotochromicClick = () => {
-    setShowPhotochromic(!showPhotochromic)
-    setShowPrescriptionSun(false)
-  }
+  // const handlePhotochromicClick = () => {
+  //   setShowPhotochromic(!showPhotochromic)
+  //   setShowPrescriptionSun(false)
+  // }
 
-  const handlePrescriptionSunClick = () => {
-    setShowPrescriptionSun(!showPrescriptionSun)
-    setShowPhotochromic(false)
-  }
+  // const handlePrescriptionSunClick = () => {
+  //   setShowPrescriptionSun(!showPrescriptionSun)
+  //   setShowPhotochromic(false)
+  // }
 
 
 
