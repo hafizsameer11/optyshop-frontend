@@ -70,6 +70,7 @@ interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
   initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
+  // selectedCaliber?: any | null // Optional: selected MM caliber information (removed - unused)
   categoryContext?: {
     category?: { id: number; name: string; slug: string } | null
     subcategory?: { id: number; name: string; slug: string } | null
@@ -181,6 +182,15 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   // Helper function to get the color-specific image URL
   const getColorSpecificImageUrl = useCallback((product: Product, imageIndex: number = 0): string => {
+    // Priority 1: Use caliber-specific image if caliber is selected
+    // if (selectedCaliber && selectedCaliber.image_url && !selectedCaliber.image_url.startsWith('blob:')) {
+    //   console.log('[ProductCheckout] Using caliber image:', {
+    //     caliber_mm: selectedCaliber.mm,
+    //     image_url: selectedCaliber.image_url
+    //   });
+    //   return selectedCaliber.image_url;
+    // }
+
     if (!selectedProductColor) {
       // Fallback to regular product image if no color selected
       return getProductImageUrl(product, imageIndex)
@@ -2285,7 +2295,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         brand: product.brand || '',
         category: product.category?.slug || 'eyeglasses',
         price: finalPriceNumber, // Ensure it's a number, not a string
-        image: getProductImageUrl(product, selectedImageIndex),
+        image: getColorSpecificImageUrl(product, selectedImageIndex), // Use color/caliber-specific image
         description: product.description || '',
         inStock: product.in_stock || false,
         rating: product.rating ? Number(product.rating) : undefined,
@@ -2297,6 +2307,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         prescription_id: finalPrescriptionId,
         // Store in a way that can be accessed later
         customization: {
+          // MM caliber information would be stored here if available
+          // selected_mm_caliber: selectedCaliber.mm,
+          // caliber_image_url: selectedCaliber.image_url
           lensType: lensSelection.type,
           lensIndex: lensSelection.lensIndex,
           lensTypeId: lensSelection.lensTypeId,
@@ -3776,8 +3789,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   treatments,
   productConfig: _productConfig,
   photochromicOptions: apiPhotochromicOptions = [],
-  prescriptionSunOptions: apiPrescriptionSunOptions = [],
-  prescriptionSunColors: apiPrescriptionSunColors = [],
+  // prescriptionSunOptions: apiPrescriptionSunOptions = [], // Removed - unused
+  // prescriptionSunColors: apiPrescriptionSunColors = [], // Removed - unused
   lensColors: apiLensColors = [],
   onTreatmentToggle,
   onNext,
@@ -3787,8 +3800,8 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   onRetry
 }) => {
   const { t } = useTranslation()
-  const [showPhotochromic, setShowPhotochromic] = useState(false)
-  const [showPrescriptionSun, setShowPrescriptionSun] = useState(false)
+  // const [showPhotochromic, setShowPhotochromic] = useState(false)
+  // const [showPrescriptionSun, setShowPrescriptionSun] = useState(false)
 
 
   // Use API treatments - filter out photochromic and prescription_sun as they have special handling
@@ -4006,392 +4019,195 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
   // The API returns lens options with type='prescription_sun' or similar
   // Each option can have colors, and we need to group them by main type (polarized, classic, blokz)
   // Also merges colors from the dedicated prescription-sun-colors endpoint and /api/lens/colors
-  const mapPrescriptionSunOptions = () => {
-    console.log('🔍 [UI] mapPrescriptionSunOptions called with:', apiPrescriptionSunOptions?.length || 0, 'options')
-    console.log('🔍 [UI] Prescription sun colors from dedicated endpoint:', apiPrescriptionSunColors?.length || 0, 'colors')
-    console.log('🔍 [UI] All lens colors from /api/lens/colors:', apiLensColors?.length || 0, 'colors')
+  // Helper function to map options to UI format (currently unused)
+  // const mapOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
+  //   // Merge colors from dedicated endpoint into options
+  //   if (additionalColors && additionalColors.length > 0) {
+  //     console.log('🔄 [UI] Merging', additionalColors.length, 'colors from dedicated endpoint into options')
+  //     options.forEach(option => {
+  //       // Find colors that belong to this option
+  //       const matchingColors = additionalColors.filter(color =>
+  //         color.lensOption && color.lensOption.id === option.id
+  //       )
 
-    // Collect all prescription sun colors from both endpoints
-    const allPrescriptionSunColors: LensColor[] = []
+  //       if (matchingColors.length > 0) {
+  //         console.log(`  ✅ Found ${matchingColors.length} colors for option ${option.name} (id: ${option.id})`)
+  //         // Merge colors, avoiding duplicates
+  //         const existingColorIds = new Set((option.colors || []).map(c => c.id))
+  //         const newColors = matchingColors
+  //           .filter(c => !existingColorIds.has(c.id))
+  //           .map(color => ({
+  //             ...color,
+  //             // Ensure consistent field names
+  //             hexCode: color.hexCode || color.hex_code,
+  //             colorCode: color.colorCode || color.color_code,
+  //             isActive: color.isActive !== undefined ? color.isActive : color.is_active,
+  //             priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
+  //           }))
 
-    // Add colors from prescription-sun-colors endpoint
-    if (apiPrescriptionSunColors && apiPrescriptionSunColors.length > 0) {
-      allPrescriptionSunColors.push(...apiPrescriptionSunColors)
-    }
+  //         option.colors = [...(option.colors || []), ...newColors]
+  //       }
+  //     })
+  //   }
 
-    // Add colors from /api/lens/colors that have prescriptionLensType
-    if (apiLensColors && apiLensColors.length > 0) {
-      const prescriptionSunColorsFromLensColors = apiLensColors.filter(color =>
-        color.prescriptionLensType !== null && color.prescriptionLensType !== undefined
-      )
-      console.log('📥 [API] Found', prescriptionSunColorsFromLensColors.length, 'prescription sun colors from /api/lens/colors')
-      allPrescriptionSunColors.push(...prescriptionSunColorsFromLensColors)
-    }
+  //   // Filter active options and sort
+  //   const activeOptions = options
+  //     .filter(option => {
+  //       // Support both camelCase and snake_case
+  //       const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
+  //       return isActive !== false;
+  //     })
+  //     .sort((a, b) => {
+  //       const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+  //       const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+  //       return sortA - sortB;
+  //     })
 
-    // If we have colors but no options, create options from colors
-    if ((!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0) &&
-      allPrescriptionSunColors.length > 0) {
-      console.log('📥 [API] No options found, creating options from prescription sun colors')
+  //   // Group by main option type (polarized, classic, blokz, etc.)
+  //   // The grouping is based on the option name or slug
+  //   const grouped: Record<string, any> = {}
 
-      // Group colors by prescriptionLensType
-      const colorsByType: Record<number, LensColor[]> = {}
-      allPrescriptionSunColors.forEach(color => {
-        if (color.prescriptionLensType && color.prescriptionLensType.id) {
-          const typeId = color.prescriptionLensType.id
-          if (!colorsByType[typeId]) {
-            colorsByType[typeId] = []
-          }
-          colorsByType[typeId].push(color)
-        } else if (color.lensOption && color.lensOption.id) {
-          // Fallback to lensOption if prescriptionLensType is not available
-          const optionId = color.lensOption.id
-          if (!colorsByType[optionId]) {
-            colorsByType[optionId] = []
-          }
-          colorsByType[optionId].push(color)
-        }
-      })
+  //   activeOptions.forEach(option => {
+  //     // Determine main type from name or slug
+  //     // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
+  //     const nameLower = (option.name || '').toLowerCase()
+  //     const slugLower = (option.slug || '').toLowerCase()
 
-      // Create options from grouped colors
-      const optionsFromColors: LensOption[] = Object.entries(colorsByType).map(([typeId, colors]) => {
-        const firstColor = colors[0]
-        const prescriptionType = firstColor.prescriptionLensType || firstColor.lensOption
-        if (!prescriptionType) return null
+  //     let mainType = ''
+  //     if (nameLower.includes('polarized') || slugLower.includes('polarized')) {
+  //       mainType = 'polarized'
+  //     } else if (nameLower.includes('blokz') || slugLower.includes('blokz')) {
+  //       mainType = 'blokz'
+  //     } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+  //       mainType = 'classic'
+  //     } else {
+  //       // Use first word of name or slug as main type
+  //       mainType = (option.name ? option.name.split(' ')[0].toLowerCase() : '') || option.slug?.split('_')[0] || 'other'
+  //     }
 
-        return {
-          id: parseInt(typeId),
-          name: prescriptionType.name || 'Prescription Sun',
-          slug: prescriptionType.slug || 'prescription-sun',
-          type: 'prescription_sun',
-          colors: colors
-        } as LensOption
-      }).filter((opt): opt is LensOption => opt !== null)
+  //     // Initialize main option if not exists
+  //     if (!grouped[mainType]) {
+  //       // Find the base option for this type (usually the one without sub-type in name)
+  //       const baseOption = activeOptions.find(opt => {
+  //         const optName = (opt.name || '').toLowerCase()
+  //         return (optName === mainType || optName.includes(mainType)) &&
+  //           !optName.includes('mirror') &&
+  //           !optName.includes('gradient') &&
+  //           !optName.includes('fashion')
+  //       }) || option
 
-      if (optionsFromColors.length > 0) {
-        // Use these options for mapping
-        return mapOptionsToUI(optionsFromColors, allPrescriptionSunColors)
-      }
-    }
+  //       const basePrice = baseOption.basePrice !== undefined ? baseOption.basePrice : baseOption.base_price || 0;
+  //       grouped[mainType] = {
+  //         id: baseOption.slug || baseOption.id.toString(),
+  //         name: baseOption.name,
+  //         price: basePrice,
+  //         description: baseOption.description || '',
+  //         subOptions: []
+  //       }
+  //     }
 
-    if (apiPrescriptionSunOptions && apiPrescriptionSunOptions.length > 0) {
-      console.log('📥 [API] Mapping prescription sun options from API:', apiPrescriptionSunOptions.length, 'options')
-      console.log('📥 [API] Raw options data:', JSON.stringify(apiPrescriptionSunOptions, null, 2))
+  //     // Determine sub-option type (classic, mirror, gradient, fashion)
+  //     let subOptionType = 'classic'
+  //     if (nameLower.includes('mirror') || slugLower.includes('mirror')) {
+  //       subOptionType = 'mirror'
+  //     } else if (nameLower.includes('gradient') || slugLower.includes('gradient')) {
+  //       subOptionType = 'gradient'
+  //     } else if (nameLower.includes('fashion') || slugLower.includes('fashion')) {
+  //       subOptionType = 'fashion'
+  //     } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
+  //       subOptionType = 'classic'
+  //     }
 
-      // Merge colors from both endpoints
-      const allColors = [...(apiPrescriptionSunColors || []), ...(apiLensColors?.filter(c => c.prescriptionLensType) || [])]
-      return mapOptionsToUI(apiPrescriptionSunOptions, allColors)
-    }
+  //     // Check if sub-option already exists
+  //     const existingSubOption = grouped[mainType].subOptions.find((sub: any) => {
+  //       const subName = (sub.name || '').toLowerCase()
+  //       const optionName = (option.name || '').toLowerCase()
+  //       return subName === optionName
+  //     })
 
-    // Fallback: Create sample data for development/testing when API returns no data
-    // This matches the structure described in the Postman collection
-    if (import.meta.env.DEV && (!apiPrescriptionSunOptions || apiPrescriptionSunOptions.length === 0)) {
-      console.info('ℹ️ [UI] No prescription sun options from API, using sample data for development')
-      console.info('   → This is sample data for UI testing')
-      console.info('   → Create prescription sun lenses via admin panel to use real data')
+  //     const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
+  //     if (!existingSubOption && option.colors && option.colors.length > 0) {
+  //       // Add as new sub-option with colors
+  //       grouped[mainType].subOptions.push({
+  //         id: `${mainType}_${subOptionType}_${option.id}`,
+  //         name: option.name,
+  //         price: optionBasePrice,
+  //         colors: option.colors
+  //           .filter(color => {
+  //             // Support both camelCase and snake_case
+  //             const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+  //             return isActive !== false;
+  //           })
+  //           .sort((a, b) => {
+  //             const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
+  //             const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
+  //             return sortA - sortB;
+  //           })
+  //           .map(color => {
+  //             // Support both camelCase and snake_case
+  //             const hexCode = color.hexCode || color.hex_code || '#000000';
+  //             const colorCode = color.colorCode || color.color_code || '';
+  //             return {
+  //               id: color.id.toString(),
+  //               name: color.name,
+  //               color: hexCode,
+  //               gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
+  //               priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+  //             };
+  //           })
+  //       })
+  //     } else if (existingSubOption && option.colors && option.colors.length > 0) {
+  //       // Merge colors into existing sub-option
+  //       const newColors = option.colors
+  //         .filter(color => {
+  //           // Support both camelCase and snake_case
+  //           const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
+  //           return isActive !== false;
+  //         })
+  //         .map(color => {
+  //           // Support both camelCase and snake_case
+  //           const hexCode = color.hexCode || color.hex_code || '#000000';
+  //           const colorCode = color.colorCode || color.color_code || '';
+  //           return {
+  //             id: color.id.toString(),
+  //             name: color.name,
+  //             color: hexCode,
+  //             gradient: colorCode.toLowerCase().includes('gradient') || false,
+  //             priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
+  //           };
+  //         })
+  //       existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
+  //     } else if (!existingSubOption) {
+  //       // Add sub-option without colors (e.g., Gradient option)
+  //       grouped[mainType].subOptions.push({
+  //         id: `${mainType}_${subOptionType}_${option.id}`,
+  //         name: option.name,
+  //         price: optionBasePrice,
+  //         colors: []
+  //       })
+  //     }
+  //   })
 
-      // Create sample options matching Postman collection structure
-      const sampleOptions: any[] = [
-        {
-          id: 'polarized',
-          name: 'Polarized',
-          price: 76.95,
-          description: 'Reduce glare and see clearly for outdoor activities and driving.',
-          subOptions: [
-            {
-              id: 'polarized_classic',
-              name: 'Classic',
-              price: 0,
-              colors: [
-                { id: '1', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
-                { id: '2', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 },
-                { id: '3', name: 'Green', color: '#228B22', gradient: false, priceAdjustment: 0 }
-              ]
-            },
-            {
-              id: 'polarized_mirror',
-              name: 'Mirror',
-              price: 27.95,
-              colors: [
-                { id: '4', name: 'Blue Mirror', color: '#4169E1', gradient: true, priceAdjustment: 0 },
-                { id: '5', name: 'Silver Mirror', color: '#C0C0C0', gradient: true, priceAdjustment: 0 }
-              ]
-            }
-          ]
-        },
-        {
-          id: 'classic',
-          name: 'Classic',
-          price: 60.90,
-          description: 'Classic prescription sun lenses with various finishes.',
-          subOptions: [
-            {
-              id: 'classic_fashion',
-              name: 'Fashion',
-              price: 0,
-              colors: [
-                { id: '6', name: 'Rose', color: '#FFB6C1', gradient: false, priceAdjustment: 0 },
-                { id: '7', name: 'Amber', color: '#FFBF00', gradient: false, priceAdjustment: 0 }
-              ]
-            },
-            {
-              id: 'classic_mirror',
-              name: 'Mirror',
-              price: 20.00,
-              colors: [
-                { id: '8', name: 'Gold Mirror', color: '#FFD700', gradient: true, priceAdjustment: 0 },
-                { id: '9', name: 'Blue Mirror', color: '#1E90FF', gradient: true, priceAdjustment: 0 }
-              ]
-            },
-            {
-              id: 'classic_gradient',
-              name: 'Gradient',
-              price: 4.00,
-              colors: [
-                { id: '10', name: 'Gray Gradient', color: '#808080', gradient: true, priceAdjustment: 0 },
-                { id: '11', name: 'Brown Gradient', color: '#8B4513', gradient: true, priceAdjustment: 0 }
-              ]
-            },
-            {
-              id: 'classic_classic',
-              name: 'Classic',
-              price: 0,
-              colors: [
-                { id: '12', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
-                { id: '13', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 }
-              ]
-            }
-          ]
-        },
-        {
-          id: 'blokz',
-          name: 'Blokz® Sunglasses',
-          price: 95.90,
-          description: 'Advanced blue light blocking with UV protection.',
-          subOptions: [
-            {
-              id: 'blokz_mirror',
-              name: 'Mirror',
-              price: 20.00,
-              colors: [
-                { id: '14', name: 'Blue Mirror', color: '#4169E1', gradient: true, priceAdjustment: 0 },
-                { id: '15', name: 'Green Mirror', color: '#32CD32', gradient: true, priceAdjustment: 0 }
-              ]
-            },
-            {
-              id: 'blokz_classic',
-              name: 'Classic',
-              price: 0,
-              colors: [
-                { id: '16', name: 'Gray', color: '#808080', gradient: false, priceAdjustment: 0 },
-                { id: '17', name: 'Brown', color: '#8B4513', gradient: false, priceAdjustment: 0 }
-              ]
-            }
-          ]
-        }
-      ]
+  //   // Sort sub-options and return grouped values
+  //   Object.values(grouped).forEach((group: any) => {
+  //     group.subOptions.sort((a: any, b: any) => {
+  //       const order = ['classic', 'fashion', 'mirror', 'gradient']
+  //       const aName = (a.name || '').toLowerCase()
+  //       const bName = (b.name || '').toLowerCase()
+  //       const aIndex = order.findIndex(o => aName.includes(o))
+  //       const bIndex = order.findIndex(o => bName.includes(o))
+  //       if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
+  //       if (aIndex !== -1) return -1
+  //       if (bIndex !== -1) return 1
+  //       // Use the already declared aName and bName variables
+  //       return aName.localeCompare(bName)
+  //     })
+  //   })
 
-      return sampleOptions
-    }
-
-    // Return empty array if no API data and not in dev mode
-    if (import.meta.env.DEV) {
-      console.info('ℹ️ [UI] No prescription sun options to map. apiPrescriptionSunOptions:', apiPrescriptionSunOptions)
-      console.info('   → This is normal if prescription sun lenses haven\'t been created yet')
-      console.info('   → Check browser console for API fetch logs to see if the API was called')
-      console.info('   → The API endpoint /api/prescription-sun-lenses should return structured data')
-    }
-    return []
-  }
-
-  // Helper function to map options to UI format
-  const mapOptionsToUI = (options: LensOption[], additionalColors?: LensColor[]) => {
-    // Merge colors from dedicated endpoint into options
-    if (additionalColors && additionalColors.length > 0) {
-      console.log('🔄 [UI] Merging', additionalColors.length, 'colors from dedicated endpoint into options')
-      options.forEach(option => {
-        // Find colors that belong to this option
-        const matchingColors = additionalColors.filter(color =>
-          color.lensOption && color.lensOption.id === option.id
-        )
-
-        if (matchingColors.length > 0) {
-          console.log(`  ✅ Found ${matchingColors.length} colors for option ${option.name} (id: ${option.id})`)
-          // Merge colors, avoiding duplicates
-          const existingColorIds = new Set((option.colors || []).map(c => c.id))
-          const newColors = matchingColors
-            .filter(c => !existingColorIds.has(c.id))
-            .map(color => ({
-              ...color,
-              // Ensure consistent field names
-              hexCode: color.hexCode || color.hex_code,
-              colorCode: color.colorCode || color.color_code,
-              isActive: color.isActive !== undefined ? color.isActive : color.is_active,
-              priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment
-            }))
-
-          option.colors = [...(option.colors || []), ...newColors]
-        }
-      })
-    }
-
-    // Filter active options and sort
-    const activeOptions = options
-      .filter(option => {
-        // Support both camelCase and snake_case
-        const isActive = option.isActive !== undefined ? option.isActive : option.is_active;
-        return isActive !== false;
-      })
-      .sort((a, b) => {
-        const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-        const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-        return sortA - sortB;
-      })
-
-    // Group by main option type (polarized, classic, blokz, etc.)
-    // The grouping is based on the option name or slug
-    const grouped: Record<string, any> = {}
-
-    activeOptions.forEach(option => {
-      // Determine main type from name or slug
-      // Examples: "Polarized", "Polarized Classic", "Polarized Mirror" -> group under "polarized"
-      const nameLower = (option.name || '').toLowerCase()
-      const slugLower = (option.slug || '').toLowerCase()
-
-      let mainType = ''
-      if (nameLower.includes('polarized') || slugLower.includes('polarized')) {
-        mainType = 'polarized'
-      } else if (nameLower.includes('blokz') || slugLower.includes('blokz')) {
-        mainType = 'blokz'
-      } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
-        mainType = 'classic'
-      } else {
-        // Use first word of name or slug as main type
-        mainType = (option.name ? option.name.split(' ')[0].toLowerCase() : '') || option.slug?.split('_')[0] || 'other'
-      }
-
-      // Initialize main option if not exists
-      if (!grouped[mainType]) {
-        // Find the base option for this type (usually the one without sub-type in name)
-        const baseOption = activeOptions.find(opt => {
-          const optName = (opt.name || '').toLowerCase()
-          return (optName === mainType || optName.includes(mainType)) &&
-            !optName.includes('mirror') &&
-            !optName.includes('gradient') &&
-            !optName.includes('fashion')
-        }) || option
-
-        const basePrice = baseOption.basePrice !== undefined ? baseOption.basePrice : baseOption.base_price || 0;
-        grouped[mainType] = {
-          id: baseOption.slug || baseOption.id.toString(),
-          name: baseOption.name,
-          price: basePrice,
-          description: baseOption.description || '',
-          subOptions: []
-        }
-      }
-
-      // Determine sub-option type (classic, mirror, gradient, fashion)
-      let subOptionType = 'classic'
-      if (nameLower.includes('mirror') || slugLower.includes('mirror')) {
-        subOptionType = 'mirror'
-      } else if (nameLower.includes('gradient') || slugLower.includes('gradient')) {
-        subOptionType = 'gradient'
-      } else if (nameLower.includes('fashion') || slugLower.includes('fashion')) {
-        subOptionType = 'fashion'
-      } else if (nameLower.includes('classic') || slugLower.includes('classic')) {
-        subOptionType = 'classic'
-      }
-
-      // Check if sub-option already exists
-      const existingSubOption = grouped[mainType].subOptions.find((sub: any) => {
-        const subName = (sub.name || '').toLowerCase()
-        const optionName = (option.name || '').toLowerCase()
-        return subName === optionName
-      })
-
-      const optionBasePrice = option.basePrice !== undefined ? option.basePrice : option.base_price || 0;
-      if (!existingSubOption && option.colors && option.colors.length > 0) {
-        // Add as new sub-option with colors
-        grouped[mainType].subOptions.push({
-          id: `${mainType}_${subOptionType}_${option.id}`,
-          name: option.name,
-          price: optionBasePrice,
-          colors: option.colors
-            .filter(color => {
-              // Support both camelCase and snake_case
-              const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
-              return isActive !== false;
-            })
-            .sort((a, b) => {
-              const sortA = a.sortOrder !== undefined ? a.sortOrder : a.sort_order || 0;
-              const sortB = b.sortOrder !== undefined ? b.sortOrder : b.sort_order || 0;
-              return sortA - sortB;
-            })
-            .map(color => {
-              // Support both camelCase and snake_case
-              const hexCode = color.hexCode || color.hex_code || '#000000';
-              const colorCode = color.colorCode || color.color_code || '';
-              return {
-                id: color.id.toString(),
-                name: color.name,
-                color: hexCode,
-                gradient: (colorCode || '').toLowerCase().includes('gradient') || false,
-                priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
-              };
-            })
-        })
-      } else if (existingSubOption && option.colors && option.colors.length > 0) {
-        // Merge colors into existing sub-option
-        const newColors = option.colors
-          .filter(color => {
-            // Support both camelCase and snake_case
-            const isActive = color.isActive !== undefined ? color.isActive : color.is_active;
-            return isActive !== false;
-          })
-          .map(color => {
-            // Support both camelCase and snake_case
-            const hexCode = color.hexCode || color.hex_code || '#000000';
-            const colorCode = color.colorCode || color.color_code || '';
-            return {
-              id: color.id.toString(),
-              name: color.name,
-              color: hexCode,
-              gradient: colorCode.toLowerCase().includes('gradient') || false,
-              priceAdjustment: color.priceAdjustment !== undefined ? color.priceAdjustment : color.price_adjustment || 0
-            };
-          })
-        existingSubOption.colors = [...(existingSubOption.colors || []), ...newColors]
-      } else if (!existingSubOption) {
-        // Add sub-option without colors (e.g., Gradient option)
-        grouped[mainType].subOptions.push({
-          id: `${mainType}_${subOptionType}_${option.id}`,
-          name: option.name,
-          price: optionBasePrice,
-          colors: []
-        })
-      }
-    })
-
-    // Sort sub-options and return grouped values
-    Object.values(grouped).forEach((group: any) => {
-      group.subOptions.sort((a: any, b: any) => {
-        const order = ['classic', 'fashion', 'mirror', 'gradient']
-        const aName = (a.name || '').toLowerCase()
-        const bName = (b.name || '').toLowerCase()
-        const aIndex = order.findIndex(o => aName.includes(o))
-        const bIndex = order.findIndex(o => bName.includes(o))
-        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex
-        if (aIndex !== -1) return -1
-        if (bIndex !== -1) return 1
-        // Use the already declared aName and bName variables
-        return aName.localeCompare(bName)
-      })
-    })
-
-    const result = Object.values(grouped)
-    console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
-    return result
-  }
+  //   const result = Object.values(grouped)
+  //   console.log('✅ [API] Mapped prescription sun options:', result.length, 'main options')
+  //   return result
+  // }
 
   // Use mapped API options or fallback
   const photochromicOptions = mapPhotochromicOptions()

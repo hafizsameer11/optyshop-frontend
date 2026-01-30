@@ -593,22 +593,52 @@ export const getProductEyeHygieneVariants = async (id: number | string): Promise
     }
 
     // Handle 500 errors and other server issues gracefully
-    if (response.error && response.error.includes('500')) {
-      console.warn('⚠️ Backend server error (500) for eye hygiene variants. This endpoint may not be implemented on the backend yet.');
+    if (response.error && (response.error.includes('500') || response.error.includes('Internal Server Error'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Eye hygiene variants endpoint not available for product ${id}. Backend may not have this feature implemented.`)
+      }
       // Return empty array instead of null to prevent frontend crashes
       return [];
     }
 
-    console.error('Failed to fetch product eye hygiene variants:', response.message);
+    // Handle other API errors quietly
+    if (response.error) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Eye hygiene variants API error for product ${id}:`, response.error)
+      }
+      return []
+    }
+
+    // Handle case where API returns success but no data
+    if (!response.data) {
+      if (import.meta.env.DEV) {
+        console.log(`ℹ️ No eye hygiene variants data available for product ${id}`)
+      }
+      return []
+    }
+
     return null;
   } catch (error: any) {
-    console.error('Error fetching product eye hygiene variants:', error);
-    
     // Check if it's a network error or 500 error
-    if (error.message && error.message.includes('500')) {
-      console.warn('⚠️ Backend server error (500) for eye hygiene variants. This endpoint may not be implemented on the backend yet.');
+    if (error.message && (error.message.includes('500') || error.message.includes('Internal Server Error'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Eye hygiene variants endpoint not available for product ${id}. Backend may not have this feature implemented.`)
+      }
       // Return empty array instead of null to prevent frontend crashes
       return [];
+    }
+    
+    // Handle network errors quietly
+    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Network error fetching eye hygiene variants for product ${id}. Using fallback.`)
+      }
+      return []
+    }
+    
+    // Other errors - only log in development
+    if (import.meta.env.DEV) {
+      console.error(`Unexpected error fetching eye hygiene variants for product ${id}:`, error)
     }
     
     return null;

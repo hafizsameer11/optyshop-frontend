@@ -13,34 +13,34 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     showRelatedPages = true
 }) => {
     return (
-        <section className="bg-gradient-to-r from-blue-900 to-blue-950 text-white py-16 px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-r from-blue-900 to-blue-950 text-white py-8 px-4 sm:px-6 lg:px-8">
             <div className="w-[90%] mx-auto max-w-7xl">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
+                <div className="text-center mb-4">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
                         {title}
                     </h1>
-                    <p className="text-lg md:text-xl lg:text-2xl text-blue-100 max-w-3xl mx-auto">
+                    <p className="text-sm md:text-base lg:text-lg text-blue-100 max-w-2xl mx-auto">
                         {subtitle}
                     </p>
                 </div>
 
                 {showRelatedPages && (
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-                        <span className="text-sm font-medium text-blue-200 uppercase tracking-wide">
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-4">
+                        <span className="text-xs font-medium text-blue-200 uppercase tracking-wide">
                             Related Pages
                         </span>
-                        <div className="flex gap-4">
+                        <div className="flex gap-2">
                             <Link
                                 to="/shop?gender=men"
-                                className="px-6 py-3 bg-white text-blue-950 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200"
+                                className="px-4 py-2 bg-white text-blue-950 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200 text-sm"
                             >
-                                Men Glasses
+                                Men
                             </Link>
                             <Link
                                 to="/shop?gender=women"
-                                className="px-6 py-3 bg-white text-blue-950 rounded-lg font-semibold hover:bg-blue-50 transition-colors duration-200"
+                                className="px-4 py-2 bg-white text-blue-950 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200 text-sm"
                             >
-                                Women Glasses
+                                Women
                             </Link>
                         </div>
                     </div>

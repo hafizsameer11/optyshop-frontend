@@ -48,7 +48,7 @@ export interface EyeHygieneOptions {
 export interface EyeHygieneOptionsResponse {
   success: boolean
   message: string
-  data: {
+  data?: {
     size_volume?: string[]
     pack_type?: string[]
   }
@@ -77,9 +77,9 @@ export interface SizeVolumeVariant {
 export interface SizeVolumeVariantsResponse {
   success: boolean
   message: string
-  data: {
+  data?: {
     product_id: number
-    variants: SizeVolumeVariant[]
+    variants?: SizeVolumeVariant[]
   }
 }
 
@@ -124,9 +124,10 @@ export async function getEyeHygieneOptions(
     )
 
     if (response.success && response.data) {
+      const data = response.data as any;
       return {
-        size_volume: response.data.size_volume || [],
-        pack_type: response.data.pack_type || []
+        size_volume: data?.size_volume || [],
+        pack_type: data?.pack_type || []
       }
     }
 
@@ -151,36 +152,68 @@ export async function getSizeVolumeVariants(
       false // PUBLIC endpoint
     )
 
-    if (response.success && response.data && Array.isArray(response.data.variants)) {
-      if (import.meta.env.DEV) {
-        console.log('✅ Size/Volume Variants loaded:', {
-          productId,
-          count: response.data.variants.length,
-          variants: response.data.variants
-        })
+    if (response.success && response.data) {
+      const data = response.data as any;
+      if (data.variants && Array.isArray(data.variants)) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Size/Volume Variants loaded:', {
+            productId,
+            count: data.variants.length,
+            variants: data.variants
+          })
+        }
+        return data.variants
       }
-      return response.data.variants
     }
 
     // Handle 500 errors and other server issues gracefully
-    if (response.error && response.error.includes('500')) {
-      console.warn('⚠️ Backend server error (500) for size-volume variants. This endpoint may not be implemented on the backend yet.')
+    if (response.error && (response.error.includes('500') || response.error.includes('Internal Server Error'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Size-volume variants endpoint not available for product ${productId}. Backend may not have this feature implemented.`)
+      }
       // Return empty array instead of null to prevent frontend crashes
       return []
     }
 
-    console.error('Failed to fetch size/volume variants:', response.message)
+    // Handle other API errors quietly
+    if (response.error) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Size-volume variants API error for product ${productId}:`, response.error)
+      }
+      return []
+    }
+
+    // Handle case where API returns success but no data
+    if (!response.data) {
+      if (import.meta.env.DEV) {
+        console.log(`ℹ️ No size-volume variants data available for product ${productId}`)
+      }
+      return []
+    }
+
     return null
   } catch (error: any) {
-    console.error('Error fetching size/volume variants:', error)
-    
     // Check if it's a network error or 500 error
-    if (error.message && error.message.includes('500')) {
-      console.warn('⚠️ Backend server error (500) for size-volume variants. This endpoint may not be implemented on the backend yet.')
+    if (error.message && (error.message.includes('500') || error.message.includes('Internal Server Error'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Size-volume variants endpoint not available for product ${productId}. Backend may not have this feature implemented.`)
+      }
       // Return empty array instead of null to prevent frontend crashes
       return []
     }
     
+    // Handle network errors quietly
+    if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Network error fetching size-volume variants for product ${productId}. Using fallback.`)
+      }
+      return []
+    }
+    
+    // Other errors - only log in development
+    if (import.meta.env.DEV) {
+      console.error(`Unexpected error fetching size-volume variants for product ${productId}:`, error)
+    }
     return null
   }
 }

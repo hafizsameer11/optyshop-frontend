@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Proxy Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-image { border: 2px solid #ccc; margin: 10px; max-width: 200px; }
+        .error { color: red; }
+        .success { color: green; }
+        .test-section { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>Image Proxy Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Direct External Image (should fail with 404)</h2>
+        <img src="https://optyshop.hmstech.org/external-images/uploads/products/1767464918919-Monogreen_Box_360ml_20230124_72dpi.jpg" 
+             class="test-image" 
+             onload="this.nextElementSibling.innerHTML='<span class=success>✅ Direct image loaded</span>'" 
+             onerror="this.nextElementSibling.innerHTML='<span class=error>❌ Direct image failed (expected)</span>'">
+        <div></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Proxied Image (should work)</h2>
+        <img src="/external-images/uploads/products/1767464918919-Monogreen_Box_360ml_20230124_72dpi.jpg" 
+             class="test-image" 
+             onload="this.nextElementSibling.innerHTML='<span class=success>✅ Proxied image loaded</span>'" 
+             onerror="this.nextElementSibling.innerHTML='<span class=error>❌ Proxied image failed</span>'">
+        <div></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Another Proxied Image</h2>
+        <img src="/external-images/uploads/products/1766224481819-JJJJ1DMOT030__shad__qt-200x200%20(1).jpg" 
+             class="test-image" 
+             onload="this.nextElementSibling.innerHTML='<span class=success>✅ Proxied image loaded</span>'" 
+             onerror="this.nextElementSibling.innerHTML='<span class=error>❌ Proxied image failed</span>'">
+        <div></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Third Proxied Image</h2>
+        <img src="/external-images/uploads/products/1767459911899-61546uS1UcL._AC_UF894,1000_QL80_.jpg" 
+             class="test-image" 
+             onload="this.nextElementSibling.innerHTML='<span class=success>✅ Proxied image loaded</span>'" 
+             onerror="this.nextElementSibling.innerHTML='<span class=error>❌ Proxied image failed</span>'">
+        <div></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Fallback Image</h2>
+        <img src="/assets/images/frame1.png" 
+             class="test-image" 
+             onload="this.nextElementSibling.innerHTML='<span class=success>✅ Fallback image loaded</span>'" 
+             onerror="this.nextElementSibling.innerHTML='<span class=error>❌ Fallback image failed</span>'">
+        <div></div>
+    </div>
+</body>
+</html>

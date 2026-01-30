@@ -181,14 +181,16 @@ const ProductDetail = () => {
                 if (variants && variants.length > 0) {
                     // Process variants to handle blob URLs and problematic images
                     const processedVariants = variants.map((variant, index) => {
-                        console.log(`[ProductDetail] Processing eye hygiene variant ${index}:`, {
-                            id: variant.id,
-                            name: variant.name,
-                            image_url: variant.image_url,
-                            image: variant.image,
-                            is_blob: variant.image_url?.startsWith('blob:'),
-                            is_3d_glasses: variant.image_url?.includes('3d-glasses.png')
-                        });
+                        if (import.meta.env.DEV) {
+                            console.log(`[ProductDetail] Processing eye hygiene variant ${index}:`, {
+                                id: variant.id,
+                                name: variant.name,
+                                image_url: variant.image_url,
+                                image: variant.image,
+                                is_blob: variant.image_url?.startsWith('blob:'),
+                                is_3d_glasses: variant.image_url?.includes('3d-glasses.png')
+                            });
+                        }
                         
                         // Create a processed variant with proper image handling
                         const processedVariant = { ...variant };
@@ -211,7 +213,9 @@ const ProductDetail = () => {
                             }
                             
                             processedVariant.image_url = fallbackImage;
-                            console.log(`[ProductDetail] Set fallback image for variant ${variant.name}:`, fallbackImage);
+                            if (import.meta.env.DEV) {
+                                console.log(`[ProductDetail] Set fallback image for variant ${variant.name}:`, fallbackImage);
+                            }
                         }
                         
                         return processedVariant;
@@ -226,11 +230,18 @@ const ProductDetail = () => {
                         console.log('[ProductDetail] Product eye hygiene variants loaded and processed:', processedVariants.length)
                     }
                 } else {
+                    // No variants available - this is normal for most products
+                    if (import.meta.env.DEV) {
+                        console.log(`[ProductDetail] No eye hygiene variants available for product ${product.id} - this is normal`)
+                    }
                     setProductEyeHygieneVariants([])
                     setSelectedEyeHygieneVariant(null)
                 }
             }).catch(error => {
-                console.error('[ProductDetail] Error fetching product eye hygiene variants:', error)
+                // Handle errors quietly - most products don't have variants
+                if (import.meta.env.DEV) {
+                    console.warn(`[ProductDetail] Could not load eye hygiene variants for product ${product.id} - using fallback`)
+                }
                 setProductEyeHygieneVariants([])
                 setSelectedEyeHygieneVariant(null)
             })
@@ -2779,7 +2790,7 @@ const ProductDetail = () => {
                 brand: product.brand || '',
                 category: product.category?.slug || 'eyeglasses',
                 price: displayPrice || 0,
-                image: getColorSpecificImageUrl(product, selectedImageIndex), // Use the color-specific image if color is selected
+                image: getVariantSpecificImageUrl(product, selectedImageIndex), // Use variant-specific image (supports caliber images)
                 description: product.description || '',
                 inStock: productInStock,
                 rating: product.rating ? Number(product.rating) : undefined,

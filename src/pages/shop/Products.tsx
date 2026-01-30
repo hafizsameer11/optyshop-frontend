@@ -571,7 +571,7 @@ const Products: React.FC = () => {
             </section>
 
             {/* Breadcrumbs */}
-            <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
+            <div className="bg-white py-2 px-4 sm:px-6 border-b border-gray-200">
                 <div className="w-[90%] mx-auto max-w-screen-2xl">
                     <nav className="flex items-center gap-2 text-sm text-gray-900 flex-wrap">
                         <Link to="/" className="flex items-center gap-2 hover:text-gray-700 transition-colors">
@@ -601,20 +601,20 @@ const Products: React.FC = () => {
             </div>
 
             {/* Filters and Search */}
-            <section className="bg-gray-50 py-6 px-4 sm:px-6">
+            <section className="bg-gray-50 py-3 px-4 sm:px-6">
                 <div className="w-full max-w-7xl mx-auto">
                     {/* Top Filter Row */}
-                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 mb-6">
+                    <div className="flex flex-col lg:flex-row gap-2 lg:gap-4 mb-3">
                         {/* Sort Dropdown */}
-                        <div className="flex items-center gap-3">
-                            <label className="text-sm font-medium text-gray-700">Sort</label>
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs font-medium text-gray-700">Sort</label>
                             <select
                                 value={sortBy}
                                 onChange={(e) => {
                                     setSortBy(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[140px]"
+                                className="px-2 py-1 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none min-w-[120px]"
                             >
                                 <option value="newest">Newest</option>
                                 <option value="oldest">Oldest First</option>
@@ -634,15 +634,15 @@ const Products: React.FC = () => {
                                     setSearchTerm(e.target.value)
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                             />
                         </div>
                     </div>
 
                     {/* Filter Options Row */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
                         {/* Category Filter */}
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Category</label>
                             <select
                                 value={selectedCategory}
@@ -650,7 +650,7 @@ const Products: React.FC = () => {
                                     setSelectedCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))
                                     setCurrentPage(1)
                                 }}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                             >
                                 <option value="all">All Categories</option>
                                 {productOptions?.categories?.map((category) => (
@@ -663,7 +663,7 @@ const Products: React.FC = () => {
 
                         {/* Subcategory Filter */}
                         {selectedCategory !== 'all' && availableSubcategories.length > 0 && (
-                            <div className="space-y-4">
+                            <div className="space-y-2">
                                 <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Subcategory</label>
                                 <select
                                     value={selectedSubcategory || ''}
@@ -671,7 +671,7 @@ const Products: React.FC = () => {
                                         setSelectedSubcategory(e.target.value ? Number(e.target.value) : null)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All Subcategories</option>
                                     {availableSubcategories.map((subcategory) => (
@@ -685,7 +685,7 @@ const Products: React.FC = () => {
 
                         {/* Sub-subcategory Filter */}
                         {selectedSubcategory && availableSubSubcategories.length > 0 && (
-                            <div className="space-y-4">
+                            <div className="space-y-2">
                                 <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                 <select
                                     value={selectedSubSubcategory || ''}
@@ -693,7 +693,7 @@ const Products: React.FC = () => {
                                         setSelectedSubSubcategory(e.target.value ? Number(e.target.value) : null)
                                         setCurrentPage(1)
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                    className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                 >
                                     <option value="">All Types</option>
                                     {availableSubSubcategories.map((subSubcategory) => (
@@ -710,7 +710,7 @@ const Products: React.FC = () => {
                             // Contact Lens Specific Filters
                             <>
                                 {/* Lens Type Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                     <select
                                         value={lensType}
@@ -718,7 +718,7 @@ const Products: React.FC = () => {
                                             setLensType(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Types</option>
                                         {productOptions?.lensTypeEnums?.map((type) => (
@@ -730,7 +730,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Base Curve Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Base Curve</label>
                                     <select
                                         value={baseCurve}
@@ -738,7 +738,7 @@ const Products: React.FC = () => {
                                             setBaseCurve(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Base Curves</option>
                                         <option value="8.4">8.4</option>
@@ -752,7 +752,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Diameter Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Diameter</label>
                                     <select
                                         value={diameter}
@@ -760,7 +760,7 @@ const Products: React.FC = () => {
                                             setDiameter(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Diameters</option>
                                         <option value="13.8">13.8</option>
@@ -773,7 +773,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Replacement Period Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Replacement</label>
                                     <select
                                         value={replacementPeriod}
@@ -781,7 +781,7 @@ const Products: React.FC = () => {
                                             setReplacementPeriod(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Periods</option>
                                         <option value="daily">Daily</option>
@@ -796,7 +796,7 @@ const Products: React.FC = () => {
                             // Regular Eyeglasses/Sunglasses Filters
                             <>
                                 {/* Frame Shape Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Type</label>
                                     <select
                                         value={frameShape}
@@ -804,7 +804,7 @@ const Products: React.FC = () => {
                                             setFrameShape(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Types</option>
                                         {productOptions?.frameShapes?.map((shape) => (
@@ -816,7 +816,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Frame Material Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Coating</label>
                                     <select
                                         value={frameMaterial}
@@ -824,7 +824,7 @@ const Products: React.FC = () => {
                                             setFrameMaterial(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Coatings</option>
                                         {productOptions?.frameMaterials?.map((material) => (
@@ -836,7 +836,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Gender Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Gender</label>
                                     <select
                                         value={gender}
@@ -844,7 +844,7 @@ const Products: React.FC = () => {
                                             setGender(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All</option>
                                         {productOptions?.genders?.map((g) => (
@@ -856,7 +856,7 @@ const Products: React.FC = () => {
                                 </div>
 
                                 {/* Colors Filter */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Color</label>
                                     <select
                                         value={selectedColor}
@@ -864,7 +864,7 @@ const Products: React.FC = () => {
                                             setSelectedColor(e.target.value)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     >
                                         <option value="">All Colors</option>
                                         {availableColors.map((color) => (
@@ -878,7 +878,7 @@ const Products: React.FC = () => {
                         )}
 
                         {/* Price Range - Common for all product types */}
-                        <div className="space-y-4">
+                        <div className="space-y-2">
                             <label className="block text-xs font-semibold text-gray-500 mb-1 uppercase">Price</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 <div>
@@ -890,7 +890,7 @@ const Products: React.FC = () => {
                                             setMinPrice(e.target.value ? Number(e.target.value) : undefined)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     />
                                 </div>
                                 <div>
@@ -902,14 +902,14 @@ const Products: React.FC = () => {
                                             setMaxPrice(e.target.value ? Number(e.target.value) : undefined)
                                             setCurrentPage(1)
                                         }}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                                        className="w-full px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                                     />
                                 </div>
                             </div>
                         </div>
                     </div>
                     {/* Add spacer div for visual separation */}
-                    <div className="mb-20"></div>
+                    <div className="mb-8"></div>
                 </div>
             </section>
 
@@ -936,7 +936,7 @@ const Products: React.FC = () => {
             )}
 
             {/* Products Grid */}
-            <section className="bg-white py-8 px-4 sm:px-6">
+            <section className="bg-white py-4 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-screen-2xl">
                     {loading ? (
                         <div className="text-center py-12">

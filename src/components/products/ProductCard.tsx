@@ -16,6 +16,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const { toggleWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
 
+    // Get calibers for this product (moved outside of functions for reuse)
+    const p = product as any
+    let calibers = []
+    
+    // Parse mm_calibers if it's a string or array
+    if (p.mm_calibers) {
+        try {
+            if (typeof p.mm_calibers === 'string') {
+                calibers = JSON.parse(p.mm_calibers)
+            } else if (Array.isArray(p.mm_calibers)) {
+                calibers = p.mm_calibers
+            }
+        } catch (error) {
+            console.error('Error parsing mm_calibers:', error)
+            calibers = []
+        }
+    }
+    
+    // Filter out blob URLs and get first valid caliber
+    const validCalibers = calibers.filter((c: any) => 
+        c && c.image_url && 
+        !c.image_url.startsWith('blob:') && 
+        c.image_url !== 'null' && 
+        c.image_url !== ''
+    )
+    
+    const firstCaliber = validCalibers.length > 0 ? validCalibers[0] : null
+    
+    // Determine which image to use for display
+    let displayImage = getProductImageUrl(product)
+    if (firstCaliber && firstCaliber.image_url) {
+        displayImage = firstCaliber.image_url
+    }
+
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
@@ -25,18 +59,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             const regularPrice = product?.price ? Number(product.price) : 0
             const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
             
-            // Get calibers for this product
-            const p = product as any
-            const calibers = Array.isArray(p.mm_calibers) ? p.mm_calibers : []
-            const firstCaliber = calibers.length > 0 ? calibers[0] : null
-            
             const cartProduct = {
                 id: product?.id || 0,
                 name: product?.name || '',
                 brand: product?.brand || '',
                 category: product?.category?.slug || 'contact-lenses',
                 price: finalPrice,
-                image: firstCaliber?.image_url || getProductImageUrl(product),
+                image: displayImage,
                 description: product?.description || '',
                 inStock: product?.in_stock !== false,
                 rating: product?.rating ? Number(product.rating) : undefined,
@@ -68,7 +97,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                     <img
-                        src={getProductImageUrl(product)}
+                        src={displayImage}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         onError={(e) => {
@@ -140,14 +169,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             {/* Product Info */}
             <div className="p-2 flex-1 flex flex-col">
                 {/* Product Name */}
-                <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-2">
+                <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-1">
                     <h3 className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
                         {product.name}
                     </h3>
                 </Link>
 
                 {/* Price */}
-                <div className="mb-2">
+                <div className="mb-1">
                     {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
                         <div className="flex items-center gap-1">
                             <span className="text-xs font-bold text-gray-900">
