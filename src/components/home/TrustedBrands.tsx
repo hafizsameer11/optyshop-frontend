@@ -278,7 +278,7 @@ const TrustedBrands: React.FC = () => {
                 <div 
                     className="flex items-center animate-scroll"
                     style={{
-                        animation: 'scroll 30s linear infinite',
+                        animation: 'scroll 15s linear infinite',
                         width: `${duplicatedTrack.length * 200}px` // Give each brand more space
                     }}
                 >
