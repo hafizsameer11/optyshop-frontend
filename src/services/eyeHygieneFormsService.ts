@@ -162,10 +162,25 @@ export async function getSizeVolumeVariants(
       return response.data.variants
     }
 
+    // Handle 500 errors and other server issues gracefully
+    if (response.error && response.error.includes('500')) {
+      console.warn('⚠️ Backend server error (500) for size-volume variants. This endpoint may not be implemented on the backend yet.')
+      // Return empty array instead of null to prevent frontend crashes
+      return []
+    }
+
     console.error('Failed to fetch size/volume variants:', response.message)
     return null
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching size/volume variants:', error)
+    
+    // Check if it's a network error or 500 error
+    if (error.message && error.message.includes('500')) {
+      console.warn('⚠️ Backend server error (500) for size-volume variants. This endpoint may not be implemented on the backend yet.')
+      // Return empty array instead of null to prevent frontend crashes
+      return []
+    }
+    
     return null
   }
 }
