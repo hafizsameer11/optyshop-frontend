@@ -16,3 +16,8 @@
     backface-visibility: hidden; /* Prevent flickering during animation */
     perspective: 1000px; /* Hardware acceleration */
 }
+
+/* Ensure no gaps at the start or end of the animation */
+.marquee-track:hover {
+    animation-play-state: paused;
+}

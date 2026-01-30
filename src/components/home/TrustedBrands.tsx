@@ -274,9 +274,9 @@ const TrustedBrands: React.FC = () => {
                 </h2>
             </div>
 
-            <div className="overflow-hidden pb-6">
+            <div className="overflow-hidden pb-6 relative">
                 <div 
-                    className="flex gap-16 px-8 items-center marquee-track"
+                    className="flex items-center marquee-track"
                     style={{
                         width: 'fit-content' // Let content determine width
                     }}
@@ -293,7 +293,7 @@ const TrustedBrands: React.FC = () => {
                         return (
                             <div
                                 key={`${brand.id}-${index}`}
-                                className={`flex-shrink-0 flex items-center justify-center ${hasLink ? 'cursor-pointer' : ''}`}
+                                className={`flex-shrink-0 flex items-center justify-center px-8 ${hasLink ? 'cursor-pointer' : ''}`}
                                 onClick={() => hasLink && handleBrandClick(brand)}
                             >
                                 {imageUrl ? (
