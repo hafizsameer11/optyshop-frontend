@@ -274,9 +274,9 @@ const TrustedBrands: React.FC = () => {
                 </h2>
             </div>
 
-            <div className="overflow-hidden pb-6 relative">
+            <div className="overflow-hidden pb-6 relative bg-slate-50">
                 <div 
-                    className="flex items-center marquee-track"
+                    className="flex items-center marquee-track border-2 border-red-500"
                     style={{
                         width: 'fit-content' // Let content determine width
                     }}
