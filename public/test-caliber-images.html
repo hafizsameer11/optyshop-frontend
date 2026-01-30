@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Caliber Images</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .image-test { margin: 10px 0; border: 1px solid #ccc; padding: 10px; }
+        .image-test img { width: 100px; height: 100px; object-fit: contain; }
+        .success { background-color: #d4edda; }
+        .error { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <h1>Caliber Image Test</h1>
+    
+    <div class="image-test">
+        <h3>Frame 1 (Fallback)</h3>
+        <img src="/assets/images/frame1.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>Frame 2 (Fallback)</h3>
+        <img src="/assets/images/frame2.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>Frame 3 (Fallback)</h3>
+        <img src="/assets/images/frame3.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>Ray Ban 4926 - 45mm</h3>
+        <img src="/assets/images/rayban-4926-45mm.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>Ray Ban 4926 - 48mm</h3>
+        <img src="/assets/images/rayban-4926-48mm.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>Ray Ban 4926 - 50mm</h3>
+        <img src="/assets/images/rayban-4926-50mm.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+    
+    <div class="image-test">
+        <h3>3D Glasses (should fail)</h3>
+        <img src="/assets/images/3d-glasses.png" onload="this.parentElement.classList.add('success')" onerror="this.parentElement.classList.add('error')" />
+    </div>
+</body>
+</html>

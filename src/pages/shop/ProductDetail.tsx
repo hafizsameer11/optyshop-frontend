@@ -109,16 +109,38 @@ const ProductDetail = () => {
                 }
                 
                 if (calibersData.length > 0) {
-                    const calibers = calibersData.map((caliber: any, index: number) => ({
-                    mm: caliber.mm,
-                    // Handle blob URLs - use fallback images
-                    image_url: caliber.image_url && !caliber.image_url.startsWith('blob:') 
-                        ? caliber.image_url 
-                        : `/assets/images/frame${(index % 5) + 1}.png`, // Use existing frame images as fallback
-                    price: caliber.price,
-                    stock_quantity: caliber.stock_quantity,
-                    is_active: caliber.is_active !== false
-                }))
+                    const calibers = calibersData.map((caliber: any, index: number) => {
+                        console.log(`[ProductDetail] Processing caliber ${index}:`, {
+                            mm: caliber.mm,
+                            original_image_url: caliber.image_url,
+                            is_blob: caliber.image_url?.startsWith('blob:'),
+                            is_3d_glasses: caliber.image_url?.includes('3d-glasses.png')
+                        });
+                        
+                        // Try to use product-specific caliber image first, then fallback to frame images
+                        let fallbackImage = `/assets/images/frame${(index % 5) + 1}.png`;
+                        
+                        // Check if there's a product-specific caliber image
+                        const productSlug = product?.slug || product?.name?.toLowerCase().replace(/\s+/g, '-');
+                        if (productSlug) {
+                            // For now, we'll use this logic - in production, these images should exist
+                            if (productSlug.includes('ray') || productSlug.includes('4926')) {
+                                // Use the specific Ray Ban caliber images we created
+                                if (caliber.mm === '45') fallbackImage = '/assets/images/rayban-4926-45mm.png';
+                                else if (caliber.mm === '48') fallbackImage = '/assets/images/rayban-4926-48mm.png';
+                                else if (caliber.mm === '50') fallbackImage = '/assets/images/rayban-4926-50mm.png';
+                            }
+                        }
+                        
+                        return {
+                        mm: caliber.mm,
+                        image_url: caliber.image_url && !caliber.image_url.startsWith('blob:') && !caliber.image_url.includes('3d-glasses.png')
+                            ? caliber.image_url 
+                            : fallbackImage, // Use caliber-specific or frame images as fallback
+                        price: caliber.price,
+                        stock_quantity: caliber.stock_quantity,
+                        is_active: caliber.is_active !== false
+                    }})
                 setProductCalibers(calibers)
                 
                 console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
@@ -156,14 +178,52 @@ const ProductDetail = () => {
     useEffect(() => {
         if (product?.id) {
             getProductEyeHygieneVariants(product.id).then(variants => {
-                if (variants) {
-                    setProductEyeHygieneVariants(variants)
+                if (variants && variants.length > 0) {
+                    // Process variants to handle blob URLs and problematic images
+                    const processedVariants = variants.map((variant, index) => {
+                        console.log(`[ProductDetail] Processing eye hygiene variant ${index}:`, {
+                            id: variant.id,
+                            name: variant.name,
+                            image_url: variant.image_url,
+                            image: variant.image,
+                            is_blob: variant.image_url?.startsWith('blob:'),
+                            is_3d_glasses: variant.image_url?.includes('3d-glasses.png')
+                        });
+                        
+                        // Create a processed variant with proper image handling
+                        const processedVariant = { ...variant };
+                        
+                        // Handle blob URLs and problematic images
+                        if (!variant.image_url || variant.image_url.startsWith('blob:') || variant.image_url.includes('3d-glasses.png')) {
+                            // Use fallback image strategy for eye hygiene variants
+                            let fallbackImage = `/assets/images/frame${(index % 5) + 1}.png`;
+                            
+                            // Check if we can use size_volume-specific eye hygiene images
+                            if (variant.size_volume) {
+                                const sizeVolume = variant.size_volume.toLowerCase();
+                                if (sizeVolume.includes('5ml')) {
+                                    fallbackImage = '/assets/images/eye-hygiene-5ml.png';
+                                } else if (sizeVolume.includes('10ml')) {
+                                    fallbackImage = '/assets/images/eye-hygiene-10ml.png';
+                                } else if (sizeVolume.includes('30ml')) {
+                                    fallbackImage = '/assets/images/eye-hygiene-30ml.png';
+                                }
+                            }
+                            
+                            processedVariant.image_url = fallbackImage;
+                            console.log(`[ProductDetail] Set fallback image for variant ${variant.name}:`, fallbackImage);
+                        }
+                        
+                        return processedVariant;
+                    });
+                    
+                    setProductEyeHygieneVariants(processedVariants)
                     // Auto-select first variant if none selected and variants are available
-                    if (!selectedEyeHygieneVariant && variants.length > 0) {
-                        setSelectedEyeHygieneVariant(variants[0])
+                    if (!selectedEyeHygieneVariant && processedVariants.length > 0) {
+                        setSelectedEyeHygieneVariant(processedVariants[0])
                     }
                     if (import.meta.env.DEV) {
-                        console.log('[ProductDetail] Product eye hygiene variants loaded:', variants.length)
+                        console.log('[ProductDetail] Product eye hygiene variants loaded and processed:', processedVariants.length)
                     }
                 } else {
                     setProductEyeHygieneVariants([])
@@ -2327,12 +2387,49 @@ const ProductDetail = () => {
 
         // Priority 2: Use caliber-specific images if caliber is selected
         if (selectedCaliber && selectedCaliber.image_url && !selectedCaliber.image_url.startsWith('blob:')) {
+            console.log('[ProductDetail] Using caliber image:', {
+                caliber_mm: selectedCaliber.mm,
+                image_url: selectedCaliber.image_url,
+                is_3d_glasses: selectedCaliber.image_url.includes('3d-glasses.png'),
+                is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926')
+            });
+            
+            // Check if the image is the problematic 3d-glasses.png that doesn't exist
+            if (selectedCaliber.image_url.includes('3d-glasses.png')) {
+                console.log('[ProductDetail] Replacing 3d-glasses.png with fallback');
+                // Use fallback frame image instead
+                return '/assets/images/frame1.png'
+            }
             return selectedCaliber.image_url
+        } else if (selectedCaliber) {
+            console.log('[ProductDetail] Caliber selected but no valid image URL, using fallback:', {
+                caliber_mm: selectedCaliber.mm,
+                original_image_url: selectedCaliber.image_url,
+                is_blob: selectedCaliber.image_url?.startsWith('blob:')
+            });
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
-        if (selectedEyeHygieneVariant && selectedEyeHygieneVariant.image_url) {
-            return selectedEyeHygieneVariant.image_url
+        if (selectedEyeHygieneVariant) {
+            let variantImageUrl = selectedEyeHygieneVariant.image_url || selectedEyeHygieneVariant.image || '';
+            
+            console.log('[ProductDetail] Eye hygiene variant image processing:', {
+                variant_id: selectedEyeHygieneVariant.id,
+                variant_name: selectedEyeHygieneVariant.name,
+                image_url: selectedEyeHygieneVariant.image_url,
+                image: selectedEyeHygieneVariant.image,
+                is_blob: variantImageUrl?.startsWith('blob:'),
+                is_3d_glasses: variantImageUrl?.includes('3d-glasses.png')
+            });
+            
+            // Handle blob URLs and problematic images
+            if (variantImageUrl && !variantImageUrl.startsWith('blob:') && !variantImageUrl.includes('3d-glasses.png')) {
+                return variantImageUrl;
+            } else {
+                // Use fallback for eye hygiene variants
+                console.log('[ProductDetail] Using fallback for eye hygiene variant image');
+                return '/assets/images/frame1.png';
+            }
         }
 
         // Priority 4: Use eye hygiene size/volume variant-specific images if variant is selected

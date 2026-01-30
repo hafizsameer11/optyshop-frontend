@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Image Test - Caliber & Eye Hygiene</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; border: 1px solid #ddd; padding: 15px; }
+        .test-section h2 { color: #333; border-bottom: 2px solid #007bff; padding-bottom: 5px; }
+        .image-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 15px 0; }
+        .image-test { border: 1px solid #ccc; padding: 10px; text-align: center; }
+        .image-test img { width: 120px; height: 120px; object-fit: contain; margin: 10px 0; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .loading { background-color: #fff3cd; border-color: #ffeaa7; }
+        .status { font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Complete Image Display Test</h1>
+    <p>This page tests all image types used in the OptyShop application</p>
+
+    <div class="test-section">
+        <h2>👓 Frame Images (General Fallbacks)</h2>
+        <div class="image-grid">
+            <div class="image-test">
+                <h4>Frame 1</h4>
+                <img src="/assets/images/frame1.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Frame 2</h4>
+                <img src="/assets/images/frame2.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Frame 3</h4>
+                <img src="/assets/images/frame3.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Frame 4</h4>
+                <img src="/assets/images/frame4.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Frame 5</h4>
+                <img src="/assets/images/frame5.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🕶️ Ray Ban Caliber Images</h2>
+        <div class="image-grid">
+            <div class="image-test">
+                <h4>Ray Ban 4926 - 45mm</h4>
+                <img src="/assets/images/rayban-4926-45mm.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Ray Ban 4926 - 48mm</h4>
+                <img src="/assets/images/rayban-4926-48mm.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Ray Ban 4926 - 50mm</h4>
+                <img src="/assets/images/rayban-4926-50mm.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>💧 Eye Hygiene Product Images</h2>
+        <div class="image-grid">
+            <div class="image-test">
+                <h4>Eye Hygiene - 5ml</h4>
+                <img src="/assets/images/eye-hygiene-5ml.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Eye Hygiene - 10ml</h4>
+                <img src="/assets/images/eye-hygiene-10ml.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Eye Hygiene - 30ml</h4>
+                <img src="/assets/images/eye-hygiene-30ml.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🚫 Problematic Images (Should Fail)</h2>
+        <div class="image-grid">
+            <div class="image-test">
+                <h4>3D Glasses (Missing)</h4>
+                <img src="/assets/images/3d-glasses.png" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>Non-existent Image</h4>
+                <img src="/assets/images/non-existent.jpg" onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🌐 External Images (CORS Test)</h2>
+        <div class="image-grid">
+            <div class="image-test">
+                <h4>External Image (Direct)</h4>
+                <img src="https://optyshop-frontend.hmstech.org/uploads/products/1769173414882-car_headlight_white_116898_3840x2400.jpg" 
+                     onload="markSuccess(this)" onerror="markError(this)" crossorigin="anonymous" />
+                <div class="status">Testing...</div>
+            </div>
+            <div class="image-test">
+                <h4>External Image (Via Proxy)</h4>
+                <img src="/external-images/uploads/products/1769173414882-car_headlight_white_116898_3840x2400.jpg" 
+                     onload="markSuccess(this)" onerror="markError(this)" />
+                <div class="status">Testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function markSuccess(img) {
+            const container = img.parentElement;
+            const status = container.querySelector('.status');
+            container.classList.add('success');
+            container.classList.remove('loading', 'error');
+            status.textContent = '✅ Loaded successfully';
+            status.style.color = '#155724';
+        }
+
+        function markError(img) {
+            const container = img.parentElement;
+            const status = container.querySelector('.status');
+            container.classList.add('error');
+            container.classList.remove('loading', 'success');
+            status.textContent = '❌ Failed to load';
+            status.style.color = '#721c24';
+            console.error('Image failed to load:', img.src);
+        }
+
+        // Initialize all images as loading
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.image-test').forEach(test => {
+                test.classList.add('loading');
+            });
+        });
+
+        // Summary after all images load
+        window.addEventListener('load', function() {
+            const total = document.querySelectorAll('.image-test img').length;
+            const success = document.querySelectorAll('.success').length;
+            const errors = document.querySelectorAll('.error').length;
+            
+            const summary = document.createElement('div');
+            summary.innerHTML = `
+                <h2>📊 Test Summary</h2>
+                <p>Total Images: ${total}</p>
+                <p>✅ Successful: ${success}</p>
+                <p>❌ Failed: ${errors}</p>
+                <p>Success Rate: ${Math.round((success/total) * 100)}%</p>
+            `;
+            summary.style.cssText = 'position: fixed; top: 10px; right: 10px; background: white; padding: 15px; border: 2px solid #333; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);';
+            document.body.appendChild(summary);
+        });
+    </script>
+</body>
+</html>

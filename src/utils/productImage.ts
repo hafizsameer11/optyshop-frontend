@@ -96,6 +96,14 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
     
     // Convert full URLs to proxy paths to avoid CORS issues
     if (imgUrl && typeof imgUrl === 'string') {
+        // Handle blob URLs - these cannot be displayed in production, return fallback
+        if (imgUrl.startsWith('blob:')) {
+            if (import.meta.env.DEV) {
+                console.warn('🚫 Blob URL detected, using fallback image:', imgUrl)
+            }
+            return '/assets/images/frame1.png'
+        }
+        
         // If it's a full URL pointing to localhost:5000, convert to proxy path
         if (imgUrl.includes('http://localhost:5000/') || imgUrl.includes('https://localhost:5000/')) {
             // Extract the path after localhost:5000
@@ -112,8 +120,14 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
         if (imgUrl.startsWith('/')) {
             return imgUrl
         }
-        // If it's a full URL (other domain), use it directly
+        // If it's a full URL (other domain), handle CORS via proxy or use directly
         if (imgUrl.startsWith('http://') || imgUrl.startsWith('https://')) {
+            // For external images from optyshop-frontend.hmstech.org, use the proxy
+            if (imgUrl.includes('optyshop-frontend.hmstech.org')) {
+                // Convert to proxy path to avoid CORS issues
+                return imgUrl.replace('https://optyshop-frontend.hmstech.org', '/external-images')
+            }
+            // For other external URLs, use directly (may have CORS issues but that's expected)
             return imgUrl
         }
         // If it's a relative path without leading slash, add it
@@ -140,6 +154,26 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
     
     // Priority 1: Use variant image_url (new field)
     if (variant.image_url) {
+        // Handle blob URLs and problematic images
+        if (variant.image_url.startsWith('blob:') || variant.image_url.includes('3d-glasses.png')) {
+            if (import.meta.env.DEV) {
+                console.warn('🚫 Blob URL or problematic image detected in variant, using fallback:', variant.image_url)
+            }
+            // Use fallback based on size_volume
+            let fallbackImage = '/assets/images/frame1.png';
+            if (variant.size_volume) {
+                const sizeVolume = variant.size_volume.toLowerCase();
+                if (sizeVolume.includes('5ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-5ml.png';
+                } else if (sizeVolume.includes('10ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-10ml.png';
+                } else if (sizeVolume.includes('30ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png';
+                }
+            }
+            return fallbackImage;
+        }
+        
         if (import.meta.env.DEV) {
             console.log('🖼️ Using variant image_url:', {
                 variantId: variant.id,

@@ -88,11 +88,11 @@ const ProductPage: React.FC<ProductPageProps> = ({
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
               <img 
-                src="/assets/images/3d-glasses.png" 
+                src="/assets/images/frame1.png" 
                 alt={productName}
                 className="max-w-full max-h-full object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/assets/images/frame1.png'
+                  (e.target as HTMLImageElement).src = '/assets/images/frame2.png'
                 }}
               />
             </div>
