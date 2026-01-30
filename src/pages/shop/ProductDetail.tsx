@@ -63,8 +63,9 @@ const ProductDetail = () => {
     const lastProductIdRef = useRef<number | null>(null)
     const formInitializedRef = useRef<number | null>(null)
 
-    // MM Caliber State
+    // MM Caliber State - using product's mm_calibers data directly
     const [productCalibers, setProductCalibers] = useState<MMCaliber[]>([])
+    const [selectedCaliber, setSelectedCaliber] = useState<MMCaliber | null>(null)
 
     // Eye Hygiene Variants State
     const [productEyeHygieneVariants, setProductEyeHygieneVariants] = useState<EyeHygieneVariant[]>([])
@@ -84,27 +85,53 @@ const ProductDetail = () => {
         }
     }, [product?.id])
 
-    // Fetch product calibers
+    // Load product calibers from product data
     useEffect(() => {
         if (product?.id) {
-            getProductCalibers(product.id).then(calibers => {
-                if (calibers) {
-                    setProductCalibers(calibers)
-                    if (import.meta.env.DEV) {
-                        console.log('[ProductDetail] Product calibers loaded:', calibers.length)
-                    }
-                } else {
-                    setProductCalibers([])
+            const p = product as any
+            // Use mm_calibers from product data directly
+            if (p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0) {
+                const calibers = p.mm_calibers.map((caliber: any) => ({
+                    mm: caliber.mm,
+                    image_url: caliber.image_url,
+                    price: caliber.price,
+                    stock_quantity: caliber.stock_quantity,
+                    is_active: caliber.is_active !== false
+                }))
+                setProductCalibers(calibers)
+                
+                // Auto-select first caliber if none selected
+                if (!selectedCaliber && calibers.length > 0) {
+                    setSelectedCaliber(calibers[0])
                 }
-            }).catch(error => {
-                console.error('[ProductDetail] Error fetching product calibers:', error)
-                setProductCalibers([])
-            })
+                
+                if (import.meta.env.DEV) {
+                    console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length)
+                }
+            } else {
+                // Fallback: try to fetch from API if product doesn't have mm_calibers
+                getProductCalibers(product.id).then(calibers => {
+                    if (calibers) {
+                        setProductCalibers(calibers)
+                        if (!selectedCaliber && calibers.length > 0) {
+                            setSelectedCaliber(calibers[0])
+                        }
+                        if (import.meta.env.DEV) {
+                            console.log('[ProductDetail] Product calibers loaded from API fallback:', calibers.length)
+                        }
+                    } else {
+                        setProductCalibers([])
+                    }
+                }).catch(error => {
+                    console.error('[ProductDetail] Error fetching product calibers:', error)
+                    setProductCalibers([])
+                })
+            }
         } else {
             setProductCalibers([])
             setSelectedCaliber(null)
         }
-    }, [product?.id])
+    }, [product?.id, product?.mm_calibers])
 
     // Fetch eye hygiene variants
     useEffect(() => {
@@ -236,9 +263,7 @@ const ProductDetail = () => {
     // Quantity state for variant-based products
     const [variantQuantity, setVariantQuantity] = useState(1)
 
-    // MM Caliber State (for frames/glasses)
-    const [fetchedCalibers, setFetchedCalibers] = useState<MMCaliber[]>([])
-    const [selectedCaliber, setSelectedCaliber] = useState<MMCaliber | null>(null)
+    // MM Caliber State (for frames/glasses) - using fetched calibers as fallback
 
     // Get selected color variant - supports both 'colors' array (preferred) and 'color_images' array (fallback)
     const selectedColorVariant = useMemo(() => {
@@ -1111,46 +1136,6 @@ const ProductDetail = () => {
 
         fetchVariants()
     }, [product?.id, isEyeHygiene])
-
-    // Fetch calibers for frames/glasses products
-    useEffect(() => {
-        const fetchCalibers = async () => {
-            if (!product || !product.id) {
-                setFetchedCalibers([])
-                setSelectedCaliber(null)
-                return
-            }
-
-            // Check if product has mm_calibers or is a frame/glasses product
-            const p = product as any
-            const hasCalibers = p.mm_calibers && Array.isArray(p.mm_calibers) && p.mm_calibers.length > 0
-            const isFrameProduct = product?.category?.slug === 'eyeglasses' || product?.category?.slug === 'sunglasses'
-
-            if (!hasCalibers && !isFrameProduct) {
-                setFetchedCalibers([])
-                setSelectedCaliber(null)
-                return
-            }
-
-            try {
-                const calibers = await getProductCalibers(product.id)
-                if (import.meta.env.DEV) {
-                    console.log('🔍 Fetched calibers:', calibers)
-                }
-                setFetchedCalibers(calibers || [])
-                // Auto-select first caliber if none selected and calibers are available
-                if (!selectedCaliber && calibers && calibers.length > 0) {
-                    setSelectedCaliber(calibers[0])
-                }
-            } catch (error) {
-                console.error('Error fetching calibers:', error)
-                setFetchedCalibers([])
-                setSelectedCaliber(null)
-            }
-        }
-
-        fetchCalibers()
-    }, [product?.id, product?.category?.slug])
 
     // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
     useEffect(() => {
@@ -2194,7 +2179,7 @@ const ProductDetail = () => {
 
     // Handler for caliber change
     const handleCaliberChange = (mm: number | string) => {
-        const matchingCaliber = fetchedCalibers.find(c => c.mm === mm)
+        const matchingCaliber = productCalibers.find(c => c.mm === mm)
         if (matchingCaliber) {
             setSelectedCaliber(matchingCaliber)
             setSelectedImageIndex(0) // Reset image index to show caliber's image
@@ -4512,7 +4497,7 @@ const ProductDetail = () => {
                                                         )}
 
                                                         {/* Caliber (MM) Selector for Frames/Glasses */}
-                                                        {fetchedCalibers.length > 0 && (
+                                                        {productCalibers.length > 0 && (
                                                             <div className="flex flex-col">
                                                                 <label className="text-xs font-bold text-gray-700 uppercase mb-2">
                                                                     Frame Size (mm) <span className="text-red-500">*</span>
@@ -4524,7 +4509,7 @@ const ProductDetail = () => {
                                                                     required
                                                                 >
                                                                     <option value="">Select Frame Size</option>
-                                                                    {fetchedCalibers
+                                                                    {productCalibers
                                                                         .filter(c => c.is_active !== false)
                                                                         .sort((a, b) => Number(a.mm) - Number(b.mm))
                                                                         .map((caliber) => (
@@ -4692,20 +4677,22 @@ const ProductDetail = () => {
                                     })()}
 
                                     {/* Caliber (MM) Selection for Frames/Glasses */}
-                                    {fetchedCalibers.length > 0 && !isEyeHygiene && !isContactLens && (
+                                    {productCalibers.length > 0 && !isEyeHygiene && !isContactLens && (
                                         <div className="mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-900">Frame Size</h3>
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    <span>Choose the perfect fit</span>
-                                                </div>
+                                                {selectedCaliber && (
+                                                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                        {selectedCaliber.mm}mm selected
+                                                    </div>
+                                                )}
                                             </div>
                                             
                                             <div className="flex flex-wrap gap-3">
-                                                {fetchedCalibers
+                                                {productCalibers
                                                     .filter(c => c.is_active !== false)
                                                     .sort((a, b) => Number(a.mm) - Number(b.mm))
                                                     .map((caliber) => (
