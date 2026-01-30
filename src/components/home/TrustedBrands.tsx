@@ -261,8 +261,8 @@ const TrustedBrands: React.FC = () => {
         return null // Don't render anything if no brands
     }
 
-    // Duplicate the array for seamless infinite scroll (only if we have brands)
-    const track = Array.isArray(brands) && brands.length > 0 ? [...brands, ...brands] : []
+    // Duplicate brands for seamless marquee effect
+    const duplicatedTrack = Array.isArray(brands) && brands.length > 0 ? [...brands, ...brands] : []
 
     return (
         <section className="bg-white text-slate-900">
@@ -276,7 +276,7 @@ const TrustedBrands: React.FC = () => {
 
             <div className="overflow-hidden pb-6">
                 <div className="flex gap-16 px-8 items-center marquee-track">
-                    {track.map((brand, index) => {
+                    {duplicatedTrack.map((brand: Brand, index: number) => {
                         const imageUrl = getImageUrl(brand.logo_image || brand.logo_url, brand.name)
                         const hasLink = !!brand.website_url
                         const displayName = (brand as any).displayName || brand.name

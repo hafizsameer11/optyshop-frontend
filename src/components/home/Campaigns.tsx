@@ -200,7 +200,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                         <div 
                             className="flex animate-scroll"
                             style={{
-                                animation: 'scroll 20s linear infinite',
+                                animation: 'scroll 30s linear infinite',
                                 width: `${campaigns.length * 100}%`
                             }}
                         >
@@ -344,7 +344,7 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                     <div 
                         className="flex animate-scroll"
                         style={{
-                            animation: 'scroll 25s linear infinite',
+                            animation: 'scroll 30s linear infinite',
                             width: `${campaigns.length * 100}%`
                         }}
                     >
