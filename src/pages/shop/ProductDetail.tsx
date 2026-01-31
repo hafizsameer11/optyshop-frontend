@@ -5247,6 +5247,9 @@ const ProductDetail = () => {
                                                         onClick={(e) => {
                                                             e.preventDefault()
                                                             e.stopPropagation()
+                                                            // Reset image selection to show main product image instead of caliber image
+                                                            setSelectedImageIndex(0)
+                                                            setIsManuallySelectingImage(false)
                                                             // Navigate to the same URL with ?action=checkout query param
                                                             // This will trigger the useEffect to set showCheckout(true)
                                                             navigate(`${location.pathname}?action=checkout`)
