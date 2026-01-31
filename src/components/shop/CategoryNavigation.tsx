@@ -7,6 +7,7 @@ import {
     type Category
 } from '../../services/categoriesService'
 import QuickFilters from './QuickFilters'
+import QuickActionButtons from './QuickActionButtons'
 
 interface CategoryNavigationProps {
     category: Category | null
@@ -90,11 +91,28 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
     }
 
     return (
-        <div className="py-4 mb-6">
+        <div className="py-4 mb-3">
             <div className="max-w-7xl mx-auto px-2 sm:px-4">
                 {/* Single Filter Section */}
-                <div className="mb-4">
+                <div className="mb-3">
                     <QuickFilters onFilterChange={onFilterChange || (() => {})} />
+                </div>
+
+                {/* Quick Action Buttons */}
+                <div className="mb-3">
+                    <QuickActionButtons 
+                        onClearFilters={() => {
+                            // Clear filters by calling onFilterChange with empty values
+                            if (onFilterChange) {
+                                onFilterChange({
+                                    gender: '',
+                                    minPrice: undefined,
+                                    maxPrice: undefined,
+                                    sortBy: 'newest'
+                                })
+                            }
+                        }}
+                    />
                 </div>
 
                 {/* Center Navigation Buttons */}
