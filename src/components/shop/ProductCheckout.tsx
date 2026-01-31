@@ -70,6 +70,7 @@ interface ProductCheckoutProps {
   product: Product
   onClose?: () => void
   initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
+  initialSelectedImageIndex?: number // Optional: pre-selected image index from product page
   // selectedCaliber?: any | null // Optional: selected MM caliber information (removed - unused)
   categoryContext?: {
     category?: { id: number; name: string; slug: string } | null
@@ -113,7 +114,7 @@ interface PrescriptionFormData {
   os_axis: string
 }
 
-const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, categoryContext }) => {
+const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, initialSelectedImageIndex, categoryContext }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -160,7 +161,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       }
     }
   }, [categoryContext])
-  const [selectedImageIndex] = useState(0)
+  const [selectedImageIndex] = useState(initialSelectedImageIndex || 0)
 
   // Mouse position for lens preview effect (normalized 0-1)
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 })
