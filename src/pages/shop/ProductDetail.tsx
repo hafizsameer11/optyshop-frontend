@@ -154,6 +154,9 @@ const ProductDetail = () => {
                 
                 console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
                 
+                // Set the calibers in state
+                setProductCalibers(calibers)
+                
                 // Auto-select first caliber if none selected
                 if (!selectedCaliber && calibers.length > 0) {
                     setSelectedCaliber(calibers[0])
@@ -3420,19 +3423,35 @@ const ProductDetail = () => {
                                                             >
                                                                 {/* Caliber Image */}
                                                                 <div className="w-8 h-8 rounded overflow-hidden bg-gray-50 border border-gray-200">
-                                                                    {caliber.image_url && !caliber.image_url.startsWith('blob:') ? (
-                                                                        <img
-                                                                            src={caliber.image_url}
-                                                                            alt={`${caliber.mm}mm`}
-                                                                            className="w-full h-full object-cover"
-                                                                            onError={(e) => {
-                                                                                const target = e.target as HTMLImageElement
-                                                                                target.style.display = 'none'
-                                                                                const fallback = target.nextElementSibling as HTMLElement
-                                                                                if (fallback) fallback.style.display = 'flex'
-                                                                            }}
-                                                                        />
-                                                                    ) : null}
+                                                                    {(() => {
+                                                                        if (caliber.image_url && !caliber.image_url.startsWith('blob:')) {
+                                                                            console.log(`[ProductDetail] Rendering caliber image for ${caliber.mm}:`, caliber.image_url)
+                                                                            return (
+                                                                                <img
+                                                                                    src={caliber.image_url}
+                                                                                    alt={`${caliber.mm}mm`}
+                                                                                    className="w-full h-full object-cover"
+                                                                                    onError={(e) => {
+                                                                                        console.warn(`[ProductDetail] Failed to load caliber image for ${caliber.mm}:`, caliber.image_url)
+                                                                                        const target = e.target as HTMLImageElement
+                                                                                        target.style.display = 'none'
+                                                                                        const fallback = target.nextElementSibling as HTMLElement
+                                                                                        if (fallback) fallback.style.display = 'flex'
+                                                                                    }}
+                                                                                    onLoad={() => {
+                                                                                        console.log(`[ProductDetail] Successfully loaded caliber image for ${caliber.mm}:`, caliber.image_url)
+                                                                                    }}
+                                                                                />
+                                                                            )
+                                                                        } else {
+                                                                            console.log(`[ProductDetail] Not rendering image for ${caliber.mm}:`, {
+                                                                                has_image_url: !!caliber.image_url,
+                                                                                is_blob: caliber.image_url?.startsWith('blob:'),
+                                                                                image_url: caliber.image_url
+                                                                            })
+                                                                            return null
+                                                                        }
+                                                                    })()}
                                                                     <div className={`w-full h-full items-center justify-center text-xs text-gray-400 ${caliber.image_url && !caliber.image_url.startsWith('blob:') ? 'hidden' : 'flex'}`}>
                                                                         {caliber.mm}
                                                                     </div>

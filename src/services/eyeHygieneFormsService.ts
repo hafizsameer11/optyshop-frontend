@@ -166,23 +166,6 @@ export async function getSizeVolumeVariants(
       }
     }
 
-    // Handle 500 errors and other server issues gracefully
-    if (response.error && (response.error.includes('500') || response.error.includes('Internal Server Error'))) {
-      if (import.meta.env.DEV) {
-        console.warn(`⚠️ Size-volume variants endpoint not available for product ${productId}. Backend may not have this feature implemented.`)
-      }
-      // Return empty array instead of null to prevent frontend crashes
-      return []
-    }
-
-    // Handle other API errors quietly
-    if (response.error) {
-      if (import.meta.env.DEV) {
-        console.warn(`⚠️ Size-volume variants API error for product ${productId}:`, response.error)
-      }
-      return []
-    }
-
     // Handle case where API returns success but no data
     if (!response.data) {
       if (import.meta.env.DEV) {
@@ -191,10 +174,18 @@ export async function getSizeVolumeVariants(
       return []
     }
 
+    // Handle API errors quietly
+    if (response.error) {
+      if (import.meta.env.DEV) {
+        console.warn(`⚠️ Size-volume variants API error for product ${productId}:`, response.error)
+      }
+      return []
+    }
+
     return null
   } catch (error: any) {
     // Check if it's a network error or 500 error
-    if (error.message && (error.message.includes('500') || error.message.includes('Internal Server Error'))) {
+    if (error.message && (error.message.includes('500') || error.message.includes('Internal Server Error') || error.message.includes('Server error: 500'))) {
       if (import.meta.env.DEV) {
         console.warn(`⚠️ Size-volume variants endpoint not available for product ${productId}. Backend may not have this feature implemented.`)
       }
