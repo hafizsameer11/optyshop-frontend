@@ -120,12 +120,14 @@ const ProductDetail = () => {
                         // Use actual product images instead of blob URLs
                         let caliberImage = '';
                         
-                        // If the caliber has a blob URL, use the product's main images instead
+                        // If the caliber has a blob URL, use different product images for different calibers
                         if (caliber.image_url?.startsWith('blob:')) {
-                            // Use the first product image as the caliber image
+                            // Use different product images for different calibers to enable switching
                             if (product.images && product.images.length > 0) {
-                                caliberImage = product.images[0];
-                                console.log(`[ProductDetail] Using product image for caliber ${caliber.mm}:`, caliberImage);
+                                // Use different images based on caliber index to enable image switching
+                                const imageIndex = index % product.images.length;
+                                caliberImage = product.images[imageIndex];
+                                console.log(`[ProductDetail] Using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
                             } else {
                                 // Fallback to frame image if no product images
                                 caliberImage = `/assets/images/frame${(index % 5) + 1}.png`;
@@ -2411,25 +2413,18 @@ const ProductDetail = () => {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use caliber-specific images if caliber is selected AND the image is different from main product images
+        // Priority 2: Use caliber-specific images if caliber is selected
         if (selectedCaliber && selectedCaliber.image_url) {
-            // Check if the caliber image is different from main product images
-            const isDifferentFromMainImages = product.images && 
-                !product.images.some(mainImage => selectedCaliber.image_url === mainImage);
-            
-            console.log('[ProductDetail] Caliber image processing:', {
+            console.log('[ProductDetail] Using caliber image:', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
                 is_product_image: selectedCaliber.image_url.includes('uploads/products'),
                 is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926'),
-                is_different_from_main: isDifferentFromMainImages,
                 main_images: product.images
             });
             
-            // Only use caliber image if it's actually different from main product images
-            if (isDifferentFromMainImages) {
-                return selectedCaliber.image_url;
-            }
+            // Always use the caliber image when a caliber is selected
+            return selectedCaliber.image_url;
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
