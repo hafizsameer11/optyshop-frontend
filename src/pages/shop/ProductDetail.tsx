@@ -2411,16 +2411,25 @@ const ProductDetail = () => {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use caliber-specific images if caliber is selected
+        // Priority 2: Use caliber-specific images if caliber is selected AND the image is different from main product images
         if (selectedCaliber && selectedCaliber.image_url) {
-            console.log('[ProductDetail] Using caliber image:', {
+            // Check if the caliber image is different from main product images
+            const isDifferentFromMainImages = product.images && 
+                !product.images.some(mainImage => selectedCaliber.image_url === mainImage);
+            
+            console.log('[ProductDetail] Caliber image processing:', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
                 is_product_image: selectedCaliber.image_url.includes('uploads/products'),
-                is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926')
+                is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926'),
+                is_different_from_main: isDifferentFromMainImages,
+                main_images: product.images
             });
             
-            return selectedCaliber.image_url
+            // Only use caliber image if it's actually different from main product images
+            if (isDifferentFromMainImages) {
+                return selectedCaliber.image_url;
+            }
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
@@ -4475,7 +4484,7 @@ const ProductDetail = () => {
                                     // Ensure selectedImageIndex is within bounds
                                     const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
                                     
-                                    // Use variant-specific image if caliber or eye hygiene variant is selected, otherwise use images array
+                                    // Use variant-specific image if caliber or eye hygiene variant is selected AND has different images, otherwise use images array
                                     const selectedImage = (selectedCaliber || selectedEyeHygieneVariant) 
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
