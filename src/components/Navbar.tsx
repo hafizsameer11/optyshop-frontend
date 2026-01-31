@@ -248,9 +248,25 @@ const Navbar: React.FC = () => {
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
-                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-                                    setSearchQuery('')
-                                    setIsSearchOpen(false)
+                                    e.preventDefault()
+                                    // Show expanded search results instead of navigating to separate page
+                                    setIsSearching(true)
+                                    searchTimeoutRef.current = setTimeout(async () => {
+                                        try {
+                                            const results = await searchAll(searchQuery.trim(), 20) // Get more results for expanded view
+                                            if (results) {
+                                                setSearchResults(results.results)
+                                                setIsSearchOpen(true)
+                                            } else {
+                                                setSearchResults([])
+                                            }
+                                        } catch (error) {
+                                            console.error('Search error:', error)
+                                            setSearchResults([])
+                                        } finally {
+                                            setIsSearching(false)
+                                        }
+                                    }, 100) // Faster response for Enter key
                                 } else if (e.key === 'Escape') {
                                     setIsSearchOpen(false)
                                 }
@@ -281,6 +297,9 @@ const Navbar: React.FC = () => {
                         {isSearchOpen && searchResults.length > 0 && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
                                 <div className="p-2">
+                                    <div className="text-xs text-cyan-400/60 px-3 py-2 font-medium">
+                                        Found {searchResults.length} results for "{searchQuery}"
+                                    </div>
                                     {searchResults.map((result, index) => (
                                         <Link
                                             key={`${result.type}-${result.id}`}
@@ -330,19 +349,6 @@ const Navbar: React.FC = () => {
                                             </div>
                                         </Link>
                                     ))}
-                                    {searchQuery.trim().length >= 2 && (
-                                        <Link
-                                            to={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
-                                            onClick={() => {
-                                                setSearchQuery('')
-                                                setIsSearchOpen(false)
-                                                setSearchResults([])
-                                            }}
-                                            className="block mt-2 px-3 py-2 text-center text-sm font-medium text-cyan-300 hover:text-cyan-200 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-lg transition-all"
-                                        >
-                                            View all results for "{searchQuery}"
-                                        </Link>
-                                    )}
                                 </div>
                             </div>
                         )}

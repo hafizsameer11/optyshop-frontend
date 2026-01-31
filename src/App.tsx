@@ -39,7 +39,6 @@ import Cart from './pages/shop/Cart'
 import Checkout from './pages/shop/Checkout'
 import Payment from './pages/shop/Payment'
 import Wishlist from './pages/shop/Wishlist'
-import SearchResults from './pages/SearchResults'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ProtectedRoute from './components/customer/ProtectedRoute'
@@ -103,8 +102,7 @@ function App() {
         <Route path="/join-us" element={<JoinUs />} />
         <Route path="/job-opportunities" element={<JobOpportunities />} />
         <Route path="/job-application/:jobId" element={<JobApplication />} />
-        <Route path="/search" element={<SearchResults />} />
-        <Route path="/shop" element={<Products />} />
+                <Route path="/shop" element={<Products />} />
         <Route path="/shop/flash-offers" element={<FlashOffers />} />
         {/* Product Section Routes */}
         <Route path="/shop/sunglasses" element={<Products />} />
