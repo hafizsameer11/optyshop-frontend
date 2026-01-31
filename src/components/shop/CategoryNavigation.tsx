@@ -91,15 +91,15 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
 
     return (
         <div className="py-4 mb-6">
-            <div className="flex justify-between items-start gap-4 max-w-7xl mx-auto">
-                {/* Left Side Filters */}
-                <div className="flex-shrink-0">
+            <div className="max-w-7xl mx-auto px-2 sm:px-4">
+                {/* Single Filter Section */}
+                <div className="mb-4">
                     <QuickFilters onFilterChange={onFilterChange || (() => {})} />
                 </div>
 
                 {/* Center Navigation Buttons */}
-                <div className="flex-1 flex justify-center">
-                    <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex justify-center">
+                    <div className="flex flex-wrap justify-center gap-2 max-w-full overflow-x-hidden">
                         {/* Category Page: Show subcategories */}
                         {isCategoryPage && subcategories.map((sub) => (
                             <Link
@@ -159,11 +159,6 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
                             </>
                         )}
                     </div>
-                </div>
-
-                {/* Right Side Filters */}
-                <div className="flex-shrink-0">
-                    <QuickFilters onFilterChange={onFilterChange || (() => {})} />
                 </div>
             </div>
         </div>
