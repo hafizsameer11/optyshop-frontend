@@ -18,7 +18,7 @@ import {
     type ProductOptions
 } from '../../services/productsService'
 import CategoryBanner from '../../components/home/CategoryBanner'
-import RelatedCategories from '../../components/shop/RelatedCategories'
+import CategoryNavigation from '../../components/shop/CategoryNavigation'
 import ProductCard from '../../components/products/ProductCard'
 import BannerDebug from '../../components/debug/BannerDebug'
 
@@ -414,14 +414,12 @@ const CategoryPage: React.FC = () => {
                 />
             )}
 
-            {/* Related Categories Section - Moved directly under banner */}
-            <div className="w-full max-w-screen-2xl mx-auto px-8 sm:px-12 lg:px-16">
-                <RelatedCategories 
-                    category={categoryInfo.category}
-                    subcategory={categoryInfo.subcategory}
-                    subSubcategory={categoryInfo.subSubcategory}
-                />
-            </div>
+            {/* Category Navigation - Centered buttons under banner */}
+            <CategoryNavigation 
+                category={categoryInfo.category}
+                subcategory={categoryInfo.subcategory}
+                subSubcategory={categoryInfo.subSubcategory}
+            />
 
             {/* Debug Banner Information - Only in development */}
             {import.meta.env.DEV && categoryInfo.category && (
