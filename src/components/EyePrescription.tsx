@@ -41,6 +41,7 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
       try {
         setLoading(true);
         const structure = await getNearVisionFormStructure();
+        console.log('API Response - Form Structure:', structure);
         setFormStructure(structure);
         setError('');
       } catch (err: any) {
@@ -83,10 +84,11 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
     setLeftEye(rightEye);
   };
 
-  // Get dropdown options from API or fallback to hardcoded values
+  // Get dropdown options from API only
   const getSphOptions = () => {
     if (formStructure) {
       const sphValues = getFieldValues(formStructure, 'sph', 'both');
+      console.log('SPH Values from API:', sphValues);
       if (sphValues.length > 0) {
         return [
           <option key="--" value="--">--</option>,
@@ -98,45 +100,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
         ];
       }
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="--" value="--">--</option>,
-      <option key="-8.00" value="-8.00">-8.00</option>,
-      <option key="-7.50" value="-7.50">-7.50</option>,
-      <option key="-7.00" value="-7.00">-7.00</option>,
-      <option key="-6.50" value="-6.50">-6.50</option>,
-      <option key="-6.00" value="-6.00">-6.00</option>,
-      <option key="-5.50" value="-5.50">-5.50</option>,
-      <option key="-5.00" value="-5.00">-5.00</option>,
-      <option key="-4.50" value="-4.50">-4.50</option>,
-      <option key="-4.00" value="-4.00">-4.00</option>,
-      <option key="-3.50" value="-3.50">-3.50</option>,
-      <option key="-3.00" value="-3.00">-3.00</option>,
-      <option key="-2.50" value="-2.50">-2.50</option>,
-      <option key="-2.00" value="-2.00">-2.00</option>,
-      <option key="-1.50" value="-1.50">-1.50</option>,
-      <option key="-1.00" value="-1.00">-1.00</option>,
-      <option key="-0.75" value="-0.75">-0.75</option>,
-      <option key="-0.50" value="-0.50">-0.50</option>,
-      <option key="-0.25" value="-0.25">-0.25</option>,
-      <option key="0.00" value="0.00">0.00</option>,
-      <option key="+0.25" value="+0.25">+0.25</option>,
-      <option key="+0.50" value="+0.50">+0.50</option>,
-      <option key="+0.75" value="+0.75">+0.75</option>,
-      <option key="+1.00" value="+1.00">+1.00</option>,
-      <option key="+1.25" value="+1.25">+1.25</option>,
-      <option key="+1.50" value="+1.50">+1.50</option>,
-      <option key="+1.75" value="+1.75">+1.75</option>,
-      <option key="+2.00" value="+2.00">+2.00</option>,
-      <option key="+2.25" value="+2.25">+2.25</option>,
-      <option key="+2.50" value="+2.50">+2.50</option>,
-      <option key="+2.75" value="+2.75">+2.75</option>,
-      <option key="+3.00" value="+3.00">+3.00</option>,
-      <option key="+3.50" value="+3.50">+3.50</option>,
-      <option key="+4.00" value="+4.00">+4.00</option>,
-      <option key="+4.50" value="+4.50">+4.50</option>,
-      <option key="+5.00" value="+5.00">+5.00</option>
-    ];
+    // Return only placeholder if no API data
+    return [<option key="--" value="--">--</option>];
   };
 
   const getCylOptions = () => {
@@ -153,8 +118,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
         ];
       }
     }
-    // Fallback to hardcoded values
-    return getSphOptions(); // Same range as SPH
+    // Return only placeholder if no API data
+    return [<option key="--" value="--">--</option>];
   };
 
   const getAxisOptions = () => {
@@ -171,13 +136,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
         ];
       }
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="--" value="--">--</option>,
-      ...Array.from({ length: 181 }, (_, i) => (
-        <option key={i} value={i}>{i}</option>
-      ))
-    ];
+    // Return only placeholder if no API data
+    return [<option key="--" value="--">--</option>];
   };
 
   const getPdOptions = () => {
@@ -194,19 +154,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
         ];
       }
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="" value="">Enter Your Pupillary Distance</option>,
-      <option key="60" value="60">60</option>,
-      <option key="61" value="61">61</option>,
-      <option key="62" value="62">62</option>,
-      <option key="63" value="63">63</option>,
-      <option key="64" value="64">64</option>,
-      <option key="65" value="65">65</option>,
-      <option key="66" value="66">66</option>,
-      <option key="67" value="67">67</option>,
-      <option key="68" value="68">68</option>
-    ];
+    // Return only placeholder if no API data
+    return [<option key="" value="">Enter Your Pupillary Distance</option>];
   };
 
   const EyeCard: React.FC<{
