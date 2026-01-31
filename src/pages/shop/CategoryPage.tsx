@@ -451,14 +451,14 @@ const CategoryPage: React.FC = () => {
             )}
 
             {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-4 px-8 sm:px-12 lg:px-16">
+            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-2 px-8 sm:px-12 lg:px-16">
                 <div className="w-full max-w-screen-2xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                        <div className="mb-4 bg-white rounded-2xl shadow-lg p-4 border-l-4 border-blue-600">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div className="mb-2 bg-white rounded-xl shadow-md p-3 border-l-4 border-blue-600">
+                            <div className="flex items-center justify-between flex-wrap gap-2">
                                 <div>
-                                    <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                                    <h2 className="text-base md:text-lg font-bold text-gray-900">
                                         {categoryInfo.subSubcategory 
                                             ? `${translateCategory(categoryInfo.subSubcategory)} (Sub-subcategory)`
                                             : `${translateCategory(categoryInfo.subcategory)} (Subcategory)`}
@@ -468,8 +468,8 @@ const CategoryPage: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Filters and Search - Reduced size and lifted up */}
-                    <div className="mb-4">
+                    {/* Filters and Search - Compact layout */}
+                    <div className="mb-2">
                         <div className="flex flex-col lg:flex-row gap-2 lg:gap-3 mb-2">
                             {/* Sort Dropdown */}
                             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between lg:justify-start w-full lg:w-auto">
@@ -507,7 +507,7 @@ const CategoryPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Filter Options Row - Smaller and more compact */}
+                        {/* Filter Options Row - Compact */}
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
                             {/* Lens Type Filter */}
                             <div>
