@@ -41,16 +41,16 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({ onFilterChange, className =
     }, [gender, minPrice, maxPrice, sortBy, onFilterChange])
 
     return (
-        <div className={`flex flex-col gap-2 ${className}`}>
-            <h3 className="text-xs font-semibold text-gray-700 mb-1">Quick Filters</h3>
+        <div className={`flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4 ${className}`}>
+            <h3 className="text-xs font-semibold text-gray-700 whitespace-nowrap">Quick Filters</h3>
             
             {/* Gender Filter */}
-            <div className="flex items-center gap-1">
-                <label className="text-xs text-gray-600">Gender:</label>
+            <div className="flex items-center gap-1 min-w-0">
+                <label className="text-xs text-gray-600 whitespace-nowrap">Gender:</label>
                 <select
                     value={gender}
                     onChange={(e) => setGender(e.target.value)}
-                    className="text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none min-w-0 flex-shrink-0"
                 >
                     <option value="">All</option>
                     {productOptions?.genders?.map((g) => (
@@ -62,34 +62,34 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({ onFilterChange, className =
             </div>
 
             {/* Price Range */}
-            <div className="flex items-center gap-1">
-                <label className="text-xs text-gray-600">Price:</label>
-                <div className="flex gap-1">
+            <div className="flex items-center gap-1 min-w-0">
+                <label className="text-xs text-gray-600 whitespace-nowrap">Price:</label>
+                <div className="flex gap-1 items-center">
                     <input
                         type="number"
                         placeholder="Min"
                         value={minPrice}
                         onChange={(e) => setMinPrice(e.target.value)}
-                        className="w-14 text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-14 sm:w-16 text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none flex-shrink-0"
                     />
-                    <span className="text-xs text-gray-500">-</span>
+                    <span className="text-xs text-gray-500 flex-shrink-0">-</span>
                     <input
                         type="number"
                         placeholder="Max"
                         value={maxPrice}
                         onChange={(e) => setMaxPrice(e.target.value)}
-                        className="w-14 text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                        className="w-14 sm:w-16 text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none flex-shrink-0"
                     />
                 </div>
             </div>
 
             {/* Sort By */}
-            <div className="flex items-center gap-1">
-                <label className="text-xs text-gray-600">Sort:</label>
+            <div className="flex items-center gap-1 min-w-0">
+                <label className="text-xs text-gray-600 whitespace-nowrap">Sort:</label>
                 <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="text-xs border border-gray-300 rounded px-1 py-0.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none min-w-0 flex-shrink-0"
                 >
                     <option value="newest">Newest</option>
                     <option value="oldest">Oldest</option>
@@ -107,7 +107,7 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({ onFilterChange, className =
                     setMaxPrice('')
                     setSortBy('newest')
                 }}
-                className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-2 py-1 transition-colors"
+                className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-2 py-1 transition-colors whitespace-nowrap flex-shrink-0"
             >
                 Clear All
             </button>
