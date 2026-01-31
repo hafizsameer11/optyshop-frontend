@@ -120,26 +120,28 @@ const ProductDetail = () => {
                         // Use actual product images instead of blob URLs
                         let caliberImage = '';
                         
-                        // If the caliber has a blob URL, use different product images for different calibers
+                        // Handle blob URLs by using different product images as fallbacks since blob URLs won't work cross-origin
                         if (caliber.image_url?.startsWith('blob:')) {
-                            // Use different product images for different calibers to enable switching
+                            // Blob URLs won't work across origins, so use different product images for different calibers
                             if (product.images && product.images.length > 0) {
                                 // Use different images based on caliber index to enable image switching
                                 const imageIndex = index % product.images.length;
                                 caliberImage = product.images[imageIndex];
-                                console.log(`[ProductDetail] Using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
+                                console.log(`[ProductDetail] Blob URL detected, using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
                             } else {
-                                // Fallback to frame image if no product images
                                 caliberImage = `/assets/images/frame${(index % 5) + 1}.png`;
-                                console.log(`[ProductDetail] Using fallback frame image for caliber ${caliber.mm}:`, caliberImage);
+                                console.log(`[ProductDetail] Blob URL detected, using fallback frame image for caliber ${caliber.mm}:`, caliberImage);
                             }
                         } else if (caliber.image_url && !caliber.image_url.includes('3d-glasses.png')) {
                             // Use the caliber image if it's valid
                             caliberImage = caliber.image_url;
                         } else {
-                            // Fallback to product image or frame image
+                            // Fallback to different product images for different calibers
                             if (product.images && product.images.length > 0) {
-                                caliberImage = product.images[0];
+                                // Use different images based on caliber index to enable image switching
+                                const imageIndex = index % product.images.length;
+                                caliberImage = product.images[imageIndex];
+                                console.log(`[ProductDetail] Using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
                             } else {
                                 caliberImage = `/assets/images/frame${(index % 5) + 1}.png`;
                             }
@@ -4520,7 +4522,28 @@ const ProductDetail = () => {
                                                         className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
                                                         onError={(e) => {
                                                             const target = e.target as HTMLImageElement
-                                                            target.src = '/assets/images/frame1.png'
+                                                            const attemptedUrl = target.src
+                                                            
+                                                            if (import.meta.env.DEV) {
+                                                                console.warn('[ProductDetail] Main image failed to load:', {
+                                                                    product: product.name,
+                                                                    attemptedUrl,
+                                                                    isBlob: attemptedUrl.includes('blob:'),
+                                                                    selectedCaliber: selectedCaliber?.mm,
+                                                                    selectedVariant: selectedSizeVolumeVariant?.id
+                                                                })
+                                                            }
+                                                            
+                                                            // If blob URL failed, try to use a different product image for this caliber
+                                                            if (attemptedUrl.includes('blob:') && selectedCaliber && product.images && product.images.length > 1) {
+                                                                const caliberIndex = productCalibers.findIndex(c => c.mm === selectedCaliber.mm)
+                                                                const fallbackIndex = (caliberIndex + 1) % product.images.length
+                                                                target.src = product.images[fallbackIndex]
+                                                                console.log('[ProductDetail] Blob URL failed, using fallback image for caliber:', selectedCaliber.mm, product.images[fallbackIndex])
+                                                            } else {
+                                                                // Final fallback
+                                                                target.src = '/assets/images/frame1.png'
+                                                            }
                                                         }}
                                                     />
                                                     {hasValidSale && (
