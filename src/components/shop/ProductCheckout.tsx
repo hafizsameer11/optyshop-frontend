@@ -163,6 +163,46 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   }, [categoryContext])
   const [selectedImageIndex] = useState(initialSelectedImageIndex || 0)
 
+  // Add comprehensive debugging when component mounts or product changes
+  useEffect(() => {
+    if (import.meta.env.DEV && product) {
+      console.log('🔍 [ProductCheckout] Product data analysis:', {
+        productId: product.id,
+        productName: product.name,
+        initialSelectedImageIndex,
+        currentSelectedImageIndex: selectedImageIndex,
+        productFields: {
+          image: product.image,
+          image_url: product.image_url,
+          thumbnail: product.thumbnail,
+          images: product.images,
+          imagesType: typeof product.images,
+          imagesIsArray: Array.isArray(product.images),
+          imagesLength: Array.isArray(product.images) ? product.images.length : 'N/A'
+        },
+        additionalFields: {
+          primary_image: (product as any).primary_image,
+          main_image: (product as any).main_image,
+          product_image: (product as any).product_image,
+          photo: (product as any).photo,
+          photo_url: (product as any).photo_url,
+          image_path: (product as any).image_path,
+          media: (product as any).media,
+          attachments: (product as any).attachments
+        }
+      });
+
+      // Test what getImageUrl returns for different indices
+      if (Array.isArray(product.images) && product.images.length > 1) {
+        console.log('🖼️ [ProductCheckout] Testing different image indices:');
+        for (let i = 0; i < Math.min(product.images.length, 3); i++) {
+          const url = getColorSpecificImageUrl(product, i);
+          console.log(`  Index ${i}:`, url);
+        }
+      }
+    }
+  }, [product, initialSelectedImageIndex, selectedImageIndex]);
+
   // Mouse position for lens preview effect (normalized 0-1)
   const [mousePosition, setMousePosition] = useState({ x: 0.5, y: 0.5 })
   const imageContainerRef = useRef<HTMLDivElement>(null)
@@ -183,6 +223,21 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   // Helper function to get the color-specific image URL
   const getColorSpecificImageUrl = useCallback((product: Product, imageIndex: number = 0): string => {
+    // Debug: Log image selection process
+    if (import.meta.env.DEV) {
+      console.log('🖼️ [ProductCheckout] Getting image for product:', {
+        productId: product.id,
+        productName: product.name,
+        requestedImageIndex: imageIndex,
+        selectedColor: selectedProductColor,
+        hasImages: !!product.images,
+        hasImage: !!product.image,
+        hasImageUrl: !!product.image_url,
+        imagesArray: Array.isArray(product.images) ? product.images.length : 'not array',
+        imageType: typeof product.images
+      });
+    }
+
     // Priority 1: Use caliber-specific image if caliber is selected
     // if (selectedCaliber && selectedCaliber.image_url && !selectedCaliber.image_url.startsWith('blob:')) {
     //   console.log('[ProductCheckout] Using caliber image:', {
@@ -194,7 +249,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
     if (!selectedProductColor) {
       // Fallback to regular product image if no color selected
-      return getProductImageUrl(product, imageIndex)
+      const fallbackUrl = getProductImageUrl(product, imageIndex);
+      if (import.meta.env.DEV) {
+        console.log('🖼️ [ProductCheckout] No color selected, using fallback URL:', fallbackUrl);
+      }
+      return fallbackUrl;
     }
 
     const p = product as any
@@ -2791,6 +2850,22 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                 className="bg-gray-100 rounded-lg overflow-hidden relative cursor-crosshair group/preview"
                 style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}
               >
+                {/* Debug: Log the actual image URL being used */}
+                {(() => {
+                  const imageUrl = getColorSpecificImageUrl(product, selectedImageIndex);
+                  if (import.meta.env.DEV) {
+                    console.log('🖼️ [ProductCheckout] Rendering image:', {
+                      productId: product.id,
+                      productName: product.name,
+                      selectedImageIndex,
+                      imageUrl,
+                      imageWidth: 'auto',
+                      imageHeight: '100%',
+                      objectFit: 'contain'
+                    });
+                  }
+                  return null;
+                })()}
                 <img
                   key={`product-${product.id}-img-${selectedImageIndex}-${selectedProductColor || 'default'}-${lensSelection.photochromicColor?.id || ''}-${lensSelection.prescriptionSunColor?.id || ''}`}
                   src={getColorSpecificImageUrl(product, selectedImageIndex)}
