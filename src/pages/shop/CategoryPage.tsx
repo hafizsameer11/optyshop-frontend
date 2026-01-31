@@ -419,6 +419,25 @@ const CategoryPage: React.FC = () => {
                 category={categoryInfo.category}
                 subcategory={categoryInfo.subcategory}
                 subSubcategory={categoryInfo.subSubcategory}
+                onFilterChange={(filters) => {
+                    // Apply filters from quick filter components
+                    if (filters.gender !== undefined) {
+                        setGender(filters.gender)
+                        setCurrentPage(1)
+                    }
+                    if (filters.minPrice !== undefined) {
+                        setMinPrice(filters.minPrice)
+                        setCurrentPage(1)
+                    }
+                    if (filters.maxPrice !== undefined) {
+                        setMaxPrice(filters.maxPrice)
+                        setCurrentPage(1)
+                    }
+                    if (filters.sortBy !== undefined) {
+                        setSortBy(filters.sortBy)
+                        setCurrentPage(1)
+                    }
+                }}
             />
 
             {/* Debug Banner Information - Only in development */}

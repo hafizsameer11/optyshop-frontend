@@ -97,12 +97,12 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
     
     // Convert full URLs to proxy paths to avoid CORS issues
     if (imgUrl && typeof imgUrl === 'string') {
-        // Handle blob URLs - these cannot be displayed in production, return fallback
+        // Handle blob URLs - they are valid and can be displayed directly
         if (imgUrl.startsWith('blob:')) {
             if (import.meta.env.DEV) {
-                console.warn('🚫 Blob URL detected, using fallback image:', imgUrl)
+                console.log('🔗 Using blob URL for product image:', imgUrl)
             }
-            return '/assets/images/frame1.png'
+            return imgUrl
         }
         
         // Handle null/empty URLs
@@ -169,10 +169,23 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
     
     // Priority 1: Use variant image_url (new field)
     if (variant.image_url) {
-        // Handle blob URLs and problematic images
-        if (variant.image_url.startsWith('blob:') || variant.image_url.includes('3d-glasses.png')) {
+        // Handle blob URLs - they are valid and can be displayed directly
+        if (variant.image_url.startsWith('blob:')) {
             if (import.meta.env.DEV) {
-                console.warn('🚫 Blob URL or problematic image detected in variant, using fallback:', variant.image_url)
+                console.log('🔗 Using blob URL for variant image:', {
+                    variantId: variant.id,
+                    sizeVolume: variant.size_volume,
+                    blobUrl: variant.image_url,
+                    urlLength: variant.image_url.length
+                })
+            }
+            return variant.image_url
+        }
+        
+        // Handle problematic placeholder images
+        if (variant.image_url.includes('3d-glasses.png')) {
+            if (import.meta.env.DEV) {
+                console.warn('🚫 Problematic image detected in variant, using fallback:', variant.image_url)
             }
             // Use fallback based on size_volume
             let fallbackImage = '/assets/images/frame1.png';
@@ -182,8 +195,14 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
                     fallbackImage = '/assets/images/eye-hygiene-5ml.png';
                 } else if (sizeVolume.includes('10ml')) {
                     fallbackImage = '/assets/images/eye-hygiene-10ml.png';
+                } else if (sizeVolume.includes('15ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-10ml.png'; // Use 10ml as closest match
                 } else if (sizeVolume.includes('30ml')) {
                     fallbackImage = '/assets/images/eye-hygiene-30ml.png';
+                } else if (sizeVolume.includes('100ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png'; // Use 30ml as closest match
+                } else if (sizeVolume.includes('550ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png'; // Use 30ml as closest match
                 }
             }
             return fallbackImage;
@@ -210,8 +229,14 @@ export function getVariantImageUrl(product: Product, variant: SizeVolumeVariant 
                     fallbackImage = '/assets/images/eye-hygiene-5ml.png';
                 } else if (sizeVolume.includes('10ml')) {
                     fallbackImage = '/assets/images/eye-hygiene-10ml.png';
+                } else if (sizeVolume.includes('15ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-10ml.png'; // Use 10ml as closest match
                 } else if (sizeVolume.includes('30ml')) {
                     fallbackImage = '/assets/images/eye-hygiene-30ml.png';
+                } else if (sizeVolume.includes('100ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png'; // Use 30ml as closest match
+                } else if (sizeVolume.includes('550ml')) {
+                    fallbackImage = '/assets/images/eye-hygiene-30ml.png'; // Use 30ml as closest match
                 }
             }
             return fallbackImage;

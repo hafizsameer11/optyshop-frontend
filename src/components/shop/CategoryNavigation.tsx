@@ -6,17 +6,25 @@ import {
     getNestedSubcategoriesByParentId,
     type Category
 } from '../../services/categoriesService'
+import QuickFilters from './QuickFilters'
 
 interface CategoryNavigationProps {
     category: Category | null
     subcategory: Category | null
     subSubcategory: Category | null
+    onFilterChange?: (filters: {
+        gender?: string
+        minPrice?: number
+        maxPrice?: number
+        sortBy?: string
+    }) => void
 }
 
 const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
     category,
     subcategory,
-    subSubcategory
+    subSubcategory,
+    onFilterChange
 }) => {
     const { translateCategory } = useCategoryTranslation()
     const [subcategories, setSubcategories] = useState<Category[]>([])
@@ -82,66 +90,81 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
     }
 
     return (
-        <div className="flex justify-center py-4 mb-6">
-            <div className="flex flex-wrap justify-center gap-2">
-                {/* Category Page: Show subcategories */}
-                {isCategoryPage && subcategories.map((sub) => (
-                    <Link
-                        key={`sub-${sub.id}`}
-                        to={`/category/${category?.slug}/${sub.slug}`}
-                        className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                    >
-                        {translateCategory(sub)}
-                    </Link>
-                ))}
+        <div className="py-4 mb-6">
+            <div className="flex justify-between items-start gap-4 max-w-7xl mx-auto">
+                {/* Left Side Filters */}
+                <div className="flex-shrink-0">
+                    <QuickFilters onFilterChange={onFilterChange || (() => {})} />
+                </div>
 
-                {/* Subcategory Page: Show category button and sub-subcategories */}
-                {isSubcategoryPage && (
-                    <>
-                        {/* Category button */}
-                        <Link
-                            to={`/category/${category?.slug}`}
-                            className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-full hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                        >
-                            {translateCategory(category)}
-                        </Link>
-                        
-                        {/* Sub-subcategory buttons */}
-                        {subSubcategories.map((subSub) => (
+                {/* Center Navigation Buttons */}
+                <div className="flex-1 flex justify-center">
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {/* Category Page: Show subcategories */}
+                        {isCategoryPage && subcategories.map((sub) => (
                             <Link
-                                key={`subsub-${subSub.id}`}
-                                to={`/category/${category?.slug}/${subcategory?.slug}/${subSub.slug}`}
-                                className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                key={`sub-${sub.id}`}
+                                to={`/category/${category?.slug}/${sub.slug}`}
+                                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-full hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                             >
-                                {translateCategory(subSub)}
+                                {translateCategory(sub)}
                             </Link>
                         ))}
-                    </>
-                )}
 
-                {/* Sub-subcategory Page: Show category button and sibling sub-subcategories */}
-                {isSubSubcategoryPage && (
-                    <>
-                        {/* Category button */}
-                        <Link
-                            to={`/category/${category?.slug}`}
-                            className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-full hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                        >
-                            {translateCategory(category)}
-                        </Link>
-                        
-                        {/* Sibling sub-subcategory buttons */}
-                        {subSubcategories.map((sibling) => (
-                            <Link
-                                key={`sibling-${sibling.id}`}
-                                to={`/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`}
-                                className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm font-medium rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                            >
-                                {translateCategory(sibling)}
-                            </Link>
-                        ))}
-                    </>
-                )}
+                        {/* Subcategory Page: Show category button and sub-subcategories */}
+                        {isSubcategoryPage && (
+                            <>
+                                {/* Category button */}
+                                <Link
+                                    to={`/category/${category?.slug}`}
+                                    className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-full hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                >
+                                    {translateCategory(category)}
+                                </Link>
+                                
+                                {/* Sub-subcategory buttons */}
+                                {subSubcategories.map((subSub) => (
+                                    <Link
+                                        key={`subsub-${subSub.id}`}
+                                        to={`/category/${category?.slug}/${subcategory?.slug}/${subSub.slug}`}
+                                        className="px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-full hover:from-green-600 hover:to-green-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                    >
+                                        {translateCategory(subSub)}
+                                    </Link>
+                                ))}
+                            </>
+                        )}
+
+                        {/* Sub-subcategory Page: Show category button and sibling sub-subcategories */}
+                        {isSubSubcategoryPage && (
+                            <>
+                                {/* Category button */}
+                                <Link
+                                    to={`/category/${category?.slug}`}
+                                    className="px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white text-sm font-medium rounded-full hover:from-gray-600 hover:to-gray-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                >
+                                    {translateCategory(category)}
+                                </Link>
+                                
+                                {/* Sibling sub-subcategory buttons */}
+                                {subSubcategories.map((sibling) => (
+                                    <Link
+                                        key={`sibling-${sibling.id}`}
+                                        to={`/category/${category?.slug}/${subcategory?.slug}/${sibling.slug}`}
+                                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-sm font-medium rounded-full hover:from-purple-600 hover:to-purple-700 transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                                    >
+                                        {translateCategory(sibling)}
+                                    </Link>
+                                ))}
+                            </>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right Side Filters */}
+                <div className="flex-shrink-0">
+                    <QuickFilters onFilterChange={onFilterChange || (() => {})} />
+                </div>
             </div>
         </div>
     )

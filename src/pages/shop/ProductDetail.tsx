@@ -240,7 +240,7 @@ const ProductDetail = () => {
             }).catch(error => {
                 // Handle errors quietly - most products don't have variants
                 if (import.meta.env.DEV) {
-                    console.warn(`[ProductDetail] Could not load eye hygiene variants for product ${product.id} - using fallback`)
+                    console.warn(`[ProductDetail] Could not load eye hygiene variants for product ${product.id} - using fallback:`, error)
                 }
                 setProductEyeHygieneVariants([])
                 setSelectedEyeHygieneVariant(null)
@@ -3171,8 +3171,8 @@ const ProductDetail = () => {
                                                     // Use color-specific images
                                                     productImage = imagesArray[selectedImageIndex]
                                                 } else {
-                                                    // Fallback to regular product image
-                                                    productImage = getProductImageUrl(product, selectedImageIndex)
+                                                    // Fallback to variant-specific image (includes size/volume variant images)
+                                                    productImage = getVariantSpecificImageUrl(product, selectedImageIndex)
                                                 }
 
                                                 return (
