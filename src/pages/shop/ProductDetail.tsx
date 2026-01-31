@@ -3418,71 +3418,49 @@ const ProductDetail = () => {
                                             )
                                         })()}
 
-                                        {/* MM Caliber Selection */}
+                                        {/* MM Caliber Selection - Dropdown */}
                                         {shouldShowCalibers && (
                                             <div className="mb-4">
                                                 <label className="block text-sm font-semibold text-blue-950 mb-2">
                                                     {t('shop.selectCaliber', 'Select Size (MM)')}
                                                 </label>
-                                                <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
-                                                    {productCalibers.map((caliber: MMCaliber, index: number) => {
-                                                        const isSelected = selectedCaliber?.mm === caliber.mm
-
-                                                        return (
-                                                            <button
-                                                                key={index}
-                                                                onClick={() => {
-                                                                    setSelectedCaliber(caliber)
-                                                                    setSelectedImageIndex(0) // Reset to first image when caliber changes
-                                                                }}
-                                                                className={`flex flex-col items-center gap-1.5 p-2 rounded-lg border transition-all duration-200 flex-shrink-0 min-w-[60px] ${isSelected
-                                                                    ? 'border-blue-950 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-blue-950/20'
-                                                                    : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                                                                    }`}
-                                                                title={`${caliber.mm}mm`}
-                                                            >
-                                                                {/* Caliber Image */}
-                                                                <div className="w-8 h-8 rounded overflow-hidden bg-gray-50 border border-gray-200">
-                                                                    {(() => {
-                                                                        if (caliber.image_url && !caliber.image_url.startsWith('blob:')) {
-                                                                            console.log(`[ProductDetail] Rendering caliber image for ${caliber.mm}:`, caliber.image_url)
-                                                                            return (
-                                                                                <img
-                                                                                    src={caliber.image_url}
-                                                                                    alt={`${caliber.mm}mm`}
-                                                                                    className="w-full h-full object-cover"
-                                                                                    onError={(e) => {
-                                                                                        console.warn(`[ProductDetail] Failed to load caliber image for ${caliber.mm}:`, caliber.image_url)
-                                                                                        const target = e.target as HTMLImageElement
-                                                                                        target.style.display = 'none'
-                                                                                        const fallback = target.nextElementSibling as HTMLElement
-                                                                                        if (fallback) fallback.style.display = 'flex'
-                                                                                    }}
-                                                                                    onLoad={() => {
-                                                                                        console.log(`[ProductDetail] Successfully loaded caliber image for ${caliber.mm}:`, caliber.image_url)
-                                                                                    }}
-                                                                                />
-                                                                            )
-                                                                        } else {
-                                                                            console.log(`[ProductDetail] Not rendering image for ${caliber.mm}:`, {
-                                                                                has_image_url: !!caliber.image_url,
-                                                                                is_blob: caliber.image_url?.startsWith('blob:'),
-                                                                                image_url: caliber.image_url
-                                                                            })
-                                                                            return null
-                                                                        }
-                                                                    })()}
-                                                                    <div className={`w-full h-full items-center justify-center text-xs text-gray-400 ${caliber.image_url && !caliber.image_url.startsWith('blob:') ? 'hidden' : 'flex'}`}>
-                                                                        {caliber.mm}
-                                                                    </div>
-                                                                </div>
-                                                                <span className="text-xs font-semibold whitespace-nowrap">
-                                                                    {caliber.mm}mm
-                                                                </span>
-                                                            </button>
-                                                        )
-                                                    })}
+                                                <div className="relative">
+                                                    <select
+                                                        value={selectedCaliber?.mm?.toString() || ''}
+                                                        onChange={(e) => {
+                                                            const mmValue = e.target.value;
+                                                            if (mmValue) {
+                                                                handleCaliberChange(mmValue);
+                                                            }
+                                                        }}
+                                                        className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                                                    >
+                                                        <option value="" disabled>
+                                                            Select frame size...
+                                                        </option>
+                                                        {productCalibers
+                                                            .filter(c => c.is_active !== false)
+                                                            .sort((a, b) => Number(a.mm) - Number(b.mm))
+                                                            .map((caliber) => (
+                                                                <option 
+                                                                    key={caliber.mm} 
+                                                                    value={caliber.mm.toString()}
+                                                                >
+                                                                    {caliber.mm}mm{caliber.price ? ` (+$${caliber.price})` : ''}
+                                                                </option>
+                                                            ))}
+                                                    </select>
+                                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </div>
                                                 </div>
+                                                {selectedCaliber && (
+                                                    <div className="mt-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
+                                                        Selected: {selectedCaliber.mm}mm frame size
+                                                    </div>
+                                                )}
                                             </div>
                                         )}
 
@@ -5027,9 +5005,8 @@ const ProductDetail = () => {
                                         )
                                     })()}
 
-                                    {/* Caliber (MM) Selection for Frames/Glasses */}
+                                    {/* Caliber (MM) Selection for Frames/Glasses - Dropdown */}
                                     {shouldShowCalibers && (
-                                        <>
                                         <div className="mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                             <div className="flex items-center justify-between mb-4">
                                                 <h3 className="text-lg font-bold text-gray-900">Frame Size</h3>
@@ -5043,29 +5020,37 @@ const ProductDetail = () => {
                                                 )}
                                             </div>
                                             
-                                            <div className="flex flex-wrap gap-3">
-                                                {productCalibers
-                                                    .filter(c => c.is_active !== false)
-                                                    .sort((a, b) => Number(a.mm) - Number(b.mm))
-                                                    .map((caliber) => (
-                                                        <button
-                                                            key={caliber.mm}
-                                                            onClick={() => handleCaliberChange(caliber.mm)}
-                                                            className={`relative px-6 py-3 rounded-xl border-2 transition-all duration-200 font-semibold text-base ${
-                                                                selectedCaliber?.mm === caliber.mm
-                                                                    ? 'border-blue-950 bg-blue-50 text-blue-950 ring-2 ring-blue-100 shadow-md'
-                                                                    : 'border-gray-200 bg-white hover:border-blue-300 text-gray-700 hover:shadow-sm'
-                                                            }`}
-                                                        >
-                                                            <span className="text-lg font-bold">{caliber.mm}</span>
-                                                            <span className="text-sm font-normal ml-1">mm</span>
-                                                            {caliber.price && (
-                                                                <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                                                                    +${caliber.price}
-                                                                </span>
-                                                            )}
-                                                        </button>
-                                                    ))}
+                                            <div className="relative">
+                                                <select
+                                                    value={selectedCaliber?.mm?.toString() || ''}
+                                                    onChange={(e) => {
+                                                        const mmValue = e.target.value;
+                                                        if (mmValue) {
+                                                            handleCaliberChange(mmValue);
+                                                        }
+                                                    }}
+                                                    className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                                                >
+                                                    <option value="" disabled>
+                                                        Select frame size...
+                                                    </option>
+                                                    {productCalibers
+                                                        .filter(c => c.is_active !== false)
+                                                        .sort((a, b) => Number(a.mm) - Number(b.mm))
+                                                        .map((caliber) => (
+                                                            <option 
+                                                                key={caliber.mm} 
+                                                                value={caliber.mm.toString()}
+                                                            >
+                                                                {caliber.mm}mm{caliber.price ? ` (+$${caliber.price})` : ''}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </div>
                                             </div>
                                             
                                             {selectedCaliber && (
@@ -5078,20 +5063,16 @@ const ProductDetail = () => {
                                                             <p className="text-sm font-semibold text-blue-900">
                                                                 Selected: {selectedCaliber.mm}mm frame size
                                                             </p>
-                                                            {selectedCaliber.price && (
-                                                                <p className="text-xs text-blue-700">
-                                                                    Price adjustment: +${selectedCaliber.price}
-                                                                </p>
-                                                            )}
+                                                            <p className="text-xs text-blue-700 mt-1">
+                                                                This size will be applied to your order
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
-                                        </>
                                     )}
 
-                                    
                                     {/* Product Details Grid (for non-Eye Hygiene products or additional details) */}
                                     {(() => {
                                         const p = product as any
