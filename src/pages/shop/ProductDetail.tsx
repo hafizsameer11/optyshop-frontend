@@ -54,6 +54,7 @@ const ProductDetail = () => {
     const [selectedColor, setSelectedColor] = useState<string | null>(null) // For color_images support
     const [quantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
+    const [isManuallySelectingImage, setIsManuallySelectingImage] = useState(false) // Track manual image selection
     const [showTryOn, setShowTryOn] = useState(false)
     const [showDescription, setShowDescription] = useState(false)
     const [showSpecsDescription, setShowSpecsDescription] = useState(false)
@@ -538,17 +539,6 @@ const ProductDetail = () => {
             return false
         }
         
-        // TEMPORARY DEBUG: Always show calibers if they exist, regardless of product type
-        if (productCalibers.length > 0) {
-            console.log('[ProductDetail] shouldShowCalibers: Showing calibers (DEBUG MODE)', productCalibers.length)
-            return true
-        }
-        
-        console.log('[ProductDetail] shouldShowCalibers: No calibers loaded', productCalibers)
-        return false
-        
-        // Original logic (commented out for debugging)
-        /*
         if (productCalibers.length === 0) {
             console.log('[ProductDetail] shouldShowCalibers: No calibers loaded', productCalibers)
             return false
@@ -578,7 +568,6 @@ const ProductDetail = () => {
         })
         
         return result
-        */
     }, [product, productCalibers.length, isEyeHygiene, isContactLens])
 
     // Helper function to check if product belongs to astigmatism sub-subcategory
@@ -650,6 +639,7 @@ const ProductDetail = () => {
             if (productData) {
                 // Reset selected image index when loading a new product
                 setSelectedImageIndex(0)
+                setIsManuallySelectingImage(false) // Reset manual selection flag
                 // Reset selections when product changes
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
@@ -2374,10 +2364,12 @@ const ProductDetail = () => {
         if (matchingCaliber) {
             setSelectedCaliber(matchingCaliber)
             setSelectedImageIndex(0) // Reset image index to show caliber's image
+            setIsManuallySelectingImage(false) // Reset manual selection flag
             console.log('[ProductDetail] Caliber changed to:', matchingCaliber);
         } else {
             setSelectedCaliber(null)
             setSelectedImageIndex(0) // Reset image index
+            setIsManuallySelectingImage(false) // Reset manual selection flag
             console.log('[ProductDetail] No matching caliber found for:', mm);
         }
     }
@@ -2388,9 +2380,11 @@ const ProductDetail = () => {
         if (matchingVariant) {
             setSelectedEyeHygieneVariant(matchingVariant)
             setSelectedImageIndex(0) // Reset image index to show variant's image
+            setIsManuallySelectingImage(false) // Reset manual selection flag
         } else {
             setSelectedEyeHygieneVariant(null)
             setSelectedImageIndex(0) // Reset image index
+            setIsManuallySelectingImage(false) // Reset manual selection flag
         }
     }
 
@@ -2493,6 +2487,25 @@ const ProductDetail = () => {
                         return colorImage.images[0]
                     }
                 }
+            }
+        }
+
+        // Priority 6: Check if product has multiple images in the images array and use the index
+        if (product.images) {
+            let imagesArray: string[] = []
+            if (typeof product.images === 'string') {
+                try {
+                    imagesArray = JSON.parse(product.images)
+                } catch (e) {
+                    imagesArray = [product.images]
+                }
+            } else if (Array.isArray(product.images)) {
+                imagesArray = product.images
+            }
+            
+            // If we have multiple images and the index is valid, use the indexed image
+            if (imagesArray.length > 0 && imageIndex < imagesArray.length) {
+                return imagesArray[imageIndex]
             }
         }
 
@@ -3376,6 +3389,7 @@ const ProductDetail = () => {
                                                                     onClick={() => {
                                                                         setSelectedColor(colorValue)
                                                                         setSelectedImageIndex(0) // Reset to first image of selected color
+                                                                        setIsManuallySelectingImage(false) // Reset manual selection flag
 
                                                                         // Update URL without page reload
                                                                         const url = new URL(window.location.href)
@@ -3634,10 +3648,13 @@ const ProductDetail = () => {
                                             return imagesArray.length > 1 ? (
                                                 <div className="flex flex-col gap-2">
                                                     {imagesArray.map((image, index) => (
-                                                        <button
-                                                            key={index}
-                                                            onClick={() => setSelectedImageIndex(index)}
-                                                            className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImageIndex === index
+                                                    <button
+                                                        key={index}
+                                                        onClick={() => {
+                                                            setSelectedImageIndex(index)
+                                                            setIsManuallySelectingImage(true) // User is manually selecting
+                                                        }}
+                                                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${selectedImageIndex === index
                                                                 ? 'border-blue-950'
                                                                 : 'border-gray-200'
                                                                 }`}
@@ -3820,6 +3837,7 @@ const ProductDetail = () => {
                                                                     } else {
                                                                         setSelectedUnit(unit)
                                                                         setSelectedImageIndex(0) // Reset to first image when unit changes
+                                                                        setIsManuallySelectingImage(false) // Reset manual selection flag
                                                                     }
                                                                 }}
                                                                 className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${isSelected
@@ -4481,8 +4499,9 @@ const ProductDetail = () => {
                                     // Ensure selectedImageIndex is within bounds
                                     const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
                                     
-                                    // Use variant-specific image if caliber or eye hygiene variant is selected AND has different images, otherwise use images array
-                                    const selectedImage = (selectedCaliber || selectedEyeHygieneVariant) 
+                                    // Use variant-specific image if caliber or eye hygiene variant is selected AND user hasn't manually selected an image
+                                    // Otherwise, use images array to respect user's thumbnail selection
+                                    const selectedImage = (selectedCaliber || selectedEyeHygieneVariant) && !isManuallySelectingImage
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
 
@@ -4493,7 +4512,10 @@ const ProductDetail = () => {
                                                 {imagesArray.map((image, index) => (
                                                     <button
                                                         key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
-                                                        onClick={() => setSelectedImageIndex(index)}
+                                                        onClick={() => {
+                                                            setSelectedImageIndex(index)
+                                                            setIsManuallySelectingImage(true) // User is manually selecting
+                                                        }}
                                                         className={`relative w-24 h-24 rounded-xl overflow-hidden border-2 transition-all duration-200 flex items-center justify-center ${index === safeSelectedIndex
                                                             ? 'border-blue-950 ring-2 ring-blue-100 scale-105 shadow-md'
                                                             : 'border-gray-200 hover:border-blue-200'
@@ -4600,6 +4622,7 @@ const ProductDetail = () => {
                                                                                 const newColor = colorValue
                                                                                 setSelectedColor(newColor)
                                                                                 setSelectedImageIndex(0) // Reset to first image of selected color
+                                                                                setIsManuallySelectingImage(false) // Reset manual selection flag
 
                                                                                 // Update URL without page reload
                                                                                 const url = new URL(window.location.href)
@@ -5694,6 +5717,7 @@ const ProductDetail = () => {
                         navigate(location.pathname)
                     }}
                     initialSelectedColor={selectedColor || undefined}
+                    initialSelectedImageIndex={selectedImageIndex}
                     categoryContext={{
                         category: product.category ? {
                             id: product.category.id || 0,
