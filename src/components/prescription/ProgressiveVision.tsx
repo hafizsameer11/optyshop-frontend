@@ -100,110 +100,105 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
     setLeftEye(rightEye);
   };
 
-  // Get dropdown options from API only
+  // Get dropdown options from API with default placeholder
   const getSphOptions = (eyeType: 'right' | 'left') => {
+    const options = [<option key="" value="">Select SPH</option>];
+    
     if (formStructure) {
       const sphValues = getProgressiveFieldValues(formStructure, 'sph', eyeType);
       if (sphValues.length > 0) {
-        return sphValues.map(option => (
+        options.push(...sphValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getCylOptions = (eyeType: 'right' | 'left') => {
+    const options = [<option key="" value="">Select CYL</option>];
+    
     if (formStructure) {
       const cylValues = getProgressiveFieldValues(formStructure, 'cyl', eyeType);
       if (cylValues.length > 0) {
-        return cylValues.map(option => (
+        options.push(...cylValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getAxisOptions = (eyeType: 'right' | 'left') => {
+    const options = [<option key="" value="">Select AXIS</option>];
+    
     if (formStructure) {
       const axisValues = getProgressiveFieldValues(formStructure, 'axis', eyeType);
       if (axisValues.length > 0) {
-        return axisValues.map(option => (
+        options.push(...axisValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getPdOptions = () => {
+    const options = [<option key="" value="">Select PD</option>];
+    
     if (formStructure && formStructure.pd.length > 0) {
-      return [
-        <option key="" value="">Select PD</option>,
-        ...formStructure.pd.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))
-      ];
+      options.push(...formStructure.pd.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      )));
     }
-    // Return empty array if no API data
-    return [<option key="" value="">Select PD</option>];
+    return options;
   };
 
   const getHOptions = () => {
+    const options = [<option key="" value="">Select H</option>];
+    
     if (formStructure && formStructure.h.length > 0) {
-      return [
-        <option key="" value="">Select H</option>,
-        ...formStructure.h.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))
-      ];
+      options.push(...formStructure.h.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      )));
     }
-    // Return empty array if no API data
-    return [<option key="" value="">Select H</option>];
+    return options;
   };
 
   const getYearOfBirthOptions = () => {
+    const options = [<option key="" value="">Select Year</option>];
+    
     if (formStructure && formStructure.year_of_birth.length > 0) {
-      return [
-        <option key="" value="">Select Year</option>,
-        ...formStructure.year_of_birth.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))
-      ];
+      options.push(...formStructure.year_of_birth.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      )));
     }
-    // Return empty array if no API data
-    return [<option key="" value="">Select Year</option>];
+    return options;
   };
 
   const getSelectOptionOptions = () => {
+    const options = [<option key="" value="">Select Option</option>];
+    
     if (formStructure && formStructure.select_option.length > 0) {
-      return [
-        <option key="" value="">Select Option</option>,
-        ...formStructure.select_option.map(option => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))
-      ];
+      options.push(...formStructure.select_option.map(option => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      )));
     }
-    // Return empty array if no API data
-    return [<option key="" value="">Select Option</option>];
+    return options;
   };
 
   const EyeCard: React.FC<{

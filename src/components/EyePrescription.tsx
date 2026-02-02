@@ -84,69 +84,70 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
     setLeftEye(rightEye);
   };
 
-  // Get dropdown options from API only
+  // Get dropdown options from API with default placeholder
   const getSphOptions = () => {
+    const options = [<option key="" value="">Select SPH</option>];
+    
     if (formStructure) {
       const sphValues = getFieldValues(formStructure, 'sph', 'both');
       console.log('SPH Values from API:', sphValues);
       if (sphValues.length > 0) {
-        return sphValues.map(option => (
+        options.push(...sphValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getCylOptions = () => {
+    const options = [<option key="" value="">Select CYL</option>];
+    
     if (formStructure) {
       const cylValues = getFieldValues(formStructure, 'cyl', 'both');
       if (cylValues.length > 0) {
-        return cylValues.map(option => (
+        options.push(...cylValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getAxisOptions = () => {
+    const options = [<option key="" value="">Select AXIS</option>];
+    
     if (formStructure) {
       const axisValues = getFieldValues(formStructure, 'axis', 'both');
       if (axisValues.length > 0) {
-        return axisValues.map(option => (
+        options.push(...axisValues.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
-        ));
+        )));
       }
     }
-    // Return empty array if no API data
-    return [];
+    return options;
   };
 
   const getPdOptions = () => {
+    const options = [<option key="" value="">Select Pupillary Distance</option>];
+    
     if (formStructure) {
       const pdValues = getFieldValues(formStructure, 'pd', 'both');
       if (pdValues.length > 0) {
-        return [
-          <option key="" value="">Select Pupillary Distance</option>,
-          ...pdValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        options.push(...pdValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        )));
       }
     }
-    // Return empty array if no API data
-    return [<option key="" value="">Select Pupillary Distance</option>];
+    return options;
   };
 
   const EyeCard: React.FC<{
