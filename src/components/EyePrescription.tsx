@@ -19,15 +19,15 @@ interface PrescriptionData {
 
 const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPrescriptionChange }) => {
   const [rightEye, setRightEye] = useState({
-    sph: '--',
-    cyl: '--',
-    axis: '--'
+    sph: '',
+    cyl: '',
+    axis: ''
   });
 
   const [leftEye, setLeftEye] = useState({
-    sph: '--',
-    cyl: '--',
-    axis: '--'
+    sph: '',
+    cyl: '',
+    axis: ''
   });
 
   const [pupillaryDistance, setPupillaryDistance] = useState('');
@@ -60,12 +60,12 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
     if (onPrescriptionChange) {
       const prescriptionData: PrescriptionData = {
         pd: pupillaryDistance || undefined,
-        right_eye_sph: rightEye.sph !== '--' ? rightEye.sph : undefined,
-        right_eye_cyl: rightEye.cyl !== '--' ? rightEye.cyl : undefined,
-        right_eye_axis: rightEye.axis !== '--' ? rightEye.axis : undefined,
-        left_eye_sph: leftEye.sph !== '--' ? leftEye.sph : undefined,
-        left_eye_cyl: leftEye.cyl !== '--' ? leftEye.cyl : undefined,
-        left_eye_axis: leftEye.axis !== '--' ? leftEye.axis : undefined,
+        right_eye_sph: rightEye.sph,
+        right_eye_cyl: rightEye.cyl,
+        right_eye_axis: rightEye.axis,
+        left_eye_sph: leftEye.sph,
+        left_eye_cyl: leftEye.cyl,
+        left_eye_axis: leftEye.axis,
       };
       onPrescriptionChange(prescriptionData);
     }
@@ -90,54 +90,45 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
       const sphValues = getFieldValues(formStructure, 'sph', 'both');
       console.log('SPH Values from API:', sphValues);
       if (sphValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...sphValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return sphValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Return only placeholder if no API data
-    return [<option key="--" value="--">--</option>];
+    // Return empty array if no API data
+    return [];
   };
 
   const getCylOptions = () => {
     if (formStructure) {
       const cylValues = getFieldValues(formStructure, 'cyl', 'both');
       if (cylValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...cylValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return cylValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Return only placeholder if no API data
-    return [<option key="--" value="--">--</option>];
+    // Return empty array if no API data
+    return [];
   };
 
   const getAxisOptions = () => {
     if (formStructure) {
       const axisValues = getFieldValues(formStructure, 'axis', 'both');
       if (axisValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...axisValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return axisValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Return only placeholder if no API data
-    return [<option key="--" value="--">--</option>];
+    // Return empty array if no API data
+    return [];
   };
 
   const getPdOptions = () => {
@@ -145,7 +136,7 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
       const pdValues = getFieldValues(formStructure, 'pd', 'both');
       if (pdValues.length > 0) {
         return [
-          <option key="" value="">Enter Your Pupillary Distance</option>,
+          <option key="" value="">Select Pupillary Distance</option>,
           ...pdValues.map(option => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -154,8 +145,8 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
         ];
       }
     }
-    // Return only placeholder if no API data
-    return [<option key="" value="">Enter Your Pupillary Distance</option>];
+    // Return empty array if no API data
+    return [<option key="" value="">Select Pupillary Distance</option>];
   };
 
   const EyeCard: React.FC<{

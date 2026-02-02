@@ -16,15 +16,15 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
   onProgressiveChange 
 }) => {
   const [rightEye, setRightEye] = useState({
-    sph: '--',
-    cyl: '--',
-    axis: '--'
+    sph: '',
+    cyl: '',
+    axis: ''
   });
 
   const [leftEye, setLeftEye] = useState({
-    sph: '--',
-    cyl: '--',
-    axis: '--'
+    sph: '',
+    cyl: '',
+    axis: ''
   });
 
   const [pdFirst, setPdFirst] = useState('');
@@ -74,12 +74,12 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
         pd_second: pdSecond || undefined,
         pd_total: pdTotal || undefined,
         h: hValue || undefined,
-        right_eye_sph: rightEye.sph !== '--' ? rightEye.sph : undefined,
-        right_eye_cyl: rightEye.cyl !== '--' ? rightEye.cyl : undefined,
-        right_eye_axis: rightEye.axis !== '--' ? rightEye.axis : undefined,
-        left_eye_sph: leftEye.sph !== '--' ? leftEye.sph : undefined,
-        left_eye_cyl: leftEye.cyl !== '--' ? leftEye.cyl : undefined,
-        left_eye_axis: leftEye.axis !== '--' ? leftEye.axis : undefined,
+        right_eye_sph: rightEye.sph,
+        right_eye_cyl: rightEye.cyl,
+        right_eye_axis: rightEye.axis,
+        left_eye_sph: leftEye.sph,
+        left_eye_cyl: leftEye.cyl,
+        left_eye_axis: leftEye.axis,
         year_of_birth: yearOfBirth || undefined,
         select_option: selectOption || undefined,
       };
@@ -100,107 +100,56 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
     setLeftEye(rightEye);
   };
 
-  // Get dropdown options from API or fallback to hardcoded values
+  // Get dropdown options from API only
   const getSphOptions = (eyeType: 'right' | 'left') => {
     if (formStructure) {
       const sphValues = getProgressiveFieldValues(formStructure, 'sph', eyeType);
       if (sphValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...sphValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return sphValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="--" value="--">--</option>,
-      <option key="-8.00" value="-8.00">-8.00</option>,
-      <option key="-7.50" value="-7.50">-7.50</option>,
-      <option key="-7.00" value="-7.00">-7.00</option>,
-      <option key="-6.50" value="-6.50">-6.50</option>,
-      <option key="-6.00" value="-6.00">-6.00</option>,
-      <option key="-5.50" value="-5.50">-5.50</option>,
-      <option key="-5.00" value="-5.00">-5.00</option>,
-      <option key="-4.50" value="-4.50">-4.50</option>,
-      <option key="-4.00" value="-4.00">-4.00</option>,
-      <option key="-3.50" value="-3.50">-3.50</option>,
-      <option key="-3.00" value="-3.00">-3.00</option>,
-      <option key="-2.50" value="-2.50">-2.50</option>,
-      <option key="-2.00" value="-2.00">-2.00</option>,
-      <option key="-1.50" value="-1.50">-1.50</option>,
-      <option key="-1.00" value="-1.00">-1.00</option>,
-      <option key="-0.75" value="-0.75">-0.75</option>,
-      <option key="-0.50" value="-0.50">-0.50</option>,
-      <option key="-0.25" value="-0.25">-0.25</option>,
-      <option key="0.00" value="0.00">0.00</option>,
-      <option key="+0.25" value="+0.25">+0.25</option>,
-      <option key="+0.50" value="+0.50">+0.50</option>,
-      <option key="+0.75" value="+0.75">+0.75</option>,
-      <option key="+1.00" value="+1.00">+1.00</option>,
-      <option key="+1.25" value="+1.25">+1.25</option>,
-      <option key="+1.50" value="+1.50">+1.50</option>,
-      <option key="+1.75" value="+1.75">+1.75</option>,
-      <option key="+2.00" value="+2.00">+2.00</option>,
-      <option key="+2.25" value="+2.25">+2.25</option>,
-      <option key="+2.50" value="+2.50">+2.50</option>,
-      <option key="+2.75" value="+2.75">+2.75</option>,
-      <option key="+3.00" value="+3.00">+3.00</option>,
-      <option key="+3.50" value="+3.50">+3.50</option>,
-      <option key="+4.00" value="+4.00">+4.00</option>,
-      <option key="+4.50" value="+4.50">+4.50</option>,
-      <option key="+5.00" value="+5.00">+5.00</option>
-    ];
+    // Return empty array if no API data
+    return [];
   };
 
   const getCylOptions = (eyeType: 'right' | 'left') => {
     if (formStructure) {
       const cylValues = getProgressiveFieldValues(formStructure, 'cyl', eyeType);
       if (cylValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...cylValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return cylValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Fallback to hardcoded values
-    return getSphOptions(eyeType);
+    // Return empty array if no API data
+    return [];
   };
 
   const getAxisOptions = (eyeType: 'right' | 'left') => {
     if (formStructure) {
       const axisValues = getProgressiveFieldValues(formStructure, 'axis', eyeType);
       if (axisValues.length > 0) {
-        return [
-          <option key="--" value="--">--</option>,
-          ...axisValues.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))
-        ];
+        return axisValues.map(option => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ));
       }
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="--" value="--">--</option>,
-      ...Array.from({ length: 181 }, (_, i) => (
-        <option key={i} value={i}>{i}</option>
-      ))
-    ];
+    // Return empty array if no API data
+    return [];
   };
 
   const getPdOptions = () => {
     if (formStructure && formStructure.pd.length > 0) {
       return [
-        <option key="" value="">Enter PD</option>,
+        <option key="" value="">Select PD</option>,
         ...formStructure.pd.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -208,13 +157,8 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
         ))
       ];
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="" value="">Enter PD</option>,
-      ...Array.from({ length: 41 }, (_, i) => i + 50).map(value => (
-        <option key={value} value={value}>{value}</option>
-      ))
-    ];
+    // Return empty array if no API data
+    return [<option key="" value="">Select PD</option>];
   };
 
   const getHOptions = () => {
@@ -228,13 +172,8 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
         ))
       ];
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="" value="">Select H</option>,
-      ...Array.from({ length: 31 }, (_, i) => i + 10).map(value => (
-        <option key={value} value={value}>{value}</option>
-      ))
-    ];
+    // Return empty array if no API data
+    return [<option key="" value="">Select H</option>];
   };
 
   const getYearOfBirthOptions = () => {
@@ -248,14 +187,8 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
         ))
       ];
     }
-    // Fallback to hardcoded values
-    const currentYear = new Date().getFullYear();
-    return [
-      <option key="" value="">Select Year</option>,
-      ...Array.from({ length: 100 }, (_, i) => currentYear - i).map(year => (
-        <option key={year} value={year}>{year}</option>
-      ))
-    ];
+    // Return empty array if no API data
+    return [<option key="" value="">Select Year</option>];
   };
 
   const getSelectOptionOptions = () => {
@@ -269,13 +202,8 @@ const ProgressiveVision: React.FC<ProgressiveVisionProps> = ({
         ))
       ];
     }
-    // Fallback to hardcoded values
-    return [
-      <option key="" value="">Select Option</option>,
-      <option key="option1" value="option1">Option 1</option>,
-      <option key="option2" value="option2">Option 2</option>,
-      <option key="option3" value="option3">Option 3</option>
-    ];
+    // Return empty array if no API data
+    return [<option key="" value="">Select Option</option>];
   };
 
   const EyeCard: React.FC<{
