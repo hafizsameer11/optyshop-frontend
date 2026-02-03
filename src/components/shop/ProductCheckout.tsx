@@ -4775,6 +4775,11 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
     return getFieldOptions('year_of_birth', 'both')
   }, [getFieldOptions])
 
+  // PD (Pupillary Distance) - only from API
+  const pdOptions = useMemo(() => {
+    return getFieldOptions('pd', 'both')
+  }, [getFieldOptions])
+
   return (
     <>
       <div className="h-full flex flex-col min-h-0">
