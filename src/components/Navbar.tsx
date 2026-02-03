@@ -280,75 +280,147 @@ const Navbar: React.FC = () => {
                                 flexShrink: 1
                             }}
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (searchQuery.trim().length < 2) {
+                                    // Show feedback for short search queries
+                                    setIsSearchOpen(true)
+                                    setSearchResults([{
+                                        type: 'product',
+                                        id: 0,
+                                        name: 'Please enter at least 2 characters to search',
+                                        slug: '',
+                                        url: '',
+                                        description: 'Type more characters to see search results'
+                                    }])
+                                    setTimeout(() => {
+                                        setIsSearchOpen(false)
+                                        setSearchResults([])
+                                    }, 2000)
+                                    return
+                                }
+                                
+                                setIsSearching(true)
+                                if (searchTimeoutRef.current) {
+                                    clearTimeout(searchTimeoutRef.current)
+                                }
+                                searchTimeoutRef.current = setTimeout(async () => {
+                                    try {
+                                        const results = await searchAll(searchQuery.trim(), 20)
+                                        if (results) {
+                                            setSearchResults(results.results)
+                                            setIsSearchOpen(true)
+                                        } else {
+                                            setSearchResults([{
+                                                type: 'product',
+                                                id: 0,
+                                                name: 'No results found',
+                                                slug: '',
+                                                url: '',
+                                                description: 'Try searching with different keywords'
+                                            }])
+                                            setIsSearchOpen(true)
+                                        }
+                                    } catch (error) {
+                                        console.error('Search error:', error)
+                                        setSearchResults([{
+                                            type: 'product',
+                                            id: 0,
+                                            name: 'Search temporarily unavailable',
+                                            slug: '',
+                                            url: '',
+                                            description: 'Please try again later'
+                                        }])
+                                        setIsSearchOpen(true)
+                                    } finally {
+                                        setIsSearching(false)
+                                    }
+                                }, 100)
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-cyan-400/20 rounded-full transition-colors cursor-pointer"
+                            disabled={isSearching}
+                        >
                             {isSearching ? (
                                 <svg className="animate-spin h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
                             ) : (
-                                <svg className="h-4 w-4 text-cyan-400/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4 text-cyan-400/80 hover:text-cyan-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             )}
-                        </div>
+                        </button>
                         
                         {/* Search Results Dropdown */}
                         {isSearchOpen && searchResults.length > 0 && (
                             <div className="absolute top-full left-0 right-0 mt-1 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl z-50 max-h-96 overflow-y-auto">
                                 <div className="p-2">
-                                    <div className="text-xs text-cyan-400/60 px-3 py-2 font-medium">
-                                        Found {searchResults.length} results for "{searchQuery}"
-                                    </div>
-                                    {searchResults.map((result, index) => (
-                                        <Link
-                                            key={`${result.type}-${result.id}`}
-                                            to={result.url}
-                                            onClick={() => {
-                                                setSearchQuery('')
-                                                setIsSearchOpen(false)
-                                                setSearchResults([])
-                                            }}
-                                            className={`block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 ${
-                                                index > 0 ? 'mt-1' : ''
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                {result.image && (
-                                                    <img 
-                                                        src={result.image} 
-                                                        alt={result.name}
-                                                        className="w-10 h-10 object-cover rounded"
-                                                    />
-                                                )}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                                                            result.type === 'product' ? 'bg-green-500/20 text-green-300' :
-                                                            result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
-                                                            result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
-                                                            'bg-cyan-500/20 text-cyan-300'
-                                                        }`}>
-                                                            {result.type === 'product' ? 'Product' :
-                                                             result.type === 'category' ? 'Category' :
-                                                             result.type === 'subcategory' ? 'Subcategory' :
-                                                             'Sub-Subcategory'}
-                                                        </span>
-                                                        <p className="text-sm font-medium text-white truncate">{result.name}</p>
-                                                    </div>
-                                                    {result.description && (
-                                                        <p className="text-xs text-cyan-400/70 mt-1 line-clamp-1">{result.description}</p>
-                                                    )}
-                                                    {result.price && (
-                                                        <p className="text-xs font-semibold text-cyan-300 mt-1">€{result.price}</p>
-                                                    )}
-                                                    {result.category && (
-                                                        <p className="text-[10px] text-cyan-400/50 mt-1">in {result.category.name}</p>
-                                                    )}
-                                                </div>
+                                    {searchResults[0].id === 0 ? (
+                                        // Special message case
+                                        <div className="px-3 py-2.5 text-center">
+                                            <p className="text-sm font-medium text-cyan-300">{searchResults[0].name}</p>
+                                            {searchResults[0].description && (
+                                                <p className="text-xs text-cyan-400/70 mt-1">{searchResults[0].description}</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="text-xs text-cyan-400/60 px-3 py-2 font-medium">
+                                                Found {searchResults.length} results for "{searchQuery}"
                                             </div>
-                                        </Link>
-                                    ))}
+                                            {searchResults.map((result, index) => (
+                                                <Link
+                                                    key={`${result.type}-${result.id}`}
+                                                    to={result.url}
+                                                    onClick={() => {
+                                                        setSearchQuery('')
+                                                        setIsSearchOpen(false)
+                                                        setSearchResults([])
+                                                    }}
+                                                    className={`block px-3 py-2.5 rounded-lg hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 transition-all duration-200 ${
+                                                        index > 0 ? 'mt-1' : ''
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        {result.image && (
+                                                            <img 
+                                                                src={result.image} 
+                                                                alt={result.name}
+                                                                className="w-10 h-10 object-cover rounded"
+                                                            />
+                                                        )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                                                    result.type === 'product' ? 'bg-green-500/20 text-green-300' :
+                                                                    result.type === 'category' ? 'bg-blue-500/20 text-blue-300' :
+                                                                    result.type === 'subcategory' ? 'bg-purple-500/20 text-purple-300' :
+                                                                    'bg-cyan-500/20 text-cyan-300'
+                                                                }`}>
+                                                                    {result.type === 'product' ? 'Product' :
+                                                                     result.type === 'category' ? 'Category' :
+                                                                     result.type === 'subcategory' ? 'Subcategory' :
+                                                                     'Sub-Subcategory'}
+                                                                </span>
+                                                                <p className="text-sm font-medium text-white truncate">{result.name}</p>
+                                                            </div>
+                                                            {result.description && (
+                                                                <p className="text-xs text-cyan-400/70 mt-1 line-clamp-1">{result.description}</p>
+                                                            )}
+                                                            {result.price && (
+                                                                <p className="text-xs font-semibold text-cyan-300 mt-1">€{result.price}</p>
+                                                            )}
+                                                            {result.category && (
+                                                                <p className="text-[10px] text-cyan-400/50 mt-1">in {result.category.name}</p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         )}
