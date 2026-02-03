@@ -4736,76 +4736,14 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
     if (formStructure && formStructure.fields && formStructure.fields[fieldType]) {
       const values = getFieldValues(formStructure, fieldType, eyeType)
       
-      // For axis field, ensure we have the complete -180 to 180 range
-      if (fieldType === 'axis') {
-        const axisValues = values.map(v => v.value)
-        
-        // If API doesn't provide negative values or incomplete range, generate full range
-        if (axisValues.length < 361 || !axisValues.some(v => parseInt(v) < 0)) {
-          const fullRange = []
-          for (let i = -180; i <= 180; i++) {
-            fullRange.push(i.toString())
-          }
-          return fullRange
-        }
-        
-        return axisValues
-      }
-      
+      // For all fields, only return API values - no fallback generation
       return values.map(v => v.value)
     }
     
-    // Fallback for axis field if no API data
-    if (fieldType === 'axis') {
-      const fullRange = []
-      for (let i = -180; i <= 180; i++) {
-        fullRange.push(i.toString())
-      }
-      return fullRange
-    }
-    
-    if (fieldType === 'sph') {
-      // Generate sphere values from -20.00 to +20.00 in 0.25 steps
-      const sphereValues = []
-      for (let i = -2000; i <= 2000; i += 25) {
-        const value = (i / 100).toFixed(2)
-        sphereValues.push(value)
-      }
-      return sphereValues
-    }
-    
-    if (fieldType === 'cyl') {
-      // Generate cylinder values from -6.00 to +6.00 in 0.25 steps
-      const cylinderValues = ['0'] // Start with 0
-      for (let i = -600; i <= 600; i += 25) {
-        if (i !== 0) { // Skip 0 as it's already added
-          const value = (i / 100).toFixed(2)
-          cylinderValues.push(value)
-        }
-      }
-      return cylinderValues.sort((a, b) => parseFloat(a) - parseFloat(b))
-    }
-    
-    if (fieldType === 'pd') {
-      // Generate PD values from 50mm to 80mm in 0.5mm steps
-      const pdValues = []
-      for (let i = 500; i <= 800; i += 5) {
-        const value = (i / 10).toFixed(1)
-        pdValues.push(value)
-      }
-      return pdValues
-    }
-    
+    // Return empty array if no API data available
     return []
-  }, [formStructure])
+  }, [formStructure, getFieldValues])
 
-  // Generate options - only from API (admin-inserted values)
-  // Use useMemo to recalculate when formStructure changes
-  const pdOptions = useMemo(() => {
-    return getFieldOptions('pd', 'both')
-  }, [getFieldOptions])
-
-  // Generate SPH, CYL, AXIS options based on lens type - only from API
   const getSphereOptions = useCallback((eye: 'left' | 'right') => {
     return getFieldOptions('sph', eye)
   }, [getFieldOptions])

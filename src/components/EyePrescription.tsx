@@ -72,7 +72,6 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
   }, [rightEye, leftEye, pupillaryDistance, onPrescriptionChange]);
 
   const handleInputChange = (eye: 'right' | 'left', field: 'sph' | 'cyl' | 'axis', value: string) => {
-    console.log(`Changing ${eye} eye ${field} to: ${value}`);
     if (eye === 'right') {
       setRightEye(prev => ({ ...prev, [field]: value }));
     } else {
@@ -90,7 +89,6 @@ const EyePrescription: React.FC<EyePrescriptionProps> = ({ className = '', onPre
     
     if (formStructure) {
       const sphValues = getFieldValues(formStructure, 'sph', 'both');
-      console.log('SPH Values from API:', sphValues);
       if (sphValues.length > 0) {
         options.push(...sphValues.map(option => (
           <option key={option.value} value={option.value}>

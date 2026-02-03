@@ -114,9 +114,14 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
           <div className="p-4">
             <div className="flex items-start justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-900">{offer.title}</h3>
-              {offer.discount_percentage && (
+              {offer.discount_type === 'percentage' && offer.discount_value && (
                 <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                  -{offer.discount_percentage}%
+                  -{offer.discount_value}%
+                </span>
+              )}
+              {offer.discount_type === 'fixed' && offer.discount_value && (
+                <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
+                  -${offer.discount_value}
                 </span>
               )}
             </div>
