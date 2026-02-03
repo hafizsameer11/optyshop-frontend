@@ -105,7 +105,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const activeCount = getActiveFiltersCount()
 
     return (
-        <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
+        <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-xs ${className}`}>
             {/* Header */}
             <div className="flex items-center justify-between p-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -141,16 +141,16 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
             {/* Always Visible Quick Filters */}
             <div className="p-2 border-b border-gray-100">
-                <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
                     {/* Search */}
                     <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Search products..."
+                                placeholder="Search..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-24 sm:w-32 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-20 sm:w-28 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             />
                             <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -164,7 +164,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <select
                             value={gender}
                             onChange={(e) => setGender(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
+                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[50px] hover:border-gray-400"
                         >
                             <option value="">All</option>
                             {productOptions?.genders?.map((g) => (
@@ -181,7 +181,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[70px] hover:border-gray-400"
+                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
                         >
                             <option value="newest">Newest</option>
                             <option value="oldest">Oldest</option>
