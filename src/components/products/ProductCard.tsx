@@ -92,60 +92,63 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const isOutOfStock = product.in_stock === false
 
     return (
-        <div className={`bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col group ${className}`}>
+        <div className={`bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col group ${className}`}>
             {/* Product Image */}
-            <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+            <div className="relative aspect-[3/4] bg-white overflow-hidden">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                    <img
-                        src={displayImage}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            const originalSrc = target.src
-                            
-                            // Log the error for debugging
-                            if (import.meta.env.DEV) {
-                                console.error('❌ Product image failed to load:', {
-                                    productId: product.id,
-                                    productName: product.name,
-                                    failedSrc: originalSrc,
-                                    fallbackUsed: target.src
-                                })
-                            }
-                            
-                            // Use a better fallback with product info
-                            target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjUgMTI1SDc1VjE3NUgxMjVWMTI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDEyNUgxNzVWMTc1SDIyNVYxMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMjUgMjI1SDc1VjI3NUgxMjVWMjI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDIyNUgxNzVWMjc1SDIyNVYyMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMDAgMTUwSDE1MFYxNzVIMTAwVjE1MFoiIGZpbGw9IiNBMkEyQTQiLz4KPHRleHQgeD0iMTUwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2QjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4='
-                            
-                            // Prevent infinite error loops
-                            target.onerror = null
-                        }}
-                        onLoad={(e) => {
-                            // Log successful loads for debugging
-                            if (import.meta.env.DEV) {
+                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                        <img
+                            src={displayImage}
+                            alt={product.name}
+                            className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                            style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+                            onError={(e) => {
                                 const target = e.target as HTMLImageElement
-                                console.log('✅ Product image loaded successfully:', {
-                                    productId: product.id,
-                                    productName: product.name,
-                                    src: target.src
-                                })
-                            }
-                        }}
-                    />
+                                const originalSrc = target.src
+                                
+                                // Log the error for debugging
+                                if (import.meta.env.DEV) {
+                                    console.error('❌ Product image failed to load:', {
+                                        productId: product.id,
+                                        productName: product.name,
+                                        failedSrc: originalSrc,
+                                        fallbackUsed: target.src
+                                    })
+                                }
+                                
+                                // Use a better fallback with product info
+                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDMwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzMDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMjUgMTI1SDc1VjE3NUgxMjVWMTI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDEyNUgxNzVWMTc1SDIyNVYxMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMjUgMjI1SDc1VjI3NUgxMjVWMjI1WiIgZmlsbD0iI0Q5RDlEOSIvPgo8cGF0aCBkPSJNMjI1IDIyNUgxNzVWMjc1SDIyNVYyMjVaIiBmaWxsPSIjRDlEOUQ5Ii8+CjxwYXRoIGQ9Ik0xMDAgMTUwSDE1MFYxNzVIMTAwVjE1MFoiIGZpbGw9IiNBMkEyQTQiLz4KPHRleHQgeD0iMTUwIiB5PSIyMjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2QjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZm9udC13ZWlnaHQ9ImJvbGQiPk5vIEltYWdlPC90ZXh0Pgo8L3N2Zz4='
+                                
+                                // Prevent infinite error loops
+                                target.onerror = null
+                            }}
+                            onLoad={(e) => {
+                                // Log successful loads for debugging
+                                if (import.meta.env.DEV) {
+                                    const target = e.target as HTMLImageElement
+                                    console.log('✅ Product image loaded successfully:', {
+                                        productId: product.id,
+                                        productName: product.name,
+                                        src: target.src
+                                    })
+                                }
+                            }}
+                        />
+                    </div>
                 </Link>
 
                 {/* Heart Icon */}
                 <button
                     onClick={handleWishlistToggle}
-                    className="absolute top-2 right-2 w-6 h-6 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-200 shadow-sm z-10"
+                    className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-all duration-200 shadow-md z-10"
                     title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                 >
                     {isInWishlist(product.id) ? (
-                        <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                     ) : (
-                        <svg className="w-3 h-3 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                     )}
@@ -153,41 +156,41 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
 
                 {/* Out of Stock Badge */}
                 {isOutOfStock && (
-                    <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold z-10">
+                    <div className="absolute top-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
                         {t('shop.outOfStock')}
                     </div>
                 )}
 
                 {/* Sale Badge */}
                 {product.sale_price && Number(product.sale_price) < Number(product.price) && (
-                    <div className="absolute bottom-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold z-10">
+                    <div className="absolute bottom-3 left-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
                         Sale
                     </div>
                 )}
             </div>
 
             {/* Product Info */}
-            <div className="p-2 flex-1 flex flex-col">
+            <div className="p-4 flex-1 flex flex-col">
                 {/* Product Name */}
-                <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-1">
-                    <h3 className="text-xs font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
+                <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-3">
+                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
                         {product.name}
                     </h3>
                 </Link>
 
                 {/* Price */}
-                <div className="mb-1">
+                <div className="mb-4">
                     {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
-                        <div className="flex items-center gap-1">
-                            <span className="text-xs font-bold text-gray-900">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-gray-900">
                                 €{Number(product.sale_price).toFixed(2)}
                             </span>
-                            <span className="text-xs text-gray-400 line-through">
+                            <span className="text-sm text-gray-400 line-through">
                                 €{Number(product.price).toFixed(2)}
                             </span>
                         </div>
                     ) : (
-                        <span className="text-xs font-bold text-gray-900">
+                        <span className="text-lg font-bold text-gray-900">
                             €{Number(product.price).toFixed(2)}
                         </span>
                     )}
@@ -197,10 +200,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 <button
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
-                    className={`w-full py-1.5 px-2 rounded-lg font-semibold text-xs transition-all duration-200 ${
+                    className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
                         isOutOfStock
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
                     }`}
                 >
                     {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}
