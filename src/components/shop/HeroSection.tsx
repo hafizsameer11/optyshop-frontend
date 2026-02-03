@@ -1,5 +1,4 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
 
 interface HeroSectionProps {
     title?: string
@@ -29,20 +28,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                         <span className="text-xs font-medium text-blue-200 uppercase tracking-wide">
                             Related Pages
                         </span>
-                        <div className="flex gap-2">
-                            <Link
-                                to="/shop?gender=men"
-                                className="px-4 py-2 bg-white text-blue-950 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200 text-sm"
-                            >
-                                Men
-                            </Link>
-                            <Link
-                                to="/shop?gender=women"
-                                className="px-4 py-2 bg-white text-blue-950 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200 text-sm"
-                            >
-                                Women
-                            </Link>
-                        </div>
                     </div>
                 )}
             </div>
