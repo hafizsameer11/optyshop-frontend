@@ -249,24 +249,11 @@ const Navbar: React.FC = () => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
                                     e.preventDefault()
-                                    // Show expanded search results instead of navigating to separate page
-                                    setIsSearching(true)
-                                    searchTimeoutRef.current = setTimeout(async () => {
-                                        try {
-                                            const results = await searchAll(searchQuery.trim(), 20) // Get more results for expanded view
-                                            if (results) {
-                                                setSearchResults(results.results)
-                                                setIsSearchOpen(true)
-                                            } else {
-                                                setSearchResults([])
-                                            }
-                                        } catch (error) {
-                                            console.error('Search error:', error)
-                                            setSearchResults([])
-                                        } finally {
-                                            setIsSearching(false)
-                                        }
-                                    }, 100) // Faster response for Enter key
+                                    // Navigate to search results page
+                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    setSearchQuery('')
+                                    setIsSearchOpen(false)
+                                    setSearchResults([])
                                 } else if (e.key === 'Escape') {
                                     setIsSearchOpen(false)
                                 }
@@ -301,42 +288,11 @@ const Navbar: React.FC = () => {
                                     return
                                 }
                                 
-                                setIsSearching(true)
-                                if (searchTimeoutRef.current) {
-                                    clearTimeout(searchTimeoutRef.current)
-                                }
-                                searchTimeoutRef.current = setTimeout(async () => {
-                                    try {
-                                        const results = await searchAll(searchQuery.trim(), 20)
-                                        if (results) {
-                                            setSearchResults(results.results)
-                                            setIsSearchOpen(true)
-                                        } else {
-                                            setSearchResults([{
-                                                type: 'product',
-                                                id: 0,
-                                                name: 'No results found',
-                                                slug: '',
-                                                url: '',
-                                                description: 'Try searching with different keywords'
-                                            }])
-                                            setIsSearchOpen(true)
-                                        }
-                                    } catch (error) {
-                                        console.error('Search error:', error)
-                                        setSearchResults([{
-                                            type: 'product',
-                                            id: 0,
-                                            name: 'Search temporarily unavailable',
-                                            slug: '',
-                                            url: '',
-                                            description: 'Please try again later'
-                                        }])
-                                        setIsSearchOpen(true)
-                                    } finally {
-                                        setIsSearching(false)
-                                    }
-                                }, 100)
+                                // Navigate to search results page
+                                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                setSearchQuery('')
+                                setIsSearchOpen(false)
+                                setSearchResults([])
                             }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-cyan-400/20 rounded-full transition-colors cursor-pointer"
                             disabled={isSearching}

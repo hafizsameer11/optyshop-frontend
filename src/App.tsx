@@ -54,6 +54,7 @@ import TransactionDetail from './pages/customer/TransactionDetail'
 import PageDetail from './pages/cms/PageDetail'
 import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
 import ScrollToTop from './components/ScrollToTop'
+import SearchResults from './pages/SearchResults'
 
 
 // Redirect component for old /product/:slug URLs
@@ -121,6 +122,7 @@ function App() {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/search" element={<SearchResults />} />
         
         {/* Customer Dashboard Routes */}
         <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
