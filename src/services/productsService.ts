@@ -53,6 +53,7 @@ export interface ProductOptions {
   lensIndexOptions: number[];
   frameSizes: FrameSize[];
   lensTypeEnums: string[];
+  brands?: string[]; // Add brands property as optional
 }
 
 export interface ProductOptionsResponse {

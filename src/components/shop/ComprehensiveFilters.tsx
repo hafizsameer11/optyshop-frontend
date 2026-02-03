@@ -20,7 +20,7 @@ interface ComprehensiveFiltersProps {
     availableLensCoatings?: string[]
     className?: string
     categoryLevel?: 'category' | 'subcategory' | 'subsubcategory'
-    activeFiltersCount?: number
+    // activeFiltersCount?: number // Remove unused parameter
 }
 
 const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
@@ -30,8 +30,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     availableLensTypes = [],
     availableLensCoatings = [],
     className = '',
-    categoryLevel = 'category',
-    activeFiltersCount = 0
+    categoryLevel = 'category'
 }) => {
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [isExpanded, setIsExpanded] = useState(false)
@@ -108,7 +107,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     return (
         <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-gray-100">
+            <div className="flex items-center justify-between p-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -141,7 +140,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
             </div>
 
             {/* Always Visible Quick Filters */}
-            <div className="p-3 border-b border-gray-100">
+            <div className="p-2 border-b border-gray-100">
                 <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
                     {/* Search */}
                     <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
@@ -151,9 +150,9 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 placeholder="Search products..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-32 sm:w-40 text-xs border border-gray-300 rounded-lg pl-8 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-24 sm:w-32 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             />
-                            <svg className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </div>
@@ -165,7 +164,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <select
                             value={gender}
                             onChange={(e) => setGender(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[70px] hover:border-gray-400"
+                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
                         >
                             <option value="">All</option>
                             {productOptions?.genders?.map((g) => (
@@ -182,7 +181,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <select
                             value={sortBy}
                             onChange={(e) => setSortBy(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[80px] hover:border-gray-400"
+                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[70px] hover:border-gray-400"
                         >
                             <option value="newest">Newest</option>
                             <option value="oldest">Oldest</option>
@@ -209,30 +208,30 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
             {/* Expanded Filters */}
             {isExpanded && (
-                <div className="p-3 space-y-4">
+                <div className="p-2 space-y-3">
                     {/* Price Range */}
                     <div>
-                        <label className="text-xs font-semibold text-gray-700 mb-2 block">Price Range</label>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">Price Range</label>
                         <div className="flex gap-2 items-center">
                             <div className="relative">
-                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
                                 <input
                                     type="number"
                                     placeholder="Min"
                                     value={minPrice}
                                     onChange={(e) => setMinPrice(e.target.value)}
-                                    className="w-20 text-xs border border-gray-300 rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                    className="w-16 text-xs border border-gray-300 rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                 />
                             </div>
                             <span className="text-xs text-gray-400">-</span>
                             <div className="relative">
-                                <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
                                 <input
                                     type="number"
                                     placeholder="Max"
                                     value={maxPrice}
                                     onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-20 text-xs border border-gray-300 rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                    className="w-16 text-xs border border-gray-300 rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                 />
                             </div>
                         </div>
@@ -241,11 +240,11 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     {/* Color Filter */}
                     {availableColors.length > 0 && (
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 mb-2 block">Color</label>
+                            <label className="text-xs font-semibold text-gray-700 mb-1 block">Color</label>
                             <select
                                 value={selectedColor}
                                 onChange={(e) => setSelectedColor(e.target.value)}
-                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             >
                                 <option value="">All Colors</option>
                                 {availableColors.map((color) => (
@@ -258,16 +257,16 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     )}
 
                     {/* Brand Filter */}
-                    {(availableBrands.length > 0 || productOptions?.brands) && (
+                    {(availableBrands.length > 0 || (productOptions as any)?.brands) && (
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 mb-2 block">Brand</label>
+                            <label className="text-xs font-semibold text-gray-700 mb-1 block">Brand</label>
                             <select
                                 value={brand}
                                 onChange={(e) => setBrand(e.target.value)}
-                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             >
                                 <option value="">All Brands</option>
-                                {(availableBrands.length > 0 ? availableBrands : productOptions?.brands || []).map((brandName) => (
+                                {(availableBrands.length > 0 ? availableBrands : (productOptions as any)?.brands || []).map((brandName: string) => (
                                     <option key={brandName} value={brandName}>
                                         {brandName}
                                     </option>
@@ -279,11 +278,11 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     {/* Lens Type Filter - for contact lenses */}
                     {categoryLevel === 'category' && availableLensTypes.length > 0 && (
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 mb-2 block">Lens Type</label>
+                            <label className="text-xs font-semibold text-gray-700 mb-1 block">Lens Type</label>
                             <select
                                 value={lensType}
                                 onChange={(e) => setLensType(e.target.value)}
-                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             >
                                 <option value="">All Types</option>
                                 {availableLensTypes.map((type) => (
@@ -298,11 +297,11 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     {/* Lens Coating Filter - for contact lenses */}
                     {categoryLevel === 'category' && availableLensCoatings.length > 0 && (
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 mb-2 block">Lens Coating</label>
+                            <label className="text-xs font-semibold text-gray-700 mb-1 block">Lens Coating</label>
                             <select
                                 value={lensCoating}
                                 onChange={(e) => setLensCoating(e.target.value)}
-                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             >
                                 <option value="">All Coatings</option>
                                 {availableLensCoatings.map((coating) => (

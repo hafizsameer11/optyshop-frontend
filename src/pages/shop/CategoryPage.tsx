@@ -12,10 +12,8 @@ import {
 } from '../../services/categoriesService'
 import { 
     getProducts, 
-    getProductOptions,
     type Product,
-    type ProductFilters,
-    type ProductOptions
+    type ProductFilters
 } from '../../services/productsService'
 import CategoryBanner from '../../components/home/CategoryBanner'
 import CategoryNavigation from '../../components/shop/CategoryNavigation'
@@ -66,7 +64,6 @@ const CategoryPage: React.FC = () => {
     const [sortBy, setSortBy] = useState<string>('newest')
     const [brand, setBrand] = useState<string>('')
     const [inStockOnly, setInStockOnly] = useState<boolean>(false)
-    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
 
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
@@ -411,30 +408,6 @@ const CategoryPage: React.FC = () => {
         }
     }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, lensType, lensCoating, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, sortBy])
 
-    // Fetch product options on mount
-    useEffect(() => {
-        let isCancelled = false
-
-        const fetchOptions = async () => {
-            try {
-                const options = await getProductOptions()
-                if (!isCancelled) {
-                    setProductOptions(options)
-                }
-            } catch (error) {
-                if (!isCancelled) {
-                    console.error('Error fetching product options:', error)
-                    setProductOptions(null)
-                }
-            }
-        }
-        fetchOptions()
-
-        return () => {
-            isCancelled = true
-        }
-    }, [])
-
     
     if (loading) {
         return (
@@ -488,7 +461,7 @@ const CategoryPage: React.FC = () => {
                 subcategory={categoryInfo.subcategory}
                 subSubcategory={categoryInfo.subSubcategory}
                 onFilterChange={(filters) => {
-                    // Apply filters from comprehensive filter component
+                    // Apply filters from category navigation component (limited set)
                     if (filters.gender !== undefined) {
                         setGender(filters.gender)
                         setCurrentPage(1)
@@ -505,35 +478,11 @@ const CategoryPage: React.FC = () => {
                         setSortBy(filters.sortBy)
                         setCurrentPage(1)
                     }
-                    if (filters.color !== undefined) {
-                        setSelectedColor(filters.color)
-                        setCurrentPage(1)
-                    }
-                    if (filters.brand !== undefined) {
-                        setBrand(filters.brand)
-                        setCurrentPage(1)
-                    }
-                    if (filters.lensType !== undefined) {
-                        setLensType(filters.lensType)
-                        setCurrentPage(1)
-                    }
-                    if (filters.lensCoating !== undefined) {
-                        setLensCoating(filters.lensCoating)
-                        setCurrentPage(1)
-                    }
-                    if (filters.inStock !== undefined) {
-                        setInStockOnly(filters.inStock)
-                        setCurrentPage(1)
-                    }
-                    if (filters.searchTerm !== undefined) {
-                        setSearchTerm(filters.searchTerm)
-                        setCurrentPage(1)
-                    }
                 }}
             />
             
             {/* Comprehensive Filters */}
-            <div className="max-w-screen-2xl mx-auto px-4 mb-6">
+            <div className="max-w-screen-2xl mx-auto px-4 mb-3">
                 <ComprehensiveFilters
                     onFilterChange={(filters) => {
                         // Apply filters from comprehensive filter component
@@ -600,7 +549,7 @@ const CategoryPage: React.FC = () => {
             )}
 
             {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-2 px-8 sm:px-12 lg:px-16">
+            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-1 px-4 sm:px-6 lg:px-8">
                 <div className="w-full max-w-screen-2xl mx-auto">
                     {/* Subcategory/Sub-subcategory Info Banner */}
                     {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
