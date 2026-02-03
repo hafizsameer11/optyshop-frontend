@@ -99,27 +99,39 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const activeCount = getActiveFiltersCount()
 
     return (
-        <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-xs ${className}`}>
+        <div className={`bg-white rounded-lg shadow-sm border border-gray-200 w-full ${className}`}>
             {/* Header */}
-            <div className="flex items-center justify-between p-2 border-b border-gray-100">
-                <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
-                    {activeCount > 0 && (
-                        <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
-                            {activeCount}
-                        </span>
-                    )}
+            <div className="p-2 border-b border-gray-100">
+                {/* Filter Title */}
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
+                        {activeCount > 0 && (
+                            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                                {activeCount}
+                            </span>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        <svg className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
                 </div>
-                <div className="flex items-center gap-2">
-                    {/* Filter Controls moved to header right side */}
-                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                        {/* Category Buttons */}
+                
+                {/* Filter Controls - Better responsive layout */}
+                <div className="space-y-2">
+                    {/* Category and Subcategory Buttons */}
+                    <div className="flex flex-wrap gap-2">
                         {availableCategories.length > 0 && (
-                            <div className="flex gap-1 min-w-0 flex-shrink-0">
-                                {availableCategories.slice(0, 3).map((category) => (
+                            <div className="flex flex-wrap gap-1">
+                                {availableCategories.slice(0, 4).map((category) => (
                                     <button
                                         key={category.id}
                                         onClick={() => onFilterChange({ 
@@ -139,10 +151,9 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             </div>
                         )}
 
-                        {/* Subcategory Buttons */}
                         {availableSubcategories.length > 0 && (
-                            <div className="flex gap-1 min-w-0 flex-shrink-0">
-                                {availableSubcategories.slice(0, 3).map((subcategory) => (
+                            <div className="flex flex-wrap gap-1">
+                                {availableSubcategories.slice(0, 4).map((subcategory) => (
                                     <button
                                         key={subcategory.id}
                                         onClick={() => onFilterChange({ 
@@ -160,16 +171,19 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 ))}
                             </div>
                         )}
+                    </div>
 
+                    {/* Search, Sort, and Stock Controls */}
+                    <div className="flex flex-wrap items-center gap-3">
                         {/* Search */}
-                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                        <div className="flex items-center gap-1">
                             <div className="relative">
                                 <input
                                     type="text"
                                     placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-20 sm:w-28 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                    className="w-24 sm:w-32 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                 />
                                 <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -178,12 +192,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         </div>
 
                         {/* Sort By */}
-                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                        <div className="flex items-center gap-1">
                             <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Sort:</label>
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
-                                className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
+                                className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[70px] hover:border-gray-400"
                             >
                                 <option value="newest">Newest</option>
                                 <option value="oldest">Oldest</option>
@@ -194,7 +208,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         </div>
 
                         {/* In Stock Only */}
-                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                        <div className="flex items-center gap-1">
                             <label className="flex items-center gap-1 cursor-pointer">
                                 <input
                                     type="checkbox"
@@ -206,14 +220,6 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             </label>
                         </div>
                     </div>
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <svg className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
                 </div>
             </div>
 
