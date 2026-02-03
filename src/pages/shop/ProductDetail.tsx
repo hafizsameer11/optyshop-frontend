@@ -162,11 +162,9 @@ const ProductDetail = () => {
                 // Set the calibers in state
                 setProductCalibers(calibers)
                 
-                // Auto-select first caliber if none selected
-                if (!selectedCaliber && calibers.length > 0) {
-                    setSelectedCaliber(calibers[0])
-                    console.log('[ProductDetail] Auto-selected first caliber:', calibers[0])
-                }
+                // Don't auto-select first caliber - let user see product image first
+                // User can manually select caliber when they want to see caliber-specific options
+                console.log('[ProductDetail] Product calibers loaded:', calibers.length)
                 }
             } else {
                 console.log('[ProductDetail] No valid calibers data found, trying API fallback')
@@ -174,9 +172,7 @@ const ProductDetail = () => {
                 getProductCalibers(product.id).then(calibers => {
                     if (calibers) {
                         setProductCalibers(calibers)
-                        if (!selectedCaliber && calibers.length > 0) {
-                            setSelectedCaliber(calibers[0])
-                        }
+                        // Don't auto-select first caliber here either
                         console.log('[ProductDetail] Product calibers loaded from API fallback:', calibers.length)
                     } else {
                         console.log('[ProductDetail] No calibers found from API fallback')
@@ -2363,12 +2359,13 @@ const ProductDetail = () => {
         const matchingCaliber = productCalibers.find(c => c.mm.toString() === mmStr)
         if (matchingCaliber) {
             setSelectedCaliber(matchingCaliber)
-            setSelectedImageIndex(0) // Reset image index to show caliber's image
+            // Don't reset image index - let user continue viewing their selected image
+            // Only show caliber image when user explicitly wants to see it
             setIsManuallySelectingImage(false) // Reset manual selection flag
             console.log('[ProductDetail] Caliber changed to:', matchingCaliber);
         } else {
             setSelectedCaliber(null)
-            setSelectedImageIndex(0) // Reset image index
+            // Don't reset image index when clearing caliber selection
             setIsManuallySelectingImage(false) // Reset manual selection flag
             console.log('[ProductDetail] No matching caliber found for:', mm);
         }
@@ -2388,12 +2385,8 @@ const ProductDetail = () => {
         }
     }
 
-    // Reset image index when caliber changes to show caliber-specific image
-    useEffect(() => {
-        if (selectedCaliber) {
-            setSelectedImageIndex(0)
-        }
-    }, [selectedCaliber])
+    // Don't automatically reset image index when caliber changes
+    // User should be able to see product image first and only see caliber image when explicitly selected
 
     // Reset image index when eye hygiene variant changes to show variant-specific image
     useEffect(() => {
@@ -2409,9 +2402,16 @@ const ProductDetail = () => {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use caliber-specific images if caliber is selected
+        // Priority 2: Use regular product images FIRST - only use caliber/variant images if user has explicitly selected them
+        // Check if user has manually made a selection (either by clicking thumbnails or selecting variants)
+        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant) {
+            // No manual selection and no variant selected - use regular product images
+            return getProductImageUrl(product, imageIndex)
+        }
+
+        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user
         if (selectedCaliber && selectedCaliber.image_url) {
-            console.log('[ProductDetail] Using caliber image:', {
+            console.log('[ProductDetail] Using caliber image (user selected):', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
                 is_product_image: selectedCaliber.image_url.includes('uploads/products'),
@@ -2419,7 +2419,6 @@ const ProductDetail = () => {
                 main_images: product.images
             });
             
-            // Always use the caliber image when a caliber is selected
             return selectedCaliber.image_url;
         }
 
@@ -4477,9 +4476,9 @@ const ProductDetail = () => {
                                     // Ensure selectedImageIndex is within bounds
                                     const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
                                     
-                                    // Use variant-specific image if caliber or eye hygiene variant is selected AND user hasn't manually selected an image
-                                    // Otherwise, use images array to respect user's thumbnail selection
-                                    const selectedImage = (selectedCaliber || selectedEyeHygieneVariant) && !isManuallySelectingImage
+                                    // Use regular product images by default
+                                    // Only use variant-specific images if user has explicitly selected a variant AND hasn't manually clicked a thumbnail
+                                    const selectedImage = !isManuallySelectingImage && (selectedCaliber || selectedEyeHygieneVariant)
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
 
@@ -4837,6 +4836,21 @@ const ProductDetail = () => {
                                                                             </option>
                                                                         ))}
                                                                 </select>
+                                                                
+                                                                {/* Button to view caliber-specific image */}
+                                                                {selectedCaliber && selectedCaliber.image_url && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setSelectedImageIndex(0)
+                                                                            setIsManuallySelectingImage(false)
+                                                                            console.log('[ProductDetail] User requested to view caliber image for:', selectedCaliber.mm)
+                                                                        }}
+                                                                        className="mt-2 w-full px-3 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
+                                                                    >
+                                                                        View {selectedCaliber.mm}mm Frame Image
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         )}
 
