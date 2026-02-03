@@ -6,7 +6,6 @@ import {
     getNestedSubcategoriesByParentId,
     type Category
 } from '../../services/categoriesService'
-import QuickFilters from './QuickFilters'
 import QuickActionButtons from './QuickActionButtons'
 
 interface CategoryNavigationProps {
@@ -93,11 +92,6 @@ const CategoryNavigation: React.FC<CategoryNavigationProps> = ({
     return (
         <div className="py-2 mb-2">
             <div className="max-w-7xl mx-auto px-2 sm:px-4">
-                {/* Single Filter Section */}
-                <div className="mb-2">
-                    <QuickFilters onFilterChange={onFilterChange || (() => {})} />
-                </div>
-
                 {/* Quick Action Buttons */}
                 <div className="mb-2">
                     <QuickActionButtons 
