@@ -7,10 +7,8 @@ import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import {
     getProducts,
     getProductsBySection,
-    getProductOptions,
     type Product,
     type ProductFilters,
-    type ProductOptions,
     type ProductSection
 } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
@@ -19,7 +17,6 @@ import {
     getCategoryBySlug, 
     getSubcategoryBySlug, 
     getSubcategoriesByCategoryId, 
-    getNestedSubcategoriesByParentId, 
     type Category 
 } from '../../services/categoriesService'
 import Campaigns from '../../components/home/Campaigns'
@@ -33,7 +30,6 @@ const Products: React.FC = () => {
     const [searchParams] = useSearchParams()
     const location = useLocation()
     const [products, setProducts] = useState<Product[]>([])
-    const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [loading, setLoading] = useState(true)
 
     // Detect current section from URL path
@@ -64,13 +60,9 @@ const Products: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
     const [selectedSubcategory, setSelectedSubcategory] = useState<string | number | null>(null)
     const [availableSubcategories, setAvailableSubcategories] = useState<Category[]>([])
-    const [availableSubSubcategories, setAvailableSubSubcategories] = useState<Category[]>([])
-    const [selectedSubSubcategory, setSelectedSubSubcategory] = useState<string | number | null>(null)
     
     // Enhanced filters
     const [searchTerm, setSearchTerm] = useState('')
-    const [frameShape, setFrameShape] = useState<string>('')
-    const [frameMaterial, setFrameMaterial] = useState<string>('')
     const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
     const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
     const [gender, setGender] = useState<string>('')
@@ -85,13 +77,9 @@ const Products: React.FC = () => {
     // Contact lens specific filters
     const [lensType, setLensType] = useState<string>('')
     const [lensCoating, setLensCoating] = useState<string>('')
-    const [baseCurve, setBaseCurve] = useState<string>('')
-    const [diameter, setDiameter] = useState<string>('')
-    const [replacementPeriod, setReplacementPeriod] = useState<string>('')
     
     const [currentPage, setCurrentPage] = useState(1)
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
-    const [showNewArrivals, setShowNewArrivals] = useState(false)
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
 
@@ -172,10 +160,8 @@ const Products: React.FC = () => {
                     const subcategories = await getSubcategoriesByCategoryId(selectedCategory)
                     if (!isCancelled) {
                         setAvailableSubcategories(subcategories)
-                        // Reset subcategory and sub-subcategory when category changes
+                        // Reset subcategory when category changes
                         setSelectedSubcategory(null)
-                        setSelectedSubSubcategory(null)
-                        setAvailableSubSubcategories([])
                     }
                 } catch (error) {
                     if (!isCancelled) {
@@ -186,9 +172,7 @@ const Products: React.FC = () => {
             } else {
                 if (!isCancelled) {
                     setAvailableSubcategories([])
-                    setAvailableSubSubcategories([])
                     setSelectedSubcategory(null)
-                    setSelectedSubSubcategory(null)
                 }
             }
         }
@@ -199,74 +183,6 @@ const Products: React.FC = () => {
             isCancelled = true
         }
     }, [selectedCategory])
-
-    // Fetch sub-subcategories when subcategory changes
-    useEffect(() => {
-        let isCancelled = false
-
-        const fetchSubSubcategories = async () => {
-            if (selectedSubcategory) {
-                try {
-                    // Get sub-subcategories from the selected subcategory's children
-                    const subcategory = availableSubcategories.find(sub => sub.id === Number(selectedSubcategory))
-                    if (subcategory && subcategory.children) {
-                        if (!isCancelled) {
-                            setAvailableSubSubcategories(subcategory.children)
-                            setSelectedSubSubcategory(null)
-                        }
-                    } else {
-                        // Fallback: fetch from API
-                        const subSubcategories = await getNestedSubcategoriesByParentId(selectedSubcategory)
-                        if (!isCancelled) {
-                            setAvailableSubSubcategories(subSubcategories)
-                            setSelectedSubSubcategory(null)
-                        }
-                    }
-                } catch (error) {
-                    if (!isCancelled) {
-                        console.error('Error fetching sub-subcategories:', error)
-                        setAvailableSubSubcategories([])
-                    }
-                }
-            } else {
-                if (!isCancelled) {
-                    setAvailableSubSubcategories([])
-                    setSelectedSubSubcategory(null)
-                }
-            }
-        }
-
-        fetchSubSubcategories()
-
-        return () => {
-            isCancelled = true
-        }
-    }, [selectedSubcategory, availableSubcategories])
-
-    // Fetch product options on mount
-    useEffect(() => {
-        let isCancelled = false
-
-        const fetchOptions = async () => {
-            try {
-                const options = await getProductOptions()
-                if (!isCancelled) {
-                    setProductOptions(options)
-                }
-            } catch (error) {
-                if (!isCancelled) {
-                    console.error('Error fetching product options:', error)
-                    setProductOptions(null)
-                }
-            }
-        }
-        fetchOptions()
-
-        return () => {
-            isCancelled = true
-        }
-    }, [])
-
 
     // Fetch products when filters change
     useEffect(() => {
@@ -288,28 +204,8 @@ const Products: React.FC = () => {
                     filters.subcategory = selectedSubcategory
                 }
 
-                if (selectedSubSubcategory) {
-                    filters.subSubcategory = selectedSubSubcategory
-                }
-
                 if (searchTerm) {
                     filters.search = searchTerm
-                }
-
-                if (lensType) {
-                    filters.lensType = lensType
-                }
-
-                if (baseCurve) {
-                    filters.baseCurve = baseCurve
-                }
-
-                if (diameter) {
-                    filters.diameter = diameter
-                }
-
-                if (replacementPeriod) {
-                    filters.replacementPeriod = replacementPeriod
                 }
 
                 if (minPrice !== undefined) {
@@ -323,26 +219,6 @@ const Products: React.FC = () => {
                 if (gender) {
                     filters.gender = gender
                 }
-
-                // Contact lens specific filters
-                if (lensType) {
-                    filters.lensType = lensType
-                }
-                
-                if (baseCurve) {
-                    filters.baseCurve = baseCurve
-                }
-                
-                if (diameter) {
-                    filters.diameter = diameter
-                }
-                
-                if (replacementPeriod) {
-                    filters.replacementPeriod = replacementPeriod
-                }
-
-                // Note: Color filtering is done client-side after fetching products
-                // This ensures it doesn't interfere with the search parameter
 
                 // Add sorting
                 if (sortBy === 'newest') {
@@ -560,7 +436,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, selectedSubSubcategory, searchTerm, frameShape, frameMaterial, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, lensType, lensCoating, currentPage, sortBy, showNewArrivals, currentSection, location.pathname, baseCurve, diameter, replacementPeriod])
+    }, [selectedCategory, selectedSubcategory, searchTerm, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, lensType, lensCoating, currentPage, sortBy, currentSection, location.pathname])
 
 
     const handlePageChange = (newPage: number) => {
@@ -707,11 +583,27 @@ const Products: React.FC = () => {
                             setSearchTerm(filters.searchTerm)
                             setCurrentPage(1)
                         }
+                        if (filters.category !== undefined) {
+                            setSelectedCategory(filters.category)
+                            setCurrentPage(1)
+                        }
+                        if (filters.subcategory !== undefined) {
+                            setSelectedSubcategory(filters.subcategory)
+                            setCurrentPage(1)
+                        }
                     }}
                     availableColors={availableColors}
                     availableBrands={availableBrands}
                     availableLensTypes={availableLensTypes}
                     availableLensCoatings={availableLensCoatings}
+                    availableCategories={[
+                        { id: 'men', name: 'Men', slug: 'men' },
+                        { id: 'women', name: 'Women', slug: 'women' },
+                        { id: 'kids', name: 'Kids', slug: 'kids' }
+                    ]} // Sample categories for demonstration
+                    availableSubcategories={availableSubcategories}
+                    selectedCategory={selectedCategory}
+                    selectedSubcategory={selectedSubcategory}
                     categoryLevel="category"
                 />
             </div>

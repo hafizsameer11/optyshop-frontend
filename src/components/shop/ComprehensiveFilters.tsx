@@ -13,11 +13,17 @@ interface ComprehensiveFiltersProps {
         brand?: string
         inStock?: boolean
         searchTerm?: string
+        category?: string | number
+        subcategory?: string | number | null
     }) => void
     availableColors?: string[]
     availableBrands?: string[]
     availableLensTypes?: string[]
     availableLensCoatings?: string[]
+    availableCategories?: Array<{ id: string | number; name: string; slug: string }>
+    availableSubcategories?: Array<{ id: string | number; name: string; slug: string }>
+    selectedCategory?: string | number
+    selectedSubcategory?: string | number | null
     className?: string
     categoryLevel?: 'category' | 'subcategory' | 'subsubcategory'
     // activeFiltersCount?: number // Remove unused parameter
@@ -29,6 +35,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     availableBrands = [],
     availableLensTypes = [],
     availableLensCoatings = [],
+    availableCategories = [],
+    availableSubcategories = [],
+    selectedCategory = 'all',
+    selectedSubcategory = null,
     className = '',
     categoryLevel = 'category'
 }) => {
@@ -36,7 +46,6 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [isExpanded, setIsExpanded] = useState(false)
     
     // Filter states
-    const [gender, setGender] = useState<string>('')
     const [minPrice, setMinPrice] = useState<string>('')
     const [maxPrice, setMaxPrice] = useState<string>('')
     const [sortBy, setSortBy] = useState<string>('newest')
@@ -61,7 +70,6 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
     useEffect(() => {
         const filters: any = {}
-        if (gender) filters.gender = gender
         if (minPrice) filters.minPrice = Number(minPrice)
         if (maxPrice) filters.maxPrice = Number(maxPrice)
         if (sortBy) filters.sortBy = sortBy
@@ -73,24 +81,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (searchTerm) filters.searchTerm = searchTerm
         
         onFilterChange(filters)
-    }, [gender, minPrice, maxPrice, sortBy, selectedColor, lensType, lensCoating, brand, inStockOnly, searchTerm, onFilterChange])
-
-    const clearAllFilters = () => {
-        setGender('')
-        setMinPrice('')
-        setMaxPrice('')
-        setSortBy('newest')
-        setSelectedColor('')
-        setLensType('')
-        setLensCoating('')
-        setBrand('')
-        setInStockOnly(false)
-        setSearchTerm('')
-    }
+    }, [minPrice, maxPrice, sortBy, selectedColor, lensType, lensCoating, brand, inStockOnly, searchTerm, onFilterChange])
 
     const getActiveFiltersCount = () => {
         let count = 0
-        if (gender) count++
         if (minPrice) count++
         if (maxPrice) count++
         if (selectedColor) count++
@@ -120,14 +114,98 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    {activeCount > 0 && (
-                        <button
-                            onClick={clearAllFilters}
-                            className="text-xs text-gray-500 hover:text-red-600 transition-colors"
-                        >
-                            Clear All
-                        </button>
-                    )}
+                    {/* Filter Controls moved to header right side */}
+                    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+                        {/* Category Buttons */}
+                        {availableCategories.length > 0 && (
+                            <div className="flex gap-1 min-w-0 flex-shrink-0">
+                                {availableCategories.slice(0, 3).map((category) => (
+                                    <button
+                                        key={category.id}
+                                        onClick={() => onFilterChange({ 
+                                            ...{}, 
+                                            category: category.slug || category.id,
+                                            subcategory: null 
+                                        })}
+                                        className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
+                                            selectedCategory === (category.slug || category.id)
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {category.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Subcategory Buttons */}
+                        {availableSubcategories.length > 0 && (
+                            <div className="flex gap-1 min-w-0 flex-shrink-0">
+                                {availableSubcategories.slice(0, 3).map((subcategory) => (
+                                    <button
+                                        key={subcategory.id}
+                                        onClick={() => onFilterChange({ 
+                                            ...{}, 
+                                            subcategory: subcategory.slug || subcategory.id
+                                        })}
+                                        className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
+                                            selectedSubcategory === (subcategory.slug || subcategory.id)
+                                                ? 'bg-blue-500 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {subcategory.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Search */}
+                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-20 sm:w-28 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                                <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        {/* Sort By */}
+                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                            <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Sort:</label>
+                            <select
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                                className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
+                            >
+                                <option value="newest">Newest</option>
+                                <option value="oldest">Oldest</option>
+                                <option value="price_low">Price Low</option>
+                                <option value="price_high">Price High</option>
+                                <option value="name">Name A-Z</option>
+                            </select>
+                        </div>
+
+                        {/* In Stock Only */}
+                        <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
+                            <label className="flex items-center gap-1 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={inStockOnly}
+                                    onChange={(e) => setInStockOnly(e.target.checked)}
+                                    className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                />
+                                <span className="text-xs font-medium text-gray-700">In Stock</span>
+                            </label>
+                        </div>
+                    </div>
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -136,73 +214,6 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                </div>
-            </div>
-
-            {/* Filter Controls moved to header area */}
-            <div className="p-2 border-b border-gray-100">
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-                    {/* Search */}
-                    <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-20 sm:w-28 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
-                            />
-                            <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    {/* Gender Filter */}
-                    <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                        <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Gender:</label>
-                        <select
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[50px] hover:border-gray-400"
-                        >
-                            <option value="">All</option>
-                            {productOptions?.genders?.map((g) => (
-                                <option key={g} value={g}>
-                                    {g.charAt(0).toUpperCase() + g.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Sort By */}
-                    <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                        <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Sort:</label>
-                        <select
-                            value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="text-xs border border-gray-300 rounded-lg px-1.5 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 min-w-[60px] hover:border-gray-400"
-                        >
-                            <option value="newest">Newest</option>
-                            <option value="oldest">Oldest</option>
-                            <option value="price_low">Price Low</option>
-                            <option value="price_high">Price High</option>
-                            <option value="name">Name A-Z</option>
-                        </select>
-                    </div>
-
-                    {/* In Stock Only */}
-                    <div className="flex items-center gap-1 min-w-0 flex-shrink-0">
-                        <label className="flex items-center gap-1 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={inStockOnly}
-                                onChange={(e) => setInStockOnly(e.target.checked)}
-                                className="w-3 h-3 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-xs font-medium text-gray-700">In Stock</span>
-                        </label>
-                    </div>
                 </div>
             </div>
 
