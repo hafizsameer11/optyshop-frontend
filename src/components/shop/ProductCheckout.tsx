@@ -71,7 +71,7 @@ interface ProductCheckoutProps {
   onClose?: () => void
   initialSelectedColor?: string | null // Optional: pre-selected product color variant from product page
   initialSelectedImageIndex?: number // Optional: pre-selected image index from product page
-  // selectedCaliber?: any | null // Optional: selected MM caliber information (removed - unused)
+  initialSelectedCaliber?: any | null // Optional: selected MM caliber information from product page
   categoryContext?: {
     category?: { id: number; name: string; slug: string } | null
     subcategory?: { id: number; name: string; slug: string } | null
@@ -114,11 +114,14 @@ interface PrescriptionFormData {
   os_axis: string
 }
 
-const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, initialSelectedImageIndex, categoryContext }) => {
+const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, initialSelectedImageIndex, initialSelectedCaliber, categoryContext }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
+
+  // Store selected caliber information from product page
+  const selectedCaliber = initialSelectedCaliber || null
 
   // Store selected product color variant (from product page selection)
   const [selectedProductColor] = useState<string | null>(initialSelectedColor || null)
@@ -239,13 +242,15 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     }
 
     // Priority 1: Use caliber-specific image if caliber is selected
-    // if (selectedCaliber && selectedCaliber.image_url && !selectedCaliber.image_url.startsWith('blob:')) {
-    //   console.log('[ProductCheckout] Using caliber image:', {
-    //     caliber_mm: selectedCaliber.mm,
-    //     image_url: selectedCaliber.image_url
-    //   });
-    //   return selectedCaliber.image_url;
-    // }
+    if (selectedCaliber && selectedCaliber.image_url && !selectedCaliber.image_url.startsWith('blob:')) {
+      if (import.meta.env.DEV) {
+        console.log('[ProductCheckout] Using caliber image:', {
+          caliber_mm: selectedCaliber.mm,
+          image_url: selectedCaliber.image_url
+        });
+      }
+      return selectedCaliber.image_url;
+    }
 
     if (!selectedProductColor) {
       // Fallback to regular product image if no color selected
@@ -2367,9 +2372,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         prescription_id: finalPrescriptionId,
         // Store in a way that can be accessed later
         customization: {
-          // MM caliber information would be stored here if available
-          // selected_mm_caliber: selectedCaliber.mm,
-          // caliber_image_url: selectedCaliber.image_url
+          // Store caliber information if available
+          ...(selectedCaliber ? {
+            selected_mm_caliber: selectedCaliber.mm,
+            caliber_image_url: selectedCaliber.image_url
+          } : {}),
           lensType: lensSelection.type,
           lensIndex: lensSelection.lensIndex,
           lensTypeId: lensSelection.lensTypeId,

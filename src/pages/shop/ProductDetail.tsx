@@ -5706,6 +5706,7 @@ const ProductDetail = () => {
                     }}
                     initialSelectedColor={selectedColor || undefined}
                     initialSelectedImageIndex={selectedImageIndex}
+                    initialSelectedCaliber={selectedCaliber}
                     categoryContext={{
                         category: product.category ? {
                             id: product.category.id || 0,
