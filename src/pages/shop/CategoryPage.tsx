@@ -20,6 +20,7 @@ import {
 import CategoryBanner from '../../components/home/CategoryBanner'
 import CategoryNavigation from '../../components/shop/CategoryNavigation'
 import ProductCard from '../../components/products/ProductCard'
+import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
 import BannerDebug from '../../components/debug/BannerDebug'
 
 const CategoryPage: React.FC = () => {
@@ -50,7 +51,7 @@ const CategoryPage: React.FC = () => {
     })
     const [currentPage, setCurrentPage] = useState(1)
 
-    // Filter states
+    // Enhanced Filter states
     const [searchTerm, setSearchTerm] = useState('')
     const [lensType, setLensType] = useState<string>('')
     const [lensCoating, setLensCoating] = useState<string>('')
@@ -59,7 +60,12 @@ const CategoryPage: React.FC = () => {
     const [gender, setGender] = useState<string>('')
     const [selectedColor, setSelectedColor] = useState<string>('')
     const [availableColors, setAvailableColors] = useState<string[]>([])
+    const [availableBrands, setAvailableBrands] = useState<string[]>([])
+    const [availableLensTypes, setAvailableLensTypes] = useState<string[]>([])
+    const [availableLensCoatings, setAvailableLensCoatings] = useState<string[]>([])
     const [sortBy, setSortBy] = useState<string>('newest')
+    const [brand, setBrand] = useState<string>('')
+    const [inStockOnly, setInStockOnly] = useState<boolean>(false)
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
 
     // Fetch category, subcategory, and sub-subcategory info
@@ -190,6 +196,14 @@ const CategoryPage: React.FC = () => {
                     filters.gender = gender
                 }
 
+                if (brand) {
+                    filters.brand = brand
+                }
+
+                if (inStockOnly) {
+                    filters.inStock = true
+                }
+
                 // Add sorting
                 if (sortBy === 'newest') {
                     filters.sortBy = 'created_at'
@@ -243,12 +257,17 @@ const CategoryPage: React.FC = () => {
                     const result = await getProducts(filters)
                     
                     if (!isCancelled && result) {
-                        // Extract unique colors from all products for color filter dropdown
+                        // Extract unique colors, brands, lens types, and coatings from all products
                         if (result.products && result.products.length > 0) {
                             const colorSet = new Set<string>()
+                            const brandSet = new Set<string>()
+                            const lensTypeSet = new Set<string>()
+                            const lensCoatingSet = new Set<string>()
+                            
                             result.products.forEach((product: Product) => {
                                 const p = product as any
-                                // Extract colors from 'colors' array
+                                
+                                // Extract colors
                                 if (p.colors && Array.isArray(p.colors)) {
                                     p.colors.forEach((c: any) => {
                                         const colorName = c.display_name || c.name || c.value || c.color
@@ -257,7 +276,6 @@ const CategoryPage: React.FC = () => {
                                         }
                                     })
                                 }
-                                // Extract colors from 'color_images' array
                                 if (product.color_images && Array.isArray(product.color_images)) {
                                     product.color_images.forEach((ci: any) => {
                                         const colorName = ci.display_name || ci.name || ci.color
@@ -266,14 +284,34 @@ const CategoryPage: React.FC = () => {
                                         }
                                     })
                                 }
+                                
+                                // Extract brands
+                                if (product.brand) {
+                                    brandSet.add(product.brand)
+                                }
+                                
+                                // Extract lens types (for contact lenses)
+                                if (p.lens_type) {
+                                    lensTypeSet.add(p.lens_type)
+                                }
+                                
+                                // Extract lens coatings (for contact lenses)
+                                if (p.lens_coating) {
+                                    lensCoatingSet.add(p.lens_coating)
+                                }
                             })
+                            
                             if (!isCancelled) {
                                 setAvailableColors(Array.from(colorSet).sort())
+                                setAvailableBrands(Array.from(brandSet).sort())
+                                setAvailableLensTypes(Array.from(lensTypeSet).sort())
+                                setAvailableLensCoatings(Array.from(lensCoatingSet).sort())
                             }
                         }
 
-                        // Filter products by color if color is selected (client-side filtering)
+                        // Apply client-side filters
                         let filteredProducts = result.products || []
+                        
                         if (selectedColor && filteredProducts.length > 0) {
                             filteredProducts = filteredProducts.filter((product: Product) => {
                                 const p = product as any
@@ -298,6 +336,36 @@ const CategoryPage: React.FC = () => {
                                 }
 
                                 return false
+                            })
+                        }
+                        
+                        // Filter by brand
+                        if (brand && filteredProducts.length > 0) {
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                return product.brand && product.brand.toLowerCase() === brand.toLowerCase()
+                            })
+                        }
+                        
+                        // Filter by stock status
+                        if (inStockOnly && filteredProducts.length > 0) {
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                return product.in_stock === true || (product as any).stock_quantity > 0
+                            })
+                        }
+                        
+                        // Filter by lens type (for contact lenses)
+                        if (lensType && filteredProducts.length > 0) {
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                return p.lens_type && p.lens_type.toLowerCase() === lensType.toLowerCase()
+                            })
+                        }
+                        
+                        // Filter by lens coating (for contact lenses)
+                        if (lensCoating && filteredProducts.length > 0) {
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                return p.lens_coating && p.lens_coating.toLowerCase() === lensCoating.toLowerCase()
                             })
                         }
 
@@ -341,7 +409,7 @@ const CategoryPage: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, lensType, lensCoating, minPrice, maxPrice, gender, selectedColor, sortBy])
+    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, lensType, lensCoating, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, sortBy])
 
     // Fetch product options on mount
     useEffect(() => {
@@ -414,13 +482,13 @@ const CategoryPage: React.FC = () => {
                 />
             )}
 
-            {/* Category Navigation - Centered buttons under banner */}
+            {/* Enhanced Category Navigation with Comprehensive Filters */}
             <CategoryNavigation 
                 category={categoryInfo.category}
                 subcategory={categoryInfo.subcategory}
                 subSubcategory={categoryInfo.subSubcategory}
                 onFilterChange={(filters) => {
-                    // Apply filters from quick filter components
+                    // Apply filters from comprehensive filter component
                     if (filters.gender !== undefined) {
                         setGender(filters.gender)
                         setCurrentPage(1)
@@ -437,8 +505,89 @@ const CategoryPage: React.FC = () => {
                         setSortBy(filters.sortBy)
                         setCurrentPage(1)
                     }
+                    if (filters.color !== undefined) {
+                        setSelectedColor(filters.color)
+                        setCurrentPage(1)
+                    }
+                    if (filters.brand !== undefined) {
+                        setBrand(filters.brand)
+                        setCurrentPage(1)
+                    }
+                    if (filters.lensType !== undefined) {
+                        setLensType(filters.lensType)
+                        setCurrentPage(1)
+                    }
+                    if (filters.lensCoating !== undefined) {
+                        setLensCoating(filters.lensCoating)
+                        setCurrentPage(1)
+                    }
+                    if (filters.inStock !== undefined) {
+                        setInStockOnly(filters.inStock)
+                        setCurrentPage(1)
+                    }
+                    if (filters.searchTerm !== undefined) {
+                        setSearchTerm(filters.searchTerm)
+                        setCurrentPage(1)
+                    }
                 }}
             />
+            
+            {/* Comprehensive Filters */}
+            <div className="max-w-screen-2xl mx-auto px-4 mb-6">
+                <ComprehensiveFilters
+                    onFilterChange={(filters) => {
+                        // Apply filters from comprehensive filter component
+                        if (filters.gender !== undefined) {
+                            setGender(filters.gender)
+                            setCurrentPage(1)
+                        }
+                        if (filters.minPrice !== undefined) {
+                            setMinPrice(filters.minPrice)
+                            setCurrentPage(1)
+                        }
+                        if (filters.maxPrice !== undefined) {
+                            setMaxPrice(filters.maxPrice)
+                            setCurrentPage(1)
+                        }
+                        if (filters.sortBy !== undefined) {
+                            setSortBy(filters.sortBy)
+                            setCurrentPage(1)
+                        }
+                        if (filters.color !== undefined) {
+                            setSelectedColor(filters.color)
+                            setCurrentPage(1)
+                        }
+                        if (filters.brand !== undefined) {
+                            setBrand(filters.brand)
+                            setCurrentPage(1)
+                        }
+                        if (filters.lensType !== undefined) {
+                            setLensType(filters.lensType)
+                            setCurrentPage(1)
+                        }
+                        if (filters.lensCoating !== undefined) {
+                            setLensCoating(filters.lensCoating)
+                            setCurrentPage(1)
+                        }
+                        if (filters.inStock !== undefined) {
+                            setInStockOnly(filters.inStock)
+                            setCurrentPage(1)
+                        }
+                        if (filters.searchTerm !== undefined) {
+                            setSearchTerm(filters.searchTerm)
+                            setCurrentPage(1)
+                        }
+                    }}
+                    availableColors={availableColors}
+                    availableBrands={availableBrands}
+                    availableLensTypes={availableLensTypes}
+                    availableLensCoatings={availableLensCoatings}
+                    categoryLevel={
+                        categoryInfo.subSubcategory ? 'subsubcategory' :
+                        categoryInfo.subcategory ? 'subcategory' : 'category'
+                    }
+                />
+            </div>
 
             {/* Debug Banner Information - Only in development */}
             {import.meta.env.DEV && categoryInfo.category && (
