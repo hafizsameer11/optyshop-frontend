@@ -106,7 +106,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
     return (
         <div className={`bg-white rounded-lg shadow-sm border border-gray-200 max-w-xs ${className}`}>
-            {/* Header */}
+            {/* Header with Gender Buttons */}
             <div className="flex items-center justify-between p-2 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,6 +120,29 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     )}
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* Gender Buttons */}
+                    <div className="flex gap-1">
+                        <button
+                            onClick={() => setGender('men')}
+                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 ${
+                                gender === 'men' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Men Glasses
+                        </button>
+                        <button
+                            onClick={() => setGender('women')}
+                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 ${
+                                gender === 'women' 
+                                    ? 'bg-blue-500 text-white' 
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                        >
+                            Women Glasses
+                        </button>
+                    </div>
                     {activeCount > 0 && (
                         <button
                             onClick={clearAllFilters}
