@@ -1930,6 +1930,135 @@ const ProductDetail = () => {
         return []
     }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
+    // Generate base curve options from astigmatism configs
+    const baseCurveOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+        // For astigmatism forms, use astigmatism configs
+        if (formType === 'astigmatism') {
+            if (astigmatismConfigs.length > 0) {
+                const allBaseCurveValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightBaseCurve = (config.right_base_curve && Array.isArray(config.right_base_curve)) ? config.right_base_curve : []
+                    const leftBaseCurve = (config.left_base_curve && Array.isArray(config.left_base_curve)) ? config.left_base_curve : []
+                    rightBaseCurve.forEach(v => {
+                        if (v != null && v !== '') {
+                            allBaseCurveValues.add(String(v))
+                        }
+                    })
+                    leftBaseCurve.forEach(v => {
+                        if (v != null && v !== '') {
+                            allBaseCurveValues.add(String(v))
+                        }
+                    })
+                })
+                if (allBaseCurveValues.size > 0) {
+                    const baseCurveArray = Array.from(allBaseCurveValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using base curve options from astigmatism configs:', baseCurveArray)
+                    }
+                    return baseCurveArray
+                }
+            }
+        }
+
+        // For spherical forms or fallback, use subSubcategoryOptions
+        return subSubcategoryOptions?.baseCurveOptions || []
+    }, [contactLensFormConfig?.formType, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+
+    // Generate diameter options from astigmatism configs
+    const diameterOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+        // For astigmatism forms, use astigmatism configs
+        if (formType === 'astigmatism') {
+            if (astigmatismConfigs.length > 0) {
+                const allDiameterValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightDiameter = (config.right_diameter && Array.isArray(config.right_diameter)) ? config.right_diameter : []
+                    const leftDiameter = (config.left_diameter && Array.isArray(config.left_diameter)) ? config.left_diameter : []
+                    rightDiameter.forEach(v => {
+                        if (v != null && v !== '') {
+                            allDiameterValues.add(String(v))
+                        }
+                    })
+                    leftDiameter.forEach(v => {
+                        if (v != null && v !== '') {
+                            allDiameterValues.add(String(v))
+                        }
+                    })
+                })
+                if (allDiameterValues.size > 0) {
+                    const diameterArray = Array.from(allDiameterValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using diameter options from astigmatism configs:', diameterArray)
+                    }
+                    return diameterArray
+                }
+            }
+        }
+
+        // For spherical forms or fallback, use subSubcategoryOptions
+        return subSubcategoryOptions?.diameterOptions || []
+    }, [contactLensFormConfig?.formType, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+
+    // Generate quantity options from astigmatism configs
+    const quantityOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+
+        // For astigmatism forms, use astigmatism configs
+        if (formType === 'astigmatism') {
+            if (astigmatismConfigs.length > 0) {
+                const allQtyValues = new Set<string>()
+                astigmatismConfigs.forEach(config => {
+                    const rightQty = (config.right_qty && Array.isArray(config.right_qty)) ? config.right_qty : []
+                    const leftQty = (config.left_qty && Array.isArray(config.left_qty)) ? config.left_qty : []
+                    rightQty.forEach(v => {
+                        if (v != null && v !== '') {
+                            allQtyValues.add(String(v))
+                        }
+                    })
+                    leftQty.forEach(v => {
+                        if (v != null && v !== '') {
+                            allQtyValues.add(String(v))
+                        }
+                    })
+                })
+                if (allQtyValues.size > 0) {
+                    const qtyArray = Array.from(allQtyValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return numA - numB
+                        }
+                        return a.localeCompare(b)
+                    })
+                    if (import.meta.env.DEV) {
+                        console.log('✅ Using quantity options from astigmatism configs:', qtyArray)
+                    }
+                    return qtyArray
+                }
+            }
+        }
+
+        // For spherical forms or fallback, return empty array (qty is number input)
+        return []
+    }, [contactLensFormConfig?.formType, astigmatismConfigs, isAstigmatismSubSubcategory])
+
     // Generate axis options from astigmatism configs
     const axisOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
@@ -3859,23 +3988,48 @@ const ProductDetail = () => {
                                             </div>
 
                                             <div className={`space-y-3 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                {/* Qty Number Input with Spinner - Full Width */}
+                                                {/* Qty Dropdown or Number Input - Full Width */}
                                                 <div>
                                                     <label className="block text-xs text-gray-500 mb-1">
                                                         Quantity (Qty)
                                                     </label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={contactLensFormData.right_qty || 1}
-                                                        onChange={(e) => {
-                                                            const selectedValue = parseInt(e.target.value) || 1
-                                                            handleContactLensFieldChange('right_qty', selectedValue)
-                                                        }}
-                                                        disabled={!rightEyeEnabled}
-                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
-                                                            } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    />
+                                                    {quantityOptions.length > 0 ? (
+                                                        <div className="relative">
+                                                            <select
+                                                                value={contactLensFormData.right_qty || 1}
+                                                                onChange={(e) => {
+                                                                    const selectedValue = parseInt(e.target.value) || 1
+                                                                    handleContactLensFieldChange('right_qty', selectedValue)
+                                                                }}
+                                                                disabled={!rightEyeEnabled}
+                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm appearance-none cursor-pointer ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <option value="1">1</option>
+                                                                {quantityOptions.map((v: string) => (
+                                                                    <option key={v} value={v.toString()}>{v}</option>
+                                                                ))}
+                                                            </select>
+                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={contactLensFormData.right_qty || 1}
+                                                            onChange={(e) => {
+                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                handleContactLensFieldChange('right_qty', selectedValue)
+                                                            }}
+                                                            disabled={!rightEyeEnabled}
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
+                                                                } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        />
+                                                    )}
                                                     {contactLensErrors.right_qty && (
                                                         <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.right_qty}</p>
                                                     )}
@@ -3895,7 +4049,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v: number) => (
+                                                                {baseCurveOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -3919,7 +4073,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.diameterOptions?.map((v: number) => (
+                                                                {diameterOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4078,23 +4232,48 @@ const ProductDetail = () => {
                                             </div>
 
                                             <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
-                                                {/* Qty Number Input with Spinner - Full Width */}
+                                                {/* Qty Dropdown or Number Input - Full Width */}
                                                 <div>
                                                     <label className="block text-xs text-gray-500 mb-1">
                                                         Quantity (Qty)
                                                     </label>
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={contactLensFormData.left_qty || 1}
-                                                        onChange={(e) => {
-                                                            const selectedValue = parseInt(e.target.value) || 1
-                                                            handleContactLensFieldChange('left_qty', selectedValue)
-                                                        }}
-                                                        disabled={!leftEyeEnabled}
-                                                        className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
-                                                            } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    />
+                                                    {quantityOptions.length > 0 ? (
+                                                        <div className="relative">
+                                                            <select
+                                                                value={contactLensFormData.left_qty || 1}
+                                                                onChange={(e) => {
+                                                                    const selectedValue = parseInt(e.target.value) || 1
+                                                                    handleContactLensFieldChange('left_qty', selectedValue)
+                                                                }}
+                                                                disabled={!leftEyeEnabled}
+                                                                className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm appearance-none cursor-pointer ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                                    } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                            >
+                                                                <option value="1">1</option>
+                                                                {quantityOptions.map((v: string) => (
+                                                                    <option key={v} value={v.toString()}>{v}</option>
+                                                                ))}
+                                                            </select>
+                                                            <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
+                                                                <svg className="w-2.5 h-2.5 text-purple-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={contactLensFormData.left_qty || 1}
+                                                            onChange={(e) => {
+                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                handleContactLensFieldChange('left_qty', selectedValue)
+                                                            }}
+                                                            disabled={!leftEyeEnabled}
+                                                            className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
+                                                                } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                        />
+                                                    )}
                                                     {contactLensErrors.left_qty && (
                                                         <p className="mt-1 text-xs text-red-600 font-medium">{contactLensErrors.left_qty}</p>
                                                     )}
@@ -4114,7 +4293,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.baseCurveOptions?.map((v: number) => (
+                                                                {baseCurveOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4138,7 +4317,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {subSubcategoryOptions?.diameterOptions?.map((v: number) => (
+                                                                {diameterOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
