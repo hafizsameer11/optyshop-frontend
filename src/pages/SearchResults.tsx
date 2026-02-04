@@ -72,7 +72,7 @@ const SearchResults: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-24 pb-12 px-4">
+        <div className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4">
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
@@ -80,16 +80,16 @@ const SearchResults: React.FC = () => {
                         {t('search.results') || 'Search Results'}
                     </h1>
                     {query && (
-                        <p className="text-purple-400/80">
+                        <p className="text-cyan-400/80">
                             {loading ? (
                                 t('search.searching') || 'Searching...'
                             ) : stats.total > 0 ? (
                                 <>
-                                    {stats.total} {t('search.resultsFound') || 'results found'} for "<span className="text-purple-300 font-semibold">{query}</span>"
+                                    {stats.total} {t('search.resultsFound') || 'results found'} for "<span className="text-cyan-300 font-semibold">{query}</span>"
                                 </>
                             ) : (
                                 <>
-                                    {t('search.noResults') || 'No results found'} for "<span className="text-purple-300 font-semibold">{query}</span>"
+                                    {t('search.noResults') || 'No results found'} for "<span className="text-cyan-300 font-semibold">{query}</span>"
                                 </>
                             )}
                         </p>
@@ -129,7 +129,7 @@ const SearchResults: React.FC = () => {
                 {/* Loading State */}
                 {loading && (
                     <div className="flex justify-center items-center py-20">
-                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-400"></div>
+                        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-400"></div>
                     </div>
                 )}
 
@@ -284,11 +284,11 @@ const SearchResults: React.FC = () => {
                 {/* No Results */}
                 {!loading && results.length === 0 && query && (
                     <div className="text-center py-20">
-                        <svg className="mx-auto h-16 w-16 text-pink-400/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="mx-auto h-16 w-16 text-cyan-400/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                         <p className="text-xl text-white mb-2">{t('search.noResults') || 'No results found'}</p>
-                        <p className="text-pink-400/70">{t('search.tryDifferent') || 'Try a different search term'}</p>
+                        <p className="text-cyan-400/70">{t('search.tryDifferent') || 'Try a different search term'}</p>
                     </div>
                 )}
             </div>
