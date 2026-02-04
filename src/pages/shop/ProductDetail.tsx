@@ -4046,7 +4046,7 @@ const ProductDetail = () => {
                                                                 value={contactLensFormData.right_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_base_curve', e.target.value)}
                                                                 disabled={!rightEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
+                                                                className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
                                                                 {baseCurveOptions.map((v: string) => (
@@ -4070,7 +4070,7 @@ const ProductDetail = () => {
                                                                 value={contactLensFormData.right_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('right_diameter', e.target.value)}
                                                                 disabled={!rightEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
+                                                                className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
                                                                 {diameterOptions.map((v: string) => (
@@ -4103,7 +4103,7 @@ const ProductDetail = () => {
                                                                     value={contactLensFormData.right_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                     disabled={!rightEyeEnabled}
-                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
+                                                                    className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                         } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">00.00 (Power)</option>
@@ -4140,7 +4140,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.right_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_power', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -4161,7 +4161,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.right_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_cylinder', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -4182,7 +4182,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.right_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('right_axis', e.target.value)}
                                                                         disabled={!rightEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -4290,7 +4290,7 @@ const ProductDetail = () => {
                                                                 value={contactLensFormData.left_base_curve || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_base_curve', e.target.value)}
                                                                 disabled={!leftEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
+                                                                className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
                                                                 {baseCurveOptions.map((v: string) => (
@@ -4314,7 +4314,7 @@ const ProductDetail = () => {
                                                                 value={contactLensFormData.left_diameter || '00.00'}
                                                                 onChange={(e) => handleContactLensFieldChange('left_diameter', e.target.value)}
                                                                 disabled={!leftEyeEnabled}
-                                                                className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
+                                                                className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
                                                                 {diameterOptions.map((v: string) => (
@@ -4347,7 +4347,7 @@ const ProductDetail = () => {
                                                                     value={contactLensFormData.left_power || '00.00'}
                                                                     onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                     disabled={!leftEyeEnabled}
-                                                                    className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
+                                                                    className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                         } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">00.00 (Power)</option>
@@ -4384,7 +4384,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.left_power || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_power', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -4405,7 +4405,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.left_cylinder || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_cylinder', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
@@ -4426,7 +4426,7 @@ const ProductDetail = () => {
                                                                         value={contactLensFormData.left_axis || '00.00'}
                                                                         onChange={(e) => handleContactLensFieldChange('left_axis', e.target.value)}
                                                                         disabled={!leftEyeEnabled}
-                                                                        className={`w-full px-4 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-center font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
+                                                                        className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00">--</option>
