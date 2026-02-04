@@ -522,8 +522,11 @@ const CategoryPage: React.FC = () => {
                             setInStockOnly(filters.inStock)
                             setCurrentPage(1)
                         }
-                        if (filters.searchTerm !== undefined) {
-                            setSearchTerm(filters.searchTerm)
+                        if (filters.search !== undefined) {
+                            if (import.meta.env.DEV) {
+                                console.log('🔍 CategoryPage received search term:', filters.search)
+                            }
+                            setSearchTerm(filters.search)
                             setCurrentPage(1)
                         }
                     }}

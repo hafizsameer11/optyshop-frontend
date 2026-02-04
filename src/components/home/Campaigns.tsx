@@ -225,30 +225,30 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                         target.style.display = 'none'
                                                     }}
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-r from-slate-800/80 via-slate-800/50 to-transparent" />
+                                                <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/20 to-transparent" />
                                                 <div className="absolute inset-0 flex items-center px-4 md:px-6">
                                                     <div className="max-w-xl w-full">
-                                                        <h3 className="text-lg md:text-xl font-bold text-white mb-1">
+                                                        <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-1">
                                                             {campaign.name}
                                                         </h3>
                                                         {campaign.description && (
-                                                            <p className="text-white/90 text-xs md:text-sm line-clamp-1 mb-2">
+                                                            <p className="text-gray-700/90 text-xs md:text-sm line-clamp-1 mb-2">
                                                                 {campaign.description}
                                                             </p>
                                                         )}
                                                         {/* Date Range for Compact */}
                                                         {(campaign.starts_at || campaign.ends_at) && (
-                                                            <div className="flex items-center gap-1.5 mb-2 text-xs text-white/80">
+                                                            <div className="flex items-center gap-1.5 mb-2 text-xs text-gray-600/80">
                                                                 {campaign.starts_at && (
-                                                                    <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                    <span className="bg-white/80 px-2 py-0.5 rounded text-gray-700">
                                                                         {new Date(campaign.starts_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                                                                     </span>
                                                                 )}
                                                                 {campaign.starts_at && campaign.ends_at && (
-                                                                    <span className="text-white/60">-</span>
+                                                                    <span className="text-gray-500">-</span>
                                                                 )}
                                                                 {campaign.ends_at && (
-                                                                    <span className="bg-black/40 px-2 py-0.5 rounded">
+                                                                    <span className="bg-white/80 px-2 py-0.5 rounded text-gray-700">
                                                                         {new Date(campaign.ends_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                                                                     </span>
                                                                 )}
@@ -266,12 +266,12 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                 </div>
                                             </div>
                                         ) : (
-                                            <div className="bg-gradient-to-r from-slate-700 to-slate-600 p-4 md:p-6 rounded-lg shadow-lg">
-                                                <h3 className="text-lg md:text-xl font-bold text-white mb-2">
+                                            <div className="bg-gradient-to-r from-gray-100 to-gray-50 p-4 md:p-6 rounded-lg shadow-lg">
+                                                <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-2">
                                                     {campaign.name}
                                                 </h3>
                                                 {campaign.description && (
-                                                    <p className="text-white/90 text-xs md:text-sm mb-3">{campaign.description}</p>
+                                                    <p className="text-gray-700/90 text-xs md:text-sm mb-3">{campaign.description}</p>
                                                 )}
                                                 {/* Date Range for Compact (no image) */}
                                                 {(campaign.starts_at || campaign.ends_at) && (
@@ -369,13 +369,13 @@ const CampaignsComponent: React.FC<CampaignsComponentProps> = ({ position = null
                                                     target.style.display = 'none'
                                                 }}
                                             />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-transparent" />
                                             <div className="absolute bottom-0 left-0 right-0 p-4">
-                                                <h3 className="text-white font-bold text-lg md:text-xl mb-1">
+                                                <h3 className="text-gray-800 font-bold text-lg md:text-xl mb-1">
                                                     {campaign.name}
                                                 </h3>
                                                 {campaign.description && (
-                                                    <p className="text-white/90 text-sm mb-2 line-clamp-2">
+                                                    <p className="text-gray-700/90 text-sm mb-2 line-clamp-2">
                                                         {campaign.description}
                                                     </p>
                                                 )}
