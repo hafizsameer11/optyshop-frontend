@@ -12,7 +12,7 @@ interface ComprehensiveFiltersProps {
         lensCoating?: string
         brand?: string
         inStock?: boolean
-        searchTerm?: string
+        search?: string
         category?: string | number
         subcategory?: string | number | null
     }) => void
@@ -55,6 +55,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [brand, setBrand] = useState<string>('')
     const [inStockOnly, setInStockOnly] = useState<boolean>(false)
     const [searchTerm, setSearchTerm] = useState<string>('')
+    const [searchInput, setSearchInput] = useState<string>('')
 
     useEffect(() => {
         const fetchOptions = async () => {
@@ -78,10 +79,28 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (lensCoating) filters.lensCoating = lensCoating
         if (brand) filters.brand = brand
         if (inStockOnly) filters.inStock = true
-        if (searchTerm) filters.searchTerm = searchTerm
+        if (searchTerm) {
+        filters.search = searchTerm
+        if (import.meta.env.DEV) {
+            console.log('🔍 Search filter applied:', searchTerm)
+        }
+    }
         
         onFilterChange(filters)
     }, [minPrice, maxPrice, sortBy, selectedColor, lensType, lensCoating, brand, inStockOnly, searchTerm, onFilterChange])
+
+    const handleSearch = () => {
+        setSearchTerm(searchInput)
+        if (import.meta.env.DEV) {
+            console.log('🔍 Search button clicked with term:', searchInput)
+        }
+    }
+
+    const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleSearch()
+        }
+    }
 
     const getActiveFiltersCount = () => {
         let count = 0
@@ -181,14 +200,21 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 <input
                                     type="text"
                                     placeholder="Search..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    value={searchInput}
+                                    onChange={(e) => setSearchInput(e.target.value)}
+                                    onKeyPress={handleSearchKeyPress}
                                     className="w-24 sm:w-32 text-xs border border-gray-300 rounded-lg pl-6 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                 />
                                 <svg className="absolute left-1.5 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
+                            <button
+                                onClick={handleSearch}
+                                className="text-xs bg-blue-500 text-white px-2 py-1.5 rounded-lg hover:bg-blue-600 transition-colors duration-200 font-medium whitespace-nowrap"
+                            >
+                                Search
+                            </button>
                         </div>
 
                         {/* Sort By */}

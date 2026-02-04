@@ -118,11 +118,11 @@ const SmallSlidingBanners: React.FC = () => {
 
     if (loading) {
         return (
-            <section className="w-full py-6 md:py-8 bg-slate-950">
+            <section className="w-full py-6 md:py-8 bg-white">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-32 bg-slate-800 animate-pulse rounded-lg"></div>
+                            <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-lg"></div>
                         ))}
                     </div>
                 </div>
@@ -139,7 +139,7 @@ const SmallSlidingBanners: React.FC = () => {
 
     return (
         <section 
-            className="w-full py-6 md:py-8 bg-slate-950"
+            className="w-full py-6 md:py-8 bg-white"
         >
             <div className="w-[90%] mx-auto max-w-7xl">
                 {/* Auto-moving banners carousel - continuous scroll like brands */}

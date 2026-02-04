@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Fix for prescription form dropdown text cutoff */
+select option {
+    padding: 8px 12px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+}
+
+/* Ensure dropdown options are fully visible */
+select {
+    text-overflow: ellipsis !important;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
