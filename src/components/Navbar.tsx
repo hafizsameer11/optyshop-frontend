@@ -249,8 +249,19 @@ const Navbar: React.FC = () => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
                                     e.preventDefault()
-                                    // Navigate to search results page
-                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    const query = searchQuery.trim()
+                                    
+                                    // Check if we're on a shop page - if so, update URL params instead of navigating
+                                    if (location.pathname.startsWith('/shop')) {
+                                        // Update the shop page with search parameter
+                                        const currentUrl = new URL(window.location.href)
+                                        currentUrl.searchParams.set('search', query)
+                                        window.location.href = currentUrl.toString()
+                                    } else {
+                                        // Navigate to search results page
+                                        navigate(`/search?q=${encodeURIComponent(query)}`)
+                                    }
+                                    
                                     setSearchQuery('')
                                     setIsSearchOpen(false)
                                     setSearchResults([])
@@ -269,14 +280,12 @@ const Navbar: React.FC = () => {
                         />
                         <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                                 if (searchQuery.trim().length < 2) {
-                                    // Show feedback for short search queries
-                                    setIsSearchOpen(true)
                                     setSearchResults([{
-                                        type: 'product',
                                         id: 0,
-                                        name: 'Please enter at least 2 characters to search',
+                                        name: 'Please type at least 2 characters',
+                                        type: 'message',
                                         slug: '',
                                         url: '',
                                         description: 'Type more characters to see search results'
@@ -288,8 +297,19 @@ const Navbar: React.FC = () => {
                                     return
                                 }
                                 
-                                // Navigate to search results page
-                                navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                const query = searchQuery.trim()
+                                
+                                // Check if we're on a shop page - if so, update URL params instead of navigating
+                                if (location.pathname.startsWith('/shop')) {
+                                    // Update the shop page with search parameter
+                                    const currentUrl = new URL(window.location.href)
+                                    currentUrl.searchParams.set('search', query)
+                                    window.location.href = currentUrl.toString()
+                                } else {
+                                    // Navigate to search results page
+                                    navigate(`/search?q=${encodeURIComponent(query)}`)
+                                }
+                                
                                 setSearchQuery('')
                                 setIsSearchOpen(false)
                                 setSearchResults([])
@@ -739,7 +759,19 @@ const Navbar: React.FC = () => {
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
-                                    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+                                    const query = searchQuery.trim()
+                                    
+                                    // Check if we're on a shop page - if so, update URL params instead of navigating
+                                    if (location.pathname.startsWith('/shop')) {
+                                        // Update the shop page with search parameter
+                                        const currentUrl = new URL(window.location.href)
+                                        currentUrl.searchParams.set('search', query)
+                                        window.location.href = currentUrl.toString()
+                                    } else {
+                                        // Navigate to search results page
+                                        navigate(`/search?q=${encodeURIComponent(query)}`)
+                                    }
+                                    
                                     setSearchQuery('')
                                     setIsMobileOpen(false)
                                 }

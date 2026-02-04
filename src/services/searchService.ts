@@ -3,13 +3,11 @@
  * Handles unified search across products, categories, subcategories, and sub-subcategories
  */
 
-import { apiClient } from '../utils/api'
-import { API_ROUTES } from '../config/apiRoutes'
 import { getProducts, type Product } from './productsService'
 import { getCategories, getAllSubcategories, type Category } from './categoriesService'
 
 export interface SearchResult {
-  type: 'product' | 'category' | 'subcategory' | 'sub_subcategory'
+  type: 'product' | 'category' | 'subcategory' | 'sub_subcategory' | 'message'
   id: number
   name: string
   slug: string
@@ -121,7 +119,7 @@ export const searchAll = async (
             name: category.name,
             slug: category.slug,
             url: `/category/${category.slug}`,
-            description: category.description
+            description: category.description || undefined
           })
         })
       }
@@ -161,7 +159,7 @@ export const searchAll = async (
               : subcategory.category
               ? `/category/${subcategory.category.slug}/${subcategory.slug}`
               : `/category/${subcategory.slug}`,
-            description: subcategory.description,
+            description: subcategory.description || undefined,
             category: subcategory.category ? {
               id: subcategory.category.id,
               name: subcategory.category.name,
@@ -192,7 +190,7 @@ export const searchAll = async (
                   url: subcategory.category
                     ? `/category/${subcategory.category.slug}/${subcategory.slug}/${child.slug}`
                     : `/category/${child.slug}`,
-                  description: child.description,
+                  description: child.description || undefined,
                   category: subcategory.category ? {
                     id: subcategory.category.id,
                     name: subcategory.category.name,
