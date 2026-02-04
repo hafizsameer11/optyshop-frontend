@@ -56,6 +56,27 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [inStockOnly, setInStockOnly] = useState<boolean>(false)
     const [searchTerm, setSearchTerm] = useState<string>('')
     const [searchInput, setSearchInput] = useState<string>('')
+    
+    // Validation and conversion functions
+    const validateAndConvertPrice = (value: string): number | undefined => {
+        if (!value || value.trim() === '') return undefined
+        const num = Number(value)
+        return isNaN(num) || num < 0 ? undefined : num
+    }
+    
+    const handleMinPriceChange = (value: string) => {
+        // Allow only valid numbers and empty string
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setMinPrice(value)
+        }
+    }
+    
+    const handleMaxPriceChange = (value: string) => {
+        // Allow only valid numbers and empty string
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+            setMaxPrice(value)
+        }
+    }
 
     useEffect(() => {
         const fetchOptions = async () => {
@@ -71,8 +92,22 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
     useEffect(() => {
         const filters: any = {}
-        if (minPrice) filters.minPrice = Number(minPrice)
-        if (maxPrice) filters.maxPrice = Number(maxPrice)
+        
+        // Convert and validate prices
+        const minPriceNum = validateAndConvertPrice(minPrice)
+        const maxPriceNum = validateAndConvertPrice(maxPrice)
+        
+        // Only apply prices if they're valid and make sense
+        if (minPriceNum !== undefined) {
+            filters.minPrice = minPriceNum
+        }
+        if (maxPriceNum !== undefined) {
+            // Only apply max price if it's greater than min price (when both are set)
+            if (minPriceNum === undefined || maxPriceNum >= minPriceNum) {
+                filters.maxPrice = maxPriceNum
+            }
+        }
+        
         if (sortBy) filters.sortBy = sortBy
         if (selectedColor) filters.color = selectedColor
         if (lensType) filters.lensType = lensType
@@ -80,11 +115,11 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (brand) filters.brand = brand
         if (inStockOnly) filters.inStock = true
         if (searchTerm) {
-        filters.search = searchTerm
-        if (import.meta.env.DEV) {
-            console.log('🔍 Search filter applied:', searchTerm)
+            filters.search = searchTerm
+            if (import.meta.env.DEV) {
+                console.log('🔍 Search filter applied:', searchTerm)
+            }
         }
-    }
         
         onFilterChange(filters)
     }, [minPrice, maxPrice, sortBy, selectedColor, lensType, lensCoating, brand, inStockOnly, searchTerm, onFilterChange])
@@ -100,6 +135,19 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (e.key === 'Enter') {
             handleSearch()
         }
+    }
+
+    const clearAllFilters = () => {
+        setMinPrice('')
+        setMaxPrice('')
+        setSortBy('newest')
+        setSelectedColor('')
+        setLensType('')
+        setLensCoating('')
+        setBrand('')
+        setInStockOnly(false)
+        setSearchTerm('')
+        setSearchInput('')
     }
 
     const getActiveFiltersCount = () => {
@@ -134,14 +182,24 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             </span>
                         )}
                     </div>
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <svg className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {activeCount > 0 && (
+                            <button
+                                onClick={clearAllFilters}
+                                className="text-xs text-gray-600 hover:text-red-600 transition-colors font-medium"
+                            >
+                                Clear All
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className="text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <svg className={`w-4 h-4 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
                 
                 {/* Filter Controls - Better responsive layout */}
@@ -259,25 +317,40 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             <div className="relative">
                                 <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
                                 <input
-                                    type="number"
+                                    type="text"
                                     placeholder="Min"
                                     value={minPrice}
-                                    onChange={(e) => setMinPrice(e.target.value)}
-                                    className="w-16 text-xs border border-gray-300 rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                    onChange={(e) => handleMinPriceChange(e.target.value)}
+                                    className={`w-16 text-xs border rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
+                                        minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                    }`}
                                 />
                             </div>
                             <span className="text-xs text-gray-400">-</span>
                             <div className="relative">
                                 <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
                                 <input
-                                    type="number"
+                                    type="text"
                                     placeholder="Max"
                                     value={maxPrice}
-                                    onChange={(e) => setMaxPrice(e.target.value)}
-                                    className="w-16 text-xs border border-gray-300 rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                    onChange={(e) => handleMaxPriceChange(e.target.value)}
+                                    className={`w-16 text-xs border rounded-lg pl-4 pr-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
+                                        maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                    }`}
                                 />
                             </div>
                         </div>
+                        {/* Validation feedback */}
+                        {minPrice && maxPrice && validateAndConvertPrice(minPrice) !== undefined && validateAndConvertPrice(maxPrice) !== undefined && (
+                            <div className="mt-1">
+                                {validateAndConvertPrice(minPrice)! > validateAndConvertPrice(maxPrice)! && (
+                                    <p className="text-xs text-red-600">Min price cannot be greater than max price</p>
+                                )}
+                            </div>
+                        )}
+                        {(minPrice && validateAndConvertPrice(minPrice) === undefined) || (maxPrice && validateAndConvertPrice(maxPrice) === undefined) ? (
+                            <p className="text-xs text-red-600 mt-1">Please enter valid prices</p>
+                        ) : null}
                     </div>
 
                     {/* Color Filter */}
