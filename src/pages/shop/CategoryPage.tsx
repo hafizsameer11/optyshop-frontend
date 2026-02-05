@@ -156,6 +156,15 @@ const CategoryPage: React.FC = () => {
                 // Apply category/subcategory filters
                 if (categoryInfo.category?.slug === 'contact-lenses') {
                     filters.category = 'contact-lenses'
+                    
+                    // For contact lenses, apply specific subcategory filtering
+                    if (categoryInfo.subSubcategory) {
+                        // Use sub-subcategory for specific types like "daily spherical", "daily astigmatism"
+                        filters.subcategory = categoryInfo.subSubcategory.slug
+                    } else if (categoryInfo.subcategory) {
+                        // Use subcategory if no sub-subcategory is selected
+                        filters.subcategory = categoryInfo.subcategory.slug
+                    }
                 } else {
                     if (categoryInfo.subSubcategory) {
                         filters.subcategory = categoryInfo.subSubcategory.slug
@@ -219,13 +228,10 @@ const CategoryPage: React.FC = () => {
                     filters.sortOrder = 'asc'
                 }
 
-                // For contact lenses category, use the section endpoint
+                // For contact lenses category, use the section endpoint with specific filters
                 if (categoryInfo.category?.slug === 'contact-lenses') {
-                    // Use contact lenses section endpoint
-                    const result = await getProducts({
-                        ...filters,
-                        category: 'contact-lenses'
-                    })
+                    // Use contact lenses section endpoint with proper subcategory filtering
+                    const result = await getProducts(filters)
                     
                     if (!isCancelled && result) {
                         setProducts(result.products || [])
@@ -236,9 +242,10 @@ const CategoryPage: React.FC = () => {
                             pages: 0
                         })
                         
-                        // Debug: Log product data
+                        // Debug: Log product data and filtering info
                         if (import.meta.env.DEV && result.products && result.products.length > 0) {
                             console.log('🔍 CategoryPage - Contact lenses products received:', result.products.length);
+                            console.log('🔍 Filters applied:', filters);
                             console.log('🔍 Sample product data:', result.products[0]);
                             console.log('🔍 in_stock values:', result.products.map(p => ({
                                 id: p.id,
@@ -460,7 +467,12 @@ const CategoryPage: React.FC = () => {
                 category={categoryInfo.category}
                 subcategory={categoryInfo.subcategory}
                 subSubcategory={categoryInfo.subSubcategory}
-                onFilterChange={(filters) => {
+                onFilterChange={(filters: {
+                    gender?: string
+                    minPrice?: number
+                    maxPrice?: number
+                    sortBy?: string
+                }) => {
                     // Apply filters from category navigation component (limited set)
                     if (filters.gender !== undefined) {
                         setGender(filters.gender)

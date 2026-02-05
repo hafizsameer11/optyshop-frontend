@@ -245,6 +245,12 @@ const Products: React.FC = () => {
                 if (isCancelled) return
 
                 if (result) {
+                    // Debug: Log filtering info for contact lenses
+                    if (import.meta.env.DEV && currentSection === 'contact-lenses') {
+                        console.log('🔍 Products.tsx - Contact lenses filters applied:', filters);
+                        console.log('🔍 Products.tsx - Products received:', result.products?.length || 0);
+                    }
+                    
                         // Extract unique colors, brands, lens types, and coatings from all products
                         if (result.products && result.products.length > 0) {
                             const colorSet = new Set<string>()

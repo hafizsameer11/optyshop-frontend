@@ -4,6 +4,12 @@ interface CategoryNavigationProps {
     category: any | null
     subcategory: any | null
     subSubcategory: any | null
+    onFilterChange?: (filters: {
+        gender?: string
+        minPrice?: number
+        maxPrice?: number
+        sortBy?: string
+    }) => void
 }
 
 const CategoryNavigation: React.FC<CategoryNavigationProps> = () => {
