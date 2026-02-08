@@ -153,7 +153,18 @@ const CategoryPage: React.FC = () => {
                     limit: 12,
                 }
 
-                // Apply category/subcategory filters
+                // Apply category/subcategory filters with enhanced logging
+                if (import.meta.env.DEV) {
+                    console.log('🔍 CategoryPage - Category Info:', {
+                        category: categoryInfo.category?.name,
+                        subcategory: categoryInfo.subcategory?.name,
+                        subSubcategory: categoryInfo.subSubcategory?.name,
+                        categorySlug: categoryInfo.category?.slug,
+                        subcategorySlug: categoryInfo.subcategory?.slug,
+                        subSubcategorySlug: categoryInfo.subSubcategory?.slug
+                    })
+                }
+
                 if (categoryInfo.category?.slug === 'contact-lenses') {
                     filters.category = 'contact-lenses'
                     
@@ -161,19 +172,45 @@ const CategoryPage: React.FC = () => {
                     if (categoryInfo.subSubcategory) {
                         // Use sub-subcategory for specific types like "daily spherical", "daily astigmatism"
                         filters.subcategory = categoryInfo.subSubcategory.slug
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Contact lenses filtered by sub-subcategory:', categoryInfo.subSubcategory.slug)
+                        }
                     } else if (categoryInfo.subcategory) {
                         // Use subcategory if no sub-subcategory is selected
                         filters.subcategory = categoryInfo.subcategory.slug
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Contact lenses filtered by subcategory:', categoryInfo.subcategory.slug)
+                        }
+                    } else {
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Contact lenses filtered by category only (no subcategory)')
+                        }
                     }
                 } else {
+                    // For other categories (eyeglasses, sunglasses, etc.)
                     if (categoryInfo.subSubcategory) {
                         filters.subcategory = categoryInfo.subSubcategory.slug
                         filters.category = categoryInfo.category!.slug
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Other category filtered by sub-subcategory:', {
+                                category: categoryInfo.category!.slug,
+                                subSubcategory: categoryInfo.subSubcategory.slug
+                            })
+                        }
                     } else if (categoryInfo.subcategory) {
                         filters.subcategory = categoryInfo.subcategory.slug
                         filters.category = categoryInfo.category!.slug
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Other category filtered by subcategory:', {
+                                category: categoryInfo.category!.slug,
+                                subcategory: categoryInfo.subcategory.slug
+                            })
+                        }
                     } else {
                         filters.category = categoryInfo.category!.slug
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Other category filtered by category only:', categoryInfo.category!.slug)
+                        }
                     }
                 }
 
@@ -228,6 +265,11 @@ const CategoryPage: React.FC = () => {
                     filters.sortOrder = 'asc'
                 }
 
+                // Log final filters before API call
+                if (import.meta.env.DEV) {
+                    console.log('🔍 CategoryPage - Final filters being sent to API:', filters)
+                }
+
                 // For contact lenses category, use the section endpoint with specific filters
                 if (categoryInfo.category?.slug === 'contact-lenses') {
                     // Use contact lenses section endpoint with proper subcategory filtering
@@ -243,17 +285,22 @@ const CategoryPage: React.FC = () => {
                         })
                         
                         // Debug: Log product data and filtering info
-                        if (import.meta.env.DEV && result.products && result.products.length > 0) {
-                            console.log('🔍 CategoryPage - Contact lenses products received:', result.products.length);
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Contact lenses products received:', result.products?.length || 0);
                             console.log('🔍 Filters applied:', filters);
-                            console.log('🔍 Sample product data:', result.products[0]);
-                            console.log('🔍 in_stock values:', result.products.map(p => ({
-                                id: p.id,
-                                name: p.name,
-                                in_stock: p.in_stock,
-                                stock_quantity: p.stock_quantity,
-                                stock_status: (p as any).stock_status
-                            })));
+                            if (result.products && result.products.length > 0) {
+                                console.log('🔍 Sample product data:', result.products[0]);
+                                console.log('🔍 Product categories received:', result.products.map(p => ({
+                                    id: p.id,
+                                    name: p.name,
+                                    category: p.category?.name,
+                                    subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
+                                    in_stock: p.in_stock,
+                                    stock_quantity: p.stock_quantity
+                                })));
+                            } else {
+                                console.log('⚠️ CategoryPage - No products found for contact lenses with these filters')
+                            }
                         }
                     }
                 } else {
@@ -261,6 +308,24 @@ const CategoryPage: React.FC = () => {
                     const result = await getProducts(filters)
                     
                     if (!isCancelled && result) {
+                        // Debug: Log product data for other categories
+                        if (import.meta.env.DEV) {
+                            console.log('🔍 CategoryPage - Other category products received:', result.products?.length || 0);
+                            console.log('🔍 Filters applied:', filters);
+                            if (result.products && result.products.length > 0) {
+                                console.log('🔍 Product categories received:', result.products.map(p => ({
+                                    id: p.id,
+                                    name: p.name,
+                                    category: p.category?.name,
+                                    subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
+                                    in_stock: p.in_stock,
+                                    stock_quantity: p.stock_quantity
+                                })));
+                            } else {
+                                console.log('⚠️ CategoryPage - No products found for this category with these filters')
+                            }
+                        }
+                        
                         // Extract unique colors, brands, lens types, and coatings from all products
                         if (result.products && result.products.length > 0) {
                             const colorSet = new Set<string>()
