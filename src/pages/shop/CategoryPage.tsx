@@ -165,52 +165,27 @@ const CategoryPage: React.FC = () => {
                     })
                 }
 
-                if (categoryInfo.category?.slug === 'contact-lenses') {
-                    filters.category = 'contact-lenses'
-                    
-                    // For contact lenses, apply specific subcategory filtering
-                    if (categoryInfo.subSubcategory) {
-                        // Use sub-subcategory for specific types like "daily spherical", "daily astigmatism"
-                        filters.subcategory = categoryInfo.subSubcategory.slug
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Contact lenses filtered by sub-subcategory:', categoryInfo.subSubcategory.slug)
-                        }
-                    } else if (categoryInfo.subcategory) {
-                        // Use subcategory if no sub-subcategory is selected
-                        filters.subcategory = categoryInfo.subcategory.slug
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Contact lenses filtered by subcategory:', categoryInfo.subcategory.slug)
-                        }
-                    } else {
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Contact lenses filtered by category only (no subcategory)')
-                        }
+                // Apply category filter for all categories
+                if (categoryInfo.category?.slug) {
+                    filters.category = categoryInfo.category.slug
+                }
+
+                // Apply subcategory/sub-subcategory filters for all categories including contact lenses
+                if (categoryInfo.subSubcategory) {
+                    // Use sub-subcategory for specific filtering
+                    filters.subcategory = categoryInfo.subSubcategory.slug
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 CategoryPage - Filtered by sub-subcategory:', categoryInfo.subSubcategory.slug)
+                    }
+                } else if (categoryInfo.subcategory) {
+                    // Use subcategory if no sub-subcategory is selected
+                    filters.subcategory = categoryInfo.subcategory.slug
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 CategoryPage - Filtered by subcategory:', categoryInfo.subcategory.slug)
                     }
                 } else {
-                    // For other categories (eyeglasses, sunglasses, etc.)
-                    if (categoryInfo.subSubcategory) {
-                        filters.subcategory = categoryInfo.subSubcategory.slug
-                        filters.category = categoryInfo.category!.slug
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Other category filtered by sub-subcategory:', {
-                                category: categoryInfo.category!.slug,
-                                subSubcategory: categoryInfo.subSubcategory.slug
-                            })
-                        }
-                    } else if (categoryInfo.subcategory) {
-                        filters.subcategory = categoryInfo.subcategory.slug
-                        filters.category = categoryInfo.category!.slug
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Other category filtered by subcategory:', {
-                                category: categoryInfo.category!.slug,
-                                subcategory: categoryInfo.subcategory.slug
-                            })
-                        }
-                    } else {
-                        filters.category = categoryInfo.category!.slug
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Other category filtered by category only:', categoryInfo.category!.slug)
-                        }
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 CategoryPage - Filtered by category only (no subcategory)')
                     }
                 }
 
@@ -270,196 +245,149 @@ const CategoryPage: React.FC = () => {
                     console.log('🔍 CategoryPage - Final filters being sent to API:', filters)
                 }
 
-                // For contact lenses category, use the section endpoint with specific filters
-                if (categoryInfo.category?.slug === 'contact-lenses') {
-                    // Use contact lenses section endpoint with proper subcategory filtering
-                    const result = await getProducts(filters)
+                // Get products using unified filtering
+                const result = await getProducts(filters)
                     
-                    if (!isCancelled && result) {
-                        setProducts(result.products || [])
-                        setPagination(result.pagination || {
-                            total: 0,
-                            page: 1,
-                            limit: 12,
-                            pages: 0
-                        })
-                        
-                        // Debug: Log product data and filtering info
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Contact lenses products received:', result.products?.length || 0);
-                            console.log('🔍 Filters applied:', filters);
-                            if (result.products && result.products.length > 0) {
-                                console.log('🔍 Sample product data:', result.products[0]);
-                                console.log('🔍 Product categories received:', result.products.map(p => ({
-                                    id: p.id,
-                                    name: p.name,
-                                    category: p.category?.name,
-                                    subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
-                                    in_stock: p.in_stock,
-                                    stock_quantity: p.stock_quantity
-                                })));
-                            } else {
-                                console.log('⚠️ CategoryPage - No products found for contact lenses with these filters')
-                            }
-                        }
-                    }
-                } else {
-                    // For other categories, use regular category filtering
-                    const result = await getProducts(filters)
-                    
-                    if (!isCancelled && result) {
-                        // Debug: Log product data for other categories
-                        if (import.meta.env.DEV) {
-                            console.log('🔍 CategoryPage - Other category products received:', result.products?.length || 0);
-                            console.log('🔍 Filters applied:', filters);
-                            if (result.products && result.products.length > 0) {
-                                console.log('🔍 Product categories received:', result.products.map(p => ({
-                                    id: p.id,
-                                    name: p.name,
-                                    category: p.category?.name,
-                                    subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
-                                    in_stock: p.in_stock,
-                                    stock_quantity: p.stock_quantity
-                                })));
-                            } else {
-                                console.log('⚠️ CategoryPage - No products found for this category with these filters')
-                            }
-                        }
-                        
-                        // Extract unique colors, brands, lens types, and coatings from all products
+                if (!isCancelled && result) {
+                    // Debug: Log product data and filtering info
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 CategoryPage - Products received:', result.products?.length || 0);
+                        console.log('🔍 Filters applied:', filters);
                         if (result.products && result.products.length > 0) {
-                            const colorSet = new Set<string>()
-                            const brandSet = new Set<string>()
-                            const lensTypeSet = new Set<string>()
-                            const lensCoatingSet = new Set<string>()
-                            
-                            result.products.forEach((product: Product) => {
-                                const p = product as any
-                                
-                                // Extract colors
-                                if (p.colors && Array.isArray(p.colors)) {
-                                    p.colors.forEach((c: any) => {
-                                        const colorName = c.display_name || c.name || c.value || c.color
-                                        if (colorName) {
-                                            colorSet.add(colorName)
-                                        }
-                                    })
-                                }
-                                if (product.color_images && Array.isArray(product.color_images)) {
-                                    product.color_images.forEach((ci: any) => {
-                                        const colorName = ci.display_name || ci.name || ci.color
-                                        if (colorName) {
-                                            colorSet.add(colorName)
-                                        }
-                                    })
-                                }
-                                
-                                // Extract brands
-                                if (product.brand) {
-                                    brandSet.add(product.brand)
-                                }
-                                
-                                // Extract lens types (for contact lenses)
-                                if (p.lens_type) {
-                                    lensTypeSet.add(p.lens_type)
-                                }
-                                
-                                // Extract lens coatings (for contact lenses)
-                                if (p.lens_coating) {
-                                    lensCoatingSet.add(p.lens_coating)
-                                }
-                            })
-                            
-                            if (!isCancelled) {
-                                setAvailableColors(Array.from(colorSet).sort())
-                                setAvailableBrands(Array.from(brandSet).sort())
-                                setAvailableLensTypes(Array.from(lensTypeSet).sort())
-                                setAvailableLensCoatings(Array.from(lensCoatingSet).sort())
-                            }
-                        }
-
-                        // Apply client-side filters
-                        let filteredProducts = result.products || []
-                        
-                        if (selectedColor && filteredProducts.length > 0) {
-                            filteredProducts = filteredProducts.filter((product: Product) => {
-                                const p = product as any
-                                const selectedColorLower = selectedColor.toLowerCase()
-
-                                // Check in 'colors' array
-                                if (p.colors && Array.isArray(p.colors)) {
-                                    const hasColor = p.colors.some((c: any) => {
-                                        const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
-                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
-                                    })
-                                    if (hasColor) return true
-                                }
-
-                                // Check in 'color_images' array
-                                if (product.color_images && Array.isArray(product.color_images)) {
-                                    const hasColor = product.color_images.some((ci: any) => {
-                                        const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
-                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
-                                    })
-                                    if (hasColor) return true
-                                }
-
-                                return false
-                            })
-                        }
-                        
-                        // Filter by brand
-                        if (brand && filteredProducts.length > 0) {
-                            filteredProducts = filteredProducts.filter((product: Product) => {
-                                return product.brand && product.brand.toLowerCase() === brand.toLowerCase()
-                            })
-                        }
-                        
-                        // Filter by stock status
-                        if (inStockOnly && filteredProducts.length > 0) {
-                            filteredProducts = filteredProducts.filter((product: Product) => {
-                                return product.in_stock === true || (product as any).stock_quantity > 0
-                            })
-                        }
-                        
-                        // Filter by lens type (for contact lenses)
-                        if (lensType && filteredProducts.length > 0) {
-                            filteredProducts = filteredProducts.filter((product: Product) => {
-                                const p = product as any
-                                return p.lens_type && p.lens_type.toLowerCase() === lensType.toLowerCase()
-                            })
-                        }
-                        
-                        // Filter by lens coating (for contact lenses)
-                        if (lensCoating && filteredProducts.length > 0) {
-                            filteredProducts = filteredProducts.filter((product: Product) => {
-                                const p = product as any
-                                return p.lens_coating && p.lens_coating.toLowerCase() === lensCoating.toLowerCase()
-                            })
-                        }
-
-                        setProducts(filteredProducts)
-                        // Update pagination total if we filtered client-side
-                        const updatedPagination = { ...result.pagination }
-                        if (selectedColor && filteredProducts.length !== (result.products || []).length) {
-                            updatedPagination.total = filteredProducts.length
-                            updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
-                        }
-                        setPagination(updatedPagination)
-                        
-                        // Debug: Log product data
-                        if (import.meta.env.DEV && result.products && result.products.length > 0) {
-                            console.log('🔍 CategoryPage - Other category products received:', result.products.length);
                             console.log('🔍 Sample product data:', result.products[0]);
-                            console.log('🔍 in_stock values:', result.products.map(p => ({
+                            console.log('🔍 Product categories received:', result.products.map(p => ({
                                 id: p.id,
                                 name: p.name,
+                                category: p.category?.name,
+                                subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
                                 in_stock: p.in_stock,
-                                stock_quantity: p.stock_quantity,
-                                stock_status: (p as any).stock_status
+                                stock_quantity: p.stock_quantity
                             })));
+                        } else {
+                            console.log('⚠️ CategoryPage - No products found with these filters')
                         }
                     }
+                    
+                    // Extract unique colors, brands, lens types, and coatings from all products
+                    if (result.products && result.products.length > 0) {
+                        const colorSet = new Set<string>()
+                        const brandSet = new Set<string>()
+                        const lensTypeSet = new Set<string>()
+                        const lensCoatingSet = new Set<string>()
+                        
+                        result.products.forEach((product: Product) => {
+                            const p = product as any
+                            
+                            // Extract colors
+                            if (p.colors && Array.isArray(p.colors)) {
+                                p.colors.forEach((c: any) => {
+                                    const colorName = c.display_name || c.name || c.value || c.color
+                                    if (colorName) {
+                                        colorSet.add(colorName)
+                                    }
+                                })
+                            }
+                            if (product.color_images && Array.isArray(product.color_images)) {
+                                product.color_images.forEach((ci: any) => {
+                                    const colorName = ci.display_name || ci.name || ci.color
+                                    if (colorName) {
+                                        colorSet.add(colorName)
+                                    }
+                                })
+                            }
+                            
+                            // Extract brands
+                            if (product.brand) {
+                                brandSet.add(product.brand)
+                            }
+                            
+                            // Extract lens types (for contact lenses)
+                            if (p.lens_type) {
+                                lensTypeSet.add(p.lens_type)
+                            }
+                            
+                            // Extract lens coatings (for contact lenses)
+                            if (p.lens_coating) {
+                                lensCoatingSet.add(p.lens_coating)
+                            }
+                        })
+                        
+                        if (!isCancelled) {
+                            setAvailableColors(Array.from(colorSet).sort())
+                            setAvailableBrands(Array.from(brandSet).sort())
+                            setAvailableLensTypes(Array.from(lensTypeSet).sort())
+                            setAvailableLensCoatings(Array.from(lensCoatingSet).sort())
+                        }
+                    }
+
+                    // Apply client-side filters
+                    let filteredProducts = result.products || []
+                    
+                    if (selectedColor && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const p = product as any
+                            const selectedColorLower = selectedColor.toLowerCase()
+
+                            // Check in 'colors' array
+                            if (p.colors && Array.isArray(p.colors)) {
+                                const hasColor = p.colors.some((c: any) => {
+                                    const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
+                                    return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                })
+                                if (hasColor) return true
+                            }
+
+                            // Check in 'color_images' array
+                            if (product.color_images && Array.isArray(product.color_images)) {
+                                const hasColor = product.color_images.some((ci: any) => {
+                                    const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
+                                    return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                })
+                                if (hasColor) return true
+                            }
+
+                            return false
+                        })
+                    }
+                    
+                    // Filter by brand
+                    if (brand && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            return product.brand && product.brand.toLowerCase() === brand.toLowerCase()
+                        })
+                    }
+                    
+                    // Filter by stock status
+                    if (inStockOnly && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            return product.in_stock === true || (product as any).stock_quantity > 0
+                        })
+                    }
+                    
+                    // Filter by lens type (for contact lenses)
+                    if (lensType && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const p = product as any
+                            return p.lens_type && p.lens_type.toLowerCase() === lensType.toLowerCase()
+                        })
+                    }
+                    
+                    // Filter by lens coating (for contact lenses)
+                    if (lensCoating && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const p = product as any
+                            return p.lens_coating && p.lens_coating.toLowerCase() === lensCoating.toLowerCase()
+                        })
+                    }
+
+                    setProducts(filteredProducts)
+                    // Update pagination total if we filtered client-side
+                    const updatedPagination = { ...result.pagination }
+                    if (selectedColor && filteredProducts.length !== (result.products || []).length) {
+                        updatedPagination.total = filteredProducts.length
+                        updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                    }
+                    setPagination(updatedPagination)
                 }
             } catch (error) {
                 if (!isCancelled) {
