@@ -669,17 +669,47 @@ export const addContactLensToCart = async (
       return result
     }
 
-    console.error('❌ Failed to add contact lens to cart:', {
-      message: response.message,
-      success: response.success,
-      hasData: !!response.data,
-      hasItem: !!response.data?.item,
-      fullResponse: response
-    })
-    return null
-  } catch (error) {
+    // Handle API error responses (like "Insufficient stock") - return structured error instead of null
+    const errorResponse = {
+      success: false,
+      message: response.message || 'Failed to add contact lens to cart',
+      data: {
+        item: null as any
+      }
+    } as ContactLensCheckoutResponse
+
+    // Log detailed error for debugging (but only in development)
+    if (import.meta.env.DEV) {
+      console.error('❌ Failed to add contact lens to cart:', {
+        message: response.message,
+        success: response.success,
+        hasData: !!response.data,
+        hasItem: !!response.data?.item,
+        error: response.error,
+        fullResponse: response
+      })
+    } else {
+      // In production, only log stock-related errors which are business logic, not bugs
+      if (response.message?.includes('Insufficient stock') || 
+          response.message?.includes('Out of stock') ||
+          response.message?.includes('stock')) {
+        console.warn('Stock issue:', response.message)
+      }
+    }
+    
+    return errorResponse
+  } catch (error: any) {
+    // Handle network errors, parsing errors, etc.
     console.error('Error adding contact lens to cart:', error)
-    return null
+    
+    // Return structured error response for consistent handling
+    return {
+      success: false,
+      message: error?.message || 'Network error occurred while adding contact lens to cart',
+      data: {
+        item: null as any
+      }
+    } as ContactLensCheckoutResponse
   }
 }
 

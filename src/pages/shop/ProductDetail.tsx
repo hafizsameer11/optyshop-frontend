@@ -3166,16 +3166,30 @@ const ProductDetail = () => {
                     addToCart(cartProduct)
                     navigate('/cart')
                 } else {
-                    // Log detailed error for debugging
+                    // Handle structured error response from improved service
+                    const errorMessage = result?.message || 'Failed to add contact lens to cart. Please try again.'
+                    
+                    // Log detailed error for debugging (but only in development)
                     if (import.meta.env.DEV) {
                         console.error('❌ Failed to add contact lens to cart:', {
                             result,
                             hasSuccess: result?.success,
                             hasData: !!result?.data,
-                            hasItem: !!result?.data?.item
+                            hasItem: !!result?.data?.item,
+                            errorMessage
                         })
                     }
-                    alert(result?.message || 'Failed to add contact lens to cart. Please try again.')
+                    
+                    // Provide user-friendly error messages
+                    if (errorMessage.includes('Insufficient stock') || errorMessage.includes('Out of stock')) {
+                        alert('This product is currently out of stock or the requested quantity exceeds available stock. Please try a smaller quantity or contact customer service.')
+                    } else if (errorMessage.includes('Authentication') || errorMessage.includes('Unauthorized')) {
+                        alert('You need to be logged in to add contact lenses to cart. Please log in and try again.')
+                    } else if (errorMessage.includes('Network') || errorMessage.includes('connection')) {
+                        alert('Network error occurred. Please check your internet connection and try again.')
+                    } else {
+                        alert(errorMessage)
+                    }
                 }
             } else {
                 // For non-authenticated users, still add to local cart
