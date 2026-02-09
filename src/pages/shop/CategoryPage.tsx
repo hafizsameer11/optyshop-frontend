@@ -21,6 +21,43 @@ import ProductCard from '../../components/products/ProductCard'
 import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
 import BannerDebug from '../../components/debug/BannerDebug'
 
+// Validation function to ensure products match expected category/subcategory
+const validateProductFiltering = (products: Product[], categoryInfo: {
+    category: Category | null; 
+    subcategory: Category | null;
+    subSubcategory: Category | null;
+}) => {
+    const validation = {
+        totalProducts: products.length,
+        correctCategory: 0,
+        correctSubcategory: 0,
+        correctSubSubcategory: 0,
+        mismatches: [] as string[]
+    }
+
+    products.forEach(product => {
+        // Validate category
+        if (categoryInfo.category && product.category?.slug === categoryInfo.category.slug) {
+            validation.correctCategory++
+        } else if (categoryInfo.category) {
+            validation.mismatches.push(`Product "${product.name}" category mismatch: expected "${categoryInfo.category.slug}", got "${product.category?.slug}"`)
+        }
+
+        // Validate subcategory
+        const productSubcategory = (product as any).subCategory?.slug || (product as any).sub_category?.slug
+        if (categoryInfo.subSubcategory && productSubcategory === categoryInfo.subSubcategory.slug) {
+            validation.correctSubSubcategory++
+        } else if (categoryInfo.subcategory && productSubcategory === categoryInfo.subcategory.slug) {
+            validation.correctSubcategory++
+        } else if (categoryInfo.subcategory || categoryInfo.subSubcategory) {
+            const expected = categoryInfo.subSubcategory?.slug || categoryInfo.subcategory?.slug
+            validation.mismatches.push(`Product "${product.name}" subcategory mismatch: expected "${expected}", got "${productSubcategory}"`)
+        }
+    })
+
+    return validation
+}
+
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
@@ -165,27 +202,52 @@ const CategoryPage: React.FC = () => {
                     })
                 }
 
-                // Apply category filter for all categories
+                // Enhanced category/subcategory filtering with validation
                 if (categoryInfo.category?.slug) {
                     filters.category = categoryInfo.category.slug
+                    
+                    // Validate that we have the right category structure
+                    if (import.meta.env.DEV) {
+                        console.log('🔍 CategoryPage - Category filter applied:', {
+                            categoryName: categoryInfo.category.name,
+                            categorySlug: categoryInfo.category.slug,
+                            categoryId: categoryInfo.category.id,
+                            hasSubcategory: !!categoryInfo.subcategory,
+                            hasSubSubcategory: !!categoryInfo.subSubcategory
+                        })
+                    }
                 }
 
-                // Apply subcategory/sub-subcategory filters for all categories including contact lenses
-                if (categoryInfo.subSubcategory) {
-                    // Use sub-subcategory for specific filtering
+                // Apply subcategory/sub-subcategory filters with enhanced validation
+                if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
+                    // Use sub-subcategory for most specific filtering
                     filters.subcategory = categoryInfo.subSubcategory.slug
                     if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Filtered by sub-subcategory:', categoryInfo.subSubcategory.slug)
+                        console.log('🔍 CategoryPage - Sub-subcategory filter applied:', {
+                            subSubcategoryName: categoryInfo.subSubcategory.name,
+                            subSubcategorySlug: categoryInfo.subSubcategory.slug,
+                            subSubcategoryId: categoryInfo.subSubcategory.id,
+                            parentSubcategory: categoryInfo.subcategory?.name
+                        })
                     }
-                } else if (categoryInfo.subcategory) {
+                } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
                     // Use subcategory if no sub-subcategory is selected
                     filters.subcategory = categoryInfo.subcategory.slug
                     if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Filtered by subcategory:', categoryInfo.subcategory.slug)
+                        console.log('🔍 CategoryPage - Subcategory filter applied:', {
+                            subcategoryName: categoryInfo.subcategory.name,
+                            subcategorySlug: categoryInfo.subcategory.slug,
+                            subcategoryId: categoryInfo.subcategory.id,
+                            hasChildren: !!(categoryInfo.subcategory.children && categoryInfo.subcategory.children.length > 0),
+                            childrenCount: categoryInfo.subcategory.children?.length || 0
+                        })
                     }
                 } else {
                     if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Filtered by category only (no subcategory)')
+                        console.log('🔍 CategoryPage - Category-level filtering (no subcategory selected)', {
+                            categoryName: categoryInfo.category?.name,
+                            note: 'Will show all products in this category'
+                        })
                     }
                 }
 
@@ -249,6 +311,12 @@ const CategoryPage: React.FC = () => {
                 const result = await getProducts(filters)
                     
                 if (!isCancelled && result) {
+                    // Validate that returned products match the expected filters
+                    if (import.meta.env.DEV && result.products && result.products.length > 0) {
+                        const validationResults = validateProductFiltering(result.products, categoryInfo)
+                        console.log('🔍 CategoryPage - Product filtering validation:', validationResults)
+                    }
+                    
                     // Debug: Log product data and filtering info
                     if (import.meta.env.DEV) {
                         console.log('🔍 CategoryPage - Products received:', result.products?.length || 0);
@@ -333,17 +401,141 @@ const CategoryPage: React.FC = () => {
                             lensCoating,
                             minPrice,
                             maxPrice,
-                            gender
+                            gender,
+                            searchTerm
                         })
+                        
+                        // Debug each filter step by step
+                        console.log('🔍 CategoryPage - Testing each filter:')
+                        
+                        // Test color filter
+                        if (selectedColor) {
+                            const beforeColor = filteredProducts.length
+                            const afterColor = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                const selectedColorLower = selectedColor.toLowerCase()
+                                if (p.colors && Array.isArray(p.colors)) {
+                                    const hasColor = p.colors.some((c: any) => {
+                                        const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
+                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                    })
+                                    if (hasColor) return true
+                                }
+                                if (product.color_images && Array.isArray(product.color_images)) {
+                                    const hasColor = product.color_images.some((ci: any) => {
+                                        const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
+                                        return colorName.includes(selectedColorLower) || selectedColorLower.includes(colorName)
+                                    })
+                                    if (hasColor) return true
+                                }
+                                return false
+                            }).length
+                            console.log(`  🎨 Color filter "${selectedColor}": ${beforeColor} → ${afterColor}`)
+                        } else {
+                            console.log(`  🎨 Color filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test brand filter
+                        if (brand) {
+                            const beforeBrand = filteredProducts.length
+                            const afterBrand = filteredProducts.filter((product: Product) => {
+                                return product.brand && product.brand.toLowerCase() === brand.toLowerCase()
+                            }).length
+                            console.log(`  🏷️ Brand filter "${brand}": ${beforeBrand} → ${afterBrand}`)
+                        } else {
+                            console.log(`  🏷️ Brand filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test stock filter
+                        if (inStockOnly) {
+                            const beforeStock = filteredProducts.length
+                            const afterStock = filteredProducts.filter((product: Product) => {
+                                return product.in_stock === true || (product as any).stock_quantity > 0
+                            }).length
+                            console.log(`  📦 Stock filter: ${beforeStock} → ${afterStock}`)
+                        } else {
+                            console.log(`  📦 Stock filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test lens type filter
+                        if (lensType) {
+                            const beforeLensType = filteredProducts.length
+                            const afterLensType = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                return p.lens_type && p.lens_type.toLowerCase() === lensType.toLowerCase()
+                            }).length
+                            console.log(`  👁️ Lens type filter "${lensType}": ${beforeLensType} → ${afterLensType}`)
+                        } else {
+                            console.log(`  👁️ Lens type filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test lens coating filter
+                        if (lensCoating) {
+                            const beforeLensCoating = filteredProducts.length
+                            const afterLensCoating = filteredProducts.filter((product: Product) => {
+                                const p = product as any
+                                return p.treatment_options && p.treatment_options.toLowerCase() === lensCoating.toLowerCase()
+                            }).length
+                            console.log(`  🛡️ Lens coating filter "${lensCoating}": ${beforeLensCoating} → ${afterLensCoating}`)
+                        } else {
+                            console.log(`  🛡️ Lens coating filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test gender filter
+                        if (gender) {
+                            const beforeGender = filteredProducts.length
+                            const afterGender = filteredProducts.filter((product: Product) => {
+                                return product.gender && product.gender.toLowerCase() === gender.toLowerCase()
+                            }).length
+                            console.log(`  👤 Gender filter "${gender}": ${beforeGender} → ${afterGender}`)
+                        } else {
+                            console.log(`  👤 Gender filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test price filters
+                        if (minPrice !== undefined) {
+                            const beforeMinPrice = filteredProducts.length
+                            const afterMinPrice = filteredProducts.filter((product: Product) => {
+                                const price = parseFloat(String(product.price))
+                                return price >= minPrice
+                            }).length
+                            console.log(`  💰 Min price filter ${minPrice}: ${beforeMinPrice} → ${afterMinPrice}`)
+                        } else {
+                            console.log(`  💰 Min price filter: NOT ACTIVE`)
+                        }
+                        
+                        if (maxPrice !== undefined) {
+                            const beforeMaxPrice = filteredProducts.length
+                            const afterMaxPrice = filteredProducts.filter((product: Product) => {
+                                const price = parseFloat(String(product.price))
+                                return price <= maxPrice
+                            }).length
+                            console.log(`  💰 Max price filter ${maxPrice}: ${beforeMaxPrice} → ${afterMaxPrice}`)
+                        } else {
+                            console.log(`  💰 Max price filter: NOT ACTIVE`)
+                        }
+                        
+                        // Test search filter
+                        if (searchTerm) {
+                            const beforeSearch = filteredProducts.length
+                            const afterSearch = filteredProducts.filter((product: Product) => {
+                                const searchLower = searchTerm.toLowerCase()
+                                return product.name.toLowerCase().includes(searchLower) ||
+                                       (product.description && product.description.toLowerCase().includes(searchLower))
+                            }).length
+                            console.log(`  🔍 Search filter "${searchTerm}": ${beforeSearch} → ${afterSearch}`)
+                        } else {
+                            console.log(`  🔍 Search filter: NOT ACTIVE`)
+                        }
                     }
                     
+                    // Apply all client-side filters in sequence
                     if (selectedColor && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const p = product as any
                             const selectedColorLower = selectedColor.toLowerCase()
 
-                            // Check in 'colors' array
                             if (p.colors && Array.isArray(p.colors)) {
                                 const hasColor = p.colors.some((c: any) => {
                                     const colorName = (c.display_name || c.name || c.value || c.color || '').toLowerCase()
@@ -352,7 +544,6 @@ const CategoryPage: React.FC = () => {
                                 if (hasColor) return true
                             }
 
-                            // Check in 'color_images' array
                             if (product.color_images && Array.isArray(product.color_images)) {
                                 const hasColor = product.color_images.some((ci: any) => {
                                     const colorName = (ci.display_name || ci.name || ci.color || '').toLowerCase()
@@ -368,7 +559,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by brand
                     if (brand && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -379,7 +569,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by stock status
                     if (inStockOnly && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -390,7 +579,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by lens type (for contact lenses)
                     if (lensType && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -402,7 +590,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by lens coating (for contact lenses)
                     if (lensCoating && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -414,7 +601,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by price range
                     if (minPrice !== undefined && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -437,7 +623,6 @@ const CategoryPage: React.FC = () => {
                         }
                     }
                     
-                    // Filter by gender
                     if (gender && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
@@ -445,6 +630,18 @@ const CategoryPage: React.FC = () => {
                         })
                         if (import.meta.env.DEV) {
                             console.log(`🔍 CategoryPage - After gender filter (${gender}): ${beforeFilter} -> ${filteredProducts.length}`)
+                        }
+                    }
+
+                    if (searchTerm && filteredProducts.length > 0) {
+                        const beforeFilter = filteredProducts.length
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const searchLower = searchTerm.toLowerCase()
+                            return product.name.toLowerCase().includes(searchLower) ||
+                                   (product.description && product.description.toLowerCase().includes(searchLower))
+                        })
+                        if (import.meta.env.DEV) {
+                            console.log(`🔍 CategoryPage - After search filter (${searchTerm}): ${beforeFilter} -> ${filteredProducts.length}`)
                         }
                     }
                     
