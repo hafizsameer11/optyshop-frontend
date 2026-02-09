@@ -14,7 +14,13 @@ import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
  * Normalize subcategory field names from product data
  * Handles various API response formats for subcategory information
  */
-export const normalizeProductSubcategory = (product: Product | any): { slug: string | null; name: string | null } => {
+export const normalizeProductSubcategory = (product: Product | any): { 
+  slug: string | null; 
+  name: string | null;
+  parentSlug: string | null;
+  parentName: string | null;
+  fullPath: string[];
+} => {
   const p = product as any
   
   // Try multiple possible field names for subcategory
@@ -32,7 +38,27 @@ export const normalizeProductSubcategory = (product: Product | any): { slug: str
                p.category?.subcategory?.name ||
                null
   
-  return { slug, name }
+  // Get parent information
+  const parentSlug = p.subCategory?.parent?.slug || 
+                    p.sub_category?.parent?.slug || 
+                    p.subcategory?.parent?.slug ||
+                    p.category?.sub_category?.parent?.slug ||
+                    p.category?.subcategory?.parent?.slug ||
+                    null
+  
+  const parentName = p.subCategory?.parent?.name || 
+                    p.sub_category?.parent?.name || 
+                    p.subcategory?.parent?.name ||
+                    p.category?.sub_category?.parent?.name ||
+                    p.category?.subcategory?.parent?.name ||
+                    null
+  
+  // Build full path for hierarchy matching
+  const fullPath = []
+  if (parentSlug) fullPath.push(parentSlug)
+  if (slug) fullPath.push(slug)
+  
+  return { slug, name, parentSlug, parentName, fullPath }
 }
 
 // ============================================

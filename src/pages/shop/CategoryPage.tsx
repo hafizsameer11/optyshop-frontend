@@ -48,14 +48,24 @@ const validateProductFiltering = (products: Product[], categoryInfo: {
         const productSubcategoryData = normalizeProductSubcategory(product)
         const productSubcategory = productSubcategoryData.slug
         const productSubcategoryName = productSubcategoryData.name
+        const productParentSlug = productSubcategoryData.parentSlug
         
-        if (categoryInfo.subSubcategory && productSubcategory === categoryInfo.subSubcategory.slug) {
-            validation.correctSubSubcategory++
-        } else if (categoryInfo.subcategory && productSubcategory === categoryInfo.subcategory.slug) {
-            validation.correctSubcategory++
-        } else if (categoryInfo.subcategory || categoryInfo.subSubcategory) {
-            const expected = categoryInfo.subSubcategory?.slug || categoryInfo.subcategory?.slug
-            validation.mismatches.push(`Product "${product.name}" subcategory mismatch: expected "${expected}", got "${productSubcategory}" (name: "${productSubcategoryName}")`)
+        if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
+            // For sub-subcategories, validate both the sub-subcategory and its parent
+            if (productSubcategory === categoryInfo.subSubcategory.slug && 
+                productParentSlug === categoryInfo.subcategory?.slug) {
+                validation.correctSubSubcategory++
+            } else {
+                validation.mismatches.push(`Product "${product.name}" sub-subcategory mismatch: expected "${categoryInfo.subSubcategory.slug}" with parent "${categoryInfo.subcategory?.slug}", got "${productSubcategory}" with parent "${productParentSlug}"`)
+            }
+        } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
+            // For subcategories, validate either direct match or parent match
+            if (productSubcategory === categoryInfo.subcategory.slug || 
+                productParentSlug === categoryInfo.subcategory.slug) {
+                validation.correctSubcategory++
+            } else {
+                validation.mismatches.push(`Product "${product.name}" subcategory mismatch: expected "${categoryInfo.subcategory.slug}" (direct or parent), got "${productSubcategory}" with parent "${productParentSlug}"`)
+            }
         }
     })
 
@@ -335,6 +345,9 @@ const CategoryPage: React.FC = () => {
                                     category: p.category?.name,
                                     subcategory: subcatData.name,
                                     subcategory_slug: subcatData.slug,
+                                    parent: subcatData.parentName,
+                                    parent_slug: subcatData.parentSlug,
+                                    full_path: subcatData.fullPath.join(' > '),
                                     in_stock: p.in_stock,
                                     stock_quantity: p.stock_quantity
                                 }
@@ -404,16 +417,20 @@ const CategoryPage: React.FC = () => {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const productSubcategoryData = normalizeProductSubcategory(product)
-                            return productSubcategoryData.slug === categoryInfo.subSubcategory?.slug
+                            // For sub-subcategories, match both the sub-subcategory slug and ensure parent matches the selected subcategory
+                            return productSubcategoryData.slug === categoryInfo.subSubcategory?.slug && 
+                                   productSubcategoryData.parentSlug === categoryInfo.subcategory?.slug
                         })
                         if (import.meta.env.DEV) {
-                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${categoryInfo.subSubcategory.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
+                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${categoryInfo.subSubcategory.slug} with parent ${categoryInfo.subcategory?.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
                         }
                     } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const productSubcategoryData = normalizeProductSubcategory(product)
-                            return productSubcategoryData.slug === categoryInfo.subcategory?.slug
+                            // For subcategories, match either the subcategory directly or its parent
+                            return productSubcategoryData.slug === categoryInfo.subcategory?.slug ||
+                                   productSubcategoryData.parentSlug === categoryInfo.subcategory?.slug
                         })
                         if (import.meta.env.DEV) {
                             console.log(`🔍 CategoryPage - Client-side subcategory filter (${categoryInfo.subcategory.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
