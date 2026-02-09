@@ -2394,16 +2394,39 @@ const ProductDetail = () => {
         if (!product) return false
 
         // Contact lenses are configuration-based, not inventory-based
-        // They should check if configurations are available instead of stock quantity
+        // They should check if configurations are available AND if stock is available
         if (isContactLens) {
-            // For spherical: check if sphericalConfigs exist
-            // For astigmatism: check if astigmatismConfigs exist
+            // First check if configurations exist
+            let hasConfigs = false
             if (contactLensFormConfig?.formType === 'spherical') {
-                return sphericalConfigs.length === 0
+                hasConfigs = sphericalConfigs.length > 0
             } else if (contactLensFormConfig?.formType === 'astigmatism') {
-                return astigmatismConfigs.length === 0
+                hasConfigs = astigmatismConfigs.length > 0
+            } else {
+                // If no form config loaded yet, don't show out of stock
+                return false
             }
-            // If no form config loaded yet, don't show out of stock
+            
+            // If no configurations available, show as out of stock
+            if (!hasConfigs) {
+                return true
+            }
+            
+            // For contact lenses with configurations, also check stock quantity
+            const stockQty = product.stock_quantity
+            const stockStatus = (product as any).stock_status
+            
+            // If stock quantity is explicitly 0 or less, show as out of stock
+            if (stockQty !== undefined && stockQty <= 0) {
+                return true
+            }
+            
+            // If stock status is explicitly 'out_of_stock', show as out of stock
+            if (stockStatus === 'out_of_stock') {
+                return true
+            }
+            
+            // Otherwise, consider it in stock (has configs and has stock)
             return false
         }
 

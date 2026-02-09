@@ -55,6 +55,7 @@ import PageDetail from './pages/cms/PageDetail'
 import FloatingLanguageSwitcher from './components/FloatingLanguageSwitcher'
 import ScrollToTop from './components/ScrollToTop'
 import SearchResults from './pages/SearchResults'
+import SubcategoryFilterTest from './components/debug/SubcategoryFilterTest'
 
 
 // Redirect component for old /product/:slug URLs
@@ -123,6 +124,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/search" element={<SearchResults />} />
+        <Route path="/test-subcategories" element={<SubcategoryFilterTest />} />
         
         {/* Customer Dashboard Routes */}
         <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />

@@ -13,7 +13,8 @@ import {
 import { 
     getProducts, 
     type Product,
-    type ProductFilters
+    type ProductFilters,
+    normalizeProductSubcategory
 } from '../../services/productsService'
 import CategoryBanner from '../../components/home/CategoryBanner'
 import CategoryNavigation from '../../components/shop/CategoryNavigation'
@@ -43,15 +44,18 @@ const validateProductFiltering = (products: Product[], categoryInfo: {
             validation.mismatches.push(`Product "${product.name}" category mismatch: expected "${categoryInfo.category.slug}", got "${product.category?.slug}"`)
         }
 
-        // Validate subcategory
-        const productSubcategory = (product as any).subCategory?.slug || (product as any).sub_category?.slug
+        // Validate subcategory using helper function for consistent field name handling
+        const productSubcategoryData = normalizeProductSubcategory(product)
+        const productSubcategory = productSubcategoryData.slug
+        const productSubcategoryName = productSubcategoryData.name
+        
         if (categoryInfo.subSubcategory && productSubcategory === categoryInfo.subSubcategory.slug) {
             validation.correctSubSubcategory++
         } else if (categoryInfo.subcategory && productSubcategory === categoryInfo.subcategory.slug) {
             validation.correctSubcategory++
         } else if (categoryInfo.subcategory || categoryInfo.subSubcategory) {
             const expected = categoryInfo.subSubcategory?.slug || categoryInfo.subcategory?.slug
-            validation.mismatches.push(`Product "${product.name}" subcategory mismatch: expected "${expected}", got "${productSubcategory}"`)
+            validation.mismatches.push(`Product "${product.name}" subcategory mismatch: expected "${expected}", got "${productSubcategory}" (name: "${productSubcategoryName}")`)
         }
     })
 
@@ -323,14 +327,18 @@ const CategoryPage: React.FC = () => {
                         console.log('🔍 Filters applied:', filters);
                         if (result.products && result.products.length > 0) {
                             console.log('🔍 Sample product data:', result.products[0]);
-                            console.log('🔍 Product categories received:', result.products.map(p => ({
-                                id: p.id,
-                                name: p.name,
-                                category: p.category?.name,
-                                subcategory: (p as any).subCategory?.name || (p as any).sub_category?.name,
-                                in_stock: p.in_stock,
-                                stock_quantity: p.stock_quantity
-                            })));
+                            console.log('🔍 Product categories received:', result.products.map(p => {
+                                const subcatData = normalizeProductSubcategory(p)
+                                return {
+                                    id: p.id,
+                                    name: p.name,
+                                    category: p.category?.name,
+                                    subcategory: subcatData.name,
+                                    subcategory_slug: subcatData.slug,
+                                    in_stock: p.in_stock,
+                                    stock_quantity: p.stock_quantity
+                                }
+                            }));
                         } else {
                             console.log('⚠️ CategoryPage - No products found with these filters')
                         }
@@ -388,8 +396,29 @@ const CategoryPage: React.FC = () => {
                         }
                     }
 
-                    // Apply client-side filters
+                    // Apply client-side filters with enhanced subcategory filtering
                     let filteredProducts = result.products || []
+                    
+                    // Enhanced client-side subcategory filtering as fallback
+                    if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
+                        const beforeFilter = filteredProducts.length
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const productSubcategoryData = normalizeProductSubcategory(product)
+                            return productSubcategoryData.slug === categoryInfo.subSubcategory?.slug
+                        })
+                        if (import.meta.env.DEV) {
+                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${categoryInfo.subSubcategory.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
+                        }
+                    } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
+                        const beforeFilter = filteredProducts.length
+                        filteredProducts = filteredProducts.filter((product: Product) => {
+                            const productSubcategoryData = normalizeProductSubcategory(product)
+                            return productSubcategoryData.slug === categoryInfo.subcategory?.slug
+                        })
+                        if (import.meta.env.DEV) {
+                            console.log(`🔍 CategoryPage - Client-side subcategory filter (${categoryInfo.subcategory.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
+                        }
+                    }
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 CategoryPage - Starting with products:', filteredProducts.length)

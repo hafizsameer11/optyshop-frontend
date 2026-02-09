@@ -7,6 +7,35 @@ import { apiClient } from '../utils/api';
 import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
 
 // ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Normalize subcategory field names from product data
+ * Handles various API response formats for subcategory information
+ */
+export const normalizeProductSubcategory = (product: Product | any): { slug: string | null; name: string | null } => {
+  const p = product as any
+  
+  // Try multiple possible field names for subcategory
+  const slug = p.subCategory?.slug || 
+               p.sub_category?.slug || 
+               p.subcategory?.slug ||
+               p.category?.sub_category?.slug ||
+               p.category?.subcategory?.slug ||
+               null
+  
+  const name = p.subCategory?.name || 
+               p.sub_category?.name || 
+               p.subcategory?.name ||
+               p.category?.sub_category?.name ||
+               p.category?.subcategory?.name ||
+               null
+  
+  return { slug, name }
+}
+
+// ============================================
 // Type Definitions
 // ============================================
 
