@@ -514,36 +514,7 @@ const Products: React.FC = () => {
                 </div>
             </section>
 
-            {/* Breadcrumbs */}
-            <div className="bg-white py-2 px-4 sm:px-6 border-b border-gray-200">
-                <div className="w-[90%] mx-auto max-w-screen-2xl">
-                    <nav className="flex items-center gap-2 text-sm text-gray-900 flex-wrap">
-                        <Link to="/" className="flex items-center gap-2 hover:text-gray-700 transition-colors">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                            </svg>
-                            <span>{t('common.home').toUpperCase()}</span>
-                        </Link>
-                        <span className="text-gray-500">&gt;</span>
-                        <Link to="/shop" className="hover:text-gray-700 transition-colors">
-                            <span>{t('common.shop').toUpperCase()}</span>
-                        </Link>
-                        {categoryInfo.category && (
-                            <>
-                                <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.category)}</span>
-                            </>
-                        )}
-                        {categoryInfo.subcategory && (
-                            <>
-                                <span className="text-gray-500">&gt;</span>
-                                <span className="text-gray-900 uppercase">{translateCategory(categoryInfo.subcategory)}</span>
-                            </>
-                        )}
-                    </nav>
-                </div>
-            </div>
-
+            
             {/* Comprehensive Filters */}
             <div className="w-[90%] mx-auto max-w-screen-2xl px-4 sm:px-6 mb-6">
                 <ComprehensiveFilters

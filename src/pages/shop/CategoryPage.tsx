@@ -637,42 +637,7 @@ const CategoryPage: React.FC = () => {
                 <div className="w-full max-w-screen-2xl mx-auto">
                     {/* Enhanced Category Header with Breadcrumbs */}
                     <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        {/* Breadcrumbs */}
-                        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-                            <Link 
-                                to="/shop" 
-                                className="hover:text-blue-600 transition-colors"
-                            >
-                                {t('shop.home', 'Shop')}
-                            </Link>
-                            <span className="text-gray-400">/</span>
-                            <Link 
-                                to={`/category/${categoryInfo.category.slug}`}
-                                className="hover:text-blue-600 transition-colors"
-                            >
-                                {translateCategory(categoryInfo.category)}
-                            </Link>
-                            {categoryInfo.subcategory && (
-                                <>
-                                    <span className="text-gray-400">/</span>
-                                    <Link 
-                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
-                                        className="hover:text-blue-600 transition-colors"
-                                    >
-                                        {translateCategory(categoryInfo.subcategory)}
-                                    </Link>
-                                </>
-                            )}
-                            {categoryInfo.subSubcategory && (
-                                <>
-                                    <span className="text-gray-400">/</span>
-                                    <span className="text-gray-900 font-medium">
-                                        {translateCategory(categoryInfo.subSubcategory)}
-                                    </span>
-                                </>
-                            )}
-                        </nav>
-
+                        
                         {/* Category Title and Description */}
                         <div className="flex items-start justify-between">
                             <div className="flex-1">
