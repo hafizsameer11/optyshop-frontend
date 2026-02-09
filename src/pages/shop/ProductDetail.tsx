@@ -4044,7 +4044,7 @@ const ProductDetail = () => {
                                             <div className={`space-y-3 ${!rightEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                 {/* Qty Dropdown or Number Input - Full Width */}
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                         Quantity (Qty)
                                                     </label>
                                                     {quantityOptions.length > 0 ? (
@@ -4090,9 +4090,9 @@ const ProductDetail = () => {
                                                 </div>
 
                                                 {/* Base Curve and Diameter - Grouped Together (Dropdown Selections) */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                             Base Curve (B.C)
                                                         </label>
                                                         <div className="relative">
@@ -4115,8 +4115,8 @@ const ProductDetail = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                    <div className="space-y-1">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                             Diameter (DIA)
                                                         </label>
                                                         <div className="relative">
@@ -4197,7 +4197,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {powerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4218,7 +4218,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {cylinderOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4239,7 +4239,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {axisOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4288,7 +4288,7 @@ const ProductDetail = () => {
                                             <div className={`space-y-3 ${!leftEyeEnabled ? 'pointer-events-none' : ''}`}>
                                                 {/* Qty Dropdown or Number Input - Full Width */}
                                                 <div>
-                                                    <label className="block text-xs text-gray-500 mb-1">
+                                                    <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                         Quantity (Qty)
                                                     </label>
                                                     {quantityOptions.length > 0 ? (
@@ -4334,9 +4334,9 @@ const ProductDetail = () => {
                                                 </div>
 
                                                 {/* Base Curve and Diameter - Grouped Together (Dropdown Selections) */}
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                                    <div className="space-y-1">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                             Base Curve (B.C)
                                                         </label>
                                                         <div className="relative">
@@ -4359,8 +4359,8 @@ const ProductDetail = () => {
                                                         </div>
                                                     </div>
 
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">
+                                                    <div className="space-y-1">
+                                                        <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                             Diameter (DIA)
                                                         </label>
                                                         <div className="relative">
@@ -4441,7 +4441,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {powerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4462,7 +4462,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_cylinder ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {cylinderOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4483,7 +4483,7 @@ const ProductDetail = () => {
                                                                         className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_axis ? 'border-red-500' : 'border-gray-200'
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
-                                                                        <option value="00.00">--</option>
+                                                                        <option value="00.00" className="text-gray-400">--</option>
                                                                         {axisOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
@@ -4513,7 +4513,7 @@ const ProductDetail = () => {
                                     </div>
 
                                     {/* Copy Right to Left Button */}
-                                    <div className="mt-4 mb-4">
+                                    <div className="mt-6 mb-6 px-2">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -4528,7 +4528,7 @@ const ProductDetail = () => {
                                                 }))
                                                 setLeftEyeEnabled(rightEyeEnabled)
                                             }}
-                                            className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+                                            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 border border-blue-500/20"
                                             title="Copy Right Eye settings to Left Eye"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
