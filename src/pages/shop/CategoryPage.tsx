@@ -559,20 +559,102 @@ const CategoryPage: React.FC = () => {
             {/* Page Content */}
             <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-1 px-4 sm:px-6 lg:px-8">
                 <div className="w-full max-w-screen-2xl mx-auto">
-                    {/* Subcategory/Sub-subcategory Info Banner */}
-                    {(categoryInfo.subcategory || categoryInfo.subSubcategory) && (
-                        <div className="mb-2 bg-white rounded-xl shadow-md p-3 border-l-4 border-blue-600">
-                            <div className="flex items-center justify-between flex-wrap gap-2">
-                                <div>
-                                    <h2 className="text-base md:text-lg font-bold text-gray-900">
-                                        {categoryInfo.subSubcategory 
-                                            ? `${translateCategory(categoryInfo.subSubcategory)} (Sub-subcategory)`
-                                            : `${translateCategory(categoryInfo.subcategory)} (Subcategory)`}
-                                    </h2>
+                    {/* Enhanced Category Header with Breadcrumbs */}
+                    <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        {/* Breadcrumbs */}
+                        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+                            <Link 
+                                to="/shop" 
+                                className="hover:text-blue-600 transition-colors"
+                            >
+                                {t('shop.home', 'Shop')}
+                            </Link>
+                            <span className="text-gray-400">/</span>
+                            <Link 
+                                to={`/category/${categoryInfo.category.slug}`}
+                                className="hover:text-blue-600 transition-colors"
+                            >
+                                {translateCategory(categoryInfo.category)}
+                            </Link>
+                            {categoryInfo.subcategory && (
+                                <>
+                                    <span className="text-gray-400">/</span>
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
+                                        className="hover:text-blue-600 transition-colors"
+                                    >
+                                        {translateCategory(categoryInfo.subcategory)}
+                                    </Link>
+                                </>
+                            )}
+                            {categoryInfo.subSubcategory && (
+                                <>
+                                    <span className="text-gray-400">/</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {translateCategory(categoryInfo.subSubcategory)}
+                                    </span>
+                                </>
+                            )}
+                        </nav>
+
+                        {/* Category Title and Description */}
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                                    {categoryInfo.subSubcategory 
+                                        ? translateCategory(categoryInfo.subSubcategory)
+                                        : categoryInfo.subcategory 
+                                        ? translateCategory(categoryInfo.subcategory)
+                                        : translateCategory(categoryInfo.category)}
+                                </h1>
+                                <p className="text-gray-600 mb-4">
+                                    {categoryInfo.subSubcategory?.description || 
+                                     categoryInfo.subcategory?.description || 
+                                     categoryInfo.category?.description ||
+                                     t('shop.categoryDescription', `Browse our selection of ${categoryInfo.subSubcategory 
+                                        ? translateCategory(categoryInfo.subSubcategory).toLowerCase()
+                                        : categoryInfo.subcategory 
+                                        ? translateCategory(categoryInfo.subcategory).toLowerCase()
+                                        : translateCategory(categoryInfo.category).toLowerCase()}`)}
+                                </p>
+                                
+                                {/* Category Hierarchy Info */}
+                                <div className="flex items-center gap-4 text-sm text-gray-500">
+                                    <span>
+                                        {t('shop.level', 'Level')}: {
+                                            categoryInfo.subSubcategory ? 'Sub-subcategory' :
+                                            categoryInfo.subcategory ? 'Subcategory' : 'Category'
+                                        }
+                                    </span>
+                                    {products && products.length > 0 && (
+                                        <span>
+                                            {products.length} {t('shop.products', 'products')}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
+                            
+                            {/* Navigation Actions */}
+                            <div className="flex items-center gap-2 ml-6">
+                                {categoryInfo.subSubcategory && (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}/${categoryInfo.subcategory.slug}`}
+                                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                                    >
+                                        ← {t('shop.backTo', 'Back to')} {translateCategory(categoryInfo.subcategory)}
+                                    </Link>
+                                )}
+                                {categoryInfo.subcategory && !categoryInfo.subSubcategory && (
+                                    <Link 
+                                        to={`/category/${categoryInfo.category.slug}`}
+                                        className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                                    >
+                                        ← {t('shop.backTo', 'Back to')} {translateCategory(categoryInfo.category)}
+                                    </Link>
+                                )}
+                            </div>
                         </div>
-                    )}
+                    </div>
 
                     {loading ? (
                         <div className="text-center py-16">
