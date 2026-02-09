@@ -364,10 +364,14 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
 } | null> => {
   try {
     // Map subcategory to subCategory (API expects capital C as per Postman collection)
+    // Map subSubcategory to subSubcategory (API expects this parameter name for nested subcategories)
     const apiFilters: Record<string, any> = { ...filters };
     if (apiFilters.subcategory !== undefined) {
       apiFilters.subCategory = apiFilters.subcategory;
       delete apiFilters.subcategory;
+    }
+    if (apiFilters.subSubcategory !== undefined) {
+      apiFilters.subSubcategory = apiFilters.subSubcategory;
     }
     
     // Ensure boolean filters are properly formatted
@@ -377,9 +381,10 @@ export const getProducts = async (filters: ProductFilters = {}): Promise<{
     
     const endpoint = buildQueryString(API_ROUTES.PRODUCTS.LIST, apiFilters);
     
-    if (import.meta.env.DEV && filters.subcategory) {
+    if (import.meta.env.DEV && (filters.subcategory || filters.subSubcategory)) {
       console.log('🔍 API Request - Filtering by subcategory:', {
         subcategory: filters.subcategory,
+        subSubcategory: filters.subSubcategory,
         category: filters.category,
         endpoint
       })

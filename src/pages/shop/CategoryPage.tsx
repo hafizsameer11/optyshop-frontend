@@ -47,7 +47,6 @@ const validateProductFiltering = (products: Product[], categoryInfo: {
         // Validate subcategory using helper function for consistent field name handling
         const productSubcategoryData = normalizeProductSubcategory(product)
         const productSubcategory = productSubcategoryData.slug
-        const productSubcategoryName = productSubcategoryData.name
         const productParentSlug = productSubcategoryData.parentSlug
         
         if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
@@ -235,7 +234,7 @@ const CategoryPage: React.FC = () => {
                 // Apply subcategory/sub-subcategory filters with enhanced validation
                 if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
                     // Use sub-subcategory for most specific filtering
-                    filters.subcategory = categoryInfo.subSubcategory.slug
+                    filters.subSubcategory = categoryInfo.subSubcategory.slug
                     if (import.meta.env.DEV) {
                         console.log('🔍 CategoryPage - Sub-subcategory filter applied:', {
                             subSubcategoryName: categoryInfo.subSubcategory.name,
