@@ -2451,8 +2451,6 @@ const ProductDetail = () => {
         }
 
         // Original logic for non-contact-lens products without variants (glasses, etc.)
-        const stockStatus = p.stock_status
-        const stockQty = product.stock_quantity
 
         // Fix for Eye Hygiene products showing "Out of Stock" incorrectly
         if (isEyeHygiene && !hasVariants) {
