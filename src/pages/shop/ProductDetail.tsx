@@ -2398,12 +2398,21 @@ const ProductDetail = () => {
         if (isContactLens) {
             // First check if configurations exist
             let hasConfigs = false
+            let isConfigLoading = false
+            
             if (contactLensFormConfig?.formType === 'spherical') {
                 hasConfigs = sphericalConfigs.length > 0
+                isConfigLoading = sphericalConfigs.length === 0 && contactLensFormConfig !== null
             } else if (contactLensFormConfig?.formType === 'astigmatism') {
                 hasConfigs = astigmatismConfigs.length > 0
+                isConfigLoading = astigmatismConfigs.length === 0 && contactLensFormConfig !== null
             } else {
-                // If no form config loaded yet, don't show out of stock
+                // If no form config loaded yet, don't show out of stock (still loading)
+                return false
+            }
+            
+            // If configs are still loading, don't show out of stock
+            if (isConfigLoading) {
                 return false
             }
             
@@ -2416,17 +2425,22 @@ const ProductDetail = () => {
             const stockQty = product.stock_quantity
             const stockStatus = (product as any).stock_status
             
-            // If stock quantity is explicitly 0 or less, show as out of stock
-            if (stockQty !== undefined && stockQty <= 0) {
-                return true
-            }
+            // Contact lenses are typically made-to-order, so only show out of stock if:
+            // 1. Stock status is explicitly 'out_of_stock' OR
+            // 2. Stock quantity is explicitly set to 0 (not undefined/null)
             
             // If stock status is explicitly 'out_of_stock', show as out of stock
             if (stockStatus === 'out_of_stock') {
                 return true
             }
             
-            // Otherwise, consider it in stock (has configs and has stock)
+            // If stock quantity is explicitly 0 (not undefined), show as out of stock
+            // But if stock_quantity is undefined/null, assume it's available (made-to-order)
+            if (stockQty !== undefined && stockQty !== null && stockQty <= 0) {
+                return true
+            }
+            
+            // Otherwise, consider it in stock (has configs and no explicit out-of-stock status)
             return false
         }
 
@@ -3379,8 +3393,13 @@ const ProductDetail = () => {
                                                 )
                                             })()}
                                             {isProductOutOfStock && (
-                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                    {t('shop.outOfStock')}
+                                                <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg z-20 border-2 border-white">
+                                                    <div className="flex items-center gap-2">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                        </svg>
+                                                        {isContactLens ? 'Configurations Unavailable' : t('shop.outOfStock')}
+                                                    </div>
                                                 </div>
                                             )}
                                             {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
@@ -3495,8 +3514,13 @@ const ProductDetail = () => {
                                                 )
                                             })()}
                                             {isProductOutOfStock && (
-                                                <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                                                    Out of Stock
+                                                <div className="absolute top-4 right-4 bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg z-20 border-2 border-white">
+                                                    <div className="flex items-center gap-2">
+                                                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                        </svg>
+                                                        {isContactLens ? 'Configurations Unavailable' : 'Out of Stock'}
+                                                    </div>
                                                 </div>
                                             )}
                                             {salePriceNum && regularPriceNum && salePriceNum < regularPriceNum && (
