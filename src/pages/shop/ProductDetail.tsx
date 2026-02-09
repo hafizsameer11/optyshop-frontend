@@ -2407,6 +2407,20 @@ const ProductDetail = () => {
             return false
         }
 
+        // For non-contact-lens products, check stock quantity and status
+        const stockQty = product.stock_quantity
+        const stockStatus = (product as any).stock_status
+        
+        // If product has explicit stock quantity > 0, consider it in stock
+        if (stockQty !== undefined && stockQty > 0) {
+            return false
+        }
+        
+        // If stock_status is explicitly 'in_stock', consider it in stock
+        if (stockStatus === 'in_stock') {
+            return false
+        }
+
         // Check if product has variants (for Eye Hygiene products with sizeVolumeVariants)
         const p = product as any
         const variantsArray = fetchedVariants.length > 0
@@ -4563,6 +4577,20 @@ const ProductDetail = () => {
                                         }
                                         return null
                                     })()}
+
+                                    {/* Stock Quantity Display for Contact Lenses */}
+                                    {product.stock_quantity !== undefined && product.stock_quantity !== null && product.stock_quantity > 0 && (
+                                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span className="text-green-700 font-semibold">
+                                                    {product.stock_quantity} items available
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Add to Cart Button */}
                                     <div className="mt-6 pt-4 border-t-2 border-gray-200">

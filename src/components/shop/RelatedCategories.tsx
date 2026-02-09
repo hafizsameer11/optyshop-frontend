@@ -44,15 +44,15 @@ const RelatedCategories: React.FC<RelatedCategoriesProps> = ({
             const subName = (sub.name || '').toLowerCase()
             
             if (isSpherical) {
-                // For spherical pages, show ONLY spherical-related subcategories
-                // Exclude anything that is clearly not spherical (replacement frequency, colors, astigmatism)
-                const isReplacementFrequency = /daily|weekly|monthly|disposable|frequent/i.test(subName)
+                // For spherical pages, show spherical-related subcategories
+                // Include replacement frequency (daily, weekly, monthly) as these are valid spherical options
+                // Exclude only colors and astigmatism types
                 const isColoredType = /colored|coloured|color|colour/i.test(subName)
                 const isAstigmatismType = /astigmatism|astigmatismo|toric|torica/i.test(subName)
                 
-                // Include if it's spherical OR if it doesn't match any excluded categories
+                // Include if it's spherical OR if it doesn't match excluded categories (colors, astigmatism)
                 return /spherical|sferiche|sferica/i.test(subName) || 
-                       (!isReplacementFrequency && !isColoredType && !isAstigmatismType)
+                       (!isColoredType && !isAstigmatismType)
             } else if (isAstigmatism) {
                 // For astigmatism pages, show only astigmatism-related subcategories
                 return /astigmatism|astigmatismo|toric|torica/i.test(subName)
