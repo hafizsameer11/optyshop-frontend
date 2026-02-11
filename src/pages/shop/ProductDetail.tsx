@@ -2645,20 +2645,21 @@ const ProductDetail = () => {
 
         // Priority 2: Use regular product images FIRST - only use caliber/variant images if user has explicitly selected them
         // Check if user has manually made a selection (either by clicking thumbnails or selecting variants)
-        if (!isManuallySelectingImage && !selectedEyeHygieneVariant) {
-            // No manual selection and no eye hygiene variant selected - use regular product images
-            // Caliber images are only shown when user explicitly clicks "View Xmm Frame Image" button
+        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant) {
+            // No manual selection and no variant selected - use regular product images
+            // Caliber images are shown when user selects from dropdown or clicks "View Xmm Frame Image" button
             return getProductImageUrl(product, imageIndex)
         }
 
-        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user AND user clicked "View Xmm Frame Image" button AND current product has calibers
-        if (selectedCaliber && selectedCaliber.image_url && !isManuallySelectingImage && productCalibers.length > 0) {
-            console.log('[ProductDetail] Using caliber image (user requested via button):', {
+        // Priority 3: Use caliber-specific images if caliber is selected (either from dropdown or button click) AND current product has calibers
+        if (selectedCaliber && selectedCaliber.image_url && productCalibers.length > 0) {
+            console.log('[ProductDetail] Using caliber image:', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
                 is_product_image: selectedCaliber.image_url.includes('uploads/products'),
                 is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926'),
-                main_images: product.images
+                main_images: product.images,
+                triggered_by: isManuallySelectingImage ? 'thumbnail click' : 'dropdown selection or button click'
             });
             
             return selectedCaliber.image_url;
@@ -4787,8 +4788,8 @@ const ProductDetail = () => {
                                     
                                     // Use regular product images by default
                                     // Only use variant-specific images if user has explicitly selected a variant AND hasn't manually clicked a thumbnail
-                                    // For calibers, only show caliber image if user has explicitly clicked the "View Xmm Frame Image" button
-                                    const selectedImage = !isManuallySelectingImage && selectedEyeHygieneVariant
+                                    // For calibers, show caliber image when user selects from dropdown or clicks "View Xmm Frame Image" button
+                                    const selectedImage = !isManuallySelectingImage && (selectedCaliber || selectedEyeHygieneVariant)
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
 
