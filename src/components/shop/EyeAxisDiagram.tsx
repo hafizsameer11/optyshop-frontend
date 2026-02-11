@@ -708,15 +708,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         </div>
         
         {/* Prescription Table */}
-        <div className="mt-4 overflow-x-auto">
-          <div className="min-w-full">
-            <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
+        <div className="mt-4">
+          <table className="w-full border-collapse border-2 border-gray-300 text-base table-fixed">
             <thead>
               <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
-                <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
-                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
-                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
-                <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">
+                <th className="border-2 border-gray-300 px-2 py-2 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
+                <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
+                <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
+                <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">
                   {t('prescription.axis', 'Axis')}
                   <span className="block text-xs font-normal text-blue-600 mt-1">(Left: TABO)</span>
                 </th>
@@ -724,8 +723,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             </thead>
             <tbody>
               <tr className="hover:bg-blue-50 transition-colors">
-                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -737,11 +736,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('right', 'sphere', '')
                       }
                     }}
-                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -753,11 +752,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('right', 'cylinder', '')
                       }
                     }}
-                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="number"
                     inputMode="numeric"
@@ -769,14 +768,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="--"
                   />
                 </td>
               </tr>
               <tr className="hover:bg-blue-50 transition-colors">
-                <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -788,11 +787,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('left', 'sphere', '')
                       }
                     }}
-                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="text"
                     inputMode="decimal"
@@ -804,11 +803,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                         handlePrescriptionChange('left', 'cylinder', '')
                       }
                     }}
-                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-700 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="0,00"
                   />
                 </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <div className="relative">
                     <input
                       type="number"
@@ -832,7 +831,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 pr-12 transition-all"
+                      className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 pr-12 transition-all"
                       placeholder="--"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
@@ -841,7 +840,6 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               </tr>
             </tbody>
           </table>
-          </div>
         </div>
       </div>
     )
@@ -868,15 +866,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
       </div>
       
       {/* Prescription Table */}
-      <div className="mt-4 overflow-x-auto">
-        <div className="min-w-full">
-          <table className="w-full border-collapse border-2 border-gray-300 text-base table-auto">
+      <div className="mt-4">
+        <table className="w-full border-collapse border-2 border-gray-300 text-base table-fixed">
           <thead>
             <tr className="bg-gradient-to-r from-gray-100 to-gray-200">
-              <th className="border-2 border-gray-300 px-4 py-3 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
-              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
-              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
-              <th className="border-2 border-gray-300 px-4 py-3 text-center font-bold text-gray-800 text-sm w-[25%]">
+              <th className="border-2 border-gray-300 px-2 py-2 text-left font-bold text-gray-800 text-sm w-[25%]"></th>
+              <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.sphere', 'Sphere')}</th>
+              <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">{t('prescription.cylinder', 'Cylinder')}</th>
+              <th className="border-2 border-gray-300 px-2 py-2 text-center font-bold text-gray-800 text-sm w-[25%]">
                 {t('prescription.axis', 'Axis')}
                 <span className="block text-xs font-normal text-blue-600 mt-1">(Left: TABO)</span>
               </th>
@@ -884,8 +881,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           </thead>
           <tbody>
             <tr className="hover:bg-blue-50 transition-colors">
-              <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
-              <td className="border-2 border-gray-300 px-4 py-3 text-center">
+              <td className="border-2 border-gray-300 px-2 py-2 font-bold text-blue-700 text-sm">{t('prescription.rightEye', 'Right Eye OD')}</td>
+              <td className="border-2 border-gray-300 px-2 py-2 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -897,11 +894,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('right', 'sphere', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border-2 border-gray-300 px-4 py-3 text-center">
+              <td className="border-2 border-gray-300 px-2 py-2 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -913,11 +910,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('right', 'cylinder', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <input
                     type="number"
                     inputMode="numeric"
@@ -929,14 +926,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       const value = e.target.value === '' ? undefined : parseInt(e.target.value)
                       handlePrescriptionChange('right', 'axis', value !== undefined ? value.toString() : '')
                     }}
-                    className="w-full text-center text-blue-600 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                    className="w-full text-center text-blue-600 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                     placeholder="--"
                   />
                 </td>
             </tr>
             <tr className="hover:bg-blue-50 transition-colors">
-              <td className="border-2 border-gray-300 px-4 py-3 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
-              <td className="border-2 border-gray-300 px-4 py-3 text-center">
+              <td className="border-2 border-gray-300 px-2 py-2 font-bold text-blue-700 text-sm">{t('prescription.leftEye', 'Left Eye OS')}</td>
+              <td className="border-2 border-gray-300 px-2 py-2 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -948,11 +945,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('left', 'sphere', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                   placeholder="0,00"
                 />
               </td>
-              <td className="border-2 border-gray-300 px-4 py-3 text-center">
+              <td className="border-2 border-gray-300 px-2 py-2 text-center">
                 <input
                   type="text"
                   inputMode="decimal"
@@ -964,11 +961,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                       handlePrescriptionChange('left', 'cylinder', '')
                     }
                   }}
-                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 transition-all"
+                  className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                   placeholder="0,00"
                 />
               </td>
-                <td className="border-2 border-gray-300 px-4 py-3 text-center">
+                <td className="border-2 border-gray-300 px-2 py-2 text-center">
                   <div className="relative">
                     <input
                       type="number"
@@ -992,7 +989,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-3 py-2 pr-12 transition-all"
+                      className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 pr-12 transition-all"
                       placeholder="--"
                     />
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
@@ -1001,7 +998,6 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             </tr>
           </tbody>
         </table>
-        </div>
       </div>
       
       {isInteractive && (
