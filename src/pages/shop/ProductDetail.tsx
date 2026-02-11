@@ -639,6 +639,7 @@ const ProductDetail = () => {
                 // Reset selections when product changes
                 setSelectedFrameMaterial('')
                 setSelectedLensType('')
+                setSelectedCaliber(null) // Reset caliber selection when product changes
 
                 // Log Eye Hygiene fields if present
                 const p = productData as any
@@ -2650,8 +2651,8 @@ const ProductDetail = () => {
             return getProductImageUrl(product, imageIndex)
         }
 
-        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user AND user clicked "View Xmm Frame Image" button
-        if (selectedCaliber && selectedCaliber.image_url && !isManuallySelectingImage) {
+        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user AND user clicked "View Xmm Frame Image" button AND current product has calibers
+        if (selectedCaliber && selectedCaliber.image_url && !isManuallySelectingImage && productCalibers.length > 0) {
             console.log('[ProductDetail] Using caliber image (user requested via button):', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
