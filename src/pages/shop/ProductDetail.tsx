@@ -987,13 +987,40 @@ const ProductDetail = () => {
                                 })
                             }
                         } else {
-                            // No configs found, set empty values and clear configs
+                            // No configs found - create a default fallback configuration
+                            // This allows users to still see the form and enter values
+                            console.info('ℹ️ API returned empty spherical configs - creating fallback form configuration')
+                            
+                            setContactLensFormConfig({
+                                formType: 'spherical',
+                                subCategory: subCategoryData || {
+                                    id: numericId,
+                                    name: '',
+                                    slug: ''
+                                },
+                                formFields: {
+                                    rightEye: {
+                                        qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                        base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                        diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                        power: { type: 'number', label: 'Power', required: true, default: 0 }
+                                    },
+                                    leftEye: {
+                                        qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                        base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                        diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                        power: { type: 'number', label: 'Power', required: true, default: 0 }
+                                    }
+                                }
+                            })
+                            
+                            // Set empty configs array but keep the form visible
                             setSphericalConfigs([])
                             setSelectedConfig(null)
-                            setSphericalPowerValues([])
-                            if (import.meta.env.DEV) {
-                                console.info('ℹ️ API returned empty spherical configs - dropdowns will be empty (this is expected until admin adds configs)')
-                            }
+                            
+                            // Set common power values as fallback
+                            const fallbackPowerValues = ['-8.00', '-7.50', '-7.00', '-6.50', '-6.00', '-5.50', '-5.00', '-4.50', '-4.00', '-3.50', '-3.00', '-2.50', '-2.00', '-1.50', '-1.00', '-0.75', '-0.50', '-0.25', '0.00', '+0.25', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00', '+3.50', '+4.00', '+4.50', '+5.00', '+5.50', '+6.00', '+6.50', '+7.00', '+8.00']
+                            setSphericalPowerValues(fallbackPowerValues)
                         }
                     }
                 } else {
@@ -1068,13 +1095,40 @@ const ProductDetail = () => {
                             })
                         }
                     } else {
-                        // No configs found in fallback, clear all config data
+                        // No configs found - create a default fallback configuration
+                        // This allows users to still see the form and enter values
+                        console.info('ℹ️ API returned empty spherical configs for sub-category:', subCategoryId, '- creating fallback form configuration')
+                        
+                        setContactLensFormConfig({
+                            formType: 'spherical',
+                            subCategory: subCategoryData || {
+                                id: numericId,
+                                name: '',
+                                slug: ''
+                            },
+                            formFields: {
+                                rightEye: {
+                                    qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                    base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                    diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                    power: { type: 'number', label: 'Power', required: true, default: 0 }
+                                },
+                                leftEye: {
+                                    qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                    base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                    diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                    power: { type: 'number', label: 'Power', required: true, default: 0 }
+                                }
+                            }
+                        })
+                        
+                        // Set empty configs array but keep the form visible
                         setSphericalConfigs([])
                         setSelectedConfig(null)
-                        setSphericalPowerValues([])
-                        if (import.meta.env.DEV) {
-                            console.info('ℹ️ API returned empty spherical configs for sub-category:', subCategoryId, '- dropdowns will be empty (this is expected until admin adds configs)')
-                        }
+                        
+                        // Set common power values as fallback
+                        const fallbackPowerValues = ['-8.00', '-7.50', '-7.00', '-6.50', '-6.00', '-5.50', '-5.00', '-4.50', '-4.00', '-3.50', '-3.00', '-2.50', '-2.00', '-1.50', '-1.00', '-0.75', '-0.50', '-0.25', '0.00', '+0.25', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00', '+3.50', '+4.00', '+4.50', '+5.00', '+5.50', '+6.00', '+6.50', '+7.00', '+8.00']
+                        setSphericalPowerValues(fallbackPowerValues)
                     }
                 }
             } catch (error) {
@@ -1135,6 +1189,40 @@ const ProductDetail = () => {
                     }
                 } catch (fallbackError) {
                     console.error('Error in fallback fetch:', fallbackError)
+                    
+                    // Create fallback configuration even on error
+                    console.info('ℹ️ Creating fallback form configuration due to API error')
+                    
+                    setContactLensFormConfig({
+                        formType: 'spherical',
+                        subCategory: subCategoryData || {
+                            id: numericId,
+                            name: '',
+                            slug: ''
+                        },
+                        formFields: {
+                            rightEye: {
+                                qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                power: { type: 'number', label: 'Power', required: true, default: 0 }
+                            },
+                            leftEye: {
+                                qty: { type: 'number', label: 'Quantity', required: true, default: 1 },
+                                base_curve: { type: 'number', label: 'Base Curve', required: true, default: 8.5 },
+                                diameter: { type: 'number', label: 'Diameter', required: true, default: 14.2 },
+                                power: { type: 'number', label: 'Power', required: true, default: 0 }
+                            }
+                        }
+                    })
+                    
+                    // Set empty configs array but keep the form visible
+                    setSphericalConfigs([])
+                    setSelectedConfig(null)
+                    
+                    // Set common power values as fallback
+                    const fallbackPowerValues = ['-8.00', '-7.50', '-7.00', '-6.50', '-6.00', '-5.50', '-5.00', '-4.50', '-4.00', '-3.50', '-3.00', '-2.50', '-2.00', '-1.50', '-1.00', '-0.75', '-0.50', '-0.25', '0.00', '+0.25', '+0.50', '+0.75', '+1.00', '+1.25', '+1.50', '+1.75', '+2.00', '+2.25', '+2.50', '+2.75', '+3.00', '+3.50', '+4.00', '+4.50', '+5.00', '+5.50', '+6.00', '+6.50', '+7.00', '+8.00']
+                    setSphericalPowerValues(fallbackPowerValues)
                 }
             } finally {
                 // Form config loading complete
@@ -2396,38 +2484,12 @@ const ProductDetail = () => {
         // Contact lenses are configuration-based, not inventory-based
         // They should check if configurations are available AND if stock is available
         if (isContactLens) {
-            // First check if configurations exist
-            let hasConfigs = false
-            let isConfigLoading = false
+            // For contact lenses, don't show as out of stock just because configs are missing
+            // Allow users to see the form and enter values even without predefined configs
+            // Only show as out of stock if stock status is explicitly 'out_of_stock' or stock quantity is 0
             
-            if (contactLensFormConfig?.formType === 'spherical') {
-                hasConfigs = sphericalConfigs.length > 0
-                isConfigLoading = sphericalConfigs.length === 0 && contactLensFormConfig !== null
-            } else if (contactLensFormConfig?.formType === 'astigmatism') {
-                hasConfigs = astigmatismConfigs.length > 0
-                isConfigLoading = astigmatismConfigs.length === 0 && contactLensFormConfig !== null
-            } else {
-                // If no form config loaded yet, don't show out of stock (still loading)
-                return false
-            }
-            
-            // If configs are still loading, don't show out of stock
-            if (isConfigLoading) {
-                return false
-            }
-            
-            // If no configurations available, show as out of stock
-            if (!hasConfigs) {
-                return true
-            }
-            
-            // For contact lenses with configurations, also check stock quantity
             const stockQty = product.stock_quantity
             const stockStatus = (product as any).stock_status
-            
-            // Contact lenses are typically made-to-order, so only show out of stock if:
-            // 1. Stock status is explicitly 'out_of_stock' OR
-            // 2. Stock quantity is explicitly set to 0 (not undefined/null)
             
             // If stock status is explicitly 'out_of_stock', show as out of stock
             if (stockStatus === 'out_of_stock') {
@@ -2440,7 +2502,7 @@ const ProductDetail = () => {
                 return true
             }
             
-            // Otherwise, consider it in stock (has configs and no explicit out-of-stock status)
+            // Otherwise, consider it in stock (contact lenses are typically made-to-order)
             return false
         }
 
