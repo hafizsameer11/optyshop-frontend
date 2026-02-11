@@ -808,7 +808,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                   />
                 </td>
                 <td className="border-2 border-gray-300 px-2 py-2 text-center">
-                  <div className="relative">
+                  <div className="flex items-center justify-center gap-1">
                     <input
                       type="number"
                       inputMode="numeric"
@@ -831,10 +831,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 pr-12 transition-all"
+                      className="w-full text-center text-blue-700 font-bold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                       placeholder="--"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
+                    <span className="text-xs text-gray-500 font-medium">TABO</span>
                   </div>
                 </td>
               </tr>
@@ -966,7 +966,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                 />
               </td>
                 <td className="border-2 border-gray-300 px-2 py-2 text-center">
-                  <div className="relative">
+                  <div className="flex items-center justify-center gap-1">
                     <input
                       type="number"
                       inputMode="numeric"
@@ -989,10 +989,10 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                           handlePrescriptionChange('left', 'axis', '')
                         }
                       }}
-                      className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 pr-12 transition-all"
+                      className="w-full text-center text-blue-600 font-semibold text-sm border-2 border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400 rounded-lg px-2 py-1 transition-all"
                       placeholder="--"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-600 font-bold whitespace-nowrap pointer-events-none bg-blue-50 px-2 py-1 rounded">TABO</span>
+                    <span className="text-xs text-gray-500 font-medium">TABO</span>
                   </div>
                 </td>
             </tr>
