@@ -3460,7 +3460,7 @@ const ProductDetail = () => {
                                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                                         </svg>
-                                                        {isContactLens ? 'Configurations Unavailable' : t('shop.outOfStock')}
+                                                        {t('shop.outOfStock')}
                                                     </div>
                                                 </div>
                                             )}
@@ -3472,8 +3472,8 @@ const ProductDetail = () => {
                                         </div>
 
                                         {/* Price Display */}
-                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border-2 border-blue-100">
-                                            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100 shadow-sm">
+                                            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
                                                 {calculateContactLensTotal > 0 ? 'Total Price' : 'Price'}
                                             </p>
                                             {(() => {
@@ -3581,7 +3581,7 @@ const ProductDetail = () => {
                                                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                                         </svg>
-                                                        {isContactLens ? 'Configurations Unavailable' : 'Out of Stock'}
+                                                        'Out of Stock'
                                                     </div>
                                                 </div>
                                             )}
@@ -3902,15 +3902,13 @@ const ProductDetail = () => {
                             {/* Contact Lens Parameter Selection Form - Right Side */}
                             <div className="w-full">
                                 <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
-                                    <div className="mb-4 pb-3 border-b-2 border-gray-100">
-                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">
-                                            Select the parameters
+                                    <div className="mb-6 pb-4 border-b-2 border-gray-100">
+                                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+                                            Customize Your {product?.name || 'Lenses'}
                                         </h2>
-                                        {product && (
-                                            <p className="text-base md:text-lg text-gray-700 font-medium">
-                                                {product.name}
-                                            </p>
-                                        )}
+                                        <p className="text-base text-gray-600">
+                                            Select your parameters for each eye
+                                        </p>
                                     </div>
 
                                     {/* Unit Selection (Pack Sizes) - Independent from Qty */}
@@ -4038,10 +4036,10 @@ const ProductDetail = () => {
 
                                         return (
                                             <div className="mb-8">
-                                                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                                    Select Pack Size (Units)
+                                                <label className="block text-sm font-semibold text-gray-700 mb-4">
+                                                    Choose Pack Size
                                                 </label>
-                                                <div className="flex flex-wrap gap-3">
+                                                <div className="flex flex-wrap gap-4">
                                                     {availableUnits.map((unit: number) => {
                                                         const isSelected = selectedUnit === unit
                                                         // Get unit price from collected prices (from selected config or all configs)
@@ -4062,16 +4060,16 @@ const ProductDetail = () => {
                                                                         setIsManuallySelectingImage(false) // Reset manual selection flag
                                                                     }
                                                                 }}
-                                                                className={`px-6 py-3 rounded-full text-sm font-semibold transition-all duration-200 border-2 ${isSelected
-                                                                    ? 'bg-white text-gray-900 border-gray-900 shadow-md'
-                                                                    : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200 hover:border-gray-300'
+                                                                className={`px-8 py-4 rounded-full text-sm font-semibold transition-all duration-300 border-2 shadow-sm hover:shadow-md ${isSelected
+                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
+                                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                                                                     }`}
                                                             >
                                                                 <div className="flex flex-col items-center">
-                                                                    <span>Unit {unit}</span>
+                                                                    <span className="font-medium">{unit} {unit === 1 ? 'Pack' : 'Packs'}</span>
                                                                     {hasPrice && (
                                                                         <span className="text-xs font-normal mt-1">
-                                                                            ${unitPrice.toFixed(2)}
+                                                                            €{unitPrice.toFixed(2)}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -4099,7 +4097,7 @@ const ProductDetail = () => {
                                                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center shadow-md">
                                                         <span className="text-white font-bold text-sm">R</span>
                                                     </div>
-                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Right Eye OD</h3>
+                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Right Eye (OD)</h3>
                                                 </label>
                                             </div>
 
@@ -4222,7 +4220,7 @@ const ProductDetail = () => {
                                                                     className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-sm ${contactLensErrors.right_power ? 'border-red-500' : 'border-gray-200'
                                                                         } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
-                                                                    <option value="00.00">00.00 (Power)</option>
+                                                                    <option value="00.00">Select Power</option>
                                                                     {powerOptions.map((v) => (
                                                                         <option key={v} value={v.toString()}>{v}</option>
                                                                     ))}
@@ -4343,7 +4341,7 @@ const ProductDetail = () => {
                                                     <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
                                                         <span className="text-white font-bold text-sm">L</span>
                                                     </div>
-                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye OS</h3>
+                                                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Left Eye (OS)</h3>
                                                 </label>
                                             </div>
 
@@ -4466,7 +4464,7 @@ const ProductDetail = () => {
                                                                     className={`w-full px-1 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-sm ${contactLensErrors.left_power ? 'border-red-500' : 'border-gray-200'
                                                                         } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
-                                                                    <option value="00.00">00.00 (Power)</option>
+                                                                    <option value="00.00">Select Power</option>
                                                                     {powerOptions.map((v) => (
                                                                         <option key={v} value={v.toString()}>{v}</option>
                                                                     ))}
@@ -4932,7 +4930,7 @@ const ProductDetail = () => {
                                                                                 </span>
                                                                                 {variantPrice !== null && variantPrice !== Number(product.price || 0) && (
                                                                                     <span className="text-[10px] opacity-70 mt-0.5">
-                                                                                        ${variantPrice.toFixed(2)}
+                                                                                        €{variantPrice.toFixed(2)}
                                                                                     </span>
                                                                                 )}
                                                                             </div>
@@ -4981,11 +4979,11 @@ const ProductDetail = () => {
                                         {originalPrice ? (
                                             <div className="flex items-center gap-6">
                                                 <span className="text-5xl font-extrabold text-blue-950">
-                                                    ${(displayPrice || 0).toFixed(2)}
+                                                    €{(displayPrice || 0).toFixed(2)}
                                                 </span>
                                                 <div className="flex flex-col">
                                                     <span className="text-xl text-gray-400 line-through font-medium">
-                                                        ${(originalPrice || 0).toFixed(2)}
+                                                        €{(originalPrice || 0).toFixed(2)}
                                                     </span>
                                                     <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px]">
                                                         SAVE {Math.round(((originalPrice - (displayPrice || 0)) / originalPrice) * 100)}%
@@ -4994,7 +4992,7 @@ const ProductDetail = () => {
                                             </div>
                                         ) : (
                                             <span className="text-5xl font-extrabold text-blue-950">
-                                                ${(displayPrice || 0).toFixed(2)}
+                                                €{(displayPrice || 0).toFixed(2)}
                                             </span>
                                         )}
                                     </div>
