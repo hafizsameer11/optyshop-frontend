@@ -3395,7 +3395,7 @@ const ProductDetail = () => {
 
             
             {/* Product Details */}
-            <section className="py-4 md:py-6 px-4 sm:px-6">
+            <section className="py-4 md:py-6 px-4 sm:px-6" style={{ scrollMarginTop: '80px' }}>
                 <div className="w-[90%] mx-auto max-w-7xl">
                     {isContactLens ? (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">

@@ -1,5 +1,60 @@
 @import "tailwindcss";
 
+/* Global layout fixes to prevent content cutoff */
+@layer base {
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+        scroll-behavior: smooth !important;
+    }
+    
+    #root {
+        min-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    * {
+        box-sizing: border-box !important;
+    }
+}
+
+/* Prevent content cutoff in main sections */
+main, section {
+    scroll-margin-top: 0 !important;
+}
+
+/* Ensure proper spacing for fixed headers */
+.navbar-fixed {
+    padding-top: 0 !important;
+}
+
+/* Prevent content from being hidden behind fixed elements */
+.content-wrapper {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Fix content cutoff caused by fixed navbar */
+body {
+    padding-top: 0 !important;
+}
+
+/* Ensure main content starts below fixed navbar */
+main > section:first-child,
+div > section:first-child {
+    padding-top: 80px !important;
+}
+
+@media (max-width: 768px) {
+    main > section:first-child,
+    div > section:first-child {
+        padding-top: 120px !important;
+    }
+}
+
 /* Fix for prescription form dropdown text cutoff */
 select option {
     padding: 8px 12px !important;
