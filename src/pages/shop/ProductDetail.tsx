@@ -2644,14 +2644,15 @@ const ProductDetail = () => {
 
         // Priority 2: Use regular product images FIRST - only use caliber/variant images if user has explicitly selected them
         // Check if user has manually made a selection (either by clicking thumbnails or selecting variants)
-        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant) {
-            // No manual selection and no variant selected - use regular product images
+        if (!isManuallySelectingImage && !selectedEyeHygieneVariant) {
+            // No manual selection and no eye hygiene variant selected - use regular product images
+            // Caliber images are only shown when user explicitly clicks "View Xmm Frame Image" button
             return getProductImageUrl(product, imageIndex)
         }
 
-        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user
-        if (selectedCaliber && selectedCaliber.image_url) {
-            console.log('[ProductDetail] Using caliber image (user selected):', {
+        // Priority 3: Use caliber-specific images ONLY if caliber is explicitly selected by user AND user clicked "View Xmm Frame Image" button
+        if (selectedCaliber && selectedCaliber.image_url && !isManuallySelectingImage) {
+            console.log('[ProductDetail] Using caliber image (user requested via button):', {
                 caliber_mm: selectedCaliber.mm,
                 image_url: selectedCaliber.image_url,
                 is_product_image: selectedCaliber.image_url.includes('uploads/products'),
@@ -4785,7 +4786,8 @@ const ProductDetail = () => {
                                     
                                     // Use regular product images by default
                                     // Only use variant-specific images if user has explicitly selected a variant AND hasn't manually clicked a thumbnail
-                                    const selectedImage = !isManuallySelectingImage && (selectedCaliber || selectedEyeHygieneVariant)
+                                    // For calibers, only show caliber image if user has explicitly clicked the "View Xmm Frame Image" button
+                                    const selectedImage = !isManuallySelectingImage && selectedEyeHygieneVariant
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
 
