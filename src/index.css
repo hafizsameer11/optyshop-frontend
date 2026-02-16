@@ -6,9 +6,10 @@
         margin: 0 !important;
         padding: 0 !important;
         min-height: 100vh !important;
-        height: 100% !important;
+        height: auto !important;
+        max-height: none !important;
         overflow-x: hidden !important;
-        overflow-y: auto !important;
+        overflow-y: visible !important;
         scroll-behavior: smooth !important;
     }
     
@@ -133,9 +134,50 @@ section {
     overflow: visible !important;
 }
 
-/* Ensure page content can expand fully */
-.bg-white {
+/* Universal page container fixes */
+.bg-slate-950,
+.bg-white,
+[class*="bg-"] {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
+}
+
+/* Fix all direct children of page containers */
+div > div,
+section > div,
+main > div {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Ensure all page containers can expand fully */
+div[class*="container"],
+div[class*="page"],
+div[class*="wrapper"],
+div[class*="layout"] {
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Universal fix for all elements */
+* {
+    max-height: none !important;
+}
+
+/* Exception for images and specific components that need height control */
+img,
+video,
+iframe,
+.aspect-square,
+.aspect-video,
+.aspect-ratio {
+    max-height: revert !important;
 }
 
 /* Fix any potential height constraints on grid layouts */
