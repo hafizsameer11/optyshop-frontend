@@ -77,6 +77,14 @@ body, #root, .min-h-screen {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
+    max-height: none !important;
+}
+
+/* Ensure product detail content can expand fully */
+.product-detail-container > * {
+    min-height: auto !important;
+    height: auto !important;
+    max-height: none !important;
 }
 
 /* Fix product gallery and image sections */
@@ -113,7 +121,8 @@ body {
 
 /* Ensure main content starts below fixed navbar */
 main > section:first-child,
-div > section:first-child {
+div > section:first-child,
+.product-detail-container > section:first-child {
     padding-top: 80px !important;
 }
 
@@ -139,6 +148,13 @@ section {
 @media (max-width: 768px) {
     main > section:first-child,
     div > section:first-child {
+        padding-top: 120px !important;
+    }
+}
+
+/* Additional fix for product detail pages on mobile */
+@media (max-width: 768px) {
+    .product-detail-container > section:first-child {
         padding-top: 120px !important;
     }
 }
