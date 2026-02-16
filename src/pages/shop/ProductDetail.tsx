@@ -3364,35 +3364,7 @@ const ProductDetail = () => {
         <div className="bg-white min-h-screen product-detail-container">
             <Navbar />
 
-            {/* DEBUG SECTION - TEMPORARY */}
-            {import.meta.env.DEV && (
-                <div className="bg-yellow-50 border-2 border-yellow-300 p-4 m-4 rounded-lg">
-                    <h3 className="font-bold text-lg mb-2">🔍 DEBUG INFO - Calibers</h3>
-                    <div className="text-sm space-y-1">
-                        <p><strong>Product ID:</strong> {product?.id}</p>
-                        <p><strong>Product Name:</strong> {product?.name}</p>
-                        <p><strong>Product Type:</strong> {(product as any)?.product_type}</p>
-                        <p><strong>Calibers Count:</strong> {productCalibers.length}</p>
-                        <p><strong>shouldShowCalibers:</strong> {shouldShowCalibers ? 'TRUE' : 'FALSE'}</p>
-                        <p><strong>isEyeHygiene:</strong> {isEyeHygiene ? 'TRUE' : 'FALSE'}</p>
-                        <p><strong>isContactLens:</strong> {isContactLens ? 'TRUE' : 'FALSE'}</p>
-                        <p><strong>Selected Caliber:</strong> {selectedCaliber ? `${selectedCaliber.mm}mm` : 'None'}</p>
-                        <details className="mt-2">
-                            <summary className="cursor-pointer font-semibold">Raw mm_calibers data:</summary>
-                            <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32">
-                                {JSON.stringify((product as any)?.mm_calibers, null, 2)}
-                            </pre>
-                        </details>
-                        <details className="mt-2">
-                            <summary className="cursor-pointer font-semibold">Processed calibers:</summary>
-                            <pre className="text-xs bg-white p-2 rounded border overflow-auto max-h-32">
-                                {JSON.stringify(productCalibers, null, 2)}
-                            </pre>
-                        </details>
-                    </div>
-                </div>
-            )}
-
+            
             
             {/* Product Details */}
             <section className="py-4 md:py-6 px-4 sm:px-6" style={{ scrollMarginTop: '80px' }}>
@@ -4042,7 +4014,7 @@ const ProductDetail = () => {
                                                 <label className="block text-sm font-semibold text-gray-700 mb-4">
                                                     Choose Pack Size
                                                 </label>
-                                                <div className="flex flex-wrap gap-4">
+                                                <div className="flex flex-wrap gap-2">
                                                     {availableUnits.map((unit: number) => {
                                                         const isSelected = selectedUnit === unit
                                                         // Get unit price from collected prices (from selected config or all configs)
@@ -4063,15 +4035,15 @@ const ProductDetail = () => {
                                                                         setIsManuallySelectingImage(false) // Reset manual selection flag
                                                                     }
                                                                 }}
-                                                                className={`px-8 py-4 rounded-full text-sm font-semibold transition-all duration-300 border-2 shadow-sm hover:shadow-md ${isSelected
-                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg transform scale-105'
+                                                                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 border shadow-sm hover:shadow-md ${isSelected
+                                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-md'
                                                                     : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400 hover:bg-blue-50'
                                                                     }`}
                                                             >
                                                                 <div className="flex flex-col items-center">
-                                                                    <span className="font-medium">{unit} {unit === 1 ? 'Pack' : 'Packs'}</span>
+                                                                    <span className="font-medium text-xs">{unit} {unit === 1 ? 'Pack' : 'Packs'}</span>
                                                                     {hasPrice && (
-                                                                        <span className="text-xs font-normal mt-1">
+                                                                        <span className="text-xs font-normal">
                                                                             €{unitPrice.toFixed(2)}
                                                                         </span>
                                                                     )}
