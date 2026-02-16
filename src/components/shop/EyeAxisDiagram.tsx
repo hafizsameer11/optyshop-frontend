@@ -507,6 +507,58 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           margin: '0 auto'
         }}
         xmlns="http://www.w3.org/2000/svg"
+        role="application"
+        aria-label={`${eyeType === 'right' ? 'Right Eye' : 'Left Eye'} Axis Diagram - ${normalizedAxis} degrees`}
+        aria-describedby={`axis-description-${eyeType}`}
+        tabIndex={isInteractive ? 0 : -1}
+        onKeyDown={(e) => {
+          if (!isInteractive) return
+          
+          let newValue = normalizedAxis
+          switch (e.key) {
+            case 'ArrowLeft':
+              newValue = Math.max(0, normalizedAxis - 5)
+              break
+            case 'ArrowRight':
+              newValue = Math.min(180, normalizedAxis + 5)
+              break
+            case 'Home':
+              newValue = 0
+              break
+            case 'End':
+              newValue = 180
+              break
+            case 'PageUp':
+              newValue = Math.max(0, normalizedAxis - 15)
+              break
+            case 'PageDown':
+              newValue = Math.min(180, normalizedAxis + 15)
+              break
+            case 'Enter':
+            case ' ':
+              e.preventDefault()
+              handleMouseDown(e as any, eyeType)
+              return
+            default:
+              return
+          }
+          
+          e.preventDefault()
+          
+          if (eyeType === 'right') {
+            setLocalRightAxis(newValue)
+            onRightEyeAxisChange?.(newValue)
+            const updated = { ...localRightPrescription, axis: newValue }
+            setLocalRightPrescription(updated)
+            onRightEyePrescriptionChange?.(updated)
+          } else {
+            setLocalLeftAxis(newValue)
+            onLeftEyeAxisChange?.(newValue)
+            const updated = { ...localLeftPrescription, axis: newValue }
+            setLocalLeftPrescription(updated)
+            onLeftEyePrescriptionChange?.(updated)
+          }
+        }}
         onClick={(e) => {
           if (isInteractive) {
             e.preventDefault()
@@ -528,6 +580,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
         }}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onFocus={() => {
+          // Announce current value when focused
+          const announcement = `${eyeType === 'right' ? 'Right' : 'Left'} eye axis: ${normalizedAxis} degrees`
+          const liveRegion = document.getElementById('axis-live-region')
+          if (liveRegion) {
+            liveRegion.textContent = announcement
+          }
+        }}
       >
         <defs>
           <marker
@@ -682,6 +742,14 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             })()}
           </>
         )}
+        
+        {/* Accessibility description */}
+        <desc>
+          Interactive axis diagram for {eyeType === 'right' ? 'right' : 'left'} eye. 
+          Use arrow keys to adjust by 5 degrees, Page Up/Down for 15 degrees, Home for 0 degrees, End for 180 degrees. 
+          Current value: {normalizedAxis} degrees. 
+          {eyeType === 'left' ? 'Uses TABO notation system.' : 'Uses International notation system.'}
+        </desc>
       </svg>
     )
   }
@@ -689,6 +757,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   if (compact) {
     return (
       <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg" style={{ overflow: 'visible', width: '100%' }}>
+        {/* Screen reader live region */}
+        <div id="axis-live-region" className="sr-only" aria-live="polite" aria-atomic="true"></div>
         <div className="flex flex-col gap-4 justify-center items-center mb-6" style={{ overflow: 'visible', width: '100%' }}>
           <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
             <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Right Eye OD')}</div>
@@ -847,6 +917,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-300 w-full" style={{ overflow: 'visible', width: '100%' }}>
+      {/* Screen reader live region */}
+      <div id="axis-live-region" className="sr-only" aria-live="polite" aria-atomic="true"></div>
       <div className="flex flex-col gap-4 justify-center items-center mb-4" style={{ overflow: 'visible', width: '100%' }}>
         <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '0' }}>
           <div className="font-bold text-lg mb-4 text-blue-600">{t('prescription.rightEye', 'Right Eye OD')}</div>

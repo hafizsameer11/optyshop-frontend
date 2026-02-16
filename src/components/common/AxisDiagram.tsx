@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react'
 
 interface AxisDiagramProps {
-  value?: number;
-  onChange?: (value: number) => void;
-  min?: number;
-  max?: number;
-  disabled?: boolean;
-  size?: number;
+  value?: number
+  onChange?: (value: number) => void
+  min?: number
+  max?: number
+  disabled?: boolean
+  size?: number
+  showDualScale?: boolean
+  notation?: 'INT' | 'TABO'
 }
 
 const AxisDiagram: React.FC<AxisDiagramProps> = ({
@@ -15,236 +17,383 @@ const AxisDiagram: React.FC<AxisDiagramProps> = ({
   min = -180,
   max = 180,
   disabled = false,
-  size = 200
+  size = 400,
+  showDualScale = false,
+  notation = 'INT'
 }) => {
-  const [currentValue, setCurrentValue] = useState(value);
-  const [isDragging, setIsDragging] = useState(false);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const [currentValue, setCurrentValue] = useState(value)
+  const [isDragging, setIsDragging] = useState(false)
+  const svgRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
-    setCurrentValue(value);
-  }, [value]);
+    setCurrentValue(value)
+  }, [value])
 
-  const centerX = size / 2;
-  const centerY = size / 2;
-  const radius = size * 0.35;
-  const strokeWidth = size * 0.08;
+  // Normalize axis value to 0-180 range for semi-circular display
+  const normalizeAxis = (value: number): number => {
+    if (value < 0) {
+      // Convert negative values: -179 → 1, -90 → 90, -1 → 179
+      return 180 + value
+    }
+    if (value > 180) {
+      // Wrap values > 180: 181 → 1, 270 → 90
+      return value % 180
+    }
+    return value
+  }
 
-  // Calculate angle from value (convert to radians)
-  const valueToAngle = (val: number) => {
-    const normalizedValue = ((val - min) / (max - min)) * 360 - 180;
-    return (normalizedValue * Math.PI) / 180;
-  };
+  // Convert axis value to angle for semi-circular protractor
+  const axisToAngle = (axisValue: number): number => {
+    const normalized = normalizeAxis(axisValue)
+    return (normalized * Math.PI) / 180
+  }
 
-  // Calculate value from angle
-  const angleToValue = (angle: number) => {
-    const degrees = (angle * 180) / Math.PI;
-    const normalizedValue = (degrees + 180) / 360;
-    return Math.round(min + normalizedValue * (max - min));
-  };
-
-  const currentAngle = valueToAngle(currentValue);
-  const needleX = centerX + Math.cos(currentAngle) * radius;
-  const needleY = centerY + Math.sin(currentAngle) * radius;
-
-  // Arc paths
-  const positiveArcPath = describeArc(centerX, centerY, radius, 0, 180);
-  const negativeArcPath = describeArc(centerX, centerY, radius, 180, 360);
-
-  // Tick marks and labels
-  const ticks = [];
-  for (let i = min; i <= max; i += 30) {
-    const angle = valueToAngle(i);
-    const tickStartX = centerX + Math.cos(angle) * (radius - strokeWidth);
-    const tickStartY = centerY + Math.sin(angle) * (radius - strokeWidth);
-    const tickEndX = centerX + Math.cos(angle) * (radius - strokeWidth * 0.5);
-    const tickEndY = centerY + Math.sin(angle) * (radius - strokeWidth * 0.5);
+  // Convert angle to axis value
+  const angleToAxis = (angle: number): number => {
+    let degrees = (angle * 180) / Math.PI
     
-    const labelX = centerX + Math.cos(angle) * (radius - strokeWidth * 1.5);
-    const labelY = centerY + Math.sin(angle) * (radius - strokeWidth * 1.5);
-
-    ticks.push({
-      x1: tickStartX,
-      y1: tickStartY,
-      x2: tickEndX,
-      y2: tickEndY,
-      labelX,
-      labelY,
-      value: i,
-      angle: angle * (180 / Math.PI)
-    });
+    // Normalize to 0-180 range for semi-circle
+    if (degrees < 0) degrees = 0
+    if (degrees > 180) degrees = 180
+    
+    return Math.round(degrees)
   }
 
-  function describeArc(x: number, y: number, radius: number, startAngle: number, endAngle: number) {
-    const start = polarToCartesian(x, y, radius, endAngle);
-    const end = polarToCartesian(x, y, radius, startAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-    return [
-      "M", start.x, start.y,
-      "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y
-    ].join(" ");
+  const svgWidth = size
+  const svgHeight = size * 0.625 // 5:8 ratio for semi-circle
+  const centerX = svgWidth / 2
+  const centerY = svgHeight - 50
+  const radius = size * 0.35
+
+  // Calculate needle position
+  const normalizedValue = normalizeAxis(currentValue)
+  const angleRad = axisToAngle(normalizedValue)
+  const arrowLength = radius - 5
+  const arrowX = centerX + Math.cos(angleRad) * arrowLength
+  const arrowY = centerY - Math.sin(angleRad) * arrowLength
+
+  // Generate semi-circular arc path
+  const generateArcPath = (r: number) => {
+    const startAngle = 0 // 0 degrees (bottom right)
+    const endAngle = Math.PI // 180 degrees (bottom left)
+    const startX = centerX + r * Math.cos(startAngle)
+    const startY = centerY - r * Math.sin(startAngle)
+    const endX = centerX + r * Math.cos(endAngle)
+    const endY = centerY - r * Math.sin(endAngle)
+    return `M ${startX} ${startY} A ${r} ${r} 0 0 0 ${endX} ${endY}`
   }
 
-  function polarToCartesian(centerX: number, centerY: number, radius: number, angleInDegrees: number) {
-    const angleInRadians = (angleInDegrees * Math.PI) / 180.0;
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians)
-    };
+  // Generate concentric arcs for grid
+  const concentricArcs = []
+  for (let i = 1; i <= 6; i++) {
+    const arcRadius = radius * (i / 6)
+    concentricArcs.push(
+      <path
+        key={`arc-${i}`}
+        d={generateArcPath(arcRadius)}
+        fill="none"
+        stroke={i === 6 ? "#999" : "#ccc"}
+        strokeWidth={i === 6 ? "1" : "0.8"}
+      />
+    )
+  }
+
+  // Generate radial lines
+  const radialLines = []
+  for (let deg = 0; deg <= 180; deg += 10) {
+    const angle = (deg * Math.PI) / 180
+    const isMainLine = deg % 30 === 0
+    const x = centerX + Math.cos(angle) * radius
+    const y = centerY - Math.sin(angle) * radius
+    
+    radialLines.push(
+      <line
+        key={`radial-${deg}`}
+        x1={centerX}
+        y1={centerY}
+        x2={x}
+        y2={y}
+        stroke={isMainLine ? "#333" : "#aaa"}
+        strokeWidth={isMainLine ? "1.8" : "1"}
+      />
+    )
+  }
+
+  // Generate degree markings and labels
+  const degreeMarkings = []
+  for (let deg = 0; deg <= 180; deg += 10) {
+    const angle = (deg * Math.PI) / 180
+    const isMainMark = deg % 30 === 0
+    const markLength = isMainMark ? 10 : 5
+    const markX1 = centerX + Math.cos(angle) * radius
+    const markY1 = centerY - Math.sin(angle) * radius
+    const markX2 = centerX + Math.cos(angle) * (radius - markLength)
+    const markY2 = centerY - Math.sin(angle) * (radius - markLength)
+    
+    degreeMarkings.push(
+      <line
+        key={`mark-${deg}`}
+        x1={markX1}
+        y1={markY1}
+        x2={markX2}
+        y2={markY2}
+        stroke="#000"
+        strokeWidth={isMainMark ? "3.5" : "2.5"}
+      />
+    )
+
+    // Outer scale labels (INT scale: 0-180)
+    const labelRadius = radius + 28
+    const labelX = centerX + Math.cos(angle) * labelRadius
+    const labelY = centerY - Math.sin(angle) * labelRadius
+    
+    degreeMarkings.push(
+      <text
+        key={`label-outer-${deg}`}
+        x={labelX}
+        y={labelY}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fontSize={isMainMark ? "22" : "16"}
+        fill="#000"
+        fontWeight={isMainMark ? "bold" : "600"}
+        fontFamily="Arial, sans-serif"
+      >
+        {deg}
+      </text>
+    )
+    
+    // Inner scale labels (TABO) - if dual scale is enabled
+    if (showDualScale) {
+      const taboValue = 180 - deg
+      const innerLabelRadius = radius - 38
+      const innerLabelX = centerX + Math.cos(angle) * innerLabelRadius
+      const innerLabelY = centerY - Math.sin(angle) * innerLabelRadius
+      
+      degreeMarkings.push(
+        <text
+          key={`label-inner-${deg}`}
+          x={innerLabelX}
+          y={innerLabelY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={isMainMark ? "18" : "14"}
+          fill={isMainMark ? "#444" : "#999"}
+          fontWeight={isMainMark ? "600" : "normal"}
+          fontFamily="Arial, sans-serif"
+        >
+          {taboValue}
+        </text>
+      )
+    }
   }
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (disabled) return;
-    setIsDragging(true);
-    updateValue(e);
-  };
+    if (disabled) return
+    setIsDragging(true)
+    updateValue(e)
+  }
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isDragging || disabled) return;
-    updateValue(e);
-  };
+    if (!isDragging || disabled) return
+    updateValue(e)
+  }
 
   const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+    setIsDragging(false)
+  }
 
   const updateValue = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!svgRef.current) return;
+    if (!svgRef.current) return
     
-    const rect = svgRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - centerX;
-    const y = e.clientY - rect.top - centerY;
+    const rect = svgRef.current.getBoundingClientRect()
+    const x = e.clientX - rect.left - centerX
+    const y = e.clientY - rect.top - centerY
     
-    let angle = Math.atan2(y, x);
-    let newValue = angleToValue(angle);
+    // Calculate distance from center to check if click is within protractor area
+    const distance = Math.sqrt(x * x + y * y)
+    if (distance > radius + 20 || distance < 10) {
+      return // Outside valid area
+    }
     
-    // Clamp value to min/max range
-    newValue = Math.max(min, Math.min(max, newValue));
+    // Calculate angle from center
+    let angle = Math.atan2(-y, x) // Negative y because SVG y increases downward
     
-    setCurrentValue(newValue);
-    onChange?.(newValue);
-  };
+    // Convert to degrees (0-180 range for semi-circle)
+    let degrees = (angle * 180) / Math.PI
+    
+    // Normalize to 0-180 range
+    if (degrees < 0) degrees = 0
+    if (degrees > 180) degrees = 180
+    
+    const newAxisValue = Math.round(degrees)
+    
+    setCurrentValue(newAxisValue)
+    onChange?.(newAxisValue)
+  }
 
   useEffect(() => {
-    const handleGlobalMouseUp = () => setIsDragging(false);
+    const handleGlobalMouseUp = () => setIsDragging(false)
     const handleGlobalMouseMove = (e: MouseEvent) => {
-      if (!isDragging || disabled || !svgRef.current) return;
+      if (!isDragging || disabled || !svgRef.current) return
       
-      const rect = svgRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left - centerX;
-      const y = e.clientY - rect.top - centerY;
+      const rect = svgRef.current.getBoundingClientRect()
+      const x = e.clientX - rect.left - centerX
+      const y = e.clientY - rect.top - centerY
       
-      let angle = Math.atan2(y, x);
-      let newValue = angleToValue(angle);
+      // Calculate distance from center
+      const distance = Math.sqrt(x * x + y * y)
+      if (distance > radius + 20 || distance < 10) {
+        return // Outside valid area
+      }
       
-      newValue = Math.max(min, Math.min(max, newValue));
+      let angle = Math.atan2(-y, x)
+      let degrees = (angle * 180) / Math.PI
       
-      setCurrentValue(newValue);
-      onChange?.(newValue);
-    };
+      if (degrees < 0) degrees = 0
+      if (degrees > 180) degrees = 180
+      
+      const newAxisValue = Math.round(degrees)
+      
+      setCurrentValue(newAxisValue)
+      onChange?.(newAxisValue)
+    }
 
     if (isDragging) {
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp)
+      document.addEventListener('mousemove', handleGlobalMouseMove)
     }
 
     return () => {
-      document.removeEventListener('mouseup', handleGlobalMouseUp);
-      document.removeEventListener('mousemove', handleGlobalMouseMove);
-    };
-  }, [isDragging, disabled, min, max, onChange]);
+      document.removeEventListener('mouseup', handleGlobalMouseUp)
+      document.removeEventListener('mousemove', handleGlobalMouseMove)
+    }
+  }, [isDragging, disabled, onChange])
 
   return (
     <div className="flex flex-col items-center space-y-2">
       <svg
         ref={svgRef}
-        width={size}
-        height={size}
+        width={svgWidth}
+        height={svgHeight}
+        viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+        preserveAspectRatio="xMidYMid meet"
         className={`cursor-pointer ${disabled ? 'opacity-50' : ''}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        style={{ userSelect: 'none' }}
       >
-        {/* Negative arc (top) */}
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="14"
+            markerHeight="14"
+            refX="12"
+            refY="7"
+            orient="auto"
+          >
+            <polygon
+              points="0 0, 14 7, 0 14"
+              fill="#2563eb"
+            />
+          </marker>
+        </defs>
+
+        {/* Background */}
+        <rect width={svgWidth} height={svgHeight} fill="white" />
+        
+        {/* Concentric arcs */}
+        {concentricArcs}
+        
+        {/* Radial lines */}
+        {radialLines}
+        
+        {/* Outer semi-circular arc - main border */}
         <path
-          d={negativeArcPath}
+          d={generateArcPath(radius)}
           fill="none"
-          stroke="#ef4444"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          opacity={0.8}
+          stroke="#000"
+          strokeWidth="3"
         />
         
-        {/* Positive arc (bottom) */}
-        <path
-          d={positiveArcPath}
-          fill="none"
-          stroke="#22c55e"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          opacity={0.8}
-        />
-
-        {/* Tick marks */}
-        {ticks.map((tick, index) => (
-          <g key={index}>
-            <line
-              x1={tick.x1}
-              y1={tick.y1}
-              x2={tick.x2}
-              y2={tick.y2}
-              stroke="#374151"
-              strokeWidth={2}
-            />
-            <text
-              x={tick.labelX}
-              y={tick.labelY}
-              fill="#374151"
-              fontSize={size * 0.08}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              transform={`rotate(${tick.angle}, ${tick.labelX}, ${tick.labelY})`}
-            >
-              {tick.value}
-            </text>
-          </g>
-        ))}
-
-        {/* Center circle */}
+        {/* Degree markings */}
+        {degreeMarkings}
+        
+        {/* Center point */}
         <circle
           cx={centerX}
           cy={centerY}
-          r={strokeWidth * 0.8}
-          fill="#1f2937"
+          r="6"
+          fill="#000"
+          stroke="#fff"
+          strokeWidth="2"
         />
-
-        {/* Needle */}
+        
+        {/* Arrow pointing to axis value */}
         <line
           x1={centerX}
           y1={centerY}
-          x2={needleX}
-          y2={needleY}
-          stroke="#dc2626"
-          strokeWidth={3}
-          strokeLinecap="round"
-          className={`transition-none ${isDragging ? 'stroke-red-600' : ''}`}
+          x2={arrowX}
+          y2={arrowY}
+          stroke="#2563eb"
+          strokeWidth="6"
+          markerEnd="url(#arrowhead)"
+          style={{ pointerEvents: 'none' }}
         />
-
-        {/* Needle tip */}
-        <circle
-          cx={needleX}
-          cy={needleY}
-          r={strokeWidth * 0.3}
-          fill="#dc2626"
-        />
+        
+        {/* 0° label below the diagram at center */}
+        <text
+          x={centerX}
+          y={centerY + 45}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize="22"
+          fill="#333"
+          fontFamily="Arial, sans-serif"
+          fontWeight="600"
+        >
+          0°
+        </text>
+        
+        {/* Notation labels */}
+        {notation === 'INT' && (
+          <text
+            x={centerX + radius + 30}
+            y={centerY + 15}
+            fontSize="22"
+            fill="#000"
+            fontWeight="700"
+            fontFamily="Arial, sans-serif"
+            textAnchor="start"
+          >
+            INT.
+          </text>
+        )}
+        
+        {notation === 'TABO' && (
+          <text
+            x={centerX - radius - 30}
+            y={centerY + 15}
+            fontSize="22"
+            fill="#000"
+            fontWeight="700"
+            fontFamily="Arial, sans-serif"
+            textAnchor="end"
+          >
+            TABO
+          </text>
+        )}
       </svg>
       
       <div className="text-center">
-        <div className="text-2xl font-bold text-gray-800">{currentValue}°</div>
-        <div className="text-sm text-gray-500">Axis Value</div>
+        <div className="text-2xl font-bold text-gray-800">{normalizedValue}°</div>
+        <div className="text-sm text-gray-500">
+          {notation === 'INT' ? 'International System' : 'TABO System'}
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default AxisDiagram;

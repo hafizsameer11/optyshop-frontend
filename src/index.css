@@ -6,14 +6,19 @@
         margin: 0 !important;
         padding: 0 !important;
         min-height: 100vh !important;
+        height: auto !important;
         overflow-x: hidden !important;
+        overflow-y: auto !important;
         scroll-behavior: smooth !important;
     }
     
     #root {
         min-height: 100vh !important;
+        height: auto !important;
         display: flex !important;
         flex-direction: column !important;
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
     }
     
     * {
@@ -24,6 +29,29 @@
 /* Prevent content cutoff in main sections */
 main, section {
     scroll-margin-top: 0 !important;
+    overflow: visible !important;
+}
+
+/* Fix page wrapper to prevent cutoff */
+.min-h-screen {
+    min-height: 100vh !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Ensure containers don't cut off content */
+.container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl {
+    overflow: visible !important;
+}
+
+/* Fix flex layouts that might cause cutoff */
+.flex {
+    overflow: visible !important;
+}
+
+/* Fix grid layouts that might cause cutoff */
+.grid {
+    overflow: visible !important;
 }
 
 /* Ensure proper spacing for fixed headers */

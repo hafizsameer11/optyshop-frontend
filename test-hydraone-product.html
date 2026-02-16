@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test HydraOne DAILY Product</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ccc;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test: HydraOne DAILY Product Page</h1>
+    
+    <div class="status info">
+        <strong>Testing:</strong> Loading HydraOne DAILY product page to verify "Configurations Unavailable" banner is fixed.
+    </div>
+    
+    <div class="status success">
+        <strong>Expected Result:</strong> The contact lens form should be visible with default values (Base Curve: 8.5, Diameter: 14.2, Power: 0.00) and no "Configurations Unavailable" banner.
+    </div>
+    
+    <iframe src="http://localhost:5173/product/hydraone-daily"></iframe>
+    
+    <script>
+        // Log when page loads
+        window.addEventListener('load', function() {
+            console.log('Test page loaded successfully');
+        });
+        
+        // Check if iframe loads
+        const iframe = document.querySelector('iframe');
+        iframe.addEventListener('load', function() {
+            console.log('Product page iframe loaded');
+        });
+        
+        iframe.addEventListener('error', function() {
+            console.error('Failed to load product page iframe');
+        });
+    </script>
+</body>
+</html>
