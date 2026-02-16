@@ -2913,7 +2913,7 @@ const ProductDetail = () => {
     // NOW we can do conditional returns AFTER all hooks have been called
     if (loading) {
         return (
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen product-detail-container">
                 <Navbar />
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
@@ -2928,7 +2928,7 @@ const ProductDetail = () => {
 
     if (!product) {
         return (
-            <div className="bg-white min-h-screen">
+            <div className="bg-white min-h-screen product-detail-container">
                 <Navbar />
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
@@ -3361,7 +3361,7 @@ const ProductDetail = () => {
     }
 
     return (
-        <div className="bg-white min-h-screen">
+        <div className="bg-white min-h-screen product-detail-container">
             <Navbar />
 
             {/* DEBUG SECTION - TEMPORARY */}

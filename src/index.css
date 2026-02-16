@@ -54,6 +54,36 @@ main, section {
     overflow: visible !important;
 }
 
+/* Exception for product images and containers that need overflow control */
+.product-image-container,
+.aspect-square,
+.aspect-video {
+    overflow: hidden !important;
+}
+
+/* Product detail page specific fixes */
+.product-detail-container {
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+
+/* Fix product gallery and image sections */
+.product-gallery,
+.product-image-gallery {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+}
+
+/* Ensure product content sections expand properly */
+.product-content,
+.product-info,
+.product-description {
+    overflow: visible !important;
+    height: auto !important;
+}
+
 /* Ensure proper spacing for fixed headers */
 .navbar-fixed {
     padding-top: 0 !important;
