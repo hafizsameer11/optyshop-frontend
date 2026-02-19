@@ -2647,7 +2647,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden border-2 border-gray-800 shadow-2xl">
+      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden border-2 border-gray-800 shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-3xl font-bold text-gray-900">{product.name}</h2>
@@ -2663,11 +2663,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           )}
         </div>
 
-        <div className="h-[calc(90vh-80px)] overflow-hidden">
+        <div className="h-[calc(90vh-80px)] overflow-y-auto overflow-x-hidden">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 items-start h-full overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 items-start h-full">
             {/* Left: Order Summary */}
-            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
+            <div className="lg:col-span-1 flex flex-col h-full">
               <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
                 <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -3217,7 +3217,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </div>
 
             {/* Right: Customization Options */}
-            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden min-w-0">
+            <div className="lg:col-span-1 flex flex-col h-full min-w-0">
               {currentStep === 'lens_type' && (
                 <LensTypeSelectionStep
                   lensSelection={lensSelection}
