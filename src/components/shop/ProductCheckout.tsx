@@ -2647,7 +2647,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden border-2 border-gray-800 shadow-2xl">
+      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden border-2 border-gray-800 shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-3xl font-bold text-gray-900">{product.name}</h2>
@@ -2665,7 +2665,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
         <div className="h-[calc(90vh-80px)] overflow-hidden">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start h-full overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 items-start h-full overflow-hidden">
             {/* Left: Order Summary */}
             <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
               <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
@@ -2853,13 +2853,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </div>
 
             {/* Middle: Product Image */}
-            <div className="lg:col-span-1 flex flex-col flex-shrink-0">
+            <div className="lg:col-span-1 flex flex-col flex-shrink-0 overflow-hidden">
               <div
                 ref={imageContainerRef}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
                 className="bg-gray-100 rounded-lg overflow-hidden relative cursor-crosshair group/preview"
-                style={{ height: '500px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem' }}
+                style={{ height: '400px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem' }}
               >
                 {/* Debug: Log the actual image URL being used */}
                 {(() => {
@@ -3217,7 +3217,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </div>
 
             {/* Right: Customization Options */}
-            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
+            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden min-w-0">
               {currentStep === 'lens_type' && (
                 <LensTypeSelectionStep
                   lensSelection={lensSelection}
@@ -3450,11 +3450,11 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-w-0">
       <h3 className="text-xl font-bold text-gray-900 mb-4 flex-shrink-0">Select Lens Type</h3>
 
       <div 
-        className="flex-1 pr-2 space-y-3 overflow-y-auto custom-scrollbar lens-type-scrollbar" 
+        className="flex-1 pr-2 space-y-3 overflow-y-auto custom-scrollbar lens-type-scrollbar min-w-0" 
         style={{ 
           minHeight: '300px',
           maxHeight: 'calc(100% - 60px)',
