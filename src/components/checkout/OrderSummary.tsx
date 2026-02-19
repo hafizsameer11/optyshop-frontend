@@ -157,7 +157,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
       
       {/* Order Items */}
-      <div className="space-y-3 mb-6">
+      <div className="space-y-3 mb-6 max-h-[400px] overflow-y-auto custom-scrollbar">
         {items
           .filter(item => item.type !== 'shipping' && item.type !== 'discount')
           .map((item) => (
@@ -193,7 +193,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
             {shippingMethods.map((method) => (
               <label
                 key={method.id}

@@ -2663,11 +2663,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           )}
         </div>
 
-        <div className="h-[calc(90vh-80px)]">
+        <div className="h-[calc(90vh-80px)] overflow-hidden">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start h-full overflow-hidden">
             {/* Left: Order Summary */}
-            <div className="lg:col-span-1 flex flex-col">
+            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
               <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
                 <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto custom-scrollbar">
@@ -3217,7 +3217,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </div>
 
             {/* Right: Customization Options */}
-            <div className="lg:col-span-1 flex flex-col" style={{ height: 'calc(90vh - 140px)', maxHeight: 'calc(90vh - 140px)', overflow: 'visible' }}>
+            <div className="lg:col-span-1 flex flex-col h-full overflow-hidden">
               {currentStep === 'lens_type' && (
                 <LensTypeSelectionStep
                   lensSelection={lensSelection}
@@ -3456,7 +3456,11 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
       <div 
         className="flex-1 pr-2 space-y-3 overflow-y-auto custom-scrollbar lens-type-scrollbar" 
         style={{ 
-          minHeight: '300px'
+          minHeight: '300px',
+          maxHeight: 'calc(100% - 60px)',
+          overflowY: 'scroll !important',
+          scrollbarWidth: 'thin !important',
+          scrollbarColor: '#3b82f6 #f1f5f9 !important'
         }}
       >
         {lensTypeOptions.length > 0 ? (

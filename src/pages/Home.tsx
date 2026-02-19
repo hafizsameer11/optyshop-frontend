@@ -40,7 +40,7 @@ const Home: React.FC = () => {
     }, [location.hash])
 
     return (
-        <div className="bg-slate-950 text-white">
+        <div className="bg-slate-950 text-white w-full min-h-screen">
             {/* Navbar - Always shown (navbar itself is fixed positioned) */}
             <Navbar />
             
@@ -52,22 +52,26 @@ const Home: React.FC = () => {
                 height="60vh"
             />
             
-            <div className="container mx-auto px-4">
+            <div className="w-full">
                 <FlashOfferBanner />
             </div>
-            <SmallSlidingBanners />
-            <TrustedBrands />
-            <StatsHighlight />
-            <ShopCategories />
-            <LatestArrivals />
-            <LiveDemoSection />
-            <ErrorBoundary>
-                <Testimonials />
-            </ErrorBoundary>
-            <PurchasingJourneySection />
-            <UltraRealisticSection />
-            <Viewer3DSection />
-            <CompatibilitySection />
+            
+            <div className="w-full">
+                <SmallSlidingBanners />
+                <TrustedBrands />
+                <StatsHighlight />
+                <ShopCategories />
+                <LatestArrivals />
+                <LiveDemoSection />
+                <ErrorBoundary>
+                    <Testimonials />
+                </ErrorBoundary>
+                <PurchasingJourneySection />
+                <UltraRealisticSection />
+                <Viewer3DSection />
+                <CompatibilitySection />
+            </div>
+            
             <Footer />
         </div>
     )

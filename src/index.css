@@ -38,6 +38,7 @@
     opacity: 1 !important;
     max-height: 100% !important;
     height: 100% !important;
+    min-height: 300px !important;
 }
 
 /* Force scrollbar visibility in webkit browsers */
@@ -80,6 +81,11 @@
         overflow-x: hidden !important;
         overflow-y: auto !important;
         scroll-behavior: smooth !important;
+        width: 100% !important;
+        background-color: white !important;
+        position: relative !important;
+        left: 0 !important;
+        right: 0 !important;
     }
     
     #root {
@@ -90,12 +96,19 @@
         overflow-x: hidden !important;
         overflow-y: auto !important;
         width: 100% !important;
+        position: relative !important;
+        background-color: white !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     * {
         box-sizing: border-box !important;
     }
 }
+
 /* Prevent content cutoff in main sections */
 main, section {
     scroll-margin-top: 0 !important;
@@ -105,13 +118,6 @@ main, section {
 .min-h-screen {
     min-height: 100vh !important;
     height: auto !important;
-}
-
-/* Additional fix for pages that need to expand beyond viewport */
-body, #root, .min-h-screen {
-    height: auto !important;
-    min-height: 100vh !important;
-    max-height: none !important;
 }
 
 /* Exception for product images and containers that need overflow control */

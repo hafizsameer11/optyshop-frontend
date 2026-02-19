@@ -182,7 +182,7 @@ const Navbar: React.FC = () => {
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex items-center w-full max-w-[1920px] mx-auto py-1 md:py-1.5 px-2 md:px-3 gap-2 md:gap-3">
+            <div className="flex items-center justify-between w-full max-w-[1920px] mx-auto py-1 md:py-1.5 px-2 md:px-3 gap-2 md:gap-3">
                 {/* Logo */}
                 <Link to="/" className="flex items-center space-x-1 flex-shrink-0 group">
                     <div className="h-6 w-6 md:h-7 md:w-7 rounded-md flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-sm">
@@ -193,18 +193,12 @@ const Navbar: React.FC = () => {
                     </span>
                 </Link>
 
-                {/* Search Bar - Prominent and Centered */}
+                {/* Search Bar - Centered */}
                 <div 
-                    className="navbar-search-container relative flex-shrink" 
+                    className="navbar-search-container relative flex-1 max-w-2xl" 
                     ref={searchRef}
-                    style={{
-                        flex: '0 1 auto',
-                        maxWidth: '32rem',
-                        width: '100%',
-                        minWidth: '200px'
-                    }}
                 >
-                    <div className="relative w-full" style={{ width: '100%', maxWidth: '100%', minWidth: 0 }}>
+                    <div className="relative w-full">
                         <input
                             type="text"
                             placeholder="Search"

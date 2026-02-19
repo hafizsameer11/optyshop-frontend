@@ -603,6 +603,7 @@ const Products: React.FC = () => {
                             </p>
                         </div>
                     ) : (
+                        <div className="max-h-[80vh] overflow-y-auto pr-2">
                         <>
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 mb-8">
                                 {products && products.length > 0 && products.map((product) => (
@@ -669,6 +670,7 @@ const Products: React.FC = () => {
                                 </div>
                             )}
                         </>
+                        </div>
                     )}
                 </div>
             </section>
