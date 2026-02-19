@@ -3457,10 +3457,8 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
         className="flex-1 pr-2 space-y-3 overflow-y-auto custom-scrollbar lens-type-scrollbar min-w-0" 
         style={{ 
           minHeight: '300px',
-          maxHeight: 'calc(100% - 60px)',
-          overflowY: 'scroll !important',
-          scrollbarWidth: 'thin !important',
-          scrollbarColor: '#3b82f6 #f1f5f9 !important'
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#3b82f6 #f1f5f9'
         }}
       >
         {lensTypeOptions.length > 0 ? (
