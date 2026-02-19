@@ -2647,7 +2647,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden border-2 border-gray-800 shadow-2xl">
+      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto overflow-x-hidden border-2 border-gray-800 shadow-2xl">
         {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-gray-800 px-6 py-4 flex items-center justify-between z-10">
           <h2 className="text-3xl font-bold text-gray-900">{product.name}</h2>
