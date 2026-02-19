@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 import { getProductOptions, type LensType, type LensCoating, type Product } from '../../services/productsService'
 import {
   createPrescription,
@@ -119,6 +120,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
+
+  // Lock body scroll when checkout modal is open
+  useBodyScrollLock(true)
 
   // Store selected caliber information from product page
   const selectedCaliber = initialSelectedCaliber || null
@@ -2659,14 +2663,14 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           )}
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+        <div className="h-[calc(90vh-80px)]">
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 items-start">
             {/* Left: Order Summary */}
             <div className="lg:col-span-1 flex flex-col">
               <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
                 <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
-                <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto">
+                <div className="space-y-3 mb-4 max-h-[400px] overflow-y-auto custom-scrollbar">
                   {orderSummary.length === 0 ? (
                     <p className="text-sm text-gray-500">No items selected</p>
                   ) : (
@@ -2700,7 +2704,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                     <label className="block text-sm font-semibold text-gray-900 mb-3">
                       {t('common.shipping')}
                     </label>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                    <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar">
                       {shippingMethods.map((method) => (
                         <label
                           key={method.id}
@@ -3213,7 +3217,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
             </div>
 
             {/* Right: Customization Options */}
-            <div className="lg:col-span-1 flex flex-col overflow-hidden min-h-0">
+            <div className="lg:col-span-1 flex flex-col" style={{ height: 'calc(90vh - 140px)', maxHeight: 'calc(90vh - 140px)', overflow: 'visible' }}>
               {currentStep === 'lens_type' && (
                 <LensTypeSelectionStep
                   lensSelection={lensSelection}
@@ -3447,9 +3451,14 @@ const LensTypeSelectionStep: React.FC<LensTypeSelectionStepProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      <h3 className="text-xl font-bold text-gray-900 mb-4">Select Lens Type</h3>
+      <h3 className="text-xl font-bold text-gray-900 mb-4 flex-shrink-0">Select Lens Type</h3>
 
-      <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-3">
+      <div 
+        className="flex-1 pr-2 space-y-3 overflow-y-auto custom-scrollbar lens-type-scrollbar" 
+        style={{ 
+          minHeight: '300px'
+        }}
+      >
         {lensTypeOptions.length > 0 ? (
           lensTypeOptions.map((option) => {
             if (!option.id) {
@@ -3518,7 +3527,7 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
 }) => {
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white flex-1">
       {/* Header with back button */}
       <div className="flex items-center gap-2 mb-4">
         <button
@@ -3537,7 +3546,7 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
       <p className="text-sm text-gray-600 mb-6">Progressives (For two powers in same lenses)</p>
 
       {/* Progressive Options List */}
-      <div className="flex-1 overflow-y-auto pr-2 mb-6 space-y-3">
+      <div className="flex-1 overflow-y-auto pr-2 mb-6 space-y-3 custom-scrollbar lens-type-scrollbar" style={{ minHeight: '300px' }}>
         {progressiveOptionsLoading ? (
           <div className="text-center py-8 text-gray-500">
             <p className="mb-2">Loading progressive options from API...</p>
@@ -3680,7 +3689,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
     return `Index ${index}`
   }
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full flex-1">
       <div className="flex items-center gap-2 mb-4">
         <button
           onClick={onBack}
@@ -3693,7 +3702,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
         <h3 className="text-xl font-bold text-gray-900">Lens Thickness</h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-4">
+      <div className="flex-1 overflow-y-auto pr-2 mb-4 space-y-4 custom-scrollbar lens-type-scrollbar" style={{ minHeight: '300px' }}>
         <div className="space-y-3">
           {lensThicknessMaterials.length > 0 ? (
             lensThicknessMaterials.map((material) => {
@@ -4789,7 +4798,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
   return (
     <>
-      <div className="h-full flex flex-col min-h-0">
+      <div className="h-full flex flex-col flex-1">
       <div className="flex items-center gap-2 mb-4 flex-shrink-0">
         <button
           onClick={onBack}
@@ -4804,7 +4813,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2">
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar lens-type-scrollbar" style={{ minHeight: '300px' }}>
 
         {/* General Error Message */}
         {errors.general && (

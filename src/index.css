@@ -1,5 +1,74 @@
 @import "tailwindcss";
 
+/* Force visible scrollbar for checkout sections */
+.lens-type-scrollbar::-webkit-scrollbar {
+    width: 12px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.lens-type-scrollbar::-webkit-scrollbar-track {
+    background: #f1f5f9 !important;
+    border-radius: 10px !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.lens-type-scrollbar::-webkit-scrollbar-thumb {
+    background: #3b82f6 !important;
+    border-radius: 10px !important;
+    display: block !important;
+    visibility: visible !important;
+    min-height: 30px !important;
+    opacity: 1 !important;
+}
+
+.lens-type-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #2563eb !important;
+}
+
+.lens-type-scrollbar {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #3b82f6 #f1f5f9 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-height: 100% !important;
+    height: 100% !important;
+}
+
+/* Force scrollbar visibility in webkit browsers */
+.lens-type-scrollbar::-webkit-scrollbar {
+    -webkit-appearance: none !important;
+    width: 12px !important;
+}
+
+.lens-type-scrollbar::-webkit-scrollbar-thumb {
+    -webkit-appearance: none !important;
+    background: #3b82f6 !important;
+    border-radius: 10px !important;
+}
+
+/* Additional force for scrollbar visibility */
+.lens-type-scrollbar {
+    overflow: -moz-scrollbars-vertical !important;
+    overflow-y: scroll !important;
+}
+
+/* Ensure content is scrollable */
+.lens-type-scrollbar > * {
+    min-height: fit-content !important;
+}
+
+/* Force scrollbar to always be visible when content overflows */
+.lens-type-scrollbar {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
 /* Global layout fixes to prevent content cutoff */
 @layer base {
     html, body {
@@ -9,7 +78,7 @@
         height: auto !important;
         max-height: none !important;
         overflow-x: hidden !important;
-        overflow-y: visible !important;
+        overflow-y: auto !important;
         scroll-behavior: smooth !important;
     }
     
@@ -19,7 +88,7 @@
         display: flex !important;
         flex-direction: column !important;
         overflow-x: hidden !important;
-        overflow-y: visible !important;
+        overflow-y: auto !important;
         width: 100% !important;
     }
     
@@ -27,18 +96,15 @@
         box-sizing: border-box !important;
     }
 }
-
 /* Prevent content cutoff in main sections */
 main, section {
     scroll-margin-top: 0 !important;
-    overflow: visible !important;
 }
 
 /* Fix page wrapper to prevent cutoff */
 .min-h-screen {
     min-height: 100vh !important;
     height: auto !important;
-    overflow: visible !important;
 }
 
 /* Additional fix for pages that need to expand beyond viewport */
@@ -46,21 +112,6 @@ body, #root, .min-h-screen {
     height: auto !important;
     min-height: 100vh !important;
     max-height: none !important;
-}
-
-/* Ensure containers don't cut off content */
-.container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl {
-    overflow: visible !important;
-}
-
-/* Fix flex layouts that might cause cutoff */
-.flex {
-    overflow: visible !important;
-}
-
-/* Fix grid layouts that might cause cutoff */
-.grid {
-    overflow: visible !important;
 }
 
 /* Exception for product images and containers that need overflow control */
@@ -127,49 +178,6 @@ div > section:first-child,
     padding-top: 80px !important;
 }
 
-/* Ensure all sections can expand beyond viewport */
-section {
-    min-height: auto !important;
-    height: auto !important;
-    overflow: visible !important;
-}
-
-/* Universal page container fixes */
-.bg-slate-950,
-.bg-white,
-[class*="bg-"] {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-}
-
-/* Fix all direct children of page containers */
-div > div,
-section > div,
-main > div {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-}
-
-/* Ensure all page containers can expand fully */
-div[class*="container"],
-div[class*="page"],
-div[class*="wrapper"],
-div[class*="layout"] {
-    height: auto !important;
-    min-height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-}
-
-/* Universal fix for all elements */
-* {
-    max-height: none !important;
-}
-
 /* Exception for images and specific components that need height control */
 img,
 video,
@@ -225,9 +233,9 @@ select {
     scrollbar-width: none;  /* Firefox */
 }
 
-/* Custom scrollbar for language dropdown */
+/* Custom scrollbar for language dropdown and checkout sections */
 .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -238,10 +246,31 @@ select {
 .custom-scrollbar::-webkit-scrollbar-thumb {
     background: linear-gradient(to bottom, #06b6d4, #3b82f6);
     border-radius: 10px;
+    min-height: 20px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(to bottom, #0891b2, #2563eb);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(to bottom, #0e7490, #1d4ed8);
+}
+
+/* Ensure scrollbar is always visible for better UX */
+.custom-scrollbar {
+    scrollbar-width: thin !important;
+    scrollbar-color: #3b82f6 #f1f5f9 !important;
+}
+
+/* Force override any conflicting overflow settings for custom scrollbars */
+.custom-scrollbar * {
+    overflow: visible !important;
+}
+
+.custom-scrollbar {
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
 }
 
 /* Animations for language dropdown */
