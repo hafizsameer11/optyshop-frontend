@@ -118,11 +118,11 @@ const SmallSlidingBanners: React.FC = () => {
 
     if (loading) {
         return (
-            <section className="w-full py-6 md:py-8 bg-slate-950">
+            <section className="w-full py-6 md:py-8 bg-white">
                 <div className="w-[90%] mx-auto max-w-7xl">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-32 bg-gray-800 animate-pulse rounded-lg"></div>
+                            <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-lg"></div>
                         ))}
                     </div>
                 </div>
@@ -172,13 +172,13 @@ const SmallSlidingBanners: React.FC = () => {
                                                 {/* Removed gradient overlay for clean image display */}
                                             </>
                                         ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-blue-900 to-blue-800 flex items-center justify-center">
+                                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
                                                 <div className="text-center px-4">
-                                                    <h3 className="text-white font-bold text-sm md:text-base mb-1">
+                                                    <h3 className="text-gray-800 font-bold text-sm md:text-base mb-1">
                                                         {campaign.name}
                                                     </h3>
                                                     {campaign.description && (
-                                                        <p className="text-white/80 text-xs line-clamp-2">
+                                                        <p className="text-gray-600 text-xs line-clamp-2">
                                                             {campaign.description}
                                                         </p>
                                                     )}
