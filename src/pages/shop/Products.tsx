@@ -197,6 +197,7 @@ const Products: React.FC = () => {
             try {
                 const category = await getCategoryBySlug('eye-hygiene')
                 if (!isCancelled && category) {
+                    console.log('Eye-hygiene category found:', { id: category.id, name: category.name, slug: category.slug })
                     setEyeHygieneCategory(category)
                 }
             } catch (error) {
