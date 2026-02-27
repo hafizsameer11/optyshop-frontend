@@ -19,14 +19,15 @@ import {
     getSubcategoriesByCategoryId, 
     type Category 
 } from '../../services/categoriesService'
+import CategoryBanner from '../../components/home/CategoryBanner'
 import Campaigns from '../../components/home/Campaigns'
 import ProductCard from '../../components/products/ProductCard'
 import HeroSection from '../../components/shop/HeroSection'
 import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
 
 const Products: React.FC = () => {
-    const { t } = useTranslation()
-    const { translateCategory } = useCategoryTranslation()
+    const { } = useTranslation()
+    const { } = useCategoryTranslation()
     const [searchParams] = useSearchParams()
     const location = useLocation()
     const [products, setProducts] = useState<Product[]>([])
@@ -50,11 +51,14 @@ const Products: React.FC = () => {
         pages: 0
     })
 
-    // Category and subcategory from URL
-    const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
-        category: null,
-        subcategory: null
-    })
+    // Category and subcategory from URL - currently unused but kept for future functionality
+    // const [categoryInfo, setCategoryInfo] = useState<{ category: Category | null; subcategory: Category | null }>({
+    //     category: null,
+    //     subcategory: null
+    // })
+    
+    // Eye hygiene category info for banner
+    const [eyeHygieneCategory, setEyeHygieneCategory] = useState<Category | null>(null)
 
     // Category and subcategory filters
     const [selectedCategory, setSelectedCategory] = useState<string | number>('all')
@@ -139,7 +143,8 @@ const Products: React.FC = () => {
             }
 
             if (!isCancelled) {
-                setCategoryInfo({ category, subcategory })
+                // setCategoryInfo({ category, subcategory })
+                // Category info state is currently unused but kept for future functionality
             }
         }
 
@@ -183,6 +188,28 @@ const Products: React.FC = () => {
             isCancelled = true
         }
     }, [selectedCategory])
+
+    // Fetch eye-hygiene category for banner
+    useEffect(() => {
+        let isCancelled = false
+
+        const fetchEyeHygieneCategory = async () => {
+            try {
+                const category = await getCategoryBySlug('eye-hygiene')
+                if (!isCancelled && category) {
+                    setEyeHygieneCategory(category)
+                }
+            } catch (error) {
+                console.error('Error fetching eye-hygiene category:', error)
+            }
+        }
+
+        fetchEyeHygieneCategory()
+
+        return () => {
+            isCancelled = true
+        }
+    }, [])
 
     // Fetch products when filters change
     useEffect(() => {
@@ -457,8 +484,19 @@ const Products: React.FC = () => {
             {/* Hero Section */}
             <HeroSection />
 
-            {/* Campaigns Section - Show before hero section */}
-            <Campaigns position="shop" variant="compact" />
+            {/* Category-specific Banners Section */}
+            {currentSection === 'eye-hygiene' && eyeHygieneCategory && (
+                <CategoryBanner 
+                    categoryName={eyeHygieneCategory.name} 
+                    categoryId={eyeHygieneCategory.id}
+                    position="category_page"
+                />
+            )}
+            
+            {/* General Campaigns Section - Show for non-specific categories */}
+            {currentSection !== 'eye-hygiene' && (
+                <Campaigns position="shop" variant="compact" />
+            )}
 
 
             {/* Section Navigation */}
