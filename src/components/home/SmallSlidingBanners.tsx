@@ -139,7 +139,7 @@ const SmallSlidingBanners: React.FC = () => {
 
     return (
         <section 
-            className="w-full py-6 md:py-8 bg-slate-950"
+            className="w-full py-6 md:py-8 bg-white"
         >
             <div className="w-[90%] mx-auto max-w-7xl">
                 {/* Auto-moving banners carousel - continuous scroll like brands */}
