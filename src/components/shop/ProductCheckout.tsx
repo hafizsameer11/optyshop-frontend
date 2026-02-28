@@ -5182,7 +5182,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                           }`}
                       >
                         <option value="" className="text-gray-900">Select</option>
-                        {getOSAxisOptions().map(opt => (
+                        {getAxisOptions('left').map(opt => (
                           <option key={opt} value={opt} className="text-gray-900">{opt}</option>
                         ))}
                       </select>
