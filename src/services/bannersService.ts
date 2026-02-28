@@ -175,14 +175,8 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
           console.log('📋 No banners found in response');
         }
         
-        // If we got an empty response but have filters, try without filters as fallback (only once)
-        if (!_isFallback && (filters.page_type || filters.category_id || filters.sub_category_id)) {
-          if (import.meta.env.DEV) {
-            console.log('🔄 Trying fallback: fetch all banners without filters');
-          }
-          return await getBanners(null, true); // Recursive call without filters, with fallback flag
-        }
-        
+        // Return empty array - no fallback to all banners
+        // This ensures only category-specific banners are shown
         return [];
       }
 

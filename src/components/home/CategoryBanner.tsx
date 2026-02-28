@@ -63,7 +63,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                 let data: Banner[] = []
                 
                 if (position === 'sub_subcategory_page') {
-                    // For sub-subcategory pages, try to get banners specific to this level
+                    // For sub-subcategory pages, only get banners specific to this level
                     console.log('Trying sub-subcategory specific banners...')
                     data = await fetchBannersWithThrottle({
                         page_type: 'sub_subcategory',
@@ -71,29 +71,8 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                         sub_category_id: subcategoryId
                     }, `sub_sub_${categoryId}_${subcategoryId}`)
                     console.log('Sub-subcategory specific banners result:', data?.length || 0)
-                    
-                    // If no specific banners found, try subcategory banners as fallback
-                    if (!data || data.length === 0) {
-                        console.log('Trying subcategory banners as fallback...')
-                        data = await fetchBannersWithThrottle({
-                            page_type: 'subcategory',
-                            category_id: categoryId,
-                            sub_category_id: subcategoryId
-                        }, `sub_${categoryId}_${subcategoryId}`)
-                        console.log('Subcategory fallback banners result:', data?.length || 0)
-                    }
-                    
-                    // If still no banners, fallback to general category banners
-                    if (!data || data.length === 0) {
-                        console.log('Trying general category banners as final fallback...')
-                        data = await fetchBannersWithThrottle({
-                            page_type: 'category',
-                            category_id: categoryId
-                        }, `cat_${categoryId}`)
-                        console.log('General category fallback banners result:', data?.length || 0)
-                    }
                 } else if (position === 'subcategory_page') {
-                    // For subcategory pages, try to get banners specific to this level
+                    // For subcategory pages, only get banners specific to this level
                     console.log('Trying subcategory specific banners...')
                     data = await fetchBannersWithThrottle({
                         page_type: 'subcategory',
@@ -101,18 +80,8 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                         sub_category_id: subcategoryId
                     }, `sub_${categoryId}_${subcategoryId}`)
                     console.log('Subcategory specific banners result:', data?.length || 0)
-                    
-                    // If no specific banners found, fallback to general category banners
-                    if (!data || data.length === 0) {
-                        console.log('Trying general category banners as fallback...')
-                        data = await fetchBannersWithThrottle({
-                            page_type: 'category',
-                            category_id: categoryId
-                        }, `cat_${categoryId}`)
-                        console.log('General category fallback banners result:', data?.length || 0)
-                    }
                 } else {
-                    // For main category pages, get general category banners
+                    // For main category pages, only get general category banners
                     console.log('Trying main category page banners...')
                     data = await fetchBannersWithThrottle({
                         page_type: 'category',
