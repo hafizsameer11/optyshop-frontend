@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { getProductOptions, type ProductOptions } from '../../services/productsService'
 
 interface ComprehensiveFiltersProps {
+    isFilterPanelVisible?: boolean
+    setIsFilterPanelVisible?: (visible: boolean) => void
     onFilterChange: (filters: {
         gender?: string
         minPrice?: number
@@ -30,6 +32,8 @@ interface ComprehensiveFiltersProps {
 }
 
 const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
+    isFilterPanelVisible: externalIsFilterPanelVisible,
+    setIsFilterPanelVisible: externalSetIsFilterPanelVisible,
     onFilterChange,
     availableColors = [],
     availableBrands = [],
@@ -45,6 +49,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [isExpanded, setIsExpanded] = useState(false)
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
+    
+    // Use external state if provided, otherwise use internal state
+    const isFilterPanelVisible = externalIsFilterPanelVisible ?? false
+    const setIsFilterPanelVisible = externalSetIsFilterPanelVisible ?? (() => {})
     
     // Filter states
     const [minPrice, setMinPrice] = useState<string>('')
@@ -171,7 +179,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
             {/* Filter Toggle Button - Always Visible */}
             <div className="mb-4">
                 <button
-                    onClick={() => setIsMobileFilterOpen(true)}
+                    onClick={() => setIsFilterPanelVisible(!isFilterPanelVisible)}
                     className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,9 +194,14 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                 </button>
             </div>
 
-            {/* Desktop Sidebar - Hidden by Default */}
+            {/* Desktop Sidebar - Hidden by Default, Slides from Left */}
             <div className={`hidden lg:block ${className}`}>
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className={`bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-300 ease-in-out overflow-hidden ${
+                    isFilterPanelVisible ? 'max-w-xs opacity-100' : 'max-w-0 opacity-0'
+                }`}>
+                    <div className={`w-64 transition-transform duration-300 ease-in-out ${
+                        isFilterPanelVisible ? 'translate-x-0' : '-translate-x-full'
+                    }`}>
                     {/* Header */}
                     <div className="p-3 border-b border-gray-100">
                         {/* Filter Title */}
@@ -453,10 +466,11 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             )}
                         </div>
                     )}
+                    </div>
                 </div>
             </div>
 
-            {/* Filter Drawer - Slides from Right (Both Mobile and Desktop) */}
+            {/* Filter Drawer - Slides from Left (Both Mobile and Desktop) */}
             <div className={`fixed inset-0 z-50 ${isMobileFilterOpen ? 'block' : 'hidden'}`}>
                 {/* Backdrop */}
                 <div 
@@ -465,8 +479,8 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                 />
                 
                 {/* Filter Drawer */}
-                <div className={`absolute top-0 right-0 h-full w-72 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
-                    isMobileFilterOpen ? 'translate-x-0' : 'translate-x-full'
+                <div className={`absolute top-0 left-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+                    isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}>
                     {/* Drawer Header */}
                     <div className="p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
