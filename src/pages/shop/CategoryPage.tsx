@@ -20,7 +20,6 @@ import CategoryBanner from '../../components/home/CategoryBanner'
 import CategoryNavigation from '../../components/shop/CategoryNavigation'
 import ProductCard from '../../components/products/ProductCard'
 import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
-import BannerDebug from '../../components/debug/BannerDebug'
 
 // Validation function to ensure products match expected category/subcategory
 const validateProductFiltering = (products: Product[], categoryInfo: {
@@ -804,167 +803,164 @@ const CategoryPage: React.FC = () => {
                 }}
             />
             
-            {/* Comprehensive Filters */}
+            {/* Main Content Area with Sidebar */}
             <div className="max-w-screen-2xl mx-auto px-4 mb-3">
-                <ComprehensiveFilters
-                    onFilterChange={(filters) => {
-                        // Apply filters from comprehensive filter component
-                        if (filters.gender !== undefined) {
-                            setGender(filters.gender)
-                            setCurrentPage(1)
-                        }
-                        if (filters.minPrice !== undefined) {
-                            setMinPrice(filters.minPrice)
-                            setCurrentPage(1)
-                        }
-                        if (filters.maxPrice !== undefined) {
-                            setMaxPrice(filters.maxPrice)
-                            setCurrentPage(1)
-                        }
-                        if (filters.sortBy !== undefined) {
-                            setSortBy(filters.sortBy)
-                            setCurrentPage(1)
-                        }
-                        if (filters.color !== undefined) {
-                            setSelectedColor(filters.color)
-                            setCurrentPage(1)
-                        }
-                        if (filters.brand !== undefined) {
-                            setBrand(filters.brand)
-                            setCurrentPage(1)
-                        }
-                        if (filters.lensType !== undefined) {
-                            setLensType(filters.lensType)
-                            setCurrentPage(1)
-                        }
-                        if (filters.lensCoating !== undefined) {
-                            setLensCoating(filters.lensCoating)
-                            setCurrentPage(1)
-                        }
-                        if (filters.inStock !== undefined) {
-                            setInStockOnly(filters.inStock)
-                            setCurrentPage(1)
-                        }
-                        if (filters.search !== undefined) {
-                            if (import.meta.env.DEV) {
-                                console.log('🔍 CategoryPage received search term:', filters.search)
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Filters Sidebar */}
+                    <div className="w-full lg:w-80 flex-shrink-0">
+                        <ComprehensiveFilters
+                            onFilterChange={(filters) => {
+                                // Apply filters from comprehensive filter component
+                                if (filters.gender !== undefined) {
+                                    setGender(filters.gender)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.minPrice !== undefined) {
+                                    setMinPrice(filters.minPrice)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.maxPrice !== undefined) {
+                                    setMaxPrice(filters.maxPrice)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.sortBy !== undefined) {
+                                    setSortBy(filters.sortBy)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.color !== undefined) {
+                                    setSelectedColor(filters.color)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.brand !== undefined) {
+                                    setBrand(filters.brand)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.lensType !== undefined) {
+                                    setLensType(filters.lensType)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.lensCoating !== undefined) {
+                                    setLensCoating(filters.lensCoating)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.inStock !== undefined) {
+                                    setInStockOnly(filters.inStock)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.search !== undefined) {
+                                    if (import.meta.env.DEV) {
+                                        console.log('🔍 CategoryPage received search term:', filters.search)
+                                    }
+                                    setSearchTerm(filters.search)
+                                    setCurrentPage(1)
+                                }
+                            }}
+                            availableColors={availableColors}
+                            availableBrands={availableBrands}
+                            availableLensTypes={availableLensTypes}
+                            availableLensCoatings={availableLensCoatings}
+                            categoryLevel={
+                                categoryInfo.subSubcategory ? 'subsubcategory' :
+                                categoryInfo.subcategory ? 'subcategory' : 'category'
                             }
-                            setSearchTerm(filters.search)
-                            setCurrentPage(1)
-                        }
-                    }}
-                    availableColors={availableColors}
-                    availableBrands={availableBrands}
-                    availableLensTypes={availableLensTypes}
-                    availableLensCoatings={availableLensCoatings}
-                    categoryLevel={
-                        categoryInfo.subSubcategory ? 'subsubcategory' :
-                        categoryInfo.subcategory ? 'subcategory' : 'category'
-                    }
-                />
-            </div>
-
-            {/* Debug Banner Information - Only in development */}
-            {import.meta.env.DEV && categoryInfo.category && (
-                <div className="max-w-screen-2xl mx-auto px-4 mb-8">
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <h3 className="text-lg font-semibold text-yellow-800 mb-2">Banner Debug Information</h3>
-                        <BannerDebug />
+                            className="sticky top-24"
+                        />
                     </div>
-                </div>
-            )}
 
-            {/* Page Content */}
-            <section className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-1 px-4 sm:px-6 lg:px-8">
-                <div className="w-full max-w-screen-2xl mx-auto">
-                    
-                    {loading ? (
-                        <div className="text-center py-16">
-                            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-950"></div>
-                            <p className="mt-6 text-xl text-gray-600 font-medium">Loading products...</p>
-                        </div>
-                    ) : !products || products.length === 0 ? (
-                        <div className="text-center py-16">
-                            <div className="max-w-lg mx-auto">
-                                <svg className="mx-auto h-32 w-32 text-gray-400 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                                </svg>
-                                <p className="text-xl md:text-2xl text-gray-600 mb-4 font-semibold">
-                                    {categoryInfo.subSubcategory 
-                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subSubcategory) })
-                                        : categoryInfo.subcategory 
-                                        ? t('shop.noProducts', { category: translateCategory(categoryInfo.subcategory) })
-                                        : t('shop.noProducts', { category: translateCategory(categoryInfo.category) })}
-                                </p>
-                                <p className="text-base text-gray-500 mb-8">
-                                    {categoryInfo.subSubcategory 
-                                        ? "This sub-subcategory doesn't have any products yet."
-                                        : categoryInfo.subcategory 
-                                        ? "This subcategory doesn't have any products yet."
-                                        : "This category doesn't have any products yet."}
-                                </p>
-                                {categoryInfo.subSubcategory ? (
-                                    <Link 
-                                        to={`/category/${categoryInfo.category?.slug || ''}/${categoryInfo.subcategory?.slug || ''}`}
-                                        className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
-                                    >
-                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
-                                    </Link>
-                                ) : categoryInfo.subcategory ? (
-                                    <Link 
-                                        to={`/category/${categoryInfo.category?.slug || ''}`}
-                                        className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
-                                    >
-                                        {t('shop.viewProducts', { category: translateCategory(categoryInfo.category || { name: '', slug: '' }) })}
-                                    </Link>
-                                ) : null}
-                                <Link 
-                                    to="/shop" 
-                                    className="inline-block px-8 py-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 transform hover:scale-105 font-semibold"
-                                >
-                                    Browse All Products
-                                </Link>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
-                                {products.map((product) => (
-                                    <ProductCard key={product.id} product={product} />
-                                ))}
-                            </div>
+                    {/* Products Content */}
+                    <div className="flex-1">
+                        {/* Page Content */}
+                        <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-1 px-4 sm:px-6 lg:px-8 rounded-lg">
                             
-                            {/* Pagination */}
-                            {pagination.pages > 1 && (
-                                <div className="flex justify-center items-center gap-4 mt-12">
-                                    <button
-                                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                        disabled={currentPage === 1}
-                                        className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 shadow-md"
-                                    >
-                                        ← Previous
-                                    </button>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        <span className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm">
-                                            {currentPage}
-                                        </span>
-                                        <span className="text-gray-500 font-medium">of {pagination.pages}</span>
+                            {loading ? (
+                                <div className="text-center py-16">
+                                    <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-950"></div>
+                                    <p className="mt-6 text-xl text-gray-600 font-medium">Loading products...</p>
+                                </div>
+                            ) : !products || products.length === 0 ? (
+                                <div className="text-center py-16">
+                                    <div className="max-w-lg mx-auto">
+                                        <svg className="mx-auto h-32 w-32 text-gray-400 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                        </svg>
+                                        <p className="text-xl md:text-2xl text-gray-600 mb-4 font-semibold">
+                                            {categoryInfo.subSubcategory 
+                                                ? t('shop.noProducts', { category: translateCategory(categoryInfo.subSubcategory) })
+                                                : categoryInfo.subcategory 
+                                                ? t('shop.noProducts', { category: translateCategory(categoryInfo.subcategory) })
+                                                : t('shop.noProducts', { category: translateCategory(categoryInfo.category) })}
+                                        </p>
+                                        <p className="text-base text-gray-500 mb-8">
+                                            {categoryInfo.subSubcategory 
+                                                ? "This sub-subcategory doesn't have any products yet."
+                                                : categoryInfo.subcategory 
+                                                ? "This subcategory doesn't have any products yet."
+                                                : "This category doesn't have any products yet."}
+                                        </p>
+                                        {categoryInfo.subSubcategory ? (
+                                            <Link 
+                                                to={`/category/${categoryInfo.category?.slug || ''}/${categoryInfo.subcategory?.slug || ''}`}
+                                                className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
+                                            >
+                                                {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
+                                            </Link>
+                                        ) : categoryInfo.subcategory ? (
+                                            <Link 
+                                                to={`/category/${categoryInfo.category?.slug || ''}`}
+                                                className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
+                                            >
+                                                {t('shop.viewProducts', { category: translateCategory(categoryInfo.category || { name: '', slug: '' }) })}
+                                            </Link>
+                                        ) : null}
+                                        <Link 
+                                            to="/shop" 
+                                            className="inline-block px-8 py-4 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200 transform hover:scale-105 font-semibold"
+                                        >
+                                            Browse All Products
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
+                                        {products.map((product) => (
+                                            <ProductCard key={product.id} product={product} />
+                                        ))}
                                     </div>
                                     
-                                    <button
-                                        onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
-                                        disabled={currentPage === pagination.pages}
-                                        className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 shadow-md"
-                                    >
-                                        Next →
-                                    </button>
-                                </div>
+                                    {/* Pagination */}
+                                    {pagination.pages > 1 && (
+                                        <div className="flex justify-center items-center gap-4 mt-12">
+                                            <button
+                                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                                disabled={currentPage === 1}
+                                                className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 shadow-md"
+                                            >
+                                                ← Previous
+                                            </button>
+                                            
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold text-sm">
+                                                    {currentPage}
+                                                </span>
+                                                <span className="text-gray-500 font-medium">of {pagination.pages}</span>
+                                            </div>
+                                            
+                                            <button
+                                                onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
+                                                disabled={currentPage === pagination.pages}
+                                                className="px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 transform hover:scale-105 shadow-md"
+                                            >
+                                                Next →
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                             )}
-                        </>
-                    )}
+                        </div>
+                    </div>
                 </div>
-            </section>
+            </div>
             <Footer />
         </div>
     )

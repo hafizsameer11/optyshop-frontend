@@ -132,7 +132,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
 
     if (loading) {
         return (
-            <div className="w-full h-24 md:h-32 lg:h-40 bg-gray-200 animate-pulse rounded-lg mb-6">
+            <div className="w-full h-12 md:h-16 lg:h-20 bg-gray-200 animate-pulse rounded-lg mb-3">
                 <div className="text-gray-400 text-center py-2">Loading banner...</div>
             </div>
         )
@@ -227,9 +227,9 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     }
 
     return (
-        <div className="relative w-full mb-6 rounded-lg overflow-hidden shadow-md">
+        <div className="relative w-full mb-3 rounded-lg overflow-hidden shadow-md">
             {/* Banner Slider Container */}
-            <div className="relative overflow-hidden w-full h-24 md:h-32 lg:h-40">
+            <div className="relative overflow-hidden w-full h-12 md:h-16 lg:h-20">
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"

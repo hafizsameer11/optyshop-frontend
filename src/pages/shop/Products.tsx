@@ -554,165 +554,165 @@ const Products: React.FC = () => {
             </section>
 
             
-            {/* Comprehensive Filters */}
+            {/* Main Content Area with Sidebar */}
             <div className="w-[90%] mx-auto max-w-screen-2xl px-4 sm:px-6 mb-6">
-                <ComprehensiveFilters
-                    onFilterChange={(filters) => {
-                        // Apply filters from comprehensive filter component
-                        if (filters.gender !== undefined) {
-                            setGender(filters.gender)
-                            setCurrentPage(1)
-                        }
-                        if (filters.minPrice !== undefined) {
-                            setMinPrice(filters.minPrice)
-                            setCurrentPage(1)
-                        }
-                        if (filters.maxPrice !== undefined) {
-                            setMaxPrice(filters.maxPrice)
-                            setCurrentPage(1)
-                        }
-                        if (filters.sortBy !== undefined) {
-                            setSortBy(filters.sortBy)
-                            setCurrentPage(1)
-                        }
-                        if (filters.color !== undefined) {
-                            setSelectedColor(filters.color)
-                            setCurrentPage(1)
-                        }
-                        if (filters.brand !== undefined) {
-                            setBrand(filters.brand)
-                            setCurrentPage(1)
-                        }
-                        if (filters.lensType !== undefined) {
-                            setLensType(filters.lensType)
-                            setCurrentPage(1)
-                        }
-                        if (filters.lensCoating !== undefined) {
-                            setLensCoating(filters.lensCoating)
-                            setCurrentPage(1)
-                        }
-                        if (filters.inStock !== undefined) {
-                            setInStockOnly(filters.inStock)
-                            setCurrentPage(1)
-                        }
-                        if (filters.search !== undefined) {
-                            if (import.meta.env.DEV) {
-                                console.log('🔍 Products.tsx received search term:', filters.search)
-                            }
-                            setSearchTerm(filters.search)
-                            setCurrentPage(1)
-                        }
-                        if (filters.category !== undefined) {
-                            setSelectedCategory(filters.category)
-                            setCurrentPage(1)
-                        }
-                        if (filters.subcategory !== undefined) {
-                            setSelectedSubcategory(filters.subcategory)
-                            setCurrentPage(1)
-                        }
-                    }}
-                    availableColors={availableColors}
-                    availableBrands={availableBrands}
-                    availableLensTypes={availableLensTypes}
-                    availableLensCoatings={availableLensCoatings}
-                    availableCategories={[
-                        { id: 'men', name: 'Men', slug: 'men' },
-                        { id: 'women', name: 'Women', slug: 'women' },
-                        { id: 'kids', name: 'Kids', slug: 'kids' }
-                    ]} // Sample categories for demonstration
-                    availableSubcategories={availableSubcategories}
-                    selectedCategory={selectedCategory}
-                    selectedSubcategory={selectedSubcategory}
-                    categoryLevel="category"
-                />
-            </div>
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Filters Sidebar */}
+                    <div className="w-full lg:w-80 flex-shrink-0">
+                        <ComprehensiveFilters
+                            onFilterChange={(filters) => {
+                                // Apply filters from comprehensive filter component
+                                if (filters.gender !== undefined) {
+                                    setGender(filters.gender)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.minPrice !== undefined) {
+                                    setMinPrice(filters.minPrice)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.maxPrice !== undefined) {
+                                    setMaxPrice(filters.maxPrice)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.sortBy !== undefined) {
+                                    setSortBy(filters.sortBy)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.color !== undefined) {
+                                    setSelectedColor(filters.color)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.brand !== undefined) {
+                                    setBrand(filters.brand)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.lensType !== undefined) {
+                                    setLensType(filters.lensType)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.lensCoating !== undefined) {
+                                    setLensCoating(filters.lensCoating)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.inStock !== undefined) {
+                                    setInStockOnly(filters.inStock)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.search !== undefined) {
+                                    if (import.meta.env.DEV) {
+                                        console.log('🔍 Products.tsx received search term:', filters.search)
+                                    }
+                                    setSearchTerm(filters.search)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.category !== undefined) {
+                                    setSelectedCategory(filters.category)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.subcategory !== undefined) {
+                                    setSelectedSubcategory(filters.subcategory)
+                                    setCurrentPage(1)
+                                }
+                            }}
+                            availableColors={availableColors}
+                            availableBrands={availableBrands}
+                            availableLensTypes={availableLensTypes}
+                            availableLensCoatings={availableLensCoatings}
+                            availableCategories={[
+                                { id: 'men', name: 'Men', slug: 'men' },
+                                { id: 'women', name: 'Women', slug: 'women' },
+                                { id: 'kids', name: 'Kids', slug: 'kids' }
+                            ]} // Sample categories for demonstration
+                            availableSubcategories={availableSubcategories}
+                            selectedCategory={selectedCategory}
+                            selectedSubcategory={selectedSubcategory}
+                            categoryLevel="category"
+                            className="sticky top-24"
+                        />
+                    </div>
 
-            {/* Products Grid */}
-            <section className="bg-white py-4 px-4 sm:px-6">
-                <div className="w-[90%] mx-auto max-w-screen-2xl">
-                    {loading ? (
-                        <div className="text-center py-12">
-                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
-                            <p className="mt-4 text-lg text-gray-600">Loading products...</p>
-                        </div>
-                    ) : !products || products.length === 0 ? (
-                        <div className="text-center py-12">
-                            <p className="text-lg md:text-xl text-gray-600">
-                                No products found. Try adjusting your filters.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="max-h-[80vh] overflow-y-auto pr-2">
-                        <>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 mb-8">
-                                {products && products.length > 0 && products.map((product) => (
-                                    <ProductCard key={product.id} product={product} />
-                                ))}
-                            </div>
+                    {/* Products Content */}
+                    <div className="flex-1">
+                        {/* Products Grid */}
+                        <div className="bg-white rounded-lg">
+                            {loading ? (
+                                <div className="text-center py-12">
+                                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
+                                    <p className="mt-4 text-lg text-gray-600">Loading products...</p>
+                                </div>
+                            ) : !products || products.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-lg md:text-xl text-gray-600">
+                                        No products found. Try adjusting your filters.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="max-h-[80vh] overflow-y-auto pr-2">
+                                <>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
+                                        {products && products.length > 0 && products.map((product) => (
+                                            <ProductCard key={product.id} product={product} />
+                                        ))}
+                                    </div>
 
-                            {/* Pagination */}
-                            {pagination && pagination.pages > 1 && (
-                                <div className="flex justify-center items-center gap-2 mt-8">
-                                    <button
-                                        onClick={() => handlePageChange(currentPage - 1)}
-                                        disabled={currentPage === 1}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === 1
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-950 text-white hover:bg-blue-900'
-                                            }`}
-                                    >
-                                        Previous
-                                    </button>
+                                    {/* Pagination */}
+                                    {pagination && pagination.pages > 1 && (
+                                        <div className="flex justify-center items-center gap-2 mt-8">
+                                            <button
+                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                disabled={currentPage === 1}
+                                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === 1
+                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-blue-950 text-white hover:bg-blue-900'
+                                                    }`}
+                                            >
+                                                Previous
+                                            </button>
 
-                                    {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
-                                        const page = i + 1
-                                        if (
-                                            page === 1 ||
-                                            page === pagination.pages ||
-                                            (page >= currentPage - 1 && page <= currentPage + 1)
-                                        ) {
-                                            return (
-                                                <button
-                                                    key={page}
-                                                    onClick={() => handlePageChange(page)}
-                                                    className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === page
-                                                        ? 'bg-blue-950 text-white'
-                                                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                        }`}
-                                                >
-                                                    {page}
-                                                </button>
-                                            )
-                                        } else if (page === currentPage - 2 || page === currentPage + 2) {
-                                            return <span key={page} className="px-2">...</span>
-                                        }
-                                        return null
-                                    })}
+                                            {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
+                                                const page = i + 1
+                                                if (
+                                                    page === 1 ||
+                                                    page === pagination.pages ||
+                                                    (page >= currentPage - 1 && page <= currentPage + 1)
+                                                ) {
+                                                    return (
+                                                        <button
+                                                            key={page}
+                                                            onClick={() => handlePageChange(page)}
+                                                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === page
+                                                                ? 'bg-blue-950 text-white'
+                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                                                                }`}
+                                                        >
+                                                            {page}
+                                                        </button>
+                                                    )
+                                                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                                                    return <span key={page} className="px-2">...</span>
+                                                }
+                                                return null
+                                            })}
 
-                                    <button
-                                        onClick={() => handlePageChange(currentPage + 1)}
-                                        disabled={currentPage === pagination.pages}
-                                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === pagination.pages
-                                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                            : 'bg-blue-950 text-white hover:bg-blue-900'
-                                            }`}
-                                    >
-                                        Next
-                                    </button>
+                                            <button
+                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                disabled={currentPage === pagination.pages}
+                                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === pagination.pages
+                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                                    : 'bg-blue-950 text-white hover:bg-blue-900'
+                                                    }`}
+                                            >
+                                                Next
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
                                 </div>
                             )}
-
-                            {/* Results count */}
-                            {pagination && (
-                                <div className="text-center mt-4 text-gray-600">
-                                    Showing {products.length} of {pagination.total || 0} products
-                                </div>
-                            )}
-                        </>
                         </div>
-                    )}
+                    </div>
                 </div>
-            </section>
+            </div>
 
             <Footer />
 
