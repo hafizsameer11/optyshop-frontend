@@ -45,14 +45,12 @@ const Home: React.FC = () => {
             <Navbar />
             
             {/* Banner Section - Only shows if there are banners */}
-            <div className="pt-16"> {/* Account for fixed navbar */}
-                <Banner 
-                    pageType="home"
-                    showNavbar={false}
-                    autoSlideInterval={5000}
-                    height="70vh"
-                />
-            </div>
+            <Banner 
+                pageType="home"
+                showNavbar={false}
+                autoSlideInterval={5000}
+                height="70vh"
+            />
             
             <div className="w-full">
                 <FlashOfferBanner />

@@ -757,21 +757,19 @@ const CategoryPage: React.FC = () => {
 
             {/* Category Banner - Dynamic banners from backend */}
             {categoryInfo.category && (
-                <div className="pt-16"> {/* Account for fixed navbar */}
-                    <CategoryBanner 
-                        categoryName={translateCategory(
-                            categoryInfo.subSubcategory || 
-                            categoryInfo.subcategory || 
-                            categoryInfo.category
-                        )}
-                        categoryId={categoryInfo.category?.id || 0}
-                        subcategoryId={
-                            categoryInfo.subSubcategory?.id || 
-                            categoryInfo.subcategory?.id
-                        }
-                        position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
-                    />
-                </div>
+                <CategoryBanner 
+                    categoryName={translateCategory(
+                        categoryInfo.subSubcategory || 
+                        categoryInfo.subcategory || 
+                        categoryInfo.category
+                    )}
+                    categoryId={categoryInfo.category?.id || 0}
+                    subcategoryId={
+                        categoryInfo.subSubcategory?.id || 
+                        categoryInfo.subcategory?.id
+                    }
+                    position={categoryInfo.subSubcategory ? "sub_subcategory_page" : categoryInfo.subcategory ? "subcategory_page" : "category_page"}
+                />
             )}
 
             {/* Enhanced Category Navigation with Comprehensive Filters */}

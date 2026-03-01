@@ -226,10 +226,12 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
                 {/* Slides Container */}
                 <div
-                    className="flex transition-transform duration-700 ease-in-out h-full"
+                    className={`flex transition-transform duration-700 ease-in-out h-full ${
+                        !showNavbar ? 'pt-16' : ''
+                    }`}
                     style={{
                         transform: `translateX(-${currentIndex * 100}%)`,
-                        height: '100%',
+                        height: showNavbar ? '100%' : 'calc(100% - 4rem)', // Account for pt-16 (4rem = 64px)
                     }}
                 >
                     {banners.map((banner, index) => {
@@ -250,8 +252,9 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }
                                 }}
                                 style={{
-                                    height,
+                                    height: showNavbar ? height : 'calc(100% + 4rem)', // Account for pt-16 padding
                                     width: '100%',
+                                    marginTop: showNavbar ? '0' : '-4rem', // Compensate for padding
                                 }}
                             >
                                 {/* Background Image - Primary method */}
@@ -285,7 +288,9 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
 
                                 {/* Banner Content - Empty for clean image display */}
-                                <main className="relative z-20 flex items-center justify-center h-full" style={{ height }}>
+                                <main className={`relative z-20 flex items-center justify-center ${
+                                    showNavbar ? 'h-full' : 'h-full pt-16'
+                                }`} style={{ height: showNavbar ? height : 'calc(100% - 4rem)' }}>
                                 </main>
                             </div>
                         )
