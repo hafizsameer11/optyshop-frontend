@@ -487,11 +487,13 @@ const Products: React.FC = () => {
 
             {/* Category-specific Banners Section */}
             {currentSection === 'eye-hygiene' && eyeHygieneCategory && (
-                <CategoryBanner 
-                    categoryName={eyeHygieneCategory.name} 
-                    categoryId={eyeHygieneCategory.id}
-                    position="category_page"
-                />
+                <div className="pt-16"> {/* Account for fixed navbar */}
+                    <CategoryBanner 
+                        categoryName={eyeHygieneCategory.name} 
+                        categoryId={eyeHygieneCategory.id}
+                        position="category_page"
+                    />
+                </div>
             )}
             
             {/* General Campaigns Section - Show for non-specific categories */}

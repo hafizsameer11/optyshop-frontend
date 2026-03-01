@@ -229,7 +229,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     return (
         <div className="relative w-full mb-3 rounded-lg overflow-hidden shadow-md">
             {/* Banner Slider Container */}
-            <div className="relative overflow-hidden w-full h-12 md:h-16 lg:h-20">
+            <div className="relative overflow-hidden w-full h-24 md:h-32 lg:h-40">
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"
