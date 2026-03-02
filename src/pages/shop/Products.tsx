@@ -557,14 +557,24 @@ const Products: React.FC = () => {
             
             {/* Main Content Area with Sidebar */}
             <div className="w-[90%] mx-auto max-w-screen-2xl px-4 sm:px-6 mb-6">
+                {/* Filter Button - Always Visible at Top */}
+                <div className="mb-4">
+                    <button
+                        onClick={() => setIsFilterPanelVisible(!isFilterPanelVisible)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <span className="font-medium text-sm">{isFilterPanelVisible ? 'Hide Filters' : 'Show Filters'}</span>
+                    </button>
+                </div>
+
                 <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Filters Sidebar - Now with sliding panel */}
-                    <div className={`hidden lg:block transition-all duration-300 ease-in-out ${
-                        isFilterPanelVisible ? 'w-80' : 'w-0'
-                    }`}>
-                        <ComprehensiveFilters
-                            isFilterPanelVisible={isFilterPanelVisible}
-                            setIsFilterPanelVisible={setIsFilterPanelVisible}
+                    {/* Filters Sidebar - Only visible when enabled */}
+                    {isFilterPanelVisible && (
+                        <div className="w-full lg:w-80 flex-shrink-0">
+                            <ComprehensiveFilters
                             onFilterChange={(filters) => {
                                 // Apply filters from comprehensive filter component
                                 if (filters.gender !== undefined) {
@@ -633,26 +643,14 @@ const Products: React.FC = () => {
                             selectedSubcategory={selectedSubcategory}
                             categoryLevel="category"
                             className="sticky top-24"
-                        />
-                    </div>
-
-                    {/* Desktop Filter Button - Show when panel is hidden */}
-                    {!isFilterPanelVisible && (
-                        <div className="hidden lg:block">
-                            <button
-                                onClick={() => setIsFilterPanelVisible(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm sticky top-24"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                                </svg>
-                                <span className="font-medium text-sm">Show Filters</span>
-                            </button>
+                            />
                         </div>
                     )}
 
-                    {/* Products Content */}
-                    <div className="flex-1">
+                    {/* Products Content - Takes full width when filter is hidden */}
+                    <div className={`flex-1 transition-all duration-300 ease-in-out ${
+                        isFilterPanelVisible ? '' : 'w-full'
+                    }`}>
                         {/* Products Grid */}
                         <div className="bg-white rounded-lg">
                             {loading ? (
