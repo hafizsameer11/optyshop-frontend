@@ -26,6 +26,8 @@ interface ComprehensiveFiltersProps {
     selectedSubcategory?: string | number | null
     className?: string
     categoryLevel?: 'category' | 'subcategory' | 'subsubcategory'
+    onClose?: () => void
+    showCloseButton?: boolean
 }
 
 const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
@@ -39,7 +41,9 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     selectedCategory = 'all',
     selectedSubcategory = null,
     className = '',
-    categoryLevel = 'category'
+    categoryLevel = 'category',
+    onClose,
+    showCloseButton = false
 }) => {
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [isExpanded, setIsExpanded] = useState(false)
@@ -168,22 +172,24 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     return (
         <>
             {/* Filter Toggle Button - Always Visible */}
-            <div className="mb-4">
-                <button
-                    onClick={() => setIsMobileFilterOpen(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                    </svg>
-                    <span className="font-medium text-sm">Filters</span>
-                    {activeCount > 0 && (
-                        <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
-                            {activeCount}
-                        </span>
-                    )}
-                </button>
-            </div>
+            {!showCloseButton && (
+                <div className="mb-4">
+                    <button
+                        onClick={() => setIsMobileFilterOpen(true)}
+                        className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <span className="font-medium text-sm">Filters</span>
+                        {activeCount > 0 && (
+                            <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                                {activeCount}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            )}
 
             {/* Desktop Sidebar - Simple filter panel */}
             <div className={`${className}`}>
@@ -210,6 +216,16 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         className="text-xs text-gray-600 hover:text-red-600 transition-colors font-medium"
                                     >
                                         Clear All
+                                    </button>
+                                )}
+                                {showCloseButton && onClose && (
+                                    <button
+                                        onClick={onClose}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
                                     </button>
                                 )}
                                 <button

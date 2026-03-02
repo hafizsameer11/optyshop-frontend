@@ -86,6 +86,7 @@ const Products: React.FC = () => {
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
+    const [showFilters, setShowFilters] = useState(false)
 
 
     // Read URL parameters and fetch category/subcategory info
@@ -556,80 +557,99 @@ const Products: React.FC = () => {
             
             {/* Main Content Area with Sidebar */}
             <div className="w-[90%] mx-auto max-w-screen-2xl px-4 sm:px-6 mb-6">
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Filters Sidebar - Always visible but compact */}
-                    <div className="w-full lg:w-80 flex-shrink-0">
-                        <ComprehensiveFilters
-                            onFilterChange={(filters) => {
-                                // Apply filters from comprehensive filter component
-                                if (filters.gender !== undefined) {
-                                    setGender(filters.gender)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.minPrice !== undefined) {
-                                    setMinPrice(filters.minPrice)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.maxPrice !== undefined) {
-                                    setMaxPrice(filters.maxPrice)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.sortBy !== undefined) {
-                                    setSortBy(filters.sortBy)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.color !== undefined) {
-                                    setSelectedColor(filters.color)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.brand !== undefined) {
-                                    setBrand(filters.brand)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.lensType !== undefined) {
-                                    setLensType(filters.lensType)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.lensCoating !== undefined) {
-                                    setLensCoating(filters.lensCoating)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.inStock !== undefined) {
-                                    setInStockOnly(filters.inStock)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.search !== undefined) {
-                                    if (import.meta.env.DEV) {
-                                        console.log('🔍 Products.tsx received search term:', filters.search)
-                                    }
-                                    setSearchTerm(filters.search)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.category !== undefined) {
-                                    setSelectedCategory(filters.category)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.subcategory !== undefined) {
-                                    setSelectedSubcategory(filters.subcategory)
-                                    setCurrentPage(1)
-                                }
-                            }}
-                            availableColors={availableColors}
-                            availableBrands={availableBrands}
-                            availableLensTypes={availableLensTypes}
-                            availableLensCoatings={availableLensCoatings}
-                            availableCategories={[
-                                { id: 'men', name: 'Men', slug: 'men' },
-                                { id: 'women', name: 'Women', slug: 'women' },
-                                { id: 'kids', name: 'Kids', slug: 'kids' }
-                            ]} // Sample categories for demonstration
-                            availableSubcategories={availableSubcategories}
-                            selectedCategory={selectedCategory}
-                            selectedSubcategory={selectedSubcategory}
-                            categoryLevel="category"
-                            className="sticky top-24"
-                        />
+                {/* Filter Toggle Button - Only visible when filters are hidden */}
+                {!showFilters && (
+                    <div className="mb-6">
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                            </svg>
+                            <span className="font-medium">Filters</span>
+                        </button>
                     </div>
+                )}
+                
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Filters Sidebar - Only visible when showFilters is true */}
+                    {showFilters && (
+                        <div className="w-full lg:w-80 flex-shrink-0">
+                            <ComprehensiveFilters
+                                onFilterChange={(filters) => {
+                                    // Apply filters from comprehensive filter component
+                                    if (filters.gender !== undefined) {
+                                        setGender(filters.gender)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.minPrice !== undefined) {
+                                        setMinPrice(filters.minPrice)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.maxPrice !== undefined) {
+                                        setMaxPrice(filters.maxPrice)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.sortBy !== undefined) {
+                                        setSortBy(filters.sortBy)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.color !== undefined) {
+                                        setSelectedColor(filters.color)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.brand !== undefined) {
+                                        setBrand(filters.brand)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.lensType !== undefined) {
+                                        setLensType(filters.lensType)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.lensCoating !== undefined) {
+                                        setLensCoating(filters.lensCoating)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.inStock !== undefined) {
+                                        setInStockOnly(filters.inStock)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.search !== undefined) {
+                                        if (import.meta.env.DEV) {
+                                            console.log('🔍 Products.tsx received search term:', filters.search)
+                                        }
+                                        setSearchTerm(filters.search)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.category !== undefined) {
+                                        setSelectedCategory(filters.category)
+                                        setCurrentPage(1)
+                                    }
+                                    if (filters.subcategory !== undefined) {
+                                        setSelectedSubcategory(filters.subcategory)
+                                        setCurrentPage(1)
+                                    }
+                                }}
+                                availableColors={availableColors}
+                                availableBrands={availableBrands}
+                                availableLensTypes={availableLensTypes}
+                                availableLensCoatings={availableLensCoatings}
+                                availableCategories={[
+                                    { id: 'men', name: 'Men', slug: 'men' },
+                                    { id: 'women', name: 'Women', slug: 'women' },
+                                    { id: 'kids', name: 'Kids', slug: 'kids' }
+                                ]} // Sample categories for demonstration
+                                availableSubcategories={availableSubcategories}
+                                selectedCategory={selectedCategory}
+                                selectedSubcategory={selectedSubcategory}
+                                categoryLevel="category"
+                                onClose={() => setShowFilters(false)}
+                                showCloseButton={true}
+                                className="sticky top-24"
+                            />
+                        </div>
+                    )}
 
                     {/* Products Content */}
                     <div className="flex-1">
