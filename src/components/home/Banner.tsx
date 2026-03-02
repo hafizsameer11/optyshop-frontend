@@ -214,7 +214,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
 
     return (
-        <div className="relative text-slate-800 w-full" style={{ height }}>
+        <div className={`relative text-slate-800 w-full ${!showNavbar ? 'pt-16' : ''}`} style={{ height: showNavbar ? height : `calc(${height} + 4rem)` }}>
             {/* Banner Slider Container - Full height */}
             <div className="relative overflow-hidden w-full" style={{ height }}>
                 {/* Navbar - Absolute positioned to overlay banner (only if showNavbar is true) */}
@@ -226,12 +226,10 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
                 {/* Slides Container */}
                 <div
-                    className={`flex transition-transform duration-700 ease-in-out h-full ${
-                        !showNavbar ? 'pt-16' : ''
-                    }`}
+                    className="flex transition-transform duration-700 ease-in-out h-full"
                     style={{
                         transform: `translateX(-${currentIndex * 100}%)`,
-                        height: showNavbar ? '100%' : 'calc(100% - 4rem)', // Account for pt-16 (4rem = 64px)
+                        height: '100%',
                     }}
                 >
                     {banners.map((banner, index) => {
@@ -252,9 +250,8 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }
                                 }}
                                 style={{
-                                    height: showNavbar ? height : 'calc(100% + 4rem)', // Account for pt-16 padding
+                                    height,
                                     width: '100%',
-                                    marginTop: showNavbar ? '0' : '-4rem', // Compensate for padding
                                 }}
                             >
                                 {/* Background Image - Primary method */}
@@ -288,9 +285,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
 
                                 {/* Banner Content - Empty for clean image display */}
-                                <main className={`relative z-20 flex items-center justify-center ${
-                                    showNavbar ? 'h-full' : 'h-full pt-16'
-                                }`} style={{ height: showNavbar ? height : 'calc(100% - 4rem)' }}>
+                                <main className="relative z-20 flex items-center justify-center h-full" style={{ height }}>
                                 </main>
                             </div>
                         )
