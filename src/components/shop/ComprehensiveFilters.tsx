@@ -167,6 +167,24 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
     return (
         <>
+            {/* Filter Toggle Button - Always Visible */}
+            <div className="mb-4">
+                <button
+                    onClick={() => setIsMobileFilterOpen(true)}
+                    className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    <span className="font-medium text-sm">Filters</span>
+                    {activeCount > 0 && (
+                        <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
+                            {activeCount}
+                        </span>
+                    )}
+                </button>
+            </div>
+
             {/* Desktop Sidebar - Simple filter panel */}
             <div className={`${className}`}>
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -273,11 +291,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                                 category: category.slug || category.id,
                                                 subcategory: null 
                                             })}
-                                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
-                                                selectedCategory === (category.slug || category.id)
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
+                                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${selectedCategory === (category.slug || category.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                         >
                                             {category.name}
                                         </button>
@@ -297,11 +311,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                                 ...{}, 
                                                 subcategory: subcategory.slug || subcategory.id
                                             })}
-                                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
-                                                selectedSubcategory === (subcategory.slug || subcategory.id)
-                                                    ? 'bg-blue-500 text-white'
-                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                            }`}
+                                            className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${selectedSubcategory === (subcategory.slug || subcategory.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                         >
                                             {subcategory.name}
                                         </button>
@@ -325,9 +335,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             placeholder="Min"
                                             value={minPrice}
                                             onChange={(e) => handleMinPriceChange(e.target.value)}
-                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
-                                                minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                            }`}
+                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                         />
                                     </div>
                                     <span className="text-xs text-gray-400">-</span>
@@ -338,9 +346,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             placeholder="Max"
                                             value={maxPrice}
                                             onChange={(e) => handleMaxPriceChange(e.target.value)}
-                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
-                                                maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                            }`}
+                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                         />
                                     </div>
                                 </div>
@@ -446,9 +452,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                 />
                 
                 {/* Filter Drawer */}
-                <div className={`absolute top-0 left-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
-                    isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}>
+                <div className={`absolute top-0 left-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     {/* Drawer Header */}
                     <div className="p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
                         <div className="flex items-center justify-between">
@@ -553,11 +557,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                                     category: category.slug || category.id,
                                                     subcategory: null 
                                                 })}
-                                                className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
-                                                    selectedCategory === (category.slug || category.id)
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                }`}
+                                                className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${selectedCategory === (category.slug || category.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                             >
                                                 {category.name}
                                             </button>
@@ -577,11 +577,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                                     ...{}, 
                                                     subcategory: subcategory.slug || subcategory.id
                                                 })}
-                                                className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${
-                                                    selectedSubcategory === (subcategory.slug || subcategory.id)
-                                                        ? 'bg-blue-500 text-white'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                }`}
+                                                className={`text-xs px-2 py-1 rounded-md transition-all duration-200 whitespace-nowrap ${selectedSubcategory === (subcategory.slug || subcategory.id) ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                                             >
                                                 {subcategory.name}
                                             </button>
@@ -604,9 +600,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             placeholder="Min"
                                             value={minPrice}
                                             onChange={(e) => handleMinPriceChange(e.target.value)}
-                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
-                                                minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                            }`}
+                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                         />
                                     </div>
                                     <span className="text-xs text-gray-400">-</span>
@@ -617,9 +611,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             placeholder="Max"
                                             value={maxPrice}
                                             onChange={(e) => handleMaxPriceChange(e.target.value)}
-                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${
-                                                maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                            }`}
+                                            className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
                                         />
                                     </div>
                                 </div>
