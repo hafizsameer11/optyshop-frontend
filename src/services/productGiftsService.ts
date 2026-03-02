@@ -123,6 +123,9 @@ export const adminGetProductGift = async (id: number | string): Promise<ProductG
  */
 export const adminCreateProductGift = async (giftData: Omit<ProductGift, 'id' | 'gift_product'>): Promise<ProductGift | null> => {
   try {
+    // Log the data being sent for debugging
+    console.log('Creating product gift with data:', JSON.stringify(giftData, null, 2));
+    
     const response = await apiClient.post<{success: boolean; message: string; data: {gift?: ProductGift}}>(
       '/admin/product-gifts',
       giftData,
@@ -135,6 +138,10 @@ export const adminCreateProductGift = async (giftData: Omit<ProductGift, 'id' | 
     return null;
   } catch (error) {
     console.error('Error creating product gift:', error);
+    // Log more detailed error information
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.error('Error details:', error);
+    }
     return null;
   }
 };

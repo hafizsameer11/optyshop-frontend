@@ -25,6 +25,7 @@ const ProductGiftsManagement: React.FC = () => {
     is_active: true,
     description: ''
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProductGifts();
@@ -43,17 +44,39 @@ const ProductGiftsManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Clear previous error
+    
+    // Prepare data - only include max_quantity if it's greater than 0
+    const dataToSend = {
+      product_id: formData.product_id,
+      gift_product_id: formData.gift_product_id,
+      min_quantity: formData.min_quantity,
+      is_active: formData.is_active,
+      description: formData.description,
+      ...(formData.max_quantity > 0 && { max_quantity: formData.max_quantity })
+    };
+    
     try {
       if (editingGift) {
-        await adminUpdateProductGift(editingGift.id, formData);
+        await adminUpdateProductGift(editingGift.id, dataToSend);
       } else {
-        await adminCreateProductGift(formData);
+        await adminCreateProductGift(dataToSend);
       }
       
       fetchProductGifts();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving product gift:', error);
+      // Extract and display error message
+      let errorMessage = 'Failed to save gift rule. Please try again.';
+      if (error && typeof error === 'object') {
+        if ('message' in error && typeof error.message === 'string') {
+          errorMessage = error.message;
+        } else if ('error' in error && typeof error.error === 'string') {
+          errorMessage = error.error;
+        }
+      }
+      setError(errorMessage);
     }
   };
 
@@ -92,6 +115,7 @@ const ProductGiftsManagement: React.FC = () => {
     });
     setEditingGift(null);
     setShowForm(false);
+    setError(null); // Clear error when resetting form
   };
 
   if (!user || user.role !== 'admin') {
@@ -133,6 +157,11 @@ const ProductGiftsManagement: React.FC = () => {
               </h2>
               
               <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                    {error}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -284,7 +313,7 @@ const ProductGiftsManagement: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           Min: {gift.min_quantity}
-                          {gift.max_quantity > 0 && ` | Max: ${gift.max_quantity}`}
+                          {gift.max_quantity && gift.max_quantity > 0 && ` | Max: ${gift.max_quantity}`}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
