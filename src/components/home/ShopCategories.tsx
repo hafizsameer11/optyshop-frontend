@@ -16,13 +16,22 @@ interface CategoryWithProducts extends Category {
     fetchedProducts?: CategoryProduct[]
 }
 
+/** One home “Shop categories” row: top-level category or a subcategory (e.g. Sunglasses) with its own banner API */
+interface ShopCategorySection {
+    rowKey: string
+    /** Category/subcategory used for products, links, and labels */
+    category: CategoryWithProducts
+    /** When set, this row is a subcategory — banner uses parent id + sub id */
+    parentCategory: Category | null
+}
+
 const ShopCategories: React.FC = () => {
     const { t } = useTranslation()
     const { translateCategory } = useCategoryTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
     const { isAuthenticated } = useAuth()
-    const [categories, setCategories] = useState<CategoryWithProducts[]>([])
+    const [categorySections, setCategorySections] = useState<ShopCategorySection[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
@@ -90,41 +99,63 @@ const ShopCategories: React.FC = () => {
         const fetchCategoriesAndProducts = async () => {
             try {
                 setLoading(true)
-                // Fetch categories with products included from API (includeProducts=true)
-                const fetchedCategories = await getCategories({ includeProducts: true })
-                
-                if (isCancelled) return
-                
-                // Limit to first 6 categories to prevent too many API calls
-                const limitedCategories = fetchedCategories.slice(0, 6)
-                
-                // Use products that come with categories API, only fetch additional if needed
-                const categoriesWithProducts = limitedCategories.map((category) => {
-                    // Use products from category if available, otherwise empty array
-                    const categoryProducts = category.products || []
-                    
-                    // Only fetch additional products if category has less than 4 products
-                    // and we need more for display
-                    if (categoryProducts.length < 4) {
-                        // Don't fetch here - just use what we have
-                        // This prevents excessive API calls
-                    }
-                    
-                    return {
-                        ...category,
-                        fetchedProducts: categoryProducts,
-                        products: categoryProducts
-                    }
+                // Subcategories included so rows like “Sunglasses” get correct banner (subcategory page_type + ids)
+                const fetchedCategories = await getCategories({
+                    includeProducts: true,
+                    includeSubcategories: true,
                 })
                 
                 if (isCancelled) return
                 
-                // Filter to only show categories that have products
-                const categoriesWithAnyProducts = categoriesWithProducts.filter(
-                    cat => (cat.products && cat.products.length > 0) || (cat.fetchedProducts && cat.fetchedProducts.length > 0)
+                const sortedTop = [...fetchedCategories].sort(
+                    (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
                 )
                 
-                setCategories(categoriesWithAnyProducts)
+                const sections: ShopCategorySection[] = []
+                
+                for (const cat of sortedTop) {
+                    const subs = [...(cat.subcategories || [])]
+                        .filter((s) => s.is_active !== false)
+                        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                    const subsWithProducts = subs.filter((s) => (s.products?.length ?? 0) > 0)
+                    
+                    if ((cat.products?.length ?? 0) > 0) {
+                        const categoryProducts = cat.products || []
+                        sections.push({
+                            rowKey: `cat-${cat.id}`,
+                            category: {
+                                ...cat,
+                                fetchedProducts: categoryProducts,
+                                products: categoryProducts,
+                            },
+                            parentCategory: null,
+                        })
+                    }
+                    
+                    for (const sub of subsWithProducts) {
+                        const subProducts = sub.products || []
+                        sections.push({
+                            rowKey: `sub-${cat.id}-${sub.id}`,
+                            category: {
+                                ...sub,
+                                fetchedProducts: subProducts,
+                                products: subProducts,
+                            },
+                            parentCategory: cat,
+                        })
+                    }
+                }
+                
+                if (isCancelled) return
+                
+                const withProducts = sections.filter(
+                    (s) =>
+                        (s.category.products && s.category.products.length > 0) ||
+                        (s.category.fetchedProducts && s.category.fetchedProducts.length > 0)
+                )
+                
+                // Cap rows (each row still loads its own banner); was 6 top-level only — hid Sunglasses when ordered late or as sub
+                setCategorySections(withProducts.slice(0, 24))
             } catch (error) {
                 if (!isCancelled) {
                     console.error('Error fetching categories:', error)
@@ -148,7 +179,8 @@ const ShopCategories: React.FC = () => {
         const newSelections: Record<number, string> = {}
         let hasChanges = false
         
-        categories.forEach(category => {
+        categorySections.forEach((section) => {
+            const category = section.category
             if (category.products) {
                 category.products.forEach(product => {
                     const productId = (product as any).id
@@ -169,7 +201,7 @@ const ShopCategories: React.FC = () => {
                 ...newSelections
             }))
         }
-    }, [categories]) // Only depend on categories, not productColorSelections
+    }, [categorySections]) // Only depend on categorySections, not productColorSelections
 
     // Helper function to parse product images
     const getProductImages = (product: CategoryProduct): string[] => {
@@ -208,17 +240,24 @@ const ShopCategories: React.FC = () => {
         <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
             <div className="w-[90%] mx-auto max-w-7xl">
                 
-                {categories.length > 0 ? (
+                {categorySections.length > 0 ? (
                     <div className="space-y-16">
-                        {categories.map((category) => (
-                            <div key={category.id} className="category-section">
-                                {/* Category Banner - Position-based banner above each category */}
+                        {categorySections.map((section) => {
+                            const category = section.category
+                            const parent = section.parentCategory
+                            const categoryPath = parent
+                                ? `/category/${parent.slug}/${category.slug}`
+                                : `/category/${category.slug}`
+                            return (
+                            <div key={section.rowKey} className="category-section">
                                 <CategoryBanner 
                                     categoryName={translateCategory(category)}
-                                    categoryId={category.id}
+                                    categoryId={parent ? parent.id : category.id}
+                                    subcategoryId={parent ? category.id : undefined}
+                                    position={parent ? 'subcategory_page' : 'category_section'}
                                 />
                                 <Link
-                                    to={`/category/${category.slug}`}
+                                    to={categoryPath}
                                     className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"
                                 >
                                     {t('navbar.viewAll')}
@@ -545,7 +584,8 @@ const ShopCategories: React.FC = () => {
                                     )
                                 })()}
                             </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 ) : (
                     // Fallback: Show category buttons if no products

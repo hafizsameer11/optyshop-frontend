@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
-import Banner from '../components/home/Banner'
+import Banner, { HOME_HERO_BANNER_HEIGHT } from '../components/home/Banner'
 import FlashOfferBanner from '../components/flashOffers/FlashOfferBanner'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import TrustedBrands from '../components/home/TrustedBrands'
@@ -49,7 +49,7 @@ const Home: React.FC = () => {
                 pageType="home"
                 showNavbar={false}
                 autoSlideInterval={5000}
-                height="70vh"
+                height={HOME_HERO_BANNER_HEIGHT}
             />
             
             <div className="w-full">

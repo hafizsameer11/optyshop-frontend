@@ -25,15 +25,15 @@ const StatsHighlight: React.FC = () => {
         },
     ]
     return (
-        <section className="bg-[#f8f3ed] py-16 px-4">
-            <div className="w-[90%] mx-auto text-center space-y-4">
+        <section className="bg-[#f8f3ed] py-16 px-4 sm:px-6">
+            <div className="w-[90%] mx-auto max-w-7xl text-center space-y-4">
                 <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t('home.stats.impact')}</p>
                 <h2 className="text-2xl md:text-3xl font-semibold text-slate-800 pb-12">
                     {t('home.stats.title')} <span className="text-blue-700">{t('home.stats.titleHighlight')}</span>
                 </h2>
             </div>
 
-            <div className="mt-12 grid gap-8 md:grid-cols-3 w-[90%] mx-auto">
+            <div className="mt-12 grid gap-8 md:grid-cols-3 w-[90%] mx-auto max-w-7xl">
                 {stats.map((stat) => (
                     <div
                         key={stat.title}

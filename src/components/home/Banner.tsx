@@ -19,6 +19,9 @@ interface BannerMeta {
     }
 }
 
+/** Home hero uses this; category banners use `min()` with a max so stacked sections stay usable */
+export const HOME_HERO_BANNER_HEIGHT = '70vh'
+
 interface BannerComponentProps {
     pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
     categoryId?: number | null;
@@ -34,7 +37,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     subCategoryId = null,
     showNavbar = false,
     autoSlideInterval = 5000,
-    height = '200px'
+    height = '200px',
 }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()

@@ -52,6 +52,20 @@ export interface GetBannersOptions {
   sub_category_id?: number | null;
 }
 
+/** API may return numeric ids as strings; avoid strict === misses */
+function sameId(a: unknown, b: unknown): boolean {
+  if (a === null || a === undefined || b === null || b === undefined) return false
+  return Number(a) === Number(b)
+}
+
+function pageTypeMatchesFilter(banner: Banner, wanted: string): boolean {
+  const raw = banner.page_type
+  if (raw == null || String(raw).trim() === '') {
+    return false
+  }
+  return String(raw).toLowerCase().trim() === String(wanted).toLowerCase().trim()
+}
+
 /**
  * Get all active banners
  * @param options - Optional filters for banners
@@ -183,22 +197,37 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
       // Filter active banners
       let filteredBanners = banners.filter((banner) => banner.is_active);
 
-      // Filter by page_type if specified
+      // Filter by page_type if specified (case-insensitive; empty page_type can match when category scoping applies below)
       if (filters.page_type) {
         const beforePageTypeFilter = filteredBanners.length;
-        filteredBanners = filteredBanners.filter(
-          (banner) => banner.page_type === filters.page_type
-        );
+        filteredBanners = filteredBanners.filter((banner) => {
+          const raw = banner.page_type;
+          if (raw == null || String(raw).trim() === '') {
+            // Legacy rows: no page_type — keep only if this request is category-scoped and the row matches that category (or is global)
+            if (filters.category_id !== undefined && filters.category_id !== null) {
+              return (
+                sameId(banner.category_id, filters.category_id) ||
+                banner.category_id === null ||
+                banner.category_id === undefined
+              );
+            }
+            return false;
+          }
+          return pageTypeMatchesFilter(banner, filters.page_type);
+        });
         if (import.meta.env.DEV) {
           console.log(`🎯 Page type filter (${filters.page_type}): ${beforePageTypeFilter} -> ${filteredBanners.length}`);
         }
       }
 
-      // Filter by category_id if specified
+      // Filter by category_id if specified (coerce string/number ids from API)
       if (filters.category_id !== undefined && filters.category_id !== null) {
         const beforeCategoryFilter = filteredBanners.length;
         filteredBanners = filteredBanners.filter(
-          (banner) => banner.category_id === filters.category_id || banner.category_id === null || banner.category_id === undefined
+          (banner) =>
+            sameId(banner.category_id, filters.category_id) ||
+            banner.category_id === null ||
+            banner.category_id === undefined
         );
         if (import.meta.env.DEV) {
           console.log(`🎯 Category ID filter (${filters.category_id}): ${beforeCategoryFilter} -> ${filteredBanners.length}`);
@@ -209,7 +238,10 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
       // Filter by sub_category_id if specified
       if (filters.sub_category_id !== undefined && filters.sub_category_id !== null) {
         filteredBanners = filteredBanners.filter(
-          (banner) => banner.sub_category_id === filters.sub_category_id || banner.sub_category_id === null
+          (banner) =>
+            sameId(banner.sub_category_id, filters.sub_category_id) ||
+            banner.sub_category_id === null ||
+            banner.sub_category_id === undefined
         );
       }
 

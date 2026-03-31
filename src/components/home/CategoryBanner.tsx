@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { getBanners, type Banner } from '../../services/bannersService'
+import { HOME_HERO_BANNER_HEIGHT } from './Banner'
 
 // Simple request cache to prevent duplicate concurrent requests
 const bannerRequestCache = new Map<string, Promise<Banner[]>>()
 const REQUEST_THROTTLE_DELAY = 100 // 100ms between requests
+
+/** Same treatment as home hero; cap height so multiple category blocks do not each use full viewport */
+const CATEGORY_HERO_HEIGHT = `min(${HOME_HERO_BANNER_HEIGHT}, 36rem)`
 
 interface CategoryBannerProps {
     categoryName: string
@@ -132,8 +136,11 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
 
     if (loading) {
         return (
-            <div className="w-full h-12 md:h-16 lg:h-20 bg-gray-200 animate-pulse rounded-lg mb-3">
-                <div className="text-gray-400 text-center py-2">Loading banner...</div>
+            <div
+                className="relative w-full mb-4 text-slate-800 overflow-hidden bg-gray-200 animate-pulse flex items-center justify-center"
+                style={{ height: CATEGORY_HERO_HEIGHT }}
+            >
+                <span className="text-gray-400 text-sm">Loading banner...</span>
             </div>
         )
     }
@@ -227,9 +234,9 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     }
 
     return (
-        <div className="relative w-full mb-3 rounded-lg overflow-hidden shadow-md">
-            {/* Banner Slider Container */}
-            <div className="relative overflow-hidden w-full h-24 md:h-32 lg:h-40">
+        <div className="relative w-full mb-4 text-slate-800 overflow-hidden">
+            {/* Match home `Banner.tsx`: same height rhythm as hero (70vh), cover + same gradient overlay */}
+            <div className="relative overflow-hidden w-full" style={{ height: CATEGORY_HERO_HEIGHT }}>
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"
@@ -254,12 +261,13 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                         return (
                             <div
                                 key={banner.id || index}
-                                className="min-w-full h-full relative cursor-pointer flex-shrink-0"
+                                className="min-w-full h-full relative cursor-pointer flex-shrink-0 w-full"
                                 onClick={() => handleBannerClick(banner)}
+                                style={{ height: CATEGORY_HERO_HEIGHT, width: '100%' }}
                             >
-                                {/* Background Image */}
+                                {/* Background Image — same as home Banner */}
                                 <div
-                                    className="absolute inset-0 w-full h-full bg-gradient-to-r from-blue-600 to-purple-600"
+                                    className="absolute inset-0 w-full h-full bg-slate-900"
                                     style={{
                                         backgroundImage: `url(${imageUrl})`,
                                         backgroundSize: 'cover',
@@ -267,40 +275,37 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                         backgroundRepeat: 'no-repeat',
                                     }}
                                 />
-                                
-                                {/* Fallback Image */}
+
                                 <img
                                     src={imageUrl}
                                     alt={banner.title || 'Category Banner'}
                                     className="absolute inset-0 w-full h-full object-cover"
+                                    style={{
+                                        objectFit: 'cover',
+                                        objectPosition: 'center',
+                                    }}
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement
-                                        // Try fallback images in order of preference
                                         if (!target.dataset.fallbackTried) {
                                             target.dataset.fallbackTried = '1'
-                                            // First try a generic banner placeholder
                                             target.src = '/assets/images/Banner-join-us-tewt-2.webp'
                                         } else if (!target.dataset.secondFallback) {
                                             target.dataset.secondFallback = '1'
-                                            // Try another banner
                                             target.src = '/assets/images/banner-mobile-footwear-blog.webp'
                                         } else if (!target.dataset.thirdFallback) {
                                             target.dataset.thirdFallback = '1'
-                                            // Finally try a hero image
                                             target.src = '/assets/images/hero3.avif'
                                         } else {
-                                            // If all fail, hide the image and show gradient background
                                             target.style.display = 'none'
                                         }
                                     }}
                                 />
-                                
-                                {/* Overlay for better text readability */}
-                                <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/40 to-black/60 z-10" />
 
-                                {/* Banner Content - Removed text overlay for clean image display */}
-                                <div className="relative z-20 flex items-center justify-center h-full px-6">
-                                </div>
+                                {/* Same overlay as home Banner */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
+
+                                <main className="relative z-20 flex items-center justify-center h-full" style={{ height: CATEGORY_HERO_HEIGHT }}>
+                                </main>
                             </div>
                         )
                     })}
