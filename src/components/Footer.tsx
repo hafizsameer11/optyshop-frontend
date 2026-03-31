@@ -75,11 +75,6 @@ const Footer: React.FC = () => {
                         <div className="h-px bg-white/30 mb-4"></div>
                         <ul className="space-y-2.5 text-sm text-slate-400">
                             <li>
-                                <Link to="/virtual-test" className="hover:text-white transition-colors">
-                                    {t('products.virtualTest')}
-                                </Link>
-                            </li>
-                            <li>
                                 <Link to="/digital-frames" className="hover:text-white transition-colors">
                                     {t('products.digitalizedFrames')}
                                 </Link>
@@ -87,11 +82,6 @@ const Footer: React.FC = () => {
                             <li>
                                 <Link to="/optical-instruments" className="hover:text-white transition-colors">
                                     {t('products.opticiansInstruments')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/3d-viewer" className="hover:text-white transition-colors">
-                                    {t('products.3dViewer')}
                                 </Link>
                             </li>
                             <li>
@@ -115,11 +105,6 @@ const Footer: React.FC = () => {
                             <li>
                                 <Link to="/online" className="hover:text-white transition-colors">
                                     {t('solutions.online')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/3d-resources" className="hover:text-white transition-colors">
-                                    {t('solutions.3dResources')}
                                 </Link>
                             </li>
                             <li>

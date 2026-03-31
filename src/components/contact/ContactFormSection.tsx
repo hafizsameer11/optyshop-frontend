@@ -1,11 +1,19 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { submitContactForm } from '../../services/contactFormService'
 
+const initialForm = {
+    email: '',
+    firstName: '',
+    lastName: '',
+    country: '',
+    companyName: '',
+    message: ''
+}
+
 const ContactFormSection: React.FC = () => {
     const { t } = useTranslation()
-    const navigate = useNavigate()
+    const formPanelRef = useRef<HTMLDivElement>(null)
     const [formData, setFormData] = useState({
         email: '',
         firstName: '',
@@ -16,7 +24,14 @@ const ContactFormSection: React.FC = () => {
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string>('')
+    const [submitSuccess, setSubmitSuccess] = useState(false)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+    useEffect(() => {
+        if (submitSuccess && formPanelRef.current) {
+            formPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+    }, [submitSuccess])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -26,6 +41,9 @@ const ContactFormSection: React.FC = () => {
         // Clear error when user starts typing
         if (submitError) {
             setSubmitError('')
+        }
+        if (submitSuccess) {
+            setSubmitSuccess(false)
         }
     }
 
@@ -74,7 +92,9 @@ const ContactFormSection: React.FC = () => {
             const result = await submitContactForm(payload)
 
             if (result.success) {
-                navigate('/thank-you')
+                setFormData({ ...initialForm })
+                setSubmitError('')
+                setSubmitSuccess(true)
             } else {
                 const errorMsg = result.message || t('contact.errorSending')
                 setSubmitError(errorMsg)
@@ -98,12 +118,41 @@ const ContactFormSection: React.FC = () => {
             <div className="w-[90%] mx-auto max-w-7xl">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
                     {/* Left Section - Contact Form */}
-                    <div className="bg-white rounded-2xl p-6 md:p-8 lg:h-[880px] lg:p-10 shadow-lg">
+                    <div ref={formPanelRef} className="bg-white rounded-2xl p-6 md:p-8 lg:h-[880px] lg:p-10 shadow-lg">
                         <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8">
                             {t('contact.sendRequest') || 'Send us your request'}
                         </h2>
 
-                        <form onSubmit={handleSubmit} className="space-y-5 md:space-y-6">
+                        {submitSuccess && (
+                            <div
+                                className="mb-6 p-5 rounded-xl border border-green-200 bg-green-50 text-green-900"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <p className="text-lg font-semibold">
+                                    {t('contact.messageSent', 'Message sent successfully!')}
+                                </p>
+                                <p className="mt-2 text-sm text-green-800">
+                                    {t(
+                                        'contact.successDetail',
+                                        'We have received your message and will get back to you soon.'
+                                    )}
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={() => setSubmitSuccess(false)}
+                                    className="mt-4 text-sm font-semibold text-blue-950 underline hover:no-underline"
+                                >
+                                    {t('contact.sendAnother', 'Send another message')}
+                                </button>
+                            </div>
+                        )}
+
+                        <form
+                            onSubmit={handleSubmit}
+                            className={`space-y-5 md:space-y-6 ${submitSuccess ? 'hidden' : ''}`}
+                            aria-hidden={submitSuccess}
+                        >
                             {/* Email */}
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
