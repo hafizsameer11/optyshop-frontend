@@ -28,6 +28,7 @@ import {
   type PrescriptionLensVariant
 } from '../../services/prescriptionLensService'
 import EyeAxisDiagram from './EyeAxisDiagram'
+import CheckoutLoginModal from './CheckoutLoginModal'
 import {
   getProductConfiguration,
   getLensThicknessMaterials,
@@ -120,6 +121,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { isAuthenticated } = useAuth()
+  const [showCheckoutLoginModal, setShowCheckoutLoginModal] = useState(false)
 
   // Lock body scroll when checkout modal is open
   useBodyScrollLock(true)
@@ -400,12 +402,10 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     country: '',
     state: ''
   })
-  const [paymentMethod, setPaymentMethod] = useState<string>(() => {
-    // Load from localStorage or default to stripe
-    return localStorage.getItem('selectedPaymentMethod') || 'stripe'
-  })
+  const paymentMethod = 'stripe'
   const [isProcessingOrder, setIsProcessingOrder] = useState(false)
   const [orderError, setOrderError] = useState<string | null>(null)
+  const [shippingErrors, setShippingErrors] = useState<Record<string, string>>({})
   const [createdOrder, setCreatedOrder] = useState<any>(null)
 
   useEffect(() => {
@@ -1618,6 +1618,45 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     return Object.keys(newErrors).length === 0
   }
 
+  const validateShippingAddress = (): boolean => {
+    const next: Record<string, string> = {}
+    const trim = (s: string | undefined) => (s || '').trim()
+
+    if (!trim(shippingAddress.first_name)) {
+      next.first_name = t('checkout.validation.firstNameRequired', 'First name is required')
+    }
+    if (!trim(shippingAddress.last_name)) {
+      next.last_name = t('checkout.validation.lastNameRequired', 'Last name is required')
+    }
+    const email = trim(shippingAddress.email)
+    if (!email) {
+      next.email = t('checkout.validation.emailRequired', 'Email is required')
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      next.email = t('checkout.validation.emailInvalid', 'Please enter a valid email address')
+    }
+    const phone = trim(shippingAddress.phone)
+    if (!phone) {
+      next.phone = t('checkout.validation.phoneRequired', 'Phone is required')
+    } else if (phone.replace(/\D/g, '').length < 6) {
+      next.phone = t('checkout.validation.phoneInvalid', 'Please enter a valid phone number')
+    }
+    if (!trim(shippingAddress.address)) {
+      next.address = t('checkout.validation.addressRequired', 'Address is required')
+    }
+    if (!trim(shippingAddress.city)) {
+      next.city = t('checkout.validation.cityRequired', 'City is required')
+    }
+    if (!trim(shippingAddress.zip_code)) {
+      next.zip_code = t('checkout.validation.zipRequired', 'Zip or postal code is required')
+    }
+    if (!trim(shippingAddress.country)) {
+      next.country = t('checkout.validation.countryRequired', 'Country is required')
+    }
+
+    setShippingErrors(next)
+    return Object.keys(next).length === 0
+  }
+
   const handleLensTypeChange = (type: 'distance_vision' | 'near_vision' | 'progressive') => {
     setLensSelection(prev => ({
       ...prev,
@@ -2070,6 +2109,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
     } else if (currentStep === 'treatment') {
       setCurrentStep('shipping')
     } else if (currentStep === 'shipping') {
+      if (!validateShippingAddress()) {
+        return
+      }
       setCurrentStep('summary')
     } else if (currentStep === 'summary') {
       setCurrentStep('payment')
@@ -2348,6 +2390,19 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         })
 
         if (!cartResult.success) {
+          const msg = (cartResult.message || '').toLowerCase()
+          if (
+            msg.includes('401') ||
+            msg.includes('unauthorized') ||
+            msg.includes('token') ||
+            msg.includes('session') ||
+            msg.includes('login') ||
+            msg.includes('authentication')
+          ) {
+            setShowCheckoutLoginModal(true)
+            setLoading(false)
+            return
+          }
           throw new Error(cartResult.message || 'Failed to add item to cart')
         }
       }
@@ -2424,9 +2479,21 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
       } else {
         navigate('/shop/cart')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding to cart:', error)
-      alert('Failed to add product to cart. Please try again.')
+      const msg = String(error?.message || '').toLowerCase()
+      if (
+        msg.includes('401') ||
+        msg.includes('unauthorized') ||
+        msg.includes('token') ||
+        msg.includes('session') ||
+        msg.includes('login') ||
+        msg.includes('authentication')
+      ) {
+        setShowCheckoutLoginModal(true)
+      } else {
+        alert('Failed to add product to cart. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -2646,15 +2713,23 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
   // })()
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-hidden border-2 border-gray-800 shadow-2xl">
+    <>
+    <CheckoutLoginModal
+      isOpen={showCheckoutLoginModal}
+      onClose={() => setShowCheckoutLoginModal(false)}
+      onSuccess={() => {
+        setOrderError(null)
+      }}
+    />
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-[2vh] sm:p-[3vh]">
+      <div className="bg-white rounded-lg w-[90vw] max-w-[90vw] h-[90vh] max-h-[90vh] flex flex-col overflow-hidden border-2 border-gray-800 shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b-2 border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-3xl font-bold text-gray-900">{product.name}</h2>
+        <div className="shrink-0 bg-white border-b-2 border-gray-800 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between z-10">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 truncate pr-2">{product.name}</h2>
           {onClose && (
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-gray-500 hover:text-gray-700 transition-colors shrink-0"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -2663,9 +2738,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
           )}
         </div>
 
-        <div className="h-[calc(90vh-80px)] overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 items-start h-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-3 sm:p-4 items-start min-h-0">
             {/* Left: Order Summary */}
             <div className="lg:col-span-1 flex flex-col h-full">
               <div className="bg-white rounded-lg p-4 border border-gray-200 sticky top-4 flex-shrink-0">
@@ -3333,24 +3408,31 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
               {currentStep === 'shipping' && (
                 <ShippingStep
                   shippingAddress={shippingAddress}
-                  onAddressChange={(field, value) => setShippingAddress(prev => ({ ...prev, [field]: value }))}
+                  onAddressChange={(field, value) => {
+                    setShippingAddress(prev => ({ ...prev, [field]: value }))
+                    setShippingErrors(prev => {
+                      const n = { ...prev }
+                      delete n[field]
+                      return n
+                    })
+                  }}
                   onNext={handleNext}
                   onBack={handleBack}
-                  errors={orderError ? { general: orderError } : {}}
+                  errors={{
+                    ...shippingErrors,
+                    ...(orderError ? { general: orderError } : {})
+                  }}
                 />
               )}
 
               {currentStep === 'payment' && (
                 <PaymentStep
-                  paymentMethod={paymentMethod}
-                  onPaymentMethodChange={setPaymentMethod}
                   onBack={handleBack}
                   onCreateOrder={handleCreateOrder}
                   isProcessing={isProcessingOrder}
                   error={orderError}
                   order={createdOrder}
-                  onLogin={() => navigate('/login')}
-                  isAuthenticated={isAuthenticated}
+                  onLogin={() => setShowCheckoutLoginModal(true)}
                 />
               )}
             </div>
@@ -3358,6 +3440,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         </div>
       </div>
     </div>
+    </>
   )
 }
 
@@ -4709,7 +4792,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   const [formStructure, setFormStructure] = useState<PrescriptionFormStructure | null>(null)
 
   const [copyRightToLeft, setCopyRightToLeft] = useState(false)
-  const [showAxisDiagram, setShowAxisDiagram] = useState(false)
+  const [showAxisDiagram, setShowAxisDiagram] = useState(true)
 
   // Fetch form structure from API
   useEffect(() => {
@@ -4799,8 +4882,7 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
   }, [getFieldOptions])
 
   return (
-    <>
-      <div className="h-full flex flex-col flex-1">
+    <div className="h-full flex flex-col flex-1 min-h-0">
       <div className="flex items-center gap-2 mb-4 flex-shrink-0">
         <button
           onClick={onBack}
@@ -4970,9 +5052,9 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
           </div>
         )}
 
-        {/* Eyes Section - Vertical Layout */}
-        <div className="mb-6">
-          <div className="space-y-4">
+        {/* Eyes + axis diagrams: stacked vertically (full width for each block) */}
+        <div className="mb-6 flex flex-col gap-6">
+          <div className="min-w-0 w-full space-y-4">
             {/* Right Eye (OD) */}
             <div className="bg-white rounded-xl border-2 border-purple-200 p-4 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
@@ -5081,7 +5163,6 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         </svg>
                       </div>
                     </div>
-                  </div>
                   {errors.od_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.od_axis}</p>
                   )}
@@ -5197,81 +5278,79 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
                         </svg>
                       </div>
                     </div>
-                  </div>
                   {errors.os_axis && (
                     <p className="text-xs text-red-600 mt-1.5 font-medium">{errors.os_axis}</p>
                   )}
                 </div>
               </div>
             </div>
-        </div>
 
-        {/* Copy Right to Left Button */}
-          <div className="mb-6 mt-6">
-            <button
-              type="button"
-              onClick={handleCopyRightToLeft}
-              disabled={!prescriptionData.od_sphere && !prescriptionData.od_cylinder && !prescriptionData.od_axis}
-              className="w-full px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-md flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-              </svg>
-              <span>Copy Right to Left</span>
-            </button>
-            {copyRightToLeft && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            {/* Copy Right to Left */}
+            <div className="mt-2">
+              <button
+                type="button"
+                onClick={handleCopyRightToLeft}
+                disabled={!prescriptionData.od_sphere && !prescriptionData.od_cylinder && !prescriptionData.od_axis}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                 </svg>
-                <p className="text-sm text-green-700 font-medium">Right eye values copied to left eye successfully</p>
-              </div>
-            )}
+                <span>Copy Right to Left</span>
+              </button>
+              {copyRightToLeft && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5 text-green-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <p className="text-sm text-green-700 font-medium">Right eye values copied to left eye successfully</p>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Axis Diagram Toggle and Display */}
-          <div className="mb-6 mt-6">
-            <button
-              type="button"
-              onClick={() => setShowAxisDiagram(!showAxisDiagram)}
-              className="w-full px-6 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 rounded-xl font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              <span>{showAxisDiagram ? 'Hide' : 'Show'} Axis Diagram</span>
-            </button>
-            
-            {showAxisDiagram && (
-              <div className="mt-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-200" style={{ overflow: 'visible', width: '100%' }}>
-                  <div className="text-center mb-3">
-                    <h3 className="text-base font-semibold text-gray-800 mb-2">Axis Measurements</h3>
-                    <div className="flex justify-center items-center gap-6">
-                      <div className="text-center">
-                        <div className="text-xs font-medium text-purple-600 mb-1">Right Eye (OD)</div>
-                        <div className="text-lg font-bold text-gray-800">{Number(prescriptionData.od_axis) || 0}°</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs font-medium text-blue-600 mb-1">Left Eye (OS)</div>
-                        <div className="text-lg font-bold text-gray-800">{Number(prescriptionData.os_axis) || 0}°</div>
-                      </div>
+          {/* Axis reference: below Rx fields, uses full column width */}
+          <aside className="min-w-0 w-full border border-gray-200 rounded-xl bg-slate-50 p-4 sm:p-5">
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAxisDiagram(!showAxisDiagram)}
+                className="w-full px-3 py-2.5 text-sm font-semibold rounded-lg border-2 border-purple-200 bg-white text-purple-800 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <span>{showAxisDiagram ? 'Hide axis diagrams' : 'Show axis diagrams'}</span>
+              </button>
+
+              {showAxisDiagram && (
+                <div className="w-full min-w-0">
+                  <div className="flex flex-wrap justify-center gap-4 text-center text-sm mb-2">
+                    <div>
+                      <div className="text-xs font-medium text-purple-600">Right (OD)</div>
+                      <div className="text-lg font-bold text-gray-900 tabular-nums">{Number(prescriptionData.od_axis) || 0}°</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-blue-600">Left (OS)</div>
+                      <div className="text-lg font-bold text-gray-900 tabular-nums">{Number(prescriptionData.os_axis) || 0}°</div>
                     </div>
                   </div>
-                  
-                  <div className="w-full overflow-x-auto">
-                    <EyeAxisDiagram 
+                  <div className="w-full min-w-0 overflow-x-hidden">
+                    <EyeAxisDiagram
                       rightEyeAxis={Number(prescriptionData.od_axis) || 0}
                       leftEyeAxis={Number(prescriptionData.os_axis) || 0}
-                      compact={true}
+                      compact
+                      layoutVariant="checkout"
+                      hidePrescriptionTable
                       onRightEyeAxisChange={(value) => onPrescriptionChange('od_axis', value.toString())}
                       onLeftEyeAxisChange={(value) => onPrescriptionChange('os_axis', value.toString())}
                     />
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </aside>
+        </div>
 
         {/* Select Option (ADD) - Only for Progressive */}
         {isProgressive && (
@@ -5322,13 +5401,13 @@ const PrescriptionInputStep: React.FC<PrescriptionInputStepProps> = ({
 
       </div>
 
-      <button
-        onClick={onNext}
-        className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
-      >
-        Continue
-      </button>
-    </>
+        <button
+          onClick={onNext}
+          className="w-full bg-blue-950 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-900 transition-colors flex-shrink-0 mt-4"
+        >
+          Continue
+        </button>
+    </div>
   )
 }
 
@@ -5546,6 +5625,11 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
 }) => {
   const { t } = useTranslation()
 
+  const inputClass = (field: string) =>
+    `w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+      errors[field] ? 'border-red-500 bg-red-50/40' : 'border-gray-300'
+    }`
+
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
@@ -5576,9 +5660,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
               type="text"
               value={shippingAddress.first_name}
               onChange={(e) => onAddressChange('first_name', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
+              className={inputClass('first_name')}
+              autoComplete="given-name"
             />
+            {errors.first_name && (
+              <p className="text-xs text-red-600 mt-1">{errors.first_name}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -5588,9 +5675,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
               type="text"
               value={shippingAddress.last_name}
               onChange={(e) => onAddressChange('last_name', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
+              className={inputClass('last_name')}
+              autoComplete="family-name"
             />
+            {errors.last_name && (
+              <p className="text-xs text-red-600 mt-1">{errors.last_name}</p>
+            )}
           </div>
         </div>
 
@@ -5602,9 +5692,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
             type="email"
             value={shippingAddress.email}
             onChange={(e) => onAddressChange('email', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+            className={inputClass('email')}
+            autoComplete="email"
           />
+          {errors.email && (
+            <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+          )}
         </div>
 
         <div>
@@ -5615,9 +5708,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
             type="tel"
             value={shippingAddress.phone}
             onChange={(e) => onAddressChange('phone', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+            className={inputClass('phone')}
+            autoComplete="tel"
           />
+          {errors.phone && (
+            <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+          )}
         </div>
 
         <div>
@@ -5628,9 +5724,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
             type="text"
             value={shippingAddress.address}
             onChange={(e) => onAddressChange('address', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+            className={inputClass('address')}
+            autoComplete="street-address"
           />
+          {errors.address && (
+            <p className="text-xs text-red-600 mt-1">{errors.address}</p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -5642,9 +5741,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
               type="text"
               value={shippingAddress.city}
               onChange={(e) => onAddressChange('city', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
+              className={inputClass('city')}
+              autoComplete="address-level2"
             />
+            {errors.city && (
+              <p className="text-xs text-red-600 mt-1">{errors.city}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -5654,8 +5756,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
               type="text"
               value={shippingAddress.state || ''}
               onChange={(e) => onAddressChange('state', e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={inputClass('state')}
+              autoComplete="address-level1"
             />
+            {errors.state && (
+              <p className="text-xs text-red-600 mt-1">{errors.state}</p>
+            )}
           </div>
         </div>
 
@@ -5667,9 +5773,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
             type="text"
             value={shippingAddress.zip_code}
             onChange={(e) => onAddressChange('zip_code', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+            className={inputClass('zip_code')}
+            autoComplete="postal-code"
           />
+          {errors.zip_code && (
+            <p className="text-xs text-red-600 mt-1">{errors.zip_code}</p>
+          )}
         </div>
 
         <div>
@@ -5680,9 +5789,12 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
             type="text"
             value={shippingAddress.country}
             onChange={(e) => onAddressChange('country', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            required
+            className={inputClass('country')}
+            autoComplete="country-name"
           />
+          {errors.country && (
+            <p className="text-xs text-red-600 mt-1">{errors.country}</p>
+          )}
         </div>
       </div>
 
@@ -5706,27 +5818,21 @@ const ShippingStep: React.FC<ShippingStepProps> = ({
 
 // Payment Step Component
 interface PaymentStepProps {
-  paymentMethod: string
-  onPaymentMethodChange: (method: string) => void
   onBack: () => void
   onCreateOrder: () => void
   isProcessing: boolean
   error: string | null
   order: any
   onLogin?: () => void
-  isAuthenticated?: boolean
 }
 
 const PaymentStep: React.FC<PaymentStepProps> = ({
-  paymentMethod,
-  onPaymentMethodChange,
   onBack,
   onCreateOrder,
   isProcessing,
   error,
   order,
-  onLogin,
-  isAuthenticated
+  onLogin
 }) => {
   const { t } = useTranslation()
 
@@ -5735,7 +5841,9 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
     error.toLowerCase().includes('login') ||
     error.toLowerCase().includes('authentication') ||
     error.toLowerCase().includes('unauthorized') ||
-    error.toLowerCase().includes('session expired')
+    error.toLowerCase().includes('session expired') ||
+    error.toLowerCase().includes('session') ||
+    error.toLowerCase().includes('guest')
   )
 
   return (
@@ -5757,12 +5865,13 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           <div className="text-red-700 text-sm mb-2">
             {error}
           </div>
-          {isLoginError && onLogin && !isAuthenticated && (
+          {isLoginError && onLogin && (
             <button
+              type="button"
               onClick={onLogin}
               className="mt-2 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-sm"
             >
-              {t('auth.login', 'Login')}
+              {t('auth.login.signIn')}
             </button>
           )}
         </div>
@@ -5779,22 +5888,24 @@ const PaymentStep: React.FC<PaymentStepProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('shop.paymentMethod', 'Payment Method')}
           </label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => onPaymentMethodChange(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="stripe">Stripe (Credit/Debit Card)</option>
-            <option value="paypal">PayPal</option>
-            <option value="cod">Cash on Delivery</option>
-          </select>
+          <div className="flex items-center gap-3 rounded-lg border-2 border-blue-600 bg-blue-50 px-4 py-3">
+            <span className="text-2xl" aria-hidden>
+              💳
+            </span>
+            <div>
+              <div className="font-semibold text-gray-900">
+                {t('shop.stripeOnlyTitle', 'Credit / debit card (Stripe)')}
+              </div>
+              <div className="text-xs text-gray-600">
+                {t('shop.stripeOnlySubtitle', 'Secure payment powered by Stripe')}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {paymentMethod === 'stripe' && (
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-            {t('shop.stripeInfo', 'You will be redirected to Stripe to complete your payment securely.')}
-          </div>
-        )}
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          {t('shop.stripeInfo', 'You will be redirected to Stripe to complete your payment securely.')}
+        </div>
       </div>
 
       <div className="flex gap-3">

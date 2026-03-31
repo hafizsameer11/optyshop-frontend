@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface PrescriptionValues {
@@ -13,6 +13,10 @@ interface EyeAxisDiagramProps {
   rightEyePrescription?: PrescriptionValues
   leftEyePrescription?: PrescriptionValues
   compact?: boolean
+  /** Smaller diagrams + denser layout for checkout modal */
+  layoutVariant?: 'default' | 'checkout'
+  /** Hide embedded SPH/CYL/AXIS table (use when parent form already has fields) */
+  hidePrescriptionTable?: boolean
   onRightEyeAxisChange?: (value: number) => void
   onLeftEyeAxisChange?: (value: number) => void
   onRightEyePrescriptionChange?: (prescription: PrescriptionValues) => void
@@ -26,6 +30,8 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
   rightEyePrescription,
   leftEyePrescription,
   compact = false,
+  layoutVariant = 'default',
+  hidePrescriptionTable = false,
   onRightEyeAxisChange,
   onLeftEyeAxisChange,
   onRightEyePrescriptionChange,
@@ -138,16 +144,34 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
     setLocalLeftAxis(leftAxisValue)
   }, [leftAxisValue])
 
-  const svgWidth = 800
-  const svgHeight = 500
-  const centerX = svgWidth / 2
-  const centerY = svgHeight - 80
-  const radius = 220
+  const { svgWidth, svgHeight, radius, centerX, centerY } = useMemo(() => {
+    if (layoutVariant === 'checkout') {
+      // Sized for full-width stacked layout in checkout (not squeezed beside form)
+      const w = 560
+      const h = 320
+      return {
+        svgWidth: w,
+        svgHeight: h,
+        radius: 148,
+        centerX: w / 2,
+        centerY: h - 68
+      }
+    }
+    return {
+      svgWidth: 800,
+      svgHeight: 500,
+      radius: 220,
+      centerX: 400,
+      centerY: 420
+    }
+  }, [layoutVariant])
 
   const calculateAxisFromPoint = (clientX: number, clientY: number, svgElement: SVGSVGElement, eyeType: 'right' | 'left'): number => {
     const rect = svgElement.getBoundingClientRect()
-    const x = clientX - rect.left - centerX
-    const y = clientY - rect.top - centerY
+    const scaleX = svgWidth / Math.max(rect.width, 1)
+    const scaleY = svgHeight / Math.max(rect.height, 1)
+    const x = (clientX - rect.left) * scaleX - centerX
+    const y = (clientY - rect.top) * scaleY - centerY
     
     // Calculate distance from center to check if click is within protractor area
     const distance = Math.sqrt(x * x + y * y)
@@ -756,28 +780,44 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
 
   if (compact) {
     return (
-      <div className="bg-white p-6 rounded-lg border-2 border-gray-300 shadow-lg" style={{ overflow: 'visible', width: '100%' }}>
+      <div
+        className={`bg-white rounded-lg border border-gray-200 shadow-sm ${layoutVariant === 'checkout' ? 'p-3 sm:p-4' : 'p-6 border-2 border-gray-300 shadow-lg'}`}
+        style={{ overflow: 'visible', width: '100%' }}
+      >
         {/* Screen reader live region */}
         <div id="axis-live-region" className="sr-only" aria-live="polite" aria-atomic="true"></div>
-        <div className="flex flex-col gap-4 justify-center items-center mb-6" style={{ overflow: 'visible', width: '100%' }}>
-          <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
-            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.rightEye', 'Right Eye OD')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
+        <div
+          className={
+            layoutVariant === 'checkout'
+              ? 'flex flex-col gap-6 mb-2 w-full'
+              : 'grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-3 mb-2 w-full'
+          }
+        >
+          <div className="text-center w-full min-w-0">
+            <div className={`font-bold text-blue-700 ${layoutVariant === 'checkout' ? 'text-base mb-2' : 'text-lg mb-4'}`}>
+              {t('prescription.rightEye', 'Right Eye OD')}
+            </div>
+            <div className="flex justify-center items-center min-h-0 w-full max-w-full">
               {generateProtractor(localRightAxis, 'right', rightSvgRef)}
             </div>
           </div>
-          <div className="text-center w-full" style={{ overflow: 'visible', minWidth: '400px' }}>
-            <div className="font-bold text-lg mb-4 text-blue-700">{t('prescription.leftEye', 'Left Eye OS')}</div>
-            <div className="flex justify-center items-center" style={{ overflow: 'visible', minHeight: '380px' }}>
+          <div className="text-center w-full min-w-0">
+            <div className={`font-bold text-blue-700 ${layoutVariant === 'checkout' ? 'text-base mb-2' : 'text-lg mb-4'}`}>
+              {t('prescription.leftEye', 'Left Eye OS')}
+            </div>
+            <div className="flex justify-center items-center min-h-0 w-full max-w-full">
               {generateProtractor(localLeftAxis, 'left', leftSvgRef)}
             </div>
-            <div className="mt-3 text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full inline-block">
+            <div
+              className={`mt-2 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full inline-block ${layoutVariant === 'checkout' ? '' : 'mt-3 text-sm'}`}
+            >
               Uses TABO system
             </div>
           </div>
         </div>
-        
-        {/* Prescription Table */}
+
+        {/* Prescription Table — optional when parent provides SPH/CYL/AXIS */}
+        {!hidePrescriptionTable && (
         <div className="mt-4">
           <table className="w-full border-collapse border-2 border-gray-300 text-base table-fixed">
             <thead>
@@ -911,6 +951,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
             </tbody>
           </table>
         </div>
+        )}
       </div>
     )
   }

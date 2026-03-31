@@ -43,10 +43,11 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
     const [shippingLoading, setShippingLoading] = useState(false)
-    const [paymentMethod, setPaymentMethod] = useState<string>(() => {
-        // Load from localStorage (set in Cart page) or default to stripe
-        return localStorage.getItem('selectedPaymentMethod') || 'stripe'
-    })
+    const paymentMethod = 'stripe'
+
+    useEffect(() => {
+        localStorage.setItem('selectedPaymentMethod', 'stripe')
+    }, [])
     
     // Initialize form data from configuration
     const initializeFormData = () => {
@@ -850,32 +851,26 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                         </div>
                                     )}
 
-                                    {/* Payment Method Display (Read-only - selected in Cart) */}
+                                    {/* Payment method: Stripe only */}
                                     <div className="pt-4 border-t border-gray-200 mt-4">
                                         <label className="block text-sm font-semibold text-gray-900 mb-3">
                                             {t('shop.paymentMethod', 'Payment Method')}
                                         </label>
                                         <div className="p-3 border-2 border-blue-600 bg-blue-50 rounded-lg">
                                             <div className="flex items-center gap-3">
-                                                <span className="text-lg">
-                                                    {paymentMethod === 'stripe' ? '💳' : paymentMethod === 'paypal' ? '🔵' : '💵'}
+                                                <span className="text-lg" aria-hidden>
+                                                    💳
                                                 </span>
                                                 <div className="flex-1">
                                                     <div className="font-medium text-gray-900">
-                                                        {paymentMethod === 'stripe' ? 'Credit/Debit Card' : paymentMethod === 'paypal' ? 'PayPal' : 'Cash on Delivery'}
+                                                        {t('shop.stripeOnlyTitle', 'Credit / debit card (Stripe)')}
                                                     </div>
                                                     <div className="text-xs text-gray-600 mt-0.5">
-                                                        {paymentMethod === 'stripe' ? 'Pay securely with Stripe' : paymentMethod === 'paypal' ? 'Pay with your PayPal account' : 'Pay when you receive your order'}
+                                                        {t('shop.stripeOnlySubtitle', 'Secure payment powered by Stripe')}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            To change payment method, please go back to{' '}
-                                            <Link to="/shop/cart" className="text-blue-600 hover:text-blue-800 underline">
-                                                your cart
-                                            </Link>
-                                        </p>
                                     </div>
 
                                     {/* Shipping Cost Display */}
