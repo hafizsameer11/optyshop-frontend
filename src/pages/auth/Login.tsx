@@ -24,15 +24,15 @@ const Login: React.FC = () => {
     // Redirect if already logged in
     useEffect(() => {
         if (!isLoading && user && user.role === 'customer') {
-            // User is already logged in, redirect to dashboard
-            navigate('/customer/dashboard', { replace: true })
+            // User is already logged in, redirect to account
+            navigate('/account/orders', { replace: true })
         }
     }, [user, isLoading, navigate])
 
     // Redirect after successful login when user state is updated
     useEffect(() => {
         if (shouldRedirect && user && user.role === 'customer' && !isLoading) {
-            navigate('/customer/dashboard', { replace: true })
+            navigate('/account/orders', { replace: true })
             setShouldRedirect(false)
         }
     }, [user, shouldRedirect, isLoading, navigate])
@@ -96,7 +96,7 @@ const Login: React.FC = () => {
             const result = await login(formData.email, formData.password)
             if (result.success) {
                 // Show success message
-                showSuccess(t('auth.login.loginSuccessful') || 'Login successful! Redirecting to dashboard...')
+                showSuccess(t('auth.login.loginSuccessful') || 'Login successful! Redirecting...')
                 // Set flag to redirect after user state is updated
                 setShouldRedirect(true)
                 setIsSubmitting(false)

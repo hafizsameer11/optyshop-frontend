@@ -8,9 +8,11 @@ import { useCategories } from '../hooks/useCategories'
 import type { Category } from '../services/categoriesService'
 import { useCategoryTranslation } from '../utils/categoryTranslations'
 import { searchAll, type SearchResult } from '../services/searchService'
+import { useAuth } from '../context/AuthContext'
 
 const Navbar: React.FC = () => {
     const { t } = useTranslation()
+    const { user } = useAuth()
     const { translateCategory } = useCategoryTranslation()
     const location = useLocation()
     const navigate = useNavigate()
@@ -702,13 +704,21 @@ const Navbar: React.FC = () => {
                         />
                     </button>
 
-                    {/* Login Button */}
-                    <Link
-                        to="/login"
-                        className="hidden md:inline-flex items-center justify-center h-7 min-w-[60px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
-                    >
-                        {t('navbar.login')}
-                    </Link>
+                    {user?.role === 'customer' ? (
+                        <Link
+                            to="/account"
+                            className="hidden md:inline-flex items-center justify-center h-7 min-w-[72px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        >
+                            {t('nav.account', 'Account')}
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/login"
+                            className="hidden md:inline-flex items-center justify-center h-7 min-w-[60px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                        >
+                            {t('navbar.login')}
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -961,15 +971,25 @@ const Navbar: React.FC = () => {
                                 <LanguageSwitcher variant="navbar" />
                             </div>
                         </div>
-                        <Link
-                            to="/login"
-                            onClick={() => {
-                                setIsMobileOpen(false)
-                            }}
-                            className="w-full rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
-                        >
-                            {t('navbar.login')}
-                        </Link>
+                        {user?.role === 'customer' ? (
+                            <Link
+                                to="/account"
+                                onClick={() => setIsMobileOpen(false)}
+                                className="w-full rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
+                            >
+                                {t('nav.account', 'Account')}
+                            </Link>
+                        ) : (
+                            <Link
+                                to="/login"
+                                onClick={() => {
+                                    setIsMobileOpen(false)
+                                }}
+                                className="w-full rounded-full border border-cyan-400 bg-blue-950/60 hover:bg-blue-900/70 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-200 cursor-pointer text-center block"
+                            >
+                                {t('navbar.login')}
+                            </Link>
+                        )}
                         <div className="flex justify-center gap-4">
                             <WishlistIcon />
                             <CartIcon />

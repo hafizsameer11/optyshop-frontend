@@ -147,7 +147,7 @@ export const processPayment = async (
       elements,
       clientSecret,
       confirmParams: {
-        return_url: `${window.location.origin}/customer/orders`,
+        return_url: `${window.location.origin}/account/orders`,
       },
       redirect: 'if_required', // Only redirect if required (3D Secure)
     });

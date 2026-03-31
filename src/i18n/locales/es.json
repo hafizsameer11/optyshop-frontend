@@ -18,6 +18,18 @@
     "language": "Idioma",
     "home": "Inicio"
   },
+  "nav": {
+    "account": "Cuenta"
+  },
+  "account": {
+    "title": "Cuenta de usuario",
+    "navAria": "Secciones de la cuenta",
+    "tabs": {
+      "orders": "Pedidos",
+      "payments": "Pagos",
+      "profile": "Perfil"
+    }
+  },
   "home": {
     "hero": {
       "title": "Prueba virtual",

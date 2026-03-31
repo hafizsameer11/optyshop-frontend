@@ -166,7 +166,7 @@ const OrderDetail: React.FC = () => {
       <div>
         <div className="mb-6">
           <button
-            onClick={() => navigate('/customer/orders')}
+            onClick={() => navigate('/account/orders')}
             className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,7 +189,7 @@ const OrderDetail: React.FC = () => {
         {/* Back Button */}
         <div className="mb-6">
           <button
-            onClick={() => navigate('/customer/orders')}
+            onClick={() => navigate('/account/orders')}
             className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

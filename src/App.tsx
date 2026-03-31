@@ -42,12 +42,10 @@ import Wishlist from './pages/shop/Wishlist'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ProtectedRoute from './components/customer/ProtectedRoute'
+import AccountLayout from './components/account/AccountLayout'
 import ErrorBoundary from './components/ErrorBoundary'
-import CustomerDashboard from './pages/customer/Dashboard'
-import CustomerCart from './pages/customer/Cart'
 import CustomerOrders from './pages/customer/Orders'
 import OrderDetail from './pages/customer/OrderDetail'
-import CustomerPrescriptions from './pages/customer/Prescriptions'
 import CustomerProfile from './pages/customer/Profile'
 import CustomerTransactions from './pages/customer/Transactions'
 import TransactionDetail from './pages/customer/TransactionDetail'
@@ -62,6 +60,16 @@ import SubcategoryFilterTest from './components/debug/SubcategoryFilterTest'
 const ProductRedirect = () => {
   const { slug } = useParams<{ slug: string }>()
   return <Navigate to={`/shop/product/${slug}`} replace />
+}
+
+const RedirectCustomerOrder = () => {
+  const { id } = useParams<{ id: string }>()
+  return <Navigate to={`/account/orders/${id}`} replace />
+}
+
+const RedirectCustomerTransaction = () => {
+  const { id } = useParams<{ id: string }>()
+  return <Navigate to={`/account/payments/${id}`} replace />
 }
 
 function App() {
@@ -125,16 +133,33 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/test-subcategories" element={<SubcategoryFilterTest />} />
-        
-        {/* Customer Dashboard Routes */}
-        <Route path="/customer/dashboard" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
-        <Route path="/customer/cart" element={<ProtectedRoute><CustomerCart /></ProtectedRoute>} />
-        <Route path="/customer/orders" element={<ProtectedRoute><CustomerOrders /></ProtectedRoute>} />
-        <Route path="/customer/orders/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
-        <Route path="/customer/prescriptions" element={<ProtectedRoute><CustomerPrescriptions /></ProtectedRoute>} />
-        <Route path="/customer/transactions" element={<ProtectedRoute><CustomerTransactions /></ProtectedRoute>} />
-        <Route path="/customer/transactions/:id" element={<ProtectedRoute><TransactionDetail /></ProtectedRoute>} />
-        <Route path="/customer/profile" element={<ProtectedRoute><CustomerProfile /></ProtectedRoute>} />
+
+        {/* User account (shop layout: Navbar + tabs + Footer) */}
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="orders" replace />} />
+          <Route path="profile" element={<CustomerProfile />} />
+          <Route path="orders" element={<CustomerOrders />} />
+          <Route path="orders/:id" element={<OrderDetail />} />
+          <Route path="payments" element={<CustomerTransactions />} />
+          <Route path="payments/:id" element={<TransactionDetail />} />
+        </Route>
+
+        {/* Legacy /customer/* → /account/* (bookmarks, payment return URLs) */}
+        <Route path="/customer/dashboard" element={<Navigate to="/account/orders" replace />} />
+        <Route path="/customer/cart" element={<Navigate to="/cart" replace />} />
+        <Route path="/customer/orders" element={<Navigate to="/account/orders" replace />} />
+        <Route path="/customer/orders/:id" element={<RedirectCustomerOrder />} />
+        <Route path="/customer/prescriptions" element={<Navigate to="/account/orders" replace />} />
+        <Route path="/customer/transactions" element={<Navigate to="/account/payments" replace />} />
+        <Route path="/customer/transactions/:id" element={<RedirectCustomerTransaction />} />
+        <Route path="/customer/profile" element={<Navigate to="/account/profile" replace />} />
       </Routes>
     </Router>
     </ErrorBoundary>

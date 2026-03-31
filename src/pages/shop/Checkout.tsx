@@ -518,7 +518,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                             <div className="flex gap-4 justify-center">
                                 {isAuthenticated && (
                                     <Link
-                                        to="/customer/orders"
+                                        to="/account/orders"
                                         className="inline-block px-8 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors duration-300"
                                     >
                                         View Orders

@@ -197,7 +197,7 @@ const Transactions: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {transaction.order ? (
                             <Link
-                              to={`/customer/orders/${transaction.order_id}`}
+                              to={`/account/orders/${transaction.order_id}`}
                               className="text-blue-600 hover:text-blue-800 font-medium"
                             >
                               {transaction.order.order_number || `#${transaction.order_id}`}
@@ -230,7 +230,7 @@ const Transactions: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <Link
-                            to={`/customer/transactions/${transaction.id}`}
+                            to={`/account/payments/${transaction.id}`}
                             className="text-blue-600 hover:text-blue-800 font-medium"
                           >
                             {t('transactions.viewDetails', { defaultValue: 'View Details' })}

@@ -81,9 +81,8 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Profile Settings</h1>
+    <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
 
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-6">
@@ -224,7 +223,6 @@ const Profile: React.FC = () => {
             )}
           </div>
         </div>
-      </div>
     </div>
   )
 }

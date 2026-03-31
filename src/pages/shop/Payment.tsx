@@ -84,7 +84,7 @@ const Payment: React.FC = () => {
           // Redirect to order page if already paid
           if (errorMessage && (errorMessage.toLowerCase().includes('already') || errorMessage.toLowerCase().includes('paid'))) {
             setTimeout(() => {
-              navigate(`/customer/orders/${parsedOrderId}`)
+              navigate(`/account/orders/${parsedOrderId}`)
             }, 3000)
           }
         } else {
@@ -134,7 +134,7 @@ const Payment: React.FC = () => {
                   {t('payment.backToCheckout', 'Back to Checkout')}
                 </button>
                 <button
-                  onClick={() => navigate('/customer/orders')}
+                  onClick={() => navigate('/account/orders')}
                   className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   {t('payment.viewOrders', 'View Orders')}

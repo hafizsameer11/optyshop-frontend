@@ -147,7 +147,7 @@ const Register: React.FC = () => {
                 // Show success message and redirect to dashboard
                 showSuccess(t('auth.register.registrationSuccessful') || 'Registration successful! Redirecting to dashboard...')
                 setTimeout(() => {
-                    navigate('/customer/dashboard')
+                    navigate('/account/orders')
                 }, 1500)
             } else {
                 // Handle different error structures using the utility function

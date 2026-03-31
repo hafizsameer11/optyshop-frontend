@@ -246,7 +246,7 @@ const Orders: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <div className="flex items-center gap-3">
                             <Link
-                              to={`/customer/orders/${order.id}`}
+                              to={`/account/orders/${order.id}`}
                               className="text-blue-600 hover:text-blue-800 font-medium"
                             >
                               {t('orders.viewOrder')}

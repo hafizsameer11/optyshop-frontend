@@ -48,6 +48,18 @@
     "yes": "OUI",
     "no": "NON"
   },
+  "nav": {
+    "account": "Compte"
+  },
+  "account": {
+    "title": "Compte utilisateur",
+    "navAria": "Sections du compte",
+    "tabs": {
+      "orders": "Commandes",
+      "payments": "Paiements",
+      "profile": "Profil"
+    }
+  },
   "home": {
     "hero": {
       "title": "Essai virtuel",

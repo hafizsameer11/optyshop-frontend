@@ -2596,7 +2596,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         if (onClose) {
           onClose()
         }
-        navigate(`/customer/orders/${order.id}`)
+        navigate(`/account/orders/${order.id}`)
       }
     } catch (error: any) {
       console.error('Error creating order:', error)

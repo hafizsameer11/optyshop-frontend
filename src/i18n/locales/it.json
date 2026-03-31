@@ -48,6 +48,18 @@
     "yes": "SÌ",
     "no": "NO"
   },
+  "nav": {
+    "account": "Account"
+  },
+  "account": {
+    "title": "Account utente",
+    "navAria": "Sezioni account",
+    "tabs": {
+      "orders": "Ordini",
+      "payments": "Pagamenti",
+      "profile": "Profilo"
+    }
+  },
   "home": {
     "hero": {
       "title": "Prova virtuale",

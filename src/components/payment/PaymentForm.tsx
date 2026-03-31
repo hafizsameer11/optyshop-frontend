@@ -47,7 +47,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, clientSecret }) => {
         elements,
         clientSecret,
         confirmParams: {
-          return_url: `${window.location.origin}/customer/orders/${orderId}`,
+          return_url: `${window.location.origin}/account/orders/${orderId}`,
         },
         redirect: 'if_required', // Only redirect if required (3D Secure)
       })
@@ -66,14 +66,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, clientSecret }) => {
         if (confirmResult) {
           // Payment successful! Transaction is created/updated automatically by backend
           // Redirect to order detail page
-          navigate(`/customer/orders/${orderId}`, {
+          navigate(`/account/orders/${orderId}`, {
             state: { paymentSuccess: true }
           })
         } else {
           // Payment succeeded with Stripe but backend confirmation failed
           // Still redirect but show warning
           console.warn('Payment succeeded with Stripe but backend confirmation failed')
-          navigate(`/customer/orders/${orderId}`, {
+          navigate(`/account/orders/${orderId}`, {
             state: { 
               paymentSuccess: true,
               paymentWarning: 'Payment processed but transaction may not be recorded. Please contact support if you don\'t see a transaction record.'
@@ -119,7 +119,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ orderId, clientSecret }) => {
       <div className="flex gap-4">
         <button
           type="button"
-          onClick={() => navigate(`/customer/orders/${orderId}`)}
+          onClick={() => navigate(`/account/orders/${orderId}`)}
           disabled={isProcessing}
           className="flex-1 px-6 py-3 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors duration-300 disabled:opacity-50"
         >

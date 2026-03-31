@@ -48,6 +48,18 @@
     "yes": "YES",
     "no": "NO"
   },
+  "nav": {
+    "account": "Account"
+  },
+  "account": {
+    "title": "User account",
+    "navAria": "Account sections",
+    "tabs": {
+      "orders": "Orders",
+      "payments": "Payments",
+      "profile": "Profile"
+    }
+  },
   "home": {
     "hero": {
       "title": "Virtual try-on",

@@ -85,7 +85,7 @@ const TransactionDetail: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-gray-500 text-lg mb-4">{t('transactions.transactionNotFound', { defaultValue: 'Transaction not found' })}</p>
         <Link
-          to="/customer/transactions"
+          to="/account/payments"
           className="text-blue-600 hover:text-blue-800 font-medium"
         >
           {t('transactions.backToTransactions', { defaultValue: 'Back to Transactions' })}
@@ -95,8 +95,8 @@ const TransactionDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="pt-4">
+    <div>
+      <div>
         <div className="flex items-center justify-between mb-6">
           <div>
             <button
@@ -199,7 +199,7 @@ const TransactionDetail: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">{t('transactions.orderNumber', { defaultValue: 'Order Number' })}</span>
                     <Link
-                      to={`/customer/orders/${transaction.order_id}`}
+                      to={`/account/orders/${transaction.order_id}`}
                       className="font-medium text-blue-600 hover:text-blue-800"
                     >
                       {transaction.order.order_number || `#${transaction.order_id}`}
@@ -289,14 +289,14 @@ const TransactionDetail: React.FC = () => {
               <div className="space-y-2">
                 {transaction.order && (
                   <Link
-                    to={`/customer/orders/${transaction.order_id}`}
+                    to={`/account/orders/${transaction.order_id}`}
                     className="block w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-center"
                   >
                     {t('transactions.viewOrder', { defaultValue: 'View Order' })}
                   </Link>
                 )}
                 <Link
-                  to="/customer/transactions"
+                  to="/account/payments"
                   className="block w-full px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors text-center"
                 >
                   {t('transactions.backToTransactions', { defaultValue: 'Back to Transactions' })}

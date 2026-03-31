@@ -48,6 +48,18 @@
     "yes": "SIM",
     "no": "NÃO"
   },
+  "nav": {
+    "account": "Conta"
+  },
+  "account": {
+    "title": "Conta de utilizador",
+    "navAria": "Secções da conta",
+    "tabs": {
+      "orders": "Pedidos",
+      "payments": "Pagamentos",
+      "profile": "Perfil"
+    }
+  },
   "home": {
     "hero": {
       "title": "Experimentação virtual",
