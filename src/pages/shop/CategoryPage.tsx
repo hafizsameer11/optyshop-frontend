@@ -19,7 +19,7 @@ import {
 import CategoryBanner from '../../components/home/CategoryBanner'
 import CategoryNavigation from '../../components/shop/CategoryNavigation'
 import ProductCard from '../../components/products/ProductCard'
-import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
+import ComprehensiveFilters, { type ShopFilterPayload } from '../../components/shop/ComprehensiveFilters'
 
 // Validation function to ensure products match expected category/subcategory
 const validateProductFiltering = (products: Product[], categoryInfo: {
@@ -113,6 +113,12 @@ const CategoryPage: React.FC = () => {
     const [sortBy, setSortBy] = useState<string>('newest')
     const [brand, setBrand] = useState<string>('')
     const [inStockOnly, setInStockOnly] = useState<boolean>(false)
+    const [frameShape, setFrameShape] = useState<string>('')
+    const [frameMaterial, setFrameMaterial] = useState<string>('')
+    const [isFeaturedOnly, setIsFeaturedOnly] = useState<boolean>(false)
+    const [baseCurve, setBaseCurve] = useState<string>('')
+    const [diameter, setDiameter] = useState<string>('')
+    const [replacementPeriod, setReplacementPeriod] = useState<string>('')
 
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
@@ -294,6 +300,25 @@ const CategoryPage: React.FC = () => {
 
                 if (inStockOnly) {
                     filters.inStock = true
+                }
+
+                if (frameShape) {
+                    filters.frameShape = frameShape
+                }
+                if (frameMaterial) {
+                    filters.frameMaterial = frameMaterial
+                }
+                if (isFeaturedOnly) {
+                    filters.isFeatured = true
+                }
+                if (baseCurve.trim()) {
+                    filters.baseCurve = baseCurve.trim()
+                }
+                if (diameter.trim()) {
+                    filters.diameter = diameter.trim()
+                }
+                if (replacementPeriod.trim()) {
+                    filters.replacementPeriod = replacementPeriod.trim()
                 }
 
                 // Add sorting
@@ -636,9 +661,13 @@ const CategoryPage: React.FC = () => {
                     
                     if (lensCoating && filteredProducts.length > 0) {
                         const beforeFilter = filteredProducts.length
+                        const want = lensCoating.toLowerCase()
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const p = product as any
-                            return p.treatment_options && p.treatment_options.toLowerCase() === lensCoating.toLowerCase()
+                            const coat = (p.lens_coating || p.treatment_options || p.lensCoating || '')
+                                .toString()
+                                .toLowerCase()
+                            return coat && (coat === want || coat.includes(want))
                         })
                         if (import.meta.env.DEV) {
                             console.log(`🔍 CategoryPage - After lens coating filter (${lensCoating}): ${beforeFilter} -> ${filteredProducts.length}`)
@@ -688,6 +717,51 @@ const CategoryPage: React.FC = () => {
                             console.log(`🔍 CategoryPage - After search filter (${searchTerm}): ${beforeFilter} -> ${filteredProducts.length}`)
                         }
                     }
+
+                    if (frameShape && filteredProducts.length > 0) {
+                        const fs = frameShape.toLowerCase()
+                        filteredProducts = filteredProducts.filter(
+                            (p) => p.frame_shape && p.frame_shape.toLowerCase() === fs
+                        )
+                    }
+                    if (frameMaterial && filteredProducts.length > 0) {
+                        const fm = frameMaterial.toLowerCase()
+                        filteredProducts = filteredProducts.filter(
+                            (p) => p.frame_material && p.frame_material.toLowerCase() === fm
+                        )
+                    }
+                    if (isFeaturedOnly && filteredProducts.length > 0) {
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            return x.is_featured === true || x.isFeatured === true
+                        })
+                    }
+                    if (baseCurve.trim() && filteredProducts.length > 0) {
+                        const bc = baseCurve.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const v = String((p as any).base_curve ?? (p as any).baseCurve ?? '')
+                            return v.toLowerCase().includes(bc)
+                        })
+                    }
+                    if (diameter.trim() && filteredProducts.length > 0) {
+                        const d = diameter.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const v = String((p as any).diameter ?? '')
+                            return v.toLowerCase().includes(d)
+                        })
+                    }
+                    if (replacementPeriod.trim() && filteredProducts.length > 0) {
+                        const rp = replacementPeriod.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const v = String(
+                                (p as any).replacement_period ??
+                                    (p as any).replacementPeriod ??
+                                    (p as any).wear_schedule ??
+                                    ''
+                            )
+                            return v.toLowerCase().includes(rp)
+                        })
+                    }
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 CategoryPage - Final filtered products:', filteredProducts.length)
@@ -698,11 +772,16 @@ const CategoryPage: React.FC = () => {
                     }
 
                     setProducts(filteredProducts)
-                    // Update pagination total if we filtered client-side
                     const updatedPagination = { ...result.pagination }
-                    if (selectedColor && filteredProducts.length !== (result.products || []).length) {
+                    const rawCount = (result.products || []).length
+                    const clientFiltered =
+                        rawCount > 0 && filteredProducts.length !== rawCount
+                    if (clientFiltered) {
                         updatedPagination.total = filteredProducts.length
-                        updatedPagination.pages = Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                        updatedPagination.pages = Math.max(
+                            1,
+                            Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
+                        )
                     }
                     setPagination(updatedPagination)
                 }
@@ -723,7 +802,28 @@ const CategoryPage: React.FC = () => {
         return () => {
             isCancelled = true
         }
-    }, [categoryInfo.category?.id, categoryInfo.subcategory?.id, categoryInfo.subSubcategory?.id, currentPage, searchTerm, lensType, lensCoating, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, sortBy])
+    }, [
+        categoryInfo.category?.id,
+        categoryInfo.subcategory?.id,
+        categoryInfo.subSubcategory?.id,
+        currentPage,
+        searchTerm,
+        lensType,
+        lensCoating,
+        minPrice,
+        maxPrice,
+        gender,
+        selectedColor,
+        brand,
+        inStockOnly,
+        sortBy,
+        frameShape,
+        frameMaterial,
+        isFeaturedOnly,
+        baseCurve,
+        diameter,
+        replacementPeriod,
+    ])
 
     
     if (loading) {
@@ -803,23 +903,16 @@ const CategoryPage: React.FC = () => {
                 }}
             />
             
-            {/* Main Content Area with Sidebar */}
-            <div className="max-w-screen-2xl mx-auto px-4 mb-3">
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Filters Sidebar */}
-                    <div className="w-full lg:w-80 flex-shrink-0">
+            <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+                    <aside className="w-full shrink-0 lg:w-72 xl:w-80">
                         <ComprehensiveFilters
-                            onFilterChange={(filters) => {
-                                // Apply filters from comprehensive filter component
-                                if (filters.gender !== undefined) {
-                                    setGender(filters.gender)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.minPrice !== undefined) {
+                            onFilterChange={(filters: ShopFilterPayload) => {
+                                if ('minPrice' in filters) {
                                     setMinPrice(filters.minPrice)
                                     setCurrentPage(1)
                                 }
-                                if (filters.maxPrice !== undefined) {
+                                if ('maxPrice' in filters) {
                                     setMaxPrice(filters.maxPrice)
                                     setCurrentPage(1)
                                 }
@@ -828,32 +921,76 @@ const CategoryPage: React.FC = () => {
                                     setCurrentPage(1)
                                 }
                                 if (filters.color !== undefined) {
-                                    setSelectedColor(filters.color)
+                                    setSelectedColor(filters.color ?? '')
                                     setCurrentPage(1)
                                 }
                                 if (filters.brand !== undefined) {
-                                    setBrand(filters.brand)
+                                    setBrand(filters.brand ?? '')
                                     setCurrentPage(1)
                                 }
                                 if (filters.lensType !== undefined) {
-                                    setLensType(filters.lensType)
+                                    setLensType(filters.lensType ?? '')
                                     setCurrentPage(1)
                                 }
                                 if (filters.lensCoating !== undefined) {
-                                    setLensCoating(filters.lensCoating)
+                                    setLensCoating(filters.lensCoating ?? '')
                                     setCurrentPage(1)
                                 }
                                 if (filters.inStock !== undefined) {
-                                    setInStockOnly(filters.inStock)
+                                    setInStockOnly(!!filters.inStock)
                                     setCurrentPage(1)
                                 }
                                 if (filters.search !== undefined) {
-                                    if (import.meta.env.DEV) {
-                                        console.log('🔍 CategoryPage received search term:', filters.search)
-                                    }
-                                    setSearchTerm(filters.search)
+                                    setSearchTerm(filters.search ?? '')
                                     setCurrentPage(1)
                                 }
+                                if (filters.gender !== undefined) {
+                                    setGender(filters.gender ?? '')
+                                    setCurrentPage(1)
+                                }
+                                if (filters.frameShape !== undefined) {
+                                    setFrameShape(filters.frameShape ?? '')
+                                    setCurrentPage(1)
+                                }
+                                if (filters.frameMaterial !== undefined) {
+                                    setFrameMaterial(filters.frameMaterial ?? '')
+                                    setCurrentPage(1)
+                                }
+                                if (typeof filters.featuredOnly === 'boolean') {
+                                    setIsFeaturedOnly(filters.featuredOnly)
+                                    setCurrentPage(1)
+                                }
+                                if (filters.baseCurve !== undefined) {
+                                    setBaseCurve(filters.baseCurve ?? '')
+                                    setCurrentPage(1)
+                                }
+                                if (filters.diameter !== undefined) {
+                                    setDiameter(filters.diameter ?? '')
+                                    setCurrentPage(1)
+                                }
+                                if (filters.replacementPeriod !== undefined) {
+                                    setReplacementPeriod(filters.replacementPeriod ?? '')
+                                    setCurrentPage(1)
+                                }
+                            }}
+                            onClearAll={() => {
+                                setSearchTerm('')
+                                setLensType('')
+                                setLensCoating('')
+                                setMinPrice(undefined)
+                                setMaxPrice(undefined)
+                                setGender('')
+                                setSelectedColor('')
+                                setBrand('')
+                                setInStockOnly(false)
+                                setSortBy('newest')
+                                setFrameShape('')
+                                setFrameMaterial('')
+                                setIsFeaturedOnly(false)
+                                setBaseCurve('')
+                                setDiameter('')
+                                setReplacementPeriod('')
+                                setCurrentPage(1)
                             }}
                             availableColors={availableColors}
                             availableBrands={availableBrands}
@@ -863,15 +1000,30 @@ const CategoryPage: React.FC = () => {
                                 categoryInfo.subSubcategory ? 'subsubcategory' :
                                 categoryInfo.subcategory ? 'subcategory' : 'category'
                             }
+                            categorySlug={categoryInfo.category?.slug || ''}
                             className="sticky top-24"
                         />
-                    </div>
+                    </aside>
 
-                    {/* Products Content */}
-                    <div className="flex-1">
-                        {/* Page Content */}
-                        <div className="bg-gradient-to-br from-gray-50 via-white to-gray-50 py-1 px-4 sm:px-6 lg:px-8 rounded-lg">
-                            
+                    <div className="min-w-0 flex-1">
+                        <header className="mb-8 border-b border-slate-200/90 pb-6">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                {translateCategory(
+                                    categoryInfo.subSubcategory ||
+                                        categoryInfo.subcategory ||
+                                        categoryInfo.category
+                                )}
+                            </h1>
+                            <p className="mt-2 text-sm text-slate-600">
+                                {!loading && products.length > 0
+                                    ? `${products.length} product${products.length === 1 ? '' : 's'}`
+                                    : !loading
+                                      ? 'No products match these filters'
+                                      : 'Loading products…'}
+                            </p>
+                        </header>
+
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 sm:p-6 lg:p-8">
                             {loading ? (
                                 <div className="text-center py-16">
                                     <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-950"></div>
@@ -922,7 +1074,7 @@ const CategoryPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-16 px-4 lg:px-6">
+                                    <div className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                                         {products.map((product) => (
                                             <ProductCard key={product.id} product={product} />
                                         ))}

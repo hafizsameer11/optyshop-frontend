@@ -226,6 +226,7 @@ const TrustedBrands: React.FC = () => {
     }
 
     const handleCorsFallback = async (target: HTMLImageElement, brand: Brand) => {
+        target.dataset.brandImgStep = '2'
         console.error(`🔄 Trying data URL conversion for: ${brand.name}`)
         try {
             const originalUrl = brand.logo_image || brand.logo_url || ''
@@ -240,8 +241,7 @@ const TrustedBrands: React.FC = () => {
         } catch (error) {
             console.error(`❌ Data URL conversion failed for: ${brand.name}`, error)
         }
-        
-        // Final fallback: hide the image
+
         console.error(`🚫 All fallbacks failed for: ${brand.name}. Hiding image.`)
         target.style.display = 'none'
     }
@@ -306,25 +306,32 @@ const TrustedBrands: React.FC = () => {
                                         onLoad={() => {
                                             console.log(`✅ Image loaded successfully: ${brand.name} -> ${imageUrl}`)
                                         }}
-                                        onError={async (e) => {
+                                        onError={(e) => {
                                             const target = e.target as HTMLImageElement
+                                            const step = target.dataset.brandImgStep || '0'
+
+                                            if (step === '2') {
+                                                target.style.display = 'none'
+                                                return
+                                            }
+
+                                            if (step === '1') {
+                                                void handleCorsFallback(target, brand)
+                                                return
+                                            }
+
                                             console.error(`❌ Brand image failed to load: ${brand.name} -> ${imageUrl}`)
                                             console.error(`🔍 Image element src: ${target.src}`)
-                                            
-                                            // Try the original URL as fallback
+
                                             const originalUrl = brand.logo_image || brand.logo_url || ''
                                             if (originalUrl && target.src !== originalUrl) {
                                                 console.error(`🌐 Trying original URL as fallback...`)
+                                                target.dataset.brandImgStep = '1'
                                                 target.src = originalUrl
-                                                target.onerror = () => {
-                                                    console.error(`❌ Original URL also failed for: ${brand.name}`)
-                                                    // Try to convert to data URL as last resort
-                                                    handleCorsFallback(target, brand)
-                                                }
-                                            } else {
-                                                // Try to convert to data URL as last resort
-                                                handleCorsFallback(target, brand)
+                                                return
                                             }
+
+                                            void handleCorsFallback(target, brand)
                                         }}
                                     />
                                 ) : (

@@ -3,7 +3,7 @@
  * Handles API calls for contact lens forms system
  */
 
-import { apiClient } from '../utils/api'
+import { apiClient, API_BASE_URL } from '../utils/api'
 import { API_ROUTES } from '../config/apiRoutes'
 
 // ============================================
@@ -385,13 +385,7 @@ export const getAstigmatismConfigs = async (
   try {
     const endpoint = API_ROUTES.CONTACT_LENS_FORMS.GET_ASTIGMATISM_CONFIGS(subCategoryId, productId)
     
-    // Get the base URL to show full URL in logs
-    const baseURL = import.meta.env.VITE_API_BASE_URL || 
-      (import.meta.env.DEV 
-        ? 'http://localhost:5000/api'
-        : 'https://optyshop-frontend.hmstech.org/api'
-      )
-    const fullURL = `${baseURL}${endpoint}`
+    const fullURL = `${API_BASE_URL}${endpoint}`
     
     if (import.meta.env.DEV) {
       console.log('🔍 Fetching astigmatism configs:', {

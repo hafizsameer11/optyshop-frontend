@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { apiClient } from '../../utils/api'
-import { API_ROUTES } from '../../config/apiRoutes'
+import { submitContactForm } from '../../services/contactFormService'
 
 const ContactFormSection: React.FC = () => {
     const { t } = useTranslation()
@@ -17,6 +16,7 @@ const ContactFormSection: React.FC = () => {
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string>('')
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -33,47 +33,58 @@ const ContactFormSection: React.FC = () => {
         e.preventDefault()
         setSubmitError('')
 
+        const normalized = {
+            email: formData.email.trim(),
+            firstName: formData.firstName.trim(),
+            lastName: formData.lastName.trim(),
+            country: formData.country.trim(),
+            companyName: formData.companyName.trim(),
+            message: formData.message.trim(),
+        }
+
         // Basic validation
-        if (!formData.email || !formData.firstName || !formData.lastName || !formData.country || !formData.companyName || !formData.message) {
+        if (!normalized.email || !normalized.firstName || !normalized.lastName || !normalized.country || !normalized.companyName || !normalized.message) {
             setSubmitError(t('contact.fillAllFields') || 'Please fill in all required fields')
+            return
+        }
+        if (!emailRegex.test(normalized.email)) {
+            setSubmitError(t('contact.invalidEmail') || 'Please enter a valid email address')
+            return
+        }
+        if (normalized.message.length < 10) {
+            setSubmitError(t('contact.messageTooShort') || 'Message should be at least 10 characters')
             return
         }
 
         setIsSubmitting(true)
         try {
-            // Prepare payload - backend expects 'company' not 'companyName'
             const payload = {
-                email: formData.email,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                country: formData.country,
-                company: formData.companyName,
-                message: formData.message
+                email: normalized.email,
+                firstName: normalized.firstName,
+                lastName: normalized.lastName,
+                country: normalized.country,
+                company: normalized.companyName,
+                message: normalized.message
             }
 
             if (import.meta.env.DEV) {
                 console.log('[Contact Form] Submitting payload:', payload)
             }
 
-            const response = await apiClient.post(
-                API_ROUTES.FORMS.CONTACT.SUBMIT,
-                payload,
-                false
-            )
+            const result = await submitContactForm(payload)
 
-            if (response.success) {
-                // Navigate to thank you page after successful submission
+            if (result.success) {
                 navigate('/thank-you')
             } else {
-                // Show detailed error message from backend
-                const errorMsg = response.error || response.message || 'Failed to submit contact form. Please try again.'
-                setSubmitError(errorMsg || t('contact.errorSending'))
+                const errorMsg = result.message || t('contact.errorSending')
+                setSubmitError(errorMsg)
                 if (import.meta.env.DEV) {
-                    console.error('Contact form submission error:', response)
+                    console.error('Contact form submission error:', result)
                 }
             }
-        } catch (error: any) {
-            setSubmitError(error.message || t('contact.errorSending'))
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error)
+            setSubmitError(msg || t('contact.errorSending'))
             if (import.meta.env.DEV) {
                 console.error('Contact form submission exception:', error)
             }
@@ -103,6 +114,7 @@ const ContactFormSection: React.FC = () => {
                                     id="email"
                                     name="email"
                                     required
+                                    autoComplete="email"
                                     value={formData.email}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -120,6 +132,7 @@ const ContactFormSection: React.FC = () => {
                                         id="firstName"
                                         name="firstName"
                                         required
+                                        autoComplete="given-name"
                                         value={formData.firstName}
                                         onChange={handleChange}
                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -134,6 +147,7 @@ const ContactFormSection: React.FC = () => {
                                         id="lastName"
                                         name="lastName"
                                         required
+                                        autoComplete="family-name"
                                         value={formData.lastName}
                                         onChange={handleChange}
                                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -176,6 +190,7 @@ const ContactFormSection: React.FC = () => {
                                     id="companyName"
                                     name="companyName"
                                     required
+                                    autoComplete="organization"
                                     value={formData.companyName}
                                     onChange={handleChange}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -192,6 +207,8 @@ const ContactFormSection: React.FC = () => {
                                     name="message"
                                     required
                                     rows={5}
+                                    minLength={10}
+                                    maxLength={2000}
                                     value={formData.message}
                                     onChange={handleChange}
                                     placeholder={t('contact.messagePlaceholder') || 'Tell us more about your needs.'}

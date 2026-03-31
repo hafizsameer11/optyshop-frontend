@@ -3,7 +3,7 @@
  * Use this in browser console to diagnose connection issues
  */
 
-import { apiClient } from './api';
+import { apiClient, API_BASE_URL } from './api';
 import { API_ROUTES } from '../config/apiRoutes';
 
 /**
@@ -12,12 +12,12 @@ import { API_ROUTES } from '../config/apiRoutes';
  */
 export const testBackendConnection = async () => {
   console.log('🔍 Testing backend connection...');
-  console.log('📍 API Base URL:', import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api');
-  
+  console.log('📍 API Base URL:', API_BASE_URL);
+
   // Test 1: Direct fetch to backend root
   console.log('\n1️⃣ Testing direct fetch to backend...');
   try {
-    const response = await fetch('https://optyshop-frontend.hmstech.org/api');
+    const response = await fetch(API_BASE_URL);
     const data = await response.text();
     console.log('✅ Direct fetch successful:', response.status, data.substring(0, 100));
   } catch (error: any) {
@@ -30,7 +30,7 @@ export const testBackendConnection = async () => {
   // Test 2: Test auth endpoint (public)
   console.log('\n2️⃣ Testing auth endpoint...');
   try {
-    const response = await fetch(API_ROUTES.AUTH.LOGIN, {
+    const response = await fetch(`${API_BASE_URL}${API_ROUTES.AUTH.LOGIN}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -57,7 +57,7 @@ export const testBackendConnection = async () => {
 
   console.log('\n📋 Summary:');
   console.log('- Frontend origin:', window.location.origin);
-  console.log('- Backend URL:', import.meta.env.VITE_API_BASE_URL || 'https://optyshop-frontend.hmstech.org/api');
+  console.log('- Backend URL:', API_BASE_URL);
   console.log('- Check Network tab in DevTools for detailed request/response');
 };
 

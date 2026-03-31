@@ -1,19 +1,37 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+const DEFAULT_API_BASE = 'https://optyshop-frontend.hmstech.org/api'
+
+/** Strip trailing /api for proxy target (e.g. https://host/api → https://host) */
+function proxyOriginFromApiBase(apiBase: string): string {
+  const trimmed = apiBase.trim().replace(/\/+$/, '')
+  const origin = trimmed.replace(/\/api\/?$/, '')
+  return origin || 'http://localhost:5000'
+}
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_')
+  const apiBase = (env.VITE_API_BASE_URL || DEFAULT_API_BASE).trim().replace(/\/+$/, '')
+  const proxyTarget = proxyOriginFromApiBase(apiBase)
+
+  if (mode === 'development') {
+    console.info(`[vite] VITE_API_BASE_URL → ${apiBase}`)
+    console.info(`[vite] proxy /api and /uploads → ${proxyTarget}`)
+  }
+
+  return {
   plugins: [react(), tailwindcss(),],
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: proxyTarget,
         changeOrigin: true,
       },
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: proxyTarget,
         changeOrigin: true,
       },
       '/external-images': {
@@ -46,5 +64,6 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1000,
+  }
   }
 })

@@ -267,19 +267,23 @@ export interface ProductFilters {
   maxPrice?: number;
   category?: string | number;
   subcategory?: string | number;
+  subSubcategory?: string | number;
   gender?: string;
-  lensType?: string; // Filter by lens type
+  lensType?: string;
+  lensCoating?: string;
+  brand?: string;
+  inStock?: boolean;
   search?: string;
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
-  isFeatured?: boolean; // Filter featured products (true/false)
-  
+  isFeatured?: boolean;
+
   // Contact lens specific filters
   baseCurve?: string;
   diameter?: string;
   replacementPeriod?: string;
-  
-  [key: string]: any; // Allow for additional filter properties
+
+  [key: string]: any;
 }
 
 // Product section types

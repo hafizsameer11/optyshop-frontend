@@ -3,7 +3,7 @@
  * Handles API calls for prescription lens types and variants
  */
 
-import { apiClient } from '../utils/api';
+import { apiClient, API_BASE_URL } from '../utils/api';
 import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
 
 // ============================================
@@ -308,11 +308,11 @@ export const getPrescriptionLensVariantsByType = async (
 
     const baseUrl = API_ROUTES.LENS.PRESCRIPTION_LENS_TYPES.VARIANTS(typeId);
     const url = buildQueryString(baseUrl, queryParams);
-    const fullUrl = `https://optyshop-frontend.hmstech.org/api${url}`;
+    const fullUrl = `${API_BASE_URL}${url}`;
     if (import.meta.env.DEV) {
       console.log('🔗 Fetching variants from URL:', url);
       console.log('🔗 Full API endpoint:', fullUrl);
-      console.log('🔗 Expected endpoint: https://optyshop-frontend.hmstech.org/api/lens/prescription-lens-types/' + typeId + '/variants');
+      console.log('🔗 Expected endpoint:', `${API_BASE_URL}/lens/prescription-lens-types/${typeId}/variants`);
     }
     const response = await apiClient.get<PrescriptionLensVariantsResponse>(url, false);
     if (import.meta.env.DEV) {

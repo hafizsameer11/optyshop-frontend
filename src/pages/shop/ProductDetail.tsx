@@ -60,6 +60,7 @@ const ProductDetail = () => {
     const [showSpecsDescription, setShowSpecsDescription] = useState(false)
     const [selectedFrameMaterial, setSelectedFrameMaterial] = useState<string>('') // Single selection
     const [selectedLensType, setSelectedLensType] = useState<'distance_vision' | 'near_vision' | 'progressive' | ''>('') // Proper lens type enum
+    const [selectedLensColor, setSelectedLensColor] = useState<string>('')
     const [productGifts, setProductGifts] = useState<ProductGift[]>([])
     const lastProductIdRef = useRef<number | null>(null)
     const formInitializedRef = useRef<number | null>(null)
@@ -395,6 +396,69 @@ const ProductDetail = () => {
 
         return null
     }, [product, selectedColor])
+
+    const lensColorOptions = useMemo(() => {
+        if (!product) return [] as string[]
+        const p = product as any
+
+        const normalize = (value: unknown): string[] => {
+            if (!value) return []
+            if (Array.isArray(value)) {
+                return value
+                    .map((v) => {
+                        if (typeof v === 'string') return v
+                        if (v && typeof v === 'object') {
+                            const obj = v as Record<string, unknown>
+                            return String(obj.name || obj.color || obj.value || '').trim()
+                        }
+                        return ''
+                    })
+                    .filter(Boolean)
+            }
+            if (typeof value === 'string') {
+                const trimmed = value.trim()
+                if (!trimmed) return []
+                if (trimmed.startsWith('[')) {
+                    try {
+                        return normalize(JSON.parse(trimmed))
+                    } catch {
+                        // fall through to comma-separated parsing
+                    }
+                }
+                return trimmed.split(',').map((x) => x.trim()).filter(Boolean)
+            }
+            return []
+        }
+
+        const options = [
+            ...normalize(p.lens_colors),
+            ...normalize(p.lensColors),
+            ...normalize(p.available_lens_colors),
+            ...normalize(p.availableLensColors),
+            ...normalize(p.prescription_sun_colors),
+            ...normalize(p.photochromic_colors),
+            ...normalize(p.lens_color),
+            ...normalize(p.lensColor),
+        ]
+
+        return Array.from(new Set(options.map((x) => x.toLowerCase()))).map((lower) => {
+            const original = options.find((x) => x.toLowerCase() === lower)
+            return original || lower
+        })
+    }, [product])
+
+    useEffect(() => {
+        if (!lensColorOptions.length) {
+            setSelectedLensColor('')
+            return
+        }
+        setSelectedLensColor((prev) => {
+            if (prev && lensColorOptions.some((c) => c.toLowerCase() === prev.toLowerCase())) {
+                return prev
+            }
+            return lensColorOptions[0]
+        })
+    }, [lensColorOptions])
 
     // Price calculation - uses variant price if size/volume variant, eye hygiene variant, or color is selected
     // Priority: eye hygiene variant > size/volume variant > color variant > product price
@@ -3061,6 +3125,7 @@ const ProductDetail = () => {
                 quantity: productQuantity,
                 frame_material: selectedFrameMaterial || undefined, // Include selected frame material (single)
                 lens_type: selectedLensType || undefined, // Include selected lens type (single)
+                lens_color: selectedLensColor || undefined,
                 selectedColor: selectedColor || undefined, // Store selected color for reference
                 // Eye Hygiene specific fields (legacy - for backward compatibility)
                 ...(isEyeHygiene && !hasVariants && {
@@ -3094,6 +3159,7 @@ const ProductDetail = () => {
                     customization: {
                         frame_material: cartProduct.frame_material,
                         color: colorValue || undefined,
+                        lens_color: selectedLensColor || undefined,
                         // Store caliber selection in customization
                         ...(selectedCaliber && {
                             selected_mm_caliber: selectedCaliber.toString(),
@@ -5461,6 +5527,30 @@ const ProductDetail = () => {
 
                                     {/* Actions */}
                                     <div className="space-y-4">
+                                        {!isContactLens && !isEyeHygiene && lensColorOptions.length > 0 && (
+                                            <div className="rounded-xl border border-gray-200 bg-white p-4">
+                                                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">Lens color</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {lensColorOptions.map((lensColor) => {
+                                                        const isSelected = selectedLensColor.toLowerCase() === lensColor.toLowerCase()
+                                                        return (
+                                                            <button
+                                                                key={lensColor}
+                                                                type="button"
+                                                                onClick={() => setSelectedLensColor(lensColor)}
+                                                                className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                                                                    isSelected
+                                                                        ? 'border-blue-700 bg-blue-700 text-white'
+                                                                        : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'
+                                                                }`}
+                                                            >
+                                                                {lensColor}
+                                                            </button>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
                                         <>
                                             {isEyeHygiene ? (() => {

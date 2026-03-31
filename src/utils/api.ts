@@ -7,9 +7,21 @@
 // Postman collection uses: base_url = http://localhost:5000
 // All API endpoints follow pattern: {{base_url}}/api/...
 // For production: https://optyshop-frontend.hmstech.org/api
-// For local development: http://localhost:5000/api
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  'https://optyshop-frontend.hmstech.org/api';  // Always use server URL
+// Override via VITE_API_BASE_URL in .env (must save file + restart `vite`)
+const DEFAULT_API_BASE = 'https://optyshop-frontend.hmstech.org/api'
+const envBase = import.meta.env.VITE_API_BASE_URL
+export const API_BASE_URL = (typeof envBase === 'string' && envBase.trim() !== '')
+  ? envBase.trim().replace(/\/+$/, '')
+  : DEFAULT_API_BASE
+
+if (import.meta.env.DEV) {
+  console.info(
+    `[OptyShop] API base (${import.meta.env.MODE}):`,
+    API_BASE_URL,
+    envBase?.trim() ? '(VITE_API_BASE_URL)' : '(code default)',
+    '— if this is wrong, check .env.development for dev or restart Vite after editing env files.'
+  )
+}
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -208,10 +220,13 @@ class ApiClient {
    */
   async get<T = any>(endpoint: string, requireAuth: boolean = false): Promise<ApiResponse<T>> {
     try {
-      // Add cache-busting parameter to prevent stale data
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const cacheBuster = `_t=${Date.now()}`;
-      const url = `${this.baseURL}${endpoint}${separator}${cacheBuster}`;
+      // Keep clean URLs by default; only bust cache when explicitly requested.
+      const shouldBypassCache = endpoint.includes('_t=')
+        || endpoint.includes('noCache=true')
+        || endpoint.includes('cacheBust=true');
+      const url = shouldBypassCache
+        ? `${this.baseURL}${endpoint}${endpoint.includes('?') ? '&' : '?'}_t=${Date.now()}`
+        : `${this.baseURL}${endpoint}`;
       if (import.meta.env.DEV) {
         console.log(`[API] GET ${url}`);
       }
@@ -236,7 +251,7 @@ class ApiClient {
       return {
         success: false,
         message: isNetworkError 
-          ? 'Unable to connect to server. This could be due to:\n1. Backend server not running on http://localhost:5000\n2. CORS configuration issue - check browser console for CORS errors\n3. Network connectivity issue'
+          ? `Unable to connect to server. This could be due to:\n1. Backend not reachable at ${this.baseURL}\n2. CORS configuration — check browser console\n3. Network connectivity issue`
           : errorMessage,
         error: errorMessage,
       };
@@ -277,7 +292,7 @@ class ApiClient {
       return {
         success: false,
         message: isNetworkError 
-          ? 'Unable to connect to server. This could be due to:\n1. Backend server not running on http://localhost:5000\n2. CORS configuration issue - check browser console for CORS errors\n3. Network connectivity issue'
+          ? `Unable to connect to server. This could be due to:\n1. Backend not reachable at ${this.baseURL}\n2. CORS configuration — check browser console\n3. Network connectivity issue`
           : errorMessage,
         error: errorMessage,
       };
@@ -310,7 +325,7 @@ class ApiClient {
       return {
         success: false,
         message: isNetworkError 
-          ? 'Unable to connect to server. This could be due to:\n1. Backend server not running on http://localhost:5000\n2. CORS configuration issue - check browser console for CORS errors\n3. Network connectivity issue'
+          ? `Unable to connect to server. This could be due to:\n1. Backend not reachable at ${this.baseURL}\n2. CORS configuration — check browser console\n3. Network connectivity issue`
           : errorMessage,
         error: errorMessage,
       };
@@ -338,7 +353,7 @@ class ApiClient {
       return {
         success: false,
         message: isNetworkError 
-          ? 'Unable to connect to server. This could be due to:\n1. Backend server not running on http://localhost:5000\n2. CORS configuration issue - check browser console for CORS errors\n3. Network connectivity issue'
+          ? `Unable to connect to server. This could be due to:\n1. Backend not reachable at ${this.baseURL}\n2. CORS configuration — check browser console\n3. Network connectivity issue`
           : errorMessage,
         error: errorMessage,
       };
@@ -389,7 +404,7 @@ class ApiClient {
       return {
         success: false,
         message: isNetworkError 
-          ? 'Unable to connect to server. This could be due to:\n1. Backend server not running on http://localhost:5000\n2. CORS configuration issue - check browser console for CORS errors\n3. Network connectivity issue'
+          ? `Unable to connect to server. This could be due to:\n1. Backend not reachable at ${this.baseURL}\n2. CORS configuration — check browser console\n3. Network connectivity issue`
           : errorMessage,
         error: errorMessage,
       };

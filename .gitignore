@@ -16,7 +16,7 @@ dist-ssr
 .env
 .env.local
 .env.production
-.env.development
+# .env.development is tracked so `npm run dev` defaults to the team API URL; override with .env.development.local
 
 # Editor directories and files
 .vscode/*
