@@ -23,33 +23,47 @@ const AccountLayout: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
-      <main className="flex-1">
-        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+
+      {/* Hero: same pattern as Contact / Login — clears fixed navbar via pt; does not modify Navbar */}
+      <section
+        className="relative flex min-h-[220px] flex-col justify-center bg-cover bg-center bg-no-repeat sm:min-h-[260px] md:min-h-[300px]"
+        style={{
+          backgroundImage: 'url(/assets/images/virtual-try.jpg)',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-950/85 to-blue-950/40" />
+        <div className="relative z-10 w-[90%] mx-auto max-w-7xl pt-24 pb-10 sm:pt-28 sm:pb-12">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl md:text-5xl">
                 {t('account.title', 'User account')}
               </h1>
               {user && (
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-3 text-base text-white/90 sm:text-lg">
                   {user.first_name} {user.last_name}
                   {user.email ? ` · ${user.email}` : ''}
                 </p>
               )}
+              <div className="mt-4 h-1 w-20 rounded-full bg-white/90" />
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="self-start rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 sm:self-center"
+              className="shrink-0 self-start rounded-xl border border-white/40 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 md:self-end"
             >
               {t('common.logout', 'Log out')}
             </button>
           </div>
+        </div>
+        <div className="relative z-10 h-1 w-full bg-gradient-to-r from-orange-500 via-green-500 to-blue-500" />
+      </section>
 
+      <main className="flex-1 bg-slate-50">
+        <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
           <nav
-            className="mb-8 flex flex-wrap gap-2 border-b border-slate-200 pb-4"
+            className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-4"
             aria-label={t('account.navAria', 'Account sections')}
           >
             <NavLink to="/account/orders" className={tabClass} end={false}>
