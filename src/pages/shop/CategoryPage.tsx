@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -121,6 +121,120 @@ const CategoryPage: React.FC = () => {
     const [baseCurve, setBaseCurve] = useState<string>('')
     const [diameter, setDiameter] = useState<string>('')
     const [replacementPeriod, setReplacementPeriod] = useState<string>('')
+
+    const handleCategoryNavigationFilterChange = useCallback(
+        (filters: {
+            gender?: string
+            minPrice?: number
+            maxPrice?: number
+            sortBy?: string
+        }) => {
+            if (filters.gender !== undefined) {
+                setGender(filters.gender)
+                setCurrentPage(1)
+            }
+            if (filters.minPrice !== undefined) {
+                setMinPrice(filters.minPrice)
+                setCurrentPage(1)
+            }
+            if (filters.maxPrice !== undefined) {
+                setMaxPrice(filters.maxPrice)
+                setCurrentPage(1)
+            }
+            if (filters.sortBy !== undefined) {
+                setSortBy(filters.sortBy)
+                setCurrentPage(1)
+            }
+        },
+        []
+    )
+
+    const handleComprehensiveFilterChange = useCallback((filters: ShopFilterPayload) => {
+        if ('minPrice' in filters) {
+            setMinPrice(filters.minPrice)
+            setCurrentPage(1)
+        }
+        if ('maxPrice' in filters) {
+            setMaxPrice(filters.maxPrice)
+            setCurrentPage(1)
+        }
+        if (filters.sortBy !== undefined) {
+            setSortBy(filters.sortBy)
+            setCurrentPage(1)
+        }
+        if (filters.color !== undefined) {
+            setSelectedColor(filters.color ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.brand !== undefined) {
+            setBrand(filters.brand ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.lensType !== undefined) {
+            setLensType(filters.lensType ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.lensCoating !== undefined) {
+            setLensCoating(filters.lensCoating ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.inStock !== undefined) {
+            setInStockOnly(!!filters.inStock)
+            setCurrentPage(1)
+        }
+        if (filters.search !== undefined) {
+            setSearchTerm(filters.search ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.gender !== undefined) {
+            setGender(filters.gender ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.frameShape !== undefined) {
+            setFrameShape(filters.frameShape ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.frameMaterial !== undefined) {
+            setFrameMaterial(filters.frameMaterial ?? '')
+            setCurrentPage(1)
+        }
+        if (typeof filters.featuredOnly === 'boolean') {
+            setIsFeaturedOnly(filters.featuredOnly)
+            setCurrentPage(1)
+        }
+        if (filters.baseCurve !== undefined) {
+            setBaseCurve(filters.baseCurve ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.diameter !== undefined) {
+            setDiameter(filters.diameter ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.replacementPeriod !== undefined) {
+            setReplacementPeriod(filters.replacementPeriod ?? '')
+            setCurrentPage(1)
+        }
+    }, [])
+
+    const handleClearAllComprehensiveFilters = useCallback(() => {
+        setSearchTerm('')
+        setLensType('')
+        setLensCoating('')
+        setMinPrice(undefined)
+        setMaxPrice(undefined)
+        setGender('')
+        setSelectedColor('')
+        setBrand('')
+        setInStockOnly(false)
+        setSortBy('newest')
+        setFrameShape('')
+        setFrameMaterial('')
+        setIsFeaturedOnly(false)
+        setBaseCurve('')
+        setDiameter('')
+        setReplacementPeriod('')
+        setCurrentPage(1)
+    }, [])
 
     const pageTitleLabel = useMemo(() => {
         if (categoryInfo.category) {
@@ -413,32 +527,50 @@ const CategoryPage: React.FC = () => {
                         }
                     }
 
-                    // Apply client-side filters with enhanced subcategory filtering (URL slugs match categoryInfo once resolved)
+                    // Client-side subcategory refinement: only when the list API was NOT already scoped by subcategory.
+                    // If we sent subcategory/subSubcategory in filters, the server result is authoritative — re-filtering
+                    // with normalizeProductSubcategory often strips everything (slug casing, nesting, stale categoryInfo).
                     let filteredProducts = result.products || []
 
-                    const leafSubSub = categoryInfo.subSubcategory?.slug ?? subSubcategorySlug
-                    const midSub = categoryInfo.subcategory?.slug ?? subcategorySlug
+                    const apiScopedBySub =
+                        !!(filters.subcategory || filters.subSubcategory)
 
-                    if (leafSubSub && midSub) {
-                        const beforeFilter = filteredProducts.length
-                        filteredProducts = filteredProducts.filter((product: Product) => {
-                            const productSubcategoryData = normalizeProductSubcategory(product)
-                            return productSubcategoryData.slug === leafSubSub &&
-                                   productSubcategoryData.parentSlug === midSub
-                        })
-                        if (import.meta.env.DEV) {
-                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${leafSubSub} / ${midSub}): ${beforeFilter} -> ${filteredProducts.length}`)
+                    if (!apiScopedBySub) {
+                        // Prefer URL segments over categoryInfo (avoids stale subcategory after client-side nav)
+                        const leafSubSub = (subSubcategorySlug || categoryInfo.subSubcategory?.slug || '')
+                            .toLowerCase()
+                        const midSub = (subcategorySlug || categoryInfo.subcategory?.slug || '')
+                            .toLowerCase()
+
+                        const norm = (s: string | null | undefined) => (s || '').toLowerCase()
+
+                        if (leafSubSub && midSub) {
+                            const beforeFilter = filteredProducts.length
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                const d = normalizeProductSubcategory(product)
+                                return norm(d.slug) === leafSubSub && norm(d.parentSlug) === midSub
+                            })
+                            if (import.meta.env.DEV) {
+                                console.log(
+                                    `🔍 CategoryPage - Client sub-sub filter (${leafSubSub}/${midSub}): ${beforeFilter} -> ${filteredProducts.length}`
+                                )
+                            }
+                        } else if (midSub) {
+                            const beforeFilter = filteredProducts.length
+                            filteredProducts = filteredProducts.filter((product: Product) => {
+                                const d = normalizeProductSubcategory(product)
+                                return norm(d.slug) === midSub || norm(d.parentSlug) === midSub
+                            })
+                            if (import.meta.env.DEV) {
+                                console.log(
+                                    `🔍 CategoryPage - Client subcategory filter (${midSub}): ${beforeFilter} -> ${filteredProducts.length}`
+                                )
+                            }
                         }
-                    } else if (midSub) {
-                        const beforeFilter = filteredProducts.length
-                        filteredProducts = filteredProducts.filter((product: Product) => {
-                            const productSubcategoryData = normalizeProductSubcategory(product)
-                            return productSubcategoryData.slug === midSub ||
-                                   productSubcategoryData.parentSlug === midSub
-                        })
-                        if (import.meta.env.DEV) {
-                            console.log(`🔍 CategoryPage - Client-side subcategory filter (${midSub}): ${beforeFilter} -> ${filteredProducts.length}`)
-                        }
+                    } else if (import.meta.env.DEV && filteredProducts.length > 0) {
+                        console.log(
+                            '🔍 CategoryPage - Skipping client subcategory filter (API already filtered by subcategory/subSubcategory)'
+                        )
                     }
                     
                     if (import.meta.env.DEV) {
@@ -753,16 +885,15 @@ const CategoryPage: React.FC = () => {
                     }
 
                     setProducts(filteredProducts)
-                    const updatedPagination = { ...result.pagination }
-                    const rawCount = (result.products || []).length
-                    const clientFiltered =
-                        rawCount > 0 && filteredProducts.length !== rawCount
-                    if (clientFiltered) {
-                        updatedPagination.total = filteredProducts.length
-                        updatedPagination.pages = Math.max(
-                            1,
-                            Math.ceil(filteredProducts.length / (updatedPagination.limit || 12))
-                        )
+                    // Always keep API pagination (total/pages) for server-side paging. Do not recompute pages from
+                    // filteredProducts.length — that count is only the current page after client filters, so it
+                    // corrupts totals (e.g. "1 of 2" breaks, or Next loads page 2 then UI resets pages to 1).
+                    const p = result.pagination
+                    const updatedPagination = {
+                        total: Number(p.total) || 0,
+                        page: currentPage > 0 ? currentPage : Number(p.page) || 1,
+                        limit: Number(p.limit) || 12,
+                        pages: Number(p.pages) || 0,
                     }
                     setPagination(updatedPagination)
                 }
@@ -840,121 +971,15 @@ const CategoryPage: React.FC = () => {
                 category={categoryInfo.category}
                 subcategory={categoryInfo.subcategory}
                 subSubcategory={categoryInfo.subSubcategory}
-                onFilterChange={(filters: {
-                    gender?: string
-                    minPrice?: number
-                    maxPrice?: number
-                    sortBy?: string
-                }) => {
-                    // Apply filters from category navigation component (limited set)
-                    if (filters.gender !== undefined) {
-                        setGender(filters.gender)
-                        setCurrentPage(1)
-                    }
-                    if (filters.minPrice !== undefined) {
-                        setMinPrice(filters.minPrice)
-                        setCurrentPage(1)
-                    }
-                    if (filters.maxPrice !== undefined) {
-                        setMaxPrice(filters.maxPrice)
-                        setCurrentPage(1)
-                    }
-                    if (filters.sortBy !== undefined) {
-                        setSortBy(filters.sortBy)
-                        setCurrentPage(1)
-                    }
-                }}
+                onFilterChange={handleCategoryNavigationFilterChange}
             />
             
             <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
                     <aside className="w-full shrink-0 lg:w-72 xl:w-80">
                         <ComprehensiveFilters
-                            onFilterChange={(filters: ShopFilterPayload) => {
-                                if ('minPrice' in filters) {
-                                    setMinPrice(filters.minPrice)
-                                    setCurrentPage(1)
-                                }
-                                if ('maxPrice' in filters) {
-                                    setMaxPrice(filters.maxPrice)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.sortBy !== undefined) {
-                                    setSortBy(filters.sortBy)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.color !== undefined) {
-                                    setSelectedColor(filters.color ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.brand !== undefined) {
-                                    setBrand(filters.brand ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.lensType !== undefined) {
-                                    setLensType(filters.lensType ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.lensCoating !== undefined) {
-                                    setLensCoating(filters.lensCoating ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.inStock !== undefined) {
-                                    setInStockOnly(!!filters.inStock)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.search !== undefined) {
-                                    setSearchTerm(filters.search ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.gender !== undefined) {
-                                    setGender(filters.gender ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.frameShape !== undefined) {
-                                    setFrameShape(filters.frameShape ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.frameMaterial !== undefined) {
-                                    setFrameMaterial(filters.frameMaterial ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (typeof filters.featuredOnly === 'boolean') {
-                                    setIsFeaturedOnly(filters.featuredOnly)
-                                    setCurrentPage(1)
-                                }
-                                if (filters.baseCurve !== undefined) {
-                                    setBaseCurve(filters.baseCurve ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.diameter !== undefined) {
-                                    setDiameter(filters.diameter ?? '')
-                                    setCurrentPage(1)
-                                }
-                                if (filters.replacementPeriod !== undefined) {
-                                    setReplacementPeriod(filters.replacementPeriod ?? '')
-                                    setCurrentPage(1)
-                                }
-                            }}
-                            onClearAll={() => {
-                                setSearchTerm('')
-                                setLensType('')
-                                setLensCoating('')
-                                setMinPrice(undefined)
-                                setMaxPrice(undefined)
-                                setGender('')
-                                setSelectedColor('')
-                                setBrand('')
-                                setInStockOnly(false)
-                                setSortBy('newest')
-                                setFrameShape('')
-                                setFrameMaterial('')
-                                setIsFeaturedOnly(false)
-                                setBaseCurve('')
-                                setDiameter('')
-                                setReplacementPeriod('')
-                                setCurrentPage(1)
-                            }}
+                            onFilterChange={handleComprehensiveFilterChange}
+                            onClearAll={handleClearAllComprehensiveFilters}
                             availableColors={availableColors}
                             availableBrands={availableBrands}
                             availableLensTypes={availableLensTypes}
