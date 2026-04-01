@@ -349,10 +349,14 @@ const CategoryPage: React.FC = () => {
                 }
 
                 filters.category = categorySlug
+                // Parent subcategory and nested sub-subcategory are independent in the URL.
+                // Sending only subSubcategory (else-if) dropped the middle segment (e.g. weekly)
+                // when browsing /category/contact-lenses/weekly/spherical.
+                if (subcategorySlug) {
+                    filters.subcategory = subcategorySlug
+                }
                 if (subSubcategorySlug) {
                     filters.subSubcategory = subSubcategorySlug
-                } else if (subcategorySlug) {
-                    filters.subcategory = subcategorySlug
                 }
 
                 if (import.meta.env.DEV) {
