@@ -5,6 +5,7 @@ import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { getStripePromise } from '../../services/stripeService'
 import { createPaymentIntent } from '../../services/paymentsService'
+import { STRIPE_CONFIG, getStripeDefaultCurrency } from '../../utils/stripeConfig'
 
 // Lazy load Stripe Elements and PaymentForm to avoid initialization issues
 const StripeElementsWrapper = lazy(async () => {
@@ -62,7 +63,7 @@ const Payment: React.FC = () => {
         // Create payment intent
         const paymentIntent = await createPaymentIntent({
           order_id: parsedOrderId,
-          currency: 'USD'
+          currency: getStripeDefaultCurrency(),
         })
 
         if (paymentIntent && paymentIntent.client_secret) {
@@ -193,9 +194,7 @@ const Payment: React.FC = () => {
                 stripe={stripePromise}
                 options={{
                   clientSecret,
-                  appearance: {
-                    theme: 'stripe',
-                  },
+                  appearance: STRIPE_CONFIG.appearance,
                 }}
               >
                 <PaymentForm orderId={orderId} clientSecret={clientSecret} />

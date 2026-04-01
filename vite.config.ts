@@ -64,6 +64,22 @@ export default defineConfig(({ mode }) => {
   },
   build: {
     chunkSizeWarningLimit: 1000,
-  }
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) {
+            return 'react-core'
+          }
+          if (id.includes('react-router')) return 'router'
+          if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n'
+          if (id.includes('@stripe')) return 'stripe'
+          if (id.includes('three')) return 'three'
+          if (id.includes('@mediapipe')) return 'mediapipe'
+          return 'vendor'
+        },
+      },
+    },
+  },
   }
 })

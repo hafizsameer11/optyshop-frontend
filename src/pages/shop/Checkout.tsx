@@ -7,7 +7,7 @@ import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
 import { applyCoupon, type CouponDiscount, type CartItemForCoupon } from '../../services/couponsService'
 import { createOrder, createGuestOrder, type OrderCartItem } from '../../services/ordersService'
-import { createPaymentIntent } from '../../services/paymentsService'
+import { isStripeConfigured } from '../../utils/stripeConfig'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 import DynamicFormField from '../../components/checkout/DynamicFormField'
 import { defaultCheckoutFormConfig, type CheckoutFormConfig } from '../../config/checkoutFormConfig'
@@ -221,6 +221,17 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         
         setIsProcessing(true)
         setError(null)
+
+        if (!isStripeConfigured()) {
+            setError(
+                t(
+                    'shop.stripeKeyMissingSubmit',
+                    'Add VITE_STRIPE_PUBLISHABLE_KEY to your environment to pay with Stripe.'
+                )
+            )
+            setIsProcessing(false)
+            return
+        }
 
         // Validate cart has items
         if (cartItems.length === 0) {
@@ -656,14 +667,16 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                     </Link>
                                     <button
                                         type="submit"
-                                        disabled={isProcessing || !isAuthenticated}
-                                        className="flex-1 px-6 py-3 rounded-lg bg-blue-950 text-white font-semibold hover:bg-blue-900 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isProcessing || !isAuthenticated || !isStripeConfigured()}
+                                        className="flex-1 rounded-xl bg-blue-950 px-6 py-3.5 font-semibold text-white shadow-md transition-all hover:bg-blue-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         {!isAuthenticated 
                                             ? 'Login to Place Order' 
+                                            : !isStripeConfigured()
+                                                ? t('shop.configureStripeFirst', 'Configure Stripe key first')
                                             : isProcessing 
                                                 ? 'Processing...' 
-                                                : `Place Order ($${Number(getFinalTotal()).toFixed(2)})`}
+                                                : `${t('shop.placeOrder', 'Place order')} (€${Number(getFinalTotal()).toFixed(2)})`}
                                     </button>
                                 </div>
                             </form>
@@ -851,23 +864,45 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                         </div>
                                     )}
 
-                                    {/* Payment method: Stripe only */}
+                                    {/* Payment: Stripe Checkout — card entry on next step after order is created */}
                                     <div className="pt-4 border-t border-gray-200 mt-4">
                                         <label className="block text-sm font-semibold text-gray-900 mb-3">
                                             {t('shop.paymentMethod', 'Payment Method')}
                                         </label>
-                                        <div className="p-3 border-2 border-blue-600 bg-blue-50 rounded-lg">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-lg" aria-hidden>
-                                                    💳
-                                                </span>
-                                                <div className="flex-1">
-                                                    <div className="font-medium text-gray-900">
-                                                        {t('shop.stripeOnlyTitle', 'Credit / debit card (Stripe)')}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 mt-0.5">
-                                                        {t('shop.stripeOnlySubtitle', 'Secure payment powered by Stripe')}
-                                                    </div>
+                                        {!isStripeConfigured() && (
+                                            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                                                <p className="font-medium">{t('shop.stripeKeyMissingTitle', 'Stripe is not configured')}</p>
+                                                <p className="mt-1 text-amber-800/90">
+                                                    {t(
+                                                        'shop.stripeKeyMissingBody',
+                                                        'Add VITE_STRIPE_PUBLISHABLE_KEY (pk_test_… or pk_live_…) to your .env file and restart the dev server.'
+                                                    )}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm ring-1 ring-slate-200/60">
+                                            <div className="flex items-start gap-4 p-4 sm:p-5">
+                                                <div
+                                                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#635BFF] px-1 shadow-sm"
+                                                    aria-hidden
+                                                >
+                                                    <span className="select-none text-center text-[10px] font-semibold leading-tight text-white">
+                                                        stripe
+                                                    </span>
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-slate-900">
+                                                        {t('shop.stripeOnlyTitle', 'Card payment (Stripe)')}
+                                                    </p>
+                                                    <p className="mt-1 text-sm text-slate-600">
+                                                        {t(
+                                                            'shop.stripeCheckoutHint',
+                                                            'After you place the order, you’ll enter your card on our secure Stripe payment page.'
+                                                        )}
+                                                    </p>
+                                                    <p className="mt-2 text-xs font-medium text-slate-500">
+                                                        {t('shop.stripeOnlySubtitle', 'PCI-compliant · 3D Secure when required')}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>

@@ -40,6 +40,69 @@ import {
     type SizeVolumeVariant
 } from '../../services/eyeHygieneFormsService'
 
+/** Backend may return a single scalar or an array for prescription fields */
+function normalizeLensFieldToStrings(value: unknown): string[] {
+    if (value == null) return []
+    if (Array.isArray(value)) {
+        return value
+            .map((v) => (v != null && v !== '' ? String(v) : ''))
+            .filter((s) => s !== '')
+    }
+    if (typeof value === 'number' && !Number.isNaN(value)) return [String(value)]
+    if (typeof value === 'string' && value.trim() !== '') return [value.trim()]
+    return []
+}
+
+function sortOptometricStringList(values: string[]): string[] {
+    return Array.from(new Set(values.filter((v) => v !== ''))).sort((a, b) => {
+        const numA = parseFloat(a)
+        const numB = parseFloat(b)
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+        return a.localeCompare(b)
+    })
+}
+
+type PerEyeLensField = 'bc' | 'dia' | 'pwr'
+
+function lensFieldKey(eye: 'right' | 'left', field: PerEyeLensField): string {
+    if (eye === 'right') {
+        if (field === 'bc') return 'right_base_curve'
+        if (field === 'dia') return 'right_diameter'
+        return 'right_power'
+    }
+    if (field === 'bc') return 'left_base_curve'
+    if (field === 'dia') return 'left_diameter'
+    return 'left_power'
+}
+
+/** Right/left dropdowns: only that eye's arrays from the selected config, then union per-eye across configs; optional aggregated API fallback for BC/DIA */
+function collectPerEyeLensOptions(
+    formType: 'spherical' | 'astigmatism',
+    eye: 'right' | 'left',
+    field: PerEyeLensField,
+    selectedSpherical: SphericalConfig | null,
+    selectedAstigmatism: AstigmatismConfig | null,
+    sphericalConfigs: SphericalConfig[],
+    astigmatismConfigs: AstigmatismConfig[],
+    aggregatedFallback: string[]
+): string[] {
+    const key = lensFieldKey(eye, field)
+    const selected = formType === 'astigmatism' ? selectedAstigmatism : selectedSpherical
+    const list = formType === 'astigmatism' ? astigmatismConfigs : sphericalConfigs
+
+    if (selected) {
+        const fromSel = normalizeLensFieldToStrings((selected as Record<string, unknown>)[key])
+        if (fromSel.length) return sortOptometricStringList(fromSel)
+    }
+    const acc = new Set<string>()
+    list.forEach((cfg) => {
+        normalizeLensFieldToStrings((cfg as Record<string, unknown>)[key]).forEach((v) => acc.add(v))
+    })
+    if (acc.size) return sortOptometricStringList(Array.from(acc))
+    if (aggregatedFallback.length) return sortOptometricStringList(aggregatedFallback)
+    return []
+}
+
 const ProductDetail = () => {
     const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
@@ -783,20 +846,22 @@ const ProductDetail = () => {
                     })
                 }
                 setProduct(productData)
+                setLoading(false)
 
-                // Fetch related products - more for Eye Hygiene products
-                // Reuse 'p' variable that was already declared above
+                // Related products load in background so the main product UI is not blocked
                 const isEyeHygieneProduct = productData.category?.slug?.toLowerCase().includes('eye-hygiene') ||
                     productData.category?.slug?.toLowerCase().includes('hygiene') ||
                     productData.category?.name?.toLowerCase().includes('eye hygiene') ||
                     false
 
-                // Fetch more related products for Eye Hygiene (8 instead of 4)
                 const relatedLimit = isEyeHygieneProduct ? 8 : 6
-                const related = await getRelatedProducts(productData.id, relatedLimit)
-                if (!isCancelled) {
-                    setRelatedProducts(related)
-                }
+                void getRelatedProducts(productData.id, relatedLimit)
+                    .then((related) => {
+                        if (!isCancelled) {
+                            setRelatedProducts(related)
+                        }
+                    })
+                    .catch(() => {})
             } else {
                 // Product not found or deleted, redirect to shop
                 // This handles both 404 errors and products deleted from admin panel
@@ -804,9 +869,9 @@ const ProductDetail = () => {
                 if (!isCancelled) {
                     navigate('/shop')
                 }
-            }
-            if (!isCancelled) {
-                setLoading(false)
+                if (!isCancelled) {
+                    setLoading(false)
+                }
             }
         }
 
@@ -2083,91 +2148,103 @@ const ProductDetail = () => {
         return []
     }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
-    // Generate base curve options from astigmatism configs
-    const baseCurveOptions = useMemo(() => {
+    const subCatBaseCurveFallback = useMemo(
+        () => (subSubcategoryOptions?.baseCurveOptions || []).map(String),
+        [subSubcategoryOptions]
+    )
+    const subCatDiameterFallback = useMemo(
+        () => (subSubcategoryOptions?.diameterOptions || []).map(String),
+        [subSubcategoryOptions]
+    )
+
+    // Per-eye lists: right column uses only right_* from API; left column only left_*
+    const rightBaseCurveOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'right',
+            'bc',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            subCatBaseCurveFallback
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+        subCatBaseCurveFallback,
+    ])
 
-        // For astigmatism forms, use astigmatism configs
-        if (formType === 'astigmatism') {
-            if (astigmatismConfigs.length > 0) {
-                const allBaseCurveValues = new Set<string>()
-                astigmatismConfigs.forEach(config => {
-                    const rightBaseCurve = (config.right_base_curve && Array.isArray(config.right_base_curve)) ? config.right_base_curve : []
-                    const leftBaseCurve = (config.left_base_curve && Array.isArray(config.left_base_curve)) ? config.left_base_curve : []
-                    rightBaseCurve.forEach(v => {
-                        if (v != null && v !== '') {
-                            allBaseCurveValues.add(String(v))
-                        }
-                    })
-                    leftBaseCurve.forEach(v => {
-                        if (v != null && v !== '') {
-                            allBaseCurveValues.add(String(v))
-                        }
-                    })
-                })
-                if (allBaseCurveValues.size > 0) {
-                    const baseCurveArray = Array.from(allBaseCurveValues).sort((a, b) => {
-                        const numA = parseFloat(a)
-                        const numB = parseFloat(b)
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return numA - numB
-                        }
-                        return a.localeCompare(b)
-                    })
-                    if (import.meta.env.DEV) {
-                        console.log('✅ Using base curve options from astigmatism configs:', baseCurveArray)
-                    }
-                    return baseCurveArray
-                }
-            }
-        }
-
-        // For spherical forms or fallback, use subSubcategoryOptions
-        return subSubcategoryOptions?.baseCurveOptions || []
-    }, [contactLensFormConfig?.formType, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
-
-    // Generate diameter options from astigmatism configs
-    const diameterOptions = useMemo(() => {
+    const leftBaseCurveOptions = useMemo(() => {
         const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'left',
+            'bc',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            subCatBaseCurveFallback
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+        subCatBaseCurveFallback,
+    ])
 
-        // For astigmatism forms, use astigmatism configs
-        if (formType === 'astigmatism') {
-            if (astigmatismConfigs.length > 0) {
-                const allDiameterValues = new Set<string>()
-                astigmatismConfigs.forEach(config => {
-                    const rightDiameter = (config.right_diameter && Array.isArray(config.right_diameter)) ? config.right_diameter : []
-                    const leftDiameter = (config.left_diameter && Array.isArray(config.left_diameter)) ? config.left_diameter : []
-                    rightDiameter.forEach(v => {
-                        if (v != null && v !== '') {
-                            allDiameterValues.add(String(v))
-                        }
-                    })
-                    leftDiameter.forEach(v => {
-                        if (v != null && v !== '') {
-                            allDiameterValues.add(String(v))
-                        }
-                    })
-                })
-                if (allDiameterValues.size > 0) {
-                    const diameterArray = Array.from(allDiameterValues).sort((a, b) => {
-                        const numA = parseFloat(a)
-                        const numB = parseFloat(b)
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return numA - numB
-                        }
-                        return a.localeCompare(b)
-                    })
-                    if (import.meta.env.DEV) {
-                        console.log('✅ Using diameter options from astigmatism configs:', diameterArray)
-                    }
-                    return diameterArray
-                }
-            }
-        }
+    const rightDiameterOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'right',
+            'dia',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            subCatDiameterFallback
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+        subCatDiameterFallback,
+    ])
 
-        // For spherical forms or fallback, use subSubcategoryOptions
-        return subSubcategoryOptions?.diameterOptions || []
-    }, [contactLensFormConfig?.formType, astigmatismConfigs, subSubcategoryOptions, isAstigmatismSubSubcategory])
+    const leftDiameterOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'left',
+            'dia',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            subCatDiameterFallback
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+        subCatDiameterFallback,
+    ])
 
     // Generate quantity options from astigmatism configs
     const quantityOptions = useMemo(() => {
@@ -2265,122 +2342,50 @@ const ProductDetail = () => {
         return []
     }, [contactLensFormConfig?.formType, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
 
-    // Parse power range to generate options (memoized)
-    // CRITICAL: Astigmatism dropdown values API should NEVER be used for Spherical forms
-    // - Spherical forms: MUST use power from spherical configs (right_power/left_power arrays) ONLY
-    // - Astigmatism forms: Use power from astigmatism dropdown values API
-    const powerOptions = useMemo(() => {
-        const formType = contactLensFormConfig?.formType
+    // Per-eye power only (no merged right+left list on each side)
+    const rightPowerOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'right',
+            'pwr',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            []
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+    ])
 
-        // For Spherical forms: Use power values from spherical configurations ONLY
-        if (formType === 'spherical') {
-            // Priority 1: Use power values from spherical configs (right_power/left_power arrays)
-            // These come from the spherical configs API response, NOT from astigmatism dropdown API
-            if (sphericalPowerValues.length > 0) {
-                if (import.meta.env.DEV) {
-                    console.log('✅ Using power options from spherical configs:', sphericalPowerValues.length, 'values', sphericalPowerValues.slice(0, 10))
-                }
-                return sphericalPowerValues
-            }
+    const leftPowerOptions = useMemo(() => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        return collectPerEyeLensOptions(
+            formType,
+            'left',
+            'pwr',
+            selectedConfig,
+            selectedAstigmatismConfig,
+            sphericalConfigs,
+            astigmatismConfigs,
+            []
+        )
+    }, [
+        contactLensFormConfig?.formType,
+        isAstigmatismSubSubcategory,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        sphericalConfigs,
+        astigmatismConfigs,
+    ])
 
-            // Priority 1b: Try to extract power from all sphericalConfigs if sphericalPowerValues is empty
-            if (sphericalConfigs.length > 0) {
-                const allPowerValues = new Set<string>()
-                sphericalConfigs.forEach(config => {
-                    const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
-                    const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
-                    rightPower.forEach(v => {
-                        if (v != null && v !== '') {
-                            allPowerValues.add(String(v))
-                        }
-                    })
-                    leftPower.forEach(v => {
-                        if (v != null && v !== '') {
-                            allPowerValues.add(String(v))
-                        }
-                    })
-                })
-                if (allPowerValues.size > 0) {
-                    const powerArray = Array.from(allPowerValues).sort((a, b) => {
-                        const numA = parseFloat(a)
-                        const numB = parseFloat(b)
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return numA - numB
-                        }
-                        return a.localeCompare(b)
-                    })
-                    if (import.meta.env.DEV) {
-                        console.log('✅ Using power options from all sphericalConfigs (fallback):', powerArray.length, 'values', powerArray.slice(0, 10))
-                    }
-                    return powerArray
-                }
-            }
-
-            // Debug: Log why no power options are available (expected when API returns empty configs)
-            if (import.meta.env.DEV) {
-                console.info('ℹ️ No power options available for spherical form (API returned empty configs - this is expected):', {
-                    sphericalPowerValuesCount: sphericalPowerValues.length,
-                    sphericalConfigsCount: sphericalConfigs.length,
-                    message: 'Dropdowns will be empty until admin adds configs via API'
-                })
-            }
-
-            // No fallback - return empty array if no config data
-            return []
-        }
-
-        // For Astigmatism forms: Use power values from astigmatism configs
-        if (formType === 'astigmatism') {
-            // Use all astigmatism configs to aggregate power options (ONLY from API configs)
-            if (astigmatismConfigs.length > 0) {
-                const allPowerValues = new Set<string>()
-                astigmatismConfigs.forEach(config => {
-                    const rightPower = (config.right_power && Array.isArray(config.right_power)) ? config.right_power : []
-                    const leftPower = (config.left_power && Array.isArray(config.left_power)) ? config.left_power : []
-                    rightPower.forEach(v => {
-                        if (v != null && v !== '') {
-                            allPowerValues.add(String(v))
-                        }
-                    })
-                    leftPower.forEach(v => {
-                        if (v != null && v !== '') {
-                            allPowerValues.add(String(v))
-                        }
-                    })
-                })
-                if (allPowerValues.size > 0) {
-                    const powerArray = Array.from(allPowerValues).sort((a, b) => {
-                        const numA = parseFloat(a)
-                        const numB = parseFloat(b)
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return numA - numB
-                        }
-                        return a.localeCompare(b)
-                    })
-                    if (import.meta.env.DEV) {
-                        console.log('✅ Using power options from all astigmatism configs:', powerArray.length, 'values', powerArray.slice(0, 10))
-                    }
-                    return powerArray
-                }
-            }
-
-            // Debug: Log why no power options are available (expected when API returns empty configs)
-            if (import.meta.env.DEV) {
-                console.info('ℹ️ No power options available for astigmatism form (API returned empty configs - this is expected):', {
-                    astigmatismConfigsCount: astigmatismConfigs.length,
-                    message: 'Dropdowns will be empty until admin adds configs via API'
-                })
-            }
-
-            // No fallback - return empty array if no config data
-            return []
-        }
-
-        // If form type is not determined yet, return empty array
-        return []
-    }, [contactLensFormConfig?.formType, sphericalPowerValues, selectedAstigmatismConfig, astigmatismConfigs, isAstigmatismSubSubcategory])
-
-    // Get fixed Base Curve and Diameter values from selected config (first value from arrays)
+    // Defaults from selected config (first value per array) — BC, DIA, and power
     const fixedBaseCurveAndDiameter = useMemo(() => {
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         if (!currentConfig) {
@@ -2388,26 +2393,28 @@ const ProductDetail = () => {
                 right_base_curve: '00.00',
                 right_diameter: '00.00',
                 left_base_curve: '00.00',
-                left_diameter: '00.00'
+                left_diameter: '00.00',
+                right_power: '00.00',
+                left_power: '00.00',
             }
         }
 
-        // Get first value from arrays (fixed value from admin panel)
-        const getFirstValue = (arr: any[] | string[] | number[] | null | undefined): string => {
-            if (!arr || !Array.isArray(arr) || arr.length === 0) return '00.00'
-            const firstValue = arr[0]
-            return firstValue != null && firstValue !== '' ? String(firstValue) : '00.00'
+        const getFirstValue = (field: unknown): string => {
+            const vals = normalizeLensFieldToStrings(field)
+            if (vals.length === 0) return '00.00'
+            return vals[0]
         }
 
         return {
             right_base_curve: getFirstValue(currentConfig.right_base_curve),
             right_diameter: getFirstValue(currentConfig.right_diameter),
             left_base_curve: getFirstValue(currentConfig.left_base_curve),
-            left_diameter: getFirstValue(currentConfig.left_diameter)
+            left_diameter: getFirstValue(currentConfig.left_diameter),
+            right_power: getFirstValue((currentConfig as { right_power?: unknown }).right_power),
+            left_power: getFirstValue((currentConfig as { left_power?: unknown }).left_power),
         }
     }, [selectedConfig, selectedAstigmatismConfig])
 
-    // Update form data with fixed values when config changes
     useEffect(() => {
         if (!isContactLens) return
 
@@ -2418,7 +2425,9 @@ const ProductDetail = () => {
                 right_base_curve: fixedBaseCurveAndDiameter.right_base_curve,
                 right_diameter: fixedBaseCurveAndDiameter.right_diameter,
                 left_base_curve: fixedBaseCurveAndDiameter.left_base_curve,
-                left_diameter: fixedBaseCurveAndDiameter.left_diameter
+                left_diameter: fixedBaseCurveAndDiameter.left_diameter,
+                right_power: fixedBaseCurveAndDiameter.right_power,
+                left_power: fixedBaseCurveAndDiameter.left_power,
             }))
         }
     }, [fixedBaseCurveAndDiameter, selectedConfig, selectedAstigmatismConfig, isContactLens])
@@ -2979,10 +2988,15 @@ const ProductDetail = () => {
         return (
             <div className="bg-white min-h-screen product-detail-container">
                 <Navbar />
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950 mb-4"></div>
-                        <p className="text-lg text-gray-600">Loading product...</p>
+                <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                    <div className="animate-pulse grid gap-8 lg:grid-cols-2 lg:gap-12">
+                        <div className="aspect-square max-w-xl rounded-2xl bg-slate-200/90" />
+                        <div className="space-y-4">
+                            <div className="h-9 w-3/4 rounded-lg bg-slate-200/90" />
+                            <div className="h-6 w-1/4 rounded bg-slate-100" />
+                            <div className="h-24 rounded-xl bg-slate-100" />
+                            <div className="h-12 w-full max-w-xs rounded-xl bg-slate-200/80" />
+                        </div>
                     </div>
                 </div>
                 <Footer />
@@ -3583,10 +3597,10 @@ const ProductDetail = () => {
                                                             )}
                                                         </div>
                                                         {loadingUnitData && (
-                                                            <div className="flex items-center gap-2 mt-2">
-                                                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600"></div>
-                                                                <p className="text-xs text-gray-500">Loading pack price and images...</p>
-                                                            </div>
+                                                            <div
+                                                                className="mt-2 h-2 max-w-[12rem] animate-pulse rounded-full bg-slate-200/90"
+                                                                aria-hidden
+                                                            />
                                                         )}
                                                     </>
                                                 )
@@ -4204,7 +4218,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {baseCurveOptions.map((v: string) => (
+                                                                {rightBaseCurveOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4228,7 +4242,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-blue-700 appearance-none cursor-pointer text-base ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {diameterOptions.map((v: string) => (
+                                                                {rightDiameterOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4262,7 +4276,7 @@ const ProductDetail = () => {
                                                                         } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">Select Power</option>
-                                                                    {powerOptions.map((v) => (
+                                                                    {rightPowerOptions.map((v) => (
                                                                         <option key={v} value={v.toString()}>{v}</option>
                                                                     ))}
                                                                 </select>
@@ -4299,7 +4313,7 @@ const ProductDetail = () => {
                                                                             } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00" className="text-gray-400">--</option>
-                                                                        {powerOptions.map((v) => (
+                                                                        {rightPowerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
                                                                     </select>
@@ -4448,7 +4462,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {baseCurveOptions.map((v: string) => (
+                                                                {leftBaseCurveOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4472,7 +4486,7 @@ const ProductDetail = () => {
                                                                 className={`w-full px-2 py-3 border-2 rounded-xl bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-left font-bold text-purple-700 appearance-none cursor-pointer text-base ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : 'border-gray-200'}`}
                                                             >
                                                                 <option value="00.00" className="text-gray-900">--</option>
-                                                                {diameterOptions.map((v: string) => (
+                                                                {leftDiameterOptions.map((v: string) => (
                                                                     <option key={v} value={v.toString()} className="text-gray-900">{v}</option>
                                                                 ))}
                                                             </select>
@@ -4506,7 +4520,7 @@ const ProductDetail = () => {
                                                                         } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                 >
                                                                     <option value="00.00">Select Power</option>
-                                                                    {powerOptions.map((v) => (
+                                                                    {leftPowerOptions.map((v) => (
                                                                         <option key={v} value={v.toString()}>{v}</option>
                                                                     ))}
                                                                 </select>
@@ -4543,7 +4557,7 @@ const ProductDetail = () => {
                                                                             } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                                     >
                                                                         <option value="00.00" className="text-gray-400">--</option>
-                                                                        {powerOptions.map((v) => (
+                                                                        {leftPowerOptions.map((v) => (
                                                                             <option key={v} value={v.toString()}>{v}</option>
                                                                         ))}
                                                                     </select>
@@ -5051,12 +5065,11 @@ const ProductDetail = () => {
                                         // Show loading state while fetching variants
                                         if (variantsLoading) {
                                             return (
-                                                <div className="mb-8 bg-blue-50 p-6 rounded-2xl border border-blue-100 shadow-sm">
-                                                    <h2 className="text-lg font-bold text-gray-900 mb-4 border-b border-blue-200 pb-2">
-                                                        Select Options
-                                                    </h2>
-                                                    <div className="flex items-center justify-center py-8">
-                                                        <div className="text-gray-500">Loading variants...</div>
+                                                <div className="mb-8 animate-pulse rounded-2xl border border-blue-100 bg-blue-50/80 p-6 shadow-sm">
+                                                    <div className="mb-4 h-7 w-40 rounded bg-slate-200/90" />
+                                                    <div className="space-y-3">
+                                                        <div className="h-10 rounded-lg bg-white/80" />
+                                                        <div className="h-10 rounded-lg bg-white/80" />
                                                     </div>
                                                 </div>
                                             )
@@ -5528,8 +5541,8 @@ const ProductDetail = () => {
                                     {/* Actions */}
                                     <div className="space-y-4">
                                         {!isContactLens && !isEyeHygiene && lensColorOptions.length > 0 && (
-                                            <div className="rounded-xl border border-gray-200 bg-white p-4">
-                                                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">Lens color</p>
+                                            <div className="rounded-2xl border border-gray-200/90 bg-gradient-to-b from-white to-slate-50/80 p-4 shadow-sm sm:p-5">
+                                                <p className="mb-3 text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Lens color</p>
                                                 <div className="flex flex-wrap gap-2">
                                                     {lensColorOptions.map((lensColor) => {
                                                         const isSelected = selectedLensColor.toLowerCase() === lensColor.toLowerCase()
@@ -5538,10 +5551,10 @@ const ProductDetail = () => {
                                                                 key={lensColor}
                                                                 type="button"
                                                                 onClick={() => setSelectedLensColor(lensColor)}
-                                                                className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
+                                                                className={`rounded-full border px-3.5 py-2 text-sm font-semibold transition-all ${
                                                                     isSelected
-                                                                        ? 'border-blue-700 bg-blue-700 text-white'
-                                                                        : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300'
+                                                                        ? 'border-blue-800 bg-blue-950 text-white shadow-md ring-2 ring-blue-950/20'
+                                                                        : 'border-slate-200 bg-white text-slate-800 hover:border-blue-300 hover:shadow-sm'
                                                                 }`}
                                                             >
                                                                 {lensColor}
@@ -5601,8 +5614,7 @@ const ProductDetail = () => {
                                             )
                                         })() : (
                                             <>
-                                                {/* For other products: Show both Add to Cart and Select Lenses */}
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="flex flex-col gap-3 sm:gap-4">
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -5611,47 +5623,32 @@ const ProductDetail = () => {
                                                             handleAddToCart()
                                                         }}
                                                         disabled={isProductOutOfStock}
-                                                        className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
-                                                            ? 'bg-blue-950 text-white hover:bg-blue-900 hover:shadow-xl transform hover:-translate-y-1'
-                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                            }`}
+                                                        className={`group relative w-full overflow-hidden rounded-2xl px-6 py-4 text-base font-semibold tracking-tight shadow-md transition-all duration-300 sm:py-[1.125rem] sm:text-lg ${
+                                                            !isProductOutOfStock
+                                                                ? 'bg-blue-950 text-white ring-1 ring-blue-950/10 hover:bg-blue-900 hover:shadow-lg active:scale-[0.99]'
+                                                                : 'cursor-not-allowed bg-gray-200 text-gray-500'
+                                                        }`}
                                                     >
-                                                        {isProductOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                                                        <span className="relative z-10 flex items-center justify-center gap-2">
+                                                            {!isProductOutOfStock && (
+                                                                <svg className="h-5 w-5 shrink-0 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                                </svg>
+                                                            )}
+                                                            {isProductOutOfStock ? 'Out of Stock' : 'Add to cart'}
+                                                        </span>
                                                     </button>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.preventDefault()
-                                                            e.stopPropagation()
-                                                            // Reset image selection to show main product image instead of caliber image
-                                                            setSelectedImageIndex(0)
-                                                            setIsManuallySelectingImage(false)
-                                                            // Navigate to the same URL with ?action=checkout query param
-                                                            // This will trigger the useEffect to set showCheckout(true)
-                                                            navigate(`${location.pathname}?action=checkout`)
-                                                        }}
-                                                        disabled={isProductOutOfStock}
-                                                        className={`px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg ${!isProductOutOfStock
-                                                            ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-xl transform hover:-translate-y-1'
-                                                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                            }`}
-                                                    >
-                                                        Select Lenses
-                                                    </button>
-                                                </div>
-
-                                                <div className="mt-4">
                                                     <a
                                                         href={`https://wa.me/3912345678?text=I'm interested in ${encodeURIComponent(product.name)}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="w-full px-8 py-4 rounded-xl bg-green-500 text-white hover:bg-green-600 transition-all duration-300 shadow-lg flex items-center justify-center gap-3 font-bold text-lg transform hover:-translate-y-1"
+                                                        className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-5 py-3.5 text-sm font-semibold text-emerald-900 transition-all duration-300 hover:border-emerald-300 hover:bg-emerald-100/90 sm:text-base"
                                                     >
-                                                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                        <svg className="h-5 w-5 shrink-0 text-emerald-600" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
                                                             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
                                                         </svg>
-                                                        <span>Inquiry on WhatsApp</span>
+                                                        <span>Ask on WhatsApp</span>
                                                     </a>
                                                 </div>
                                             </>

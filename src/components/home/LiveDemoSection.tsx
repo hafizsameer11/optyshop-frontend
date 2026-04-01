@@ -1,12 +1,10 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import VirtualTryOnModal from './VirtualTryOnModal'
 import { apiClient } from '../../utils/api'
 import { API_ROUTES } from '../../config/apiRoutes'
 
 const LiveDemoSection: React.FC = () => {
     const navigate = useNavigate()
-    const [isTryOnOpen, setIsTryOnOpen] = useState(false)
     const [formData, setFormData] = useState({
         email: '',
         name: '',
@@ -133,24 +131,9 @@ const LiveDemoSection: React.FC = () => {
                 <div className="relative overflow-hidden image-cover rounded-3xl shadow-2xl h-[630px]">
                     <img
                         src="/assets/images/virtual-try.jpg"
-                        alt="Virtual eyewear try-on"
+                        alt="OptiShop eyewear showcase"
                         className="h-full w-full object-cover"
                     />
-
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-
-                    <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 px-6 text-white space-y-4 text-center">
-                        <p className="text-lg font-medium max-w-xl">
-                            <span className="block">Discover our ultra-realistic</span>
-                            <span className="block">virtual eyewear try-on solution</span>
-                        </p>
-                        <button
-                            onClick={() => setIsTryOnOpen(true)}
-                            className="rounded-full bg-white/90 text-slate-900 px-8 py-3 font-semibold shadow-lg hover:bg-white transition-colors"
-                        >
-                            Try on glasses
-                        </button>
-                    </div>
                 </div>
 
                 {/* Right form panel */}
@@ -283,8 +266,6 @@ const LiveDemoSection: React.FC = () => {
                     </form>
                 </div>
             </div>
-
-            <VirtualTryOnModal open={isTryOnOpen} onClose={() => setIsTryOnOpen(false)} />
         </section>
     )
 }

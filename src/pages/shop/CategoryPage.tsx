@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -89,7 +89,9 @@ const CategoryPage: React.FC = () => {
         subSubcategory: null
     })
     const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true)
+    /** Initial category tree + first paint (no full-page spinner — see isFetchingProducts for grid) */
+    const [isBootstrappingCategory, setIsBootstrappingCategory] = useState(true)
+    const [isFetchingProducts, setIsFetchingProducts] = useState(false)
     const [pagination, setPagination] = useState({
         total: 0,
         page: 1,
@@ -120,6 +122,16 @@ const CategoryPage: React.FC = () => {
     const [diameter, setDiameter] = useState<string>('')
     const [replacementPeriod, setReplacementPeriod] = useState<string>('')
 
+    const pageTitleLabel = useMemo(() => {
+        if (categoryInfo.category) {
+            return translateCategory(
+                categoryInfo.subSubcategory || categoryInfo.subcategory || categoryInfo.category
+            )
+        }
+        const leaf = subSubcategorySlug || subcategorySlug || categorySlug || ''
+        return leaf.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    }, [categoryInfo, categorySlug, subcategorySlug, subSubcategorySlug, translateCategory])
+
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
         let isCancelled = false
@@ -135,40 +147,54 @@ const CategoryPage: React.FC = () => {
             let subSubcategory: Category | null = null
 
             try {
-                category = await getCategoryBySlug(categorySlug)
-                if (isCancelled) return
-                
-                if (!category) {
-                    navigate('/shop')
-                    return
-                }
-
                 if (subcategorySlug) {
-                    subcategory = await getSubcategoryBySlug(subcategorySlug, category.id)
+                    // Load category + subcategory in parallel (was sequential — saved one round-trip)
+                    const [cat, sub] = await Promise.all([
+                        getCategoryBySlug(categorySlug),
+                        getSubcategoryBySlug(subcategorySlug),
+                    ])
+                    category = cat
+                    subcategory = sub
                     if (isCancelled) return
-                    
+
+                    if (!category) {
+                        navigate('/shop')
+                        return
+                    }
+
                     if (!subcategory) {
                         navigate(`/category/${categorySlug}`)
                         return
                     }
 
-                    // If sub-subcategory slug is provided, fetch it
+                    const subCatParentId = subcategory.category_id ?? subcategory.category?.id
+                    if (subCatParentId != null && String(subCatParentId) !== String(category.id)) {
+                        navigate(`/category/${categorySlug}`)
+                        return
+                    }
+
                     if (subSubcategorySlug) {
-                        // Get all nested subcategories (sub-subcategories) for this subcategory
                         const nestedSubcategories = await getNestedSubcategoriesByParentId(subcategory.id)
                         if (!isCancelled) {
-                            // Find the sub-subcategory by slug (case-insensitive comparison)
                             const subSubcategorySlugLower = (subSubcategorySlug || '').toLowerCase()
-                            subSubcategory = nestedSubcategories.find(sub => 
+                            subSubcategory = nestedSubcategories.find(sub =>
                                 sub.slug && sub.slug.toLowerCase() === subSubcategorySlugLower
                             ) || null
-                            
+
                             if (!subSubcategory) {
                                 console.warn(`⚠️ Sub-subcategory "${subSubcategorySlug}" not found under subcategory "${subcategory.name}"`)
                                 navigate(`/category/${categorySlug}/${subcategorySlug}`)
                                 return
                             }
                         }
+                    }
+                } else {
+                    category = await getCategoryBySlug(categorySlug)
+                    if (isCancelled) return
+
+                    if (!category) {
+                        navigate('/shop')
+                        return
                     }
                 }
 
@@ -182,7 +208,7 @@ const CategoryPage: React.FC = () => {
                 }
             } finally {
                 if (!isCancelled) {
-                    setLoading(false)
+                    setIsBootstrappingCategory(false)
                 }
             }
         }
@@ -194,79 +220,34 @@ const CategoryPage: React.FC = () => {
         }
     }, [categorySlug, subcategorySlug, subSubcategorySlug, navigate])
 
-    // Fetch products
+    // Fetch products — uses URL slugs so the list request runs in parallel with category metadata (no waterfall)
     useEffect(() => {
-        if (!categoryInfo.category) return
+        if (!categorySlug) return
 
         let isCancelled = false
 
         const fetchProducts = async () => {
             try {
-                setLoading(true)
+                setIsFetchingProducts(true)
                 const filters: ProductFilters = {
                     page: currentPage,
                     limit: 12,
                 }
 
-                // Apply category/subcategory filters with enhanced logging
+                filters.category = categorySlug
+                if (subSubcategorySlug) {
+                    filters.subSubcategory = subSubcategorySlug
+                } else if (subcategorySlug) {
+                    filters.subcategory = subcategorySlug
+                }
+
                 if (import.meta.env.DEV) {
-                    console.log('🔍 CategoryPage - Category Info:', {
-                        category: categoryInfo.category?.name,
-                        subcategory: categoryInfo.subcategory?.name,
-                        subSubcategory: categoryInfo.subSubcategory?.name,
-                        categorySlug: categoryInfo.category?.slug,
-                        subcategorySlug: categoryInfo.subcategory?.slug,
-                        subSubcategorySlug: categoryInfo.subSubcategory?.slug
+                    console.log('🔍 CategoryPage - Product filters (URL-first):', {
+                        categorySlug,
+                        subcategorySlug,
+                        subSubcategorySlug,
+                        resolvedCategory: categoryInfo.category?.name,
                     })
-                }
-
-                // Enhanced category/subcategory filtering with validation
-                if (categoryInfo.category?.slug) {
-                    filters.category = categoryInfo.category.slug
-                    
-                    // Validate that we have the right category structure
-                    if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Category filter applied:', {
-                            categoryName: categoryInfo.category.name,
-                            categorySlug: categoryInfo.category.slug,
-                            categoryId: categoryInfo.category.id,
-                            hasSubcategory: !!categoryInfo.subcategory,
-                            hasSubSubcategory: !!categoryInfo.subSubcategory
-                        })
-                    }
-                }
-
-                // Apply subcategory/sub-subcategory filters with enhanced validation
-                if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
-                    // Use sub-subcategory for most specific filtering
-                    filters.subSubcategory = categoryInfo.subSubcategory.slug
-                    if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Sub-subcategory filter applied:', {
-                            subSubcategoryName: categoryInfo.subSubcategory.name,
-                            subSubcategorySlug: categoryInfo.subSubcategory.slug,
-                            subSubcategoryId: categoryInfo.subSubcategory.id,
-                            parentSubcategory: categoryInfo.subcategory?.name
-                        })
-                    }
-                } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
-                    // Use subcategory if no sub-subcategory is selected
-                    filters.subcategory = categoryInfo.subcategory.slug
-                    if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Subcategory filter applied:', {
-                            subcategoryName: categoryInfo.subcategory.name,
-                            subcategorySlug: categoryInfo.subcategory.slug,
-                            subcategoryId: categoryInfo.subcategory.id,
-                            hasChildren: !!(categoryInfo.subcategory.children && categoryInfo.subcategory.children.length > 0),
-                            childrenCount: categoryInfo.subcategory.children?.length || 0
-                        })
-                    }
-                } else {
-                    if (import.meta.env.DEV) {
-                        console.log('🔍 CategoryPage - Category-level filtering (no subcategory selected)', {
-                            categoryName: categoryInfo.category?.name,
-                            note: 'Will show all products in this category'
-                        })
-                    }
                 }
 
                 // Apply additional filters
@@ -349,7 +330,7 @@ const CategoryPage: React.FC = () => {
                     
                 if (!isCancelled && result) {
                     // Validate that returned products match the expected filters
-                    if (import.meta.env.DEV && result.products && result.products.length > 0) {
+                    if (import.meta.env.DEV && categoryInfo.category && result.products && result.products.length > 0) {
                         const validationResults = validateProductFiltering(result.products, categoryInfo)
                         console.log('🔍 CategoryPage - Product filtering validation:', validationResults)
                     }
@@ -432,31 +413,31 @@ const CategoryPage: React.FC = () => {
                         }
                     }
 
-                    // Apply client-side filters with enhanced subcategory filtering
+                    // Apply client-side filters with enhanced subcategory filtering (URL slugs match categoryInfo once resolved)
                     let filteredProducts = result.products || []
-                    
-                    // Enhanced client-side subcategory filtering as fallback
-                    if (categoryInfo.subSubcategory && categoryInfo.subSubcategory.slug) {
+
+                    const leafSubSub = categoryInfo.subSubcategory?.slug ?? subSubcategorySlug
+                    const midSub = categoryInfo.subcategory?.slug ?? subcategorySlug
+
+                    if (leafSubSub && midSub) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const productSubcategoryData = normalizeProductSubcategory(product)
-                            // For sub-subcategories, match both the sub-subcategory slug and ensure parent matches the selected subcategory
-                            return productSubcategoryData.slug === categoryInfo.subSubcategory?.slug && 
-                                   productSubcategoryData.parentSlug === categoryInfo.subcategory?.slug
+                            return productSubcategoryData.slug === leafSubSub &&
+                                   productSubcategoryData.parentSlug === midSub
                         })
                         if (import.meta.env.DEV) {
-                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${categoryInfo.subSubcategory.slug} with parent ${categoryInfo.subcategory?.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
+                            console.log(`🔍 CategoryPage - Client-side sub-subcategory filter (${leafSubSub} / ${midSub}): ${beforeFilter} -> ${filteredProducts.length}`)
                         }
-                    } else if (categoryInfo.subcategory && categoryInfo.subcategory.slug) {
+                    } else if (midSub) {
                         const beforeFilter = filteredProducts.length
                         filteredProducts = filteredProducts.filter((product: Product) => {
                             const productSubcategoryData = normalizeProductSubcategory(product)
-                            // For subcategories, match either the subcategory directly or its parent
-                            return productSubcategoryData.slug === categoryInfo.subcategory?.slug ||
-                                   productSubcategoryData.parentSlug === categoryInfo.subcategory?.slug
+                            return productSubcategoryData.slug === midSub ||
+                                   productSubcategoryData.parentSlug === midSub
                         })
                         if (import.meta.env.DEV) {
-                            console.log(`🔍 CategoryPage - Client-side subcategory filter (${categoryInfo.subcategory.slug}): ${beforeFilter} -> ${filteredProducts.length}`)
+                            console.log(`🔍 CategoryPage - Client-side subcategory filter (${midSub}): ${beforeFilter} -> ${filteredProducts.length}`)
                         }
                     }
                     
@@ -792,7 +773,7 @@ const CategoryPage: React.FC = () => {
                 }
             } finally {
                 if (!isCancelled) {
-                    setLoading(false)
+                    setIsFetchingProducts(false)
                 }
             }
         }
@@ -803,9 +784,9 @@ const CategoryPage: React.FC = () => {
             isCancelled = true
         }
     }, [
-        categoryInfo.category?.id,
-        categoryInfo.subcategory?.id,
-        categoryInfo.subSubcategory?.id,
+        categorySlug,
+        subcategorySlug,
+        subSubcategorySlug,
         currentPage,
         searchTerm,
         lensType,
@@ -825,21 +806,7 @@ const CategoryPage: React.FC = () => {
         replacementPeriod,
     ])
 
-    
-    if (loading) {
-        return (
-            <div className="bg-white min-h-screen">
-                <Navbar />
-                <div className="text-center py-12">
-                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
-                    <p className="mt-4 text-lg text-gray-600">Loading...</p>
-                </div>
-                <Footer />
-            </div>
-        )
-    }
-
-    if (!categoryInfo.category) {
+    if (!isBootstrappingCategory && !categoryInfo.category && categorySlug) {
         return (
             <div className="bg-white min-h-screen">
                 <Navbar />
@@ -858,11 +825,7 @@ const CategoryPage: React.FC = () => {
             {/* Category Banner - Dynamic banners from backend */}
             {categoryInfo.category && (
                 <CategoryBanner 
-                    categoryName={translateCategory(
-                        categoryInfo.subSubcategory || 
-                        categoryInfo.subcategory || 
-                        categoryInfo.category
-                    )}
+                    categoryName={pageTitleLabel}
                     categoryId={categoryInfo.category?.id || 0}
                     subcategoryId={
                         categoryInfo.subSubcategory?.id || 
@@ -997,10 +960,10 @@ const CategoryPage: React.FC = () => {
                             availableLensTypes={availableLensTypes}
                             availableLensCoatings={availableLensCoatings}
                             categoryLevel={
-                                categoryInfo.subSubcategory ? 'subsubcategory' :
-                                categoryInfo.subcategory ? 'subcategory' : 'category'
+                                subSubcategorySlug ? 'subsubcategory' :
+                                subcategorySlug ? 'subcategory' : 'category'
                             }
-                            categorySlug={categoryInfo.category?.slug || ''}
+                            categorySlug={categoryInfo.category?.slug || categorySlug || ''}
                             className="sticky top-24"
                         />
                     </aside>
@@ -1008,26 +971,30 @@ const CategoryPage: React.FC = () => {
                     <div className="min-w-0 flex-1">
                         <header className="mb-8 border-b border-slate-200/90 pb-6">
                             <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                                {translateCategory(
-                                    categoryInfo.subSubcategory ||
-                                        categoryInfo.subcategory ||
-                                        categoryInfo.category
-                                )}
+                                {pageTitleLabel}
                             </h1>
                             <p className="mt-2 text-sm text-slate-600">
-                                {!loading && products.length > 0
+                                {!isFetchingProducts && products.length > 0
                                     ? `${products.length} product${products.length === 1 ? '' : 's'}`
-                                    : !loading
+                                    : !isFetchingProducts
                                       ? 'No products match these filters'
-                                      : 'Loading products…'}
+                                      : '\u00a0'}
                             </p>
                         </header>
 
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 sm:p-6 lg:p-8">
-                            {loading ? (
-                                <div className="text-center py-16">
-                                    <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-blue-950"></div>
-                                    <p className="mt-6 text-xl text-gray-600 font-medium">Loading products...</p>
+                            {isFetchingProducts ? (
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+                                        >
+                                            <div className="aspect-[4/3] rounded-xl bg-slate-200/80" />
+                                            <div className="mt-4 h-4 w-[80%] rounded bg-slate-200/80" />
+                                            <div className="mt-2 h-3 w-1/3 rounded bg-slate-100" />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : !products || products.length === 0 ? (
                                 <div className="text-center py-16">
@@ -1036,11 +1003,16 @@ const CategoryPage: React.FC = () => {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                         </svg>
                                         <p className="text-xl md:text-2xl text-gray-600 mb-4 font-semibold">
-                                            {categoryInfo.subSubcategory 
-                                                ? t('shop.noProducts', { category: translateCategory(categoryInfo.subSubcategory) })
-                                                : categoryInfo.subcategory 
-                                                ? t('shop.noProducts', { category: translateCategory(categoryInfo.subcategory) })
-                                                : t('shop.noProducts', { category: translateCategory(categoryInfo.category) })}
+                                            {t('shop.noProducts', {
+                                                category:
+                                                    categoryInfo.subSubcategory
+                                                        ? translateCategory(categoryInfo.subSubcategory)
+                                                        : categoryInfo.subcategory
+                                                          ? translateCategory(categoryInfo.subcategory)
+                                                          : categoryInfo.category
+                                                            ? translateCategory(categoryInfo.category)
+                                                            : pageTitleLabel,
+                                            })}
                                         </p>
                                         <p className="text-base text-gray-500 mb-8">
                                             {categoryInfo.subSubcategory 
