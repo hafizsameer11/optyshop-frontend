@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getProductOptions, type ProductOptions } from '../../services/productsService'
 
 export type ShopFilterPayload = {
@@ -20,6 +21,12 @@ export type ShopFilterPayload = {
     baseCurve?: string
     diameter?: string
     replacementPeriod?: string
+    model?: string
+    features?: string
+    categoryText?: string
+    caliber?: string
+    bridge?: string
+    temples?: string
     /** Synced to parent; not sent to products API as-is */
     featuredOnly?: boolean
 }
@@ -60,6 +67,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     onClose,
     showCloseButton = false
 }) => {
+    const { t } = useTranslation()
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [isExpanded, setIsExpanded] = useState(true)
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
@@ -86,6 +94,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [baseCurve, setBaseCurve] = useState<string>('')
     const [diameter, setDiameter] = useState<string>('')
     const [replacementPeriod, setReplacementPeriod] = useState<string>('')
+    const [categoryText, setCategoryText] = useState<string>('')
+    const [model, setModel] = useState<string>('')
+    const [features, setFeatures] = useState<string>('')
+    const [caliber, setCaliber] = useState<string>('')
+    const [bridge, setBridge] = useState<string>('')
+    const [temples, setTemples] = useState<string>('')
     
     // Validation and conversion functions
     const validateAndConvertPrice = (value: string): number | undefined => {
@@ -149,6 +163,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (baseCurve.trim()) filters.baseCurve = baseCurve.trim()
         if (diameter.trim()) filters.diameter = diameter.trim()
         if (replacementPeriod.trim()) filters.replacementPeriod = replacementPeriod.trim()
+        if (categoryText.trim()) filters.categoryText = categoryText.trim()
+        if (model.trim()) filters.model = model.trim()
+        if (features.trim()) filters.features = features.trim()
+        if (caliber.trim()) filters.caliber = caliber.trim()
+        if (bridge.trim()) filters.bridge = bridge.trim()
+        if (temples.trim()) filters.temples = temples.trim()
 
         onFilterChange({
             ...filters,
@@ -161,6 +181,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
             baseCurve,
             diameter,
             replacementPeriod,
+            categoryText,
+            model,
+            features,
+            caliber,
+            bridge,
+            temples,
         })
     }, [
         minPrice,
@@ -179,6 +205,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         baseCurve,
         diameter,
         replacementPeriod,
+        categoryText,
+        model,
+        features,
+        caliber,
+        bridge,
+        temples,
         onFilterChange,
     ])
 
@@ -213,6 +245,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         setBaseCurve('')
         setDiameter('')
         setReplacementPeriod('')
+        setCategoryText('')
+        setModel('')
+        setFeatures('')
+        setCaliber('')
+        setBridge('')
+        setTemples('')
         onClearAll?.()
     }
 
@@ -233,6 +271,12 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (baseCurve.trim()) count++
         if (diameter.trim()) count++
         if (replacementPeriod.trim()) count++
+        if (categoryText.trim()) count++
+        if (model.trim()) count++
+        if (features.trim()) count++
+        if (caliber.trim()) count++
+        if (bridge.trim()) count++
+        if (temples.trim()) count++
         return count
     }
 
@@ -251,7 +295,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                         </svg>
-                        <span className="font-medium text-sm">Filters</span>
+                        <span className="font-medium text-sm">{t('shop.filters.filters', 'Filtri')}</span>
                         {activeCount > 0 && (
                             <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
                                 {activeCount}
@@ -272,7 +316,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                 </svg>
-                                <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
+                                <h3 className="text-sm font-semibold text-gray-800">{t('shop.filters.filters', 'Filtri')}</h3>
                                 {activeCount > 0 && (
                                     <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
                                         {activeCount}
@@ -285,7 +329,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onClick={clearAllFilters}
                                         className="text-xs text-gray-600 hover:text-red-600 transition-colors font-medium"
                                     >
-                                        Clear All
+                                        {t('shop.filters.clearAll', 'Cancella tutto')}
                                     </button>
                                 )}
                                 {showCloseButton && onClose && (
@@ -314,7 +358,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder="Search..."
+                                    placeholder={t('shop.filters.searchPlaceholder', 'Cerca...')}
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
                                     onKeyPress={handleSearchKeyPress}
@@ -328,7 +372,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 onClick={handleSearch}
                                 className="w-full bg-blue-500 text-white text-xs font-medium py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200"
                             >
-                                Search
+                                {t('shop.filters.search', 'Cerca')}
                             </button>
                         </div>
                     </div>
@@ -337,17 +381,18 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                     <div className="p-3 space-y-3 border-b border-gray-100">
                         {/* Sort By */}
                         <div>
-                            <label className="text-xs font-semibold text-gray-700 mb-1 block">Sort By</label>
+                            <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.sortBy', 'Ordina per')}</label>
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value)}
                                 className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                             >
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
-                                <option value="price_low">Price: Low to High</option>
-                                <option value="price_high">Price: High to Low</option>
-                                <option value="name">Name: A to Z</option>
+                                <option value="newest">{t('shop.filters.newestFirst', 'Più recenti')}</option>
+                                <option value="oldest">{t('shop.filters.oldestFirst', 'Meno recenti')}</option>
+                                <option value="price_low">{t('shop.filters.priceLowToHigh', 'Prezzo: crescente')}</option>
+                                <option value="price_high">{t('shop.filters.priceHighToLow', 'Prezzo: decrescente')}</option>
+                                <option value="relevance">{t('shop.filters.relevance', 'Rilevanza')}</option>
+                                <option value="name">{t('shop.filters.nameAZ', 'Nome: A-Z')}</option>
                             </select>
                         </div>
 
@@ -360,19 +405,19 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     onChange={(e) => setInStockOnly(e.target.checked)}
                                     className="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
                                 />
-                                <span className="text-xs font-medium text-slate-700">In stock only</span>
+                                <span className="text-xs font-medium text-slate-700">{t('shop.filters.inStockOnly', 'Solo disponibili')}</span>
                             </label>
                         </div>
 
                         {productOptions?.genders && productOptions.genders.length > 0 && (
                             <div>
-                                <label className="mb-1 block text-xs font-semibold text-slate-700">Gender</label>
+                                <label className="mb-1 block text-xs font-semibold text-slate-700">{t('shop.filters.gender', 'Genere')}</label>
                                 <select
                                     value={gender}
                                     onChange={(e) => setGender(e.target.value)}
                                     className="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs outline-none transition-colors focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
                                 >
-                                    <option value="">All genders</option>
+                                    <option value="">{t('shop.filters.allGenders', 'Tutti i generi')}</option>
                                     {productOptions.genders.map((g) => (
                                         <option key={g} value={g}>
                                             {g}
@@ -390,14 +435,14 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     onChange={(e) => setFeaturedOnly(e.target.checked)}
                                     className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-400"
                                 />
-                                <span className="text-xs font-medium text-slate-700">Featured only</span>
+                                <span className="text-xs font-medium text-slate-700">{t('shop.filters.featuredOnly', 'In evidenza')}</span>
                             </label>
                         </div>
 
                         {/* Category and Subcategory Buttons */}
                         {availableCategories.length > 0 && (
                             <div>
-                                <label className="text-xs font-semibold text-gray-700 mb-1 block">Category</label>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.category', 'Categoria')}</label>
                                 <div className="flex flex-wrap gap-1">
                                     {availableCategories.slice(0, 4).map((category) => (
                                         <button
@@ -442,13 +487,13 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <div className="p-3 space-y-3">
                             {/* Price Range */}
                             <div>
-                                <label className="text-xs font-semibold text-gray-700 mb-1 block">Price Range</label>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.price', 'Prezzo')}</label>
                                 <div className="flex gap-2 items-center">
                                     <div className="relative flex-1">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                                         <input
                                             type="text"
-                                            placeholder="Min"
+                                            placeholder={t('shop.filters.min', 'Min')}
                                             value={minPrice}
                                             onChange={(e) => handleMinPriceChange(e.target.value)}
                                             className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${minPrice && validateAndConvertPrice(minPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
@@ -456,10 +501,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     </div>
                                     <span className="text-xs text-gray-400">-</span>
                                     <div className="relative flex-1">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                                         <input
                                             type="text"
-                                            placeholder="Max"
+                                            placeholder={t('shop.filters.max', 'Max')}
                                             value={maxPrice}
                                             onChange={(e) => handleMaxPriceChange(e.target.value)}
                                             className={`w-full text-xs border rounded-lg pl-5 pr-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400 ${maxPrice && validateAndConvertPrice(maxPrice) === undefined ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
@@ -470,25 +515,25 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 {minPrice && maxPrice && validateAndConvertPrice(minPrice) !== undefined && validateAndConvertPrice(maxPrice) !== undefined && (
                                     <div className="mt-1">
                                         {validateAndConvertPrice(minPrice)! > validateAndConvertPrice(maxPrice)! && (
-                                            <p className="text-xs text-red-600">Min price cannot be greater than max price</p>
+                                            <p className="text-xs text-red-600">{t('shop.filters.minGreaterThanMax', 'Il prezzo minimo non puo superare il massimo')}</p>
                                         )}
                                     </div>
                                 )}
                                 {(minPrice && validateAndConvertPrice(minPrice) === undefined) || (maxPrice && validateAndConvertPrice(maxPrice) === undefined) ? (
-                                    <p className="text-xs text-red-600 mt-1">Please enter valid prices</p>
+                                    <p className="text-xs text-red-600 mt-1">{t('shop.filters.validPrices', 'Inserisci prezzi validi')}</p>
                                 ) : null}
                             </div>
 
                             {/* Color Filter */}
                             {availableColors.length > 0 && (
                                 <div>
-                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">Color</label>
+                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.color', 'Colore')}</label>
                                     <select
                                         value={selectedColor}
                                         onChange={(e) => setSelectedColor(e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                     >
-                                        <option value="">All Colors</option>
+                                        <option value="">{t('shop.filters.allColors', 'Tutti i colori')}</option>
                                         {availableColors.map((color) => (
                                             <option key={color} value={color}>
                                                 {color}
@@ -501,13 +546,13 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             {/* Brand Filter */}
                             {(availableBrands.length > 0 || (productOptions as any)?.brands) && (
                                 <div>
-                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">Brand</label>
+                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.brand', 'Brand')}</label>
                                     <select
                                         value={brand}
                                         onChange={(e) => setBrand(e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                     >
-                                        <option value="">All Brands</option>
+                                        <option value="">{t('shop.filters.allBrands', 'Tutti i brand')}</option>
                                         {(availableBrands.length > 0 ? availableBrands : (productOptions as any)?.brands || []).map((brandName: string) => (
                                             <option key={brandName} value={brandName}>
                                                 {brandName}
@@ -517,15 +562,37 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 </div>
                             )}
 
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.category', 'Categoria')}</label>
+                                <input
+                                    type="text"
+                                    value={categoryText}
+                                    onChange={(e) => setCategoryText(e.target.value)}
+                                    placeholder={t('shop.filters.category', 'Categoria')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.model', 'Modello')}</label>
+                                <input
+                                    type="text"
+                                    value={model}
+                                    onChange={(e) => setModel(e.target.value)}
+                                    placeholder={t('shop.filters.model', 'Modello')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
+
                             {showEyewearFilters && productOptions?.frameShapes && productOptions.frameShapes.length > 0 && (
                                 <div>
-                                    <label className="mb-1 block text-xs font-semibold text-slate-700">Frame shape</label>
+                                    <label className="mb-1 block text-xs font-semibold text-slate-700">{t('shop.filters.shape', 'Forma')}</label>
                                     <select
                                         value={frameShape}
                                         onChange={(e) => setFrameShape(e.target.value)}
                                         className="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
                                     >
-                                        <option value="">All shapes</option>
+                                        <option value="">{t('shop.filters.allShapes', 'Tutte le forme')}</option>
                                         {productOptions.frameShapes.map((shape) => (
                                             <option key={shape} value={shape}>
                                                 {shape}
@@ -537,13 +604,13 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
                             {showEyewearFilters && productOptions?.frameMaterials && productOptions.frameMaterials.length > 0 && (
                                 <div>
-                                    <label className="mb-1 block text-xs font-semibold text-slate-700">Frame material</label>
+                                    <label className="mb-1 block text-xs font-semibold text-slate-700">{t('shop.filters.material', 'Materiale')}</label>
                                     <select
                                         value={frameMaterial}
                                         onChange={(e) => setFrameMaterial(e.target.value)}
                                         className="w-full rounded-lg border border-slate-200 px-2 py-2 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
                                     >
-                                        <option value="">All materials</option>
+                                        <option value="">{t('shop.filters.allMaterials', 'Tutti i materiali')}</option>
                                         {productOptions.frameMaterials.map((mat) => (
                                             <option key={mat} value={mat}>
                                                 {mat}
@@ -552,6 +619,52 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     </select>
                                 </div>
                             )}
+
+                            {showEyewearFilters && (
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.caliber', 'Calibro')}</label>
+                                        <input
+                                            type="text"
+                                            value={caliber}
+                                            onChange={(e) => setCaliber(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.bridge', 'Ponte')}</label>
+                                        <input
+                                            type="text"
+                                            value={bridge}
+                                            onChange={(e) => setBridge(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.temples', 'Aste')}</label>
+                                        <input
+                                            type="text"
+                                            value={temples}
+                                            onChange={(e) => setTemples(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.features', 'Caratteristiche')}</label>
+                                <input
+                                    type="text"
+                                    value={features}
+                                    onChange={(e) => setFeatures(e.target.value)}
+                                    placeholder={t('shop.filters.features', 'Caratteristiche')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
 
                             {availableLensTypes.length > 0 && (
                                 <div>
@@ -648,7 +761,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                 </svg>
-                                <h3 className="text-sm font-semibold text-gray-800">Filters</h3>
+                                <h3 className="text-sm font-semibold text-gray-800">{t('shop.filters.filters', 'Filtri')}</h3>
                                 {activeCount > 0 && (
                                     <span className="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full font-medium">
                                         {activeCount}
@@ -661,7 +774,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onClick={clearAllFilters}
                                         className="text-xs text-gray-600 hover:text-red-600 transition-colors font-medium"
                                     >
-                                        Clear All
+                                        {t('shop.filters.clearAll', 'Cancella tutto')}
                                     </button>
                                 )}
                                 <button
@@ -683,7 +796,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             <div className="relative">
                                 <input
                                     type="text"
-                                    placeholder="Search products..."
+                                    placeholder={t('shop.filters.searchProducts', 'Cerca prodotti...')}
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
                                     onKeyPress={handleSearchKeyPress}
@@ -697,7 +810,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 onClick={handleSearch}
                                 className="w-full bg-blue-500 text-white text-xs font-medium py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200"
                             >
-                                Search
+                                {t('shop.filters.search', 'Cerca')}
                             </button>
                         </div>
 
@@ -705,17 +818,18 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <div className="p-3 space-y-3 border-b border-gray-100">
                             {/* Sort By */}
                             <div>
-                                <label className="text-xs font-semibold text-gray-700 mb-1 block">Sort By</label>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.sortBy', 'Ordina per')}</label>
                                 <select
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
                                     className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                 >
-                                    <option value="newest">Newest First</option>
-                                    <option value="oldest">Oldest First</option>
-                                    <option value="price_low">Price: Low to High</option>
-                                    <option value="price_high">Price: High to Low</option>
-                                    <option value="name">Name: A to Z</option>
+                                    <option value="newest">{t('shop.filters.newestFirst', 'Più recenti')}</option>
+                                    <option value="oldest">{t('shop.filters.oldestFirst', 'Meno recenti')}</option>
+                                    <option value="price_low">{t('shop.filters.priceLowToHigh', 'Prezzo: crescente')}</option>
+                                    <option value="price_high">{t('shop.filters.priceHighToLow', 'Prezzo: decrescente')}</option>
+                                    <option value="relevance">{t('shop.filters.relevance', 'Rilevanza')}</option>
+                                    <option value="name">{t('shop.filters.nameAZ', 'Nome: A-Z')}</option>
                                 </select>
                             </div>
 
@@ -727,19 +841,19 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onChange={(e) => setInStockOnly(e.target.checked)}
                                         className="h-3.5 w-3.5 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
                                     />
-                                    <span className="text-xs font-medium text-gray-700">In stock only</span>
+                                    <span className="text-xs font-medium text-gray-700">{t('shop.filters.inStockOnly', 'Solo disponibili')}</span>
                                 </label>
                             </div>
 
                             {productOptions?.genders && productOptions.genders.length > 0 && (
                                 <div>
-                                    <label className="mb-1 block text-xs font-semibold text-gray-700">Gender</label>
+                                    <label className="mb-1 block text-xs font-semibold text-gray-700">{t('shop.filters.gender', 'Genere')}</label>
                                     <select
                                         value={gender}
                                         onChange={(e) => setGender(e.target.value)}
                                         className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-blue-500"
                                     >
-                                        <option value="">All genders</option>
+                                        <option value="">{t('shop.filters.allGenders', 'Tutti i generi')}</option>
                                         {productOptions.genders.map((g) => (
                                             <option key={g} value={g}>
                                                 {g}
@@ -757,14 +871,14 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onChange={(e) => setFeaturedOnly(e.target.checked)}
                                         className="h-3.5 w-3.5 rounded border-slate-300 text-amber-600 focus:ring-amber-400"
                                     />
-                                    <span className="text-xs font-medium text-gray-700">Featured only</span>
+                                    <span className="text-xs font-medium text-gray-700">{t('shop.filters.featuredOnly', 'In evidenza')}</span>
                                 </label>
                             </div>
 
                             {/* Category and Subcategory Buttons */}
                             {availableCategories.length > 0 && (
                                 <div>
-                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">Category</label>
+                                    <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.category', 'Categoria')}</label>
                                     <div className="flex flex-wrap gap-1">
                                         {availableCategories.slice(0, 6).map((category) => (
                                             <button
@@ -808,10 +922,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         <div className="p-3 space-y-3">
                             {/* Price Range */}
                             <div>
-                                <label className="text-xs font-semibold text-gray-700 mb-1 block">Price Range</label>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.price', 'Prezzo')}</label>
                                 <div className="flex gap-2 items-center">
                                     <div className="relative flex-1">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                                         <input
                                             type="text"
                                             placeholder="Min"
@@ -822,7 +936,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     </div>
                                     <span className="text-xs text-gray-400">-</span>
                                     <div className="relative flex-1">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                                         <input
                                             type="text"
                                             placeholder="Max"
@@ -854,7 +968,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onChange={(e) => setSelectedColor(e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                     >
-                                        <option value="">All Colors</option>
+                                        <option value="">{t('shop.filters.allColors', 'Tutti i colori')}</option>
                                         {availableColors.map((color) => (
                                             <option key={color} value={color}>
                                                 {color}
@@ -873,7 +987,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                         onChange={(e) => setBrand(e.target.value)}
                                         className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
                                     >
-                                        <option value="">All Brands</option>
+                                        <option value="">{t('shop.filters.allBrands', 'Tutti i brand')}</option>
                                         {(availableBrands.length > 0 ? availableBrands : (productOptions as any)?.brands || []).map((brandName: string) => (
                                             <option key={brandName} value={brandName}>
                                                 {brandName}
@@ -883,15 +997,37 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                 </div>
                             )}
 
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.category', 'Categoria')}</label>
+                                <input
+                                    type="text"
+                                    value={categoryText}
+                                    onChange={(e) => setCategoryText(e.target.value)}
+                                    placeholder={t('shop.filters.category', 'Categoria')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.model', 'Modello')}</label>
+                                <input
+                                    type="text"
+                                    value={model}
+                                    onChange={(e) => setModel(e.target.value)}
+                                    placeholder={t('shop.filters.model', 'Modello')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
+
                             {showEyewearFilters && productOptions?.frameShapes && productOptions.frameShapes.length > 0 && (
                                 <div>
-                                    <label className="mb-1 block text-xs font-semibold text-gray-700">Frame shape</label>
+                                    <label className="mb-1 block text-xs font-semibold text-gray-700">{t('shop.filters.shape', 'Forma')}</label>
                                     <select
                                         value={frameShape}
                                         onChange={(e) => setFrameShape(e.target.value)}
                                         className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
                                     >
-                                        <option value="">All shapes</option>
+                                        <option value="">{t('shop.filters.allShapes', 'Tutte le forme')}</option>
                                         {productOptions.frameShapes.map((shape) => (
                                             <option key={shape} value={shape}>
                                                 {shape}
@@ -903,13 +1039,13 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
 
                             {showEyewearFilters && productOptions?.frameMaterials && productOptions.frameMaterials.length > 0 && (
                                 <div>
-                                    <label className="mb-1 block text-xs font-semibold text-gray-700">Frame material</label>
+                                    <label className="mb-1 block text-xs font-semibold text-gray-700">{t('shop.filters.material', 'Materiale')}</label>
                                     <select
                                         value={frameMaterial}
                                         onChange={(e) => setFrameMaterial(e.target.value)}
                                         className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
                                     >
-                                        <option value="">All materials</option>
+                                        <option value="">{t('shop.filters.allMaterials', 'Tutti i materiali')}</option>
                                         {productOptions.frameMaterials.map((mat) => (
                                             <option key={mat} value={mat}>
                                                 {mat}
@@ -918,6 +1054,52 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     </select>
                                 </div>
                             )}
+
+                            {showEyewearFilters && (
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.caliber', 'Calibro')}</label>
+                                        <input
+                                            type="text"
+                                            value={caliber}
+                                            onChange={(e) => setCaliber(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.bridge', 'Ponte')}</label>
+                                        <input
+                                            type="text"
+                                            value={bridge}
+                                            onChange={(e) => setBridge(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.temples', 'Aste')}</label>
+                                        <input
+                                            type="text"
+                                            value={temples}
+                                            onChange={(e) => setTemples(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="text-xs font-semibold text-gray-700 mb-1 block">{t('shop.filters.features', 'Caratteristiche')}</label>
+                                <input
+                                    type="text"
+                                    value={features}
+                                    onChange={(e) => setFeatures(e.target.value)}
+                                    placeholder={t('shop.filters.features', 'Caratteristiche')}
+                                    className="w-full text-xs border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 hover:border-gray-400"
+                                />
+                            </div>
 
                             {availableLensTypes.length > 0 && (
                                 <div>
@@ -990,7 +1172,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             onClick={() => setIsMobileFilterOpen(false)}
                             className="w-full bg-blue-500 text-white font-medium py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm"
                         >
-                            Apply Filters
+                            {t('shop.filters.applyFilters', 'Applica filtri')}
                         </button>
                     </div>
                 </div>

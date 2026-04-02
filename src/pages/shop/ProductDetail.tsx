@@ -3695,7 +3695,7 @@ const ProductDetail = () => {
                                                                         url.searchParams.set('color', colorValue)
                                                                         window.history.pushState({}, '', url)
                                                                     }}
-                                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all duration-200 flex-shrink-0 ${isSelected
+                                                                    className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-200 flex-shrink-0 ${isSelected
                                                                         ? 'border-blue-950 bg-blue-50 text-blue-950 shadow-sm ring-1 ring-blue-950/20'
                                                                         : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
                                                                         }`}
@@ -3703,10 +3703,10 @@ const ProductDetail = () => {
                                                                 >
                                                                     {/* Color Swatch */}
                                                                     <span
-                                                                        className="w-3.5 h-3.5 rounded-full border border-gray-200 shadow-inner"
+                                                                        className="w-5 h-5 rounded-full border border-gray-200 shadow-inner"
                                                                         style={{ backgroundColor: hexCode }}
                                                                     />
-                                                                    <span className="text-xs font-semibold capitalize whitespace-nowrap">
+                                                                    <span className="text-sm font-semibold capitalize whitespace-nowrap">
                                                                         {displayName}
                                                                     </span>
                                                                 </button>
@@ -3732,7 +3732,7 @@ const ProductDetail = () => {
                                                                 handleCaliberChange(mmValue);
                                                             }
                                                         }}
-                                                        className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                                                        className="w-full px-4 py-3.5 pr-10 border-2 border-gray-300 rounded-xl bg-white text-base text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                                                     >
                                                         <option value="" disabled>
                                                             Select frame size...
@@ -5395,7 +5395,7 @@ const ProductDetail = () => {
                                                             handleCaliberChange(mmValue);
                                                         }
                                                     }}
-                                                    className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                                                        className="w-full px-4 py-3.5 pr-10 border-2 border-gray-300 rounded-xl bg-white text-base text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                                                 >
                                                     <option value="" disabled>
                                                         Select frame size...

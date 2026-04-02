@@ -121,6 +121,12 @@ const CategoryPage: React.FC = () => {
     const [baseCurve, setBaseCurve] = useState<string>('')
     const [diameter, setDiameter] = useState<string>('')
     const [replacementPeriod, setReplacementPeriod] = useState<string>('')
+    const [categoryText, setCategoryText] = useState<string>('')
+    const [model, setModel] = useState<string>('')
+    const [features, setFeatures] = useState<string>('')
+    const [caliber, setCaliber] = useState<string>('')
+    const [bridge, setBridge] = useState<string>('')
+    const [temples, setTemples] = useState<string>('')
 
     const handleCategoryNavigationFilterChange = useCallback(
         (filters: {
@@ -214,6 +220,30 @@ const CategoryPage: React.FC = () => {
             setReplacementPeriod(filters.replacementPeriod ?? '')
             setCurrentPage(1)
         }
+        if (filters.categoryText !== undefined) {
+            setCategoryText(filters.categoryText ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.model !== undefined) {
+            setModel(filters.model ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.features !== undefined) {
+            setFeatures(filters.features ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.caliber !== undefined) {
+            setCaliber(filters.caliber ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.bridge !== undefined) {
+            setBridge(filters.bridge ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.temples !== undefined) {
+            setTemples(filters.temples ?? '')
+            setCurrentPage(1)
+        }
     }, [])
 
     const handleClearAllComprehensiveFilters = useCallback(() => {
@@ -233,6 +263,12 @@ const CategoryPage: React.FC = () => {
         setBaseCurve('')
         setDiameter('')
         setReplacementPeriod('')
+        setCategoryText('')
+        setModel('')
+        setFeatures('')
+        setCaliber('')
+        setBridge('')
+        setTemples('')
         setCurrentPage(1)
     }, [])
 
@@ -436,6 +472,8 @@ const CategoryPage: React.FC = () => {
                 } else if (sortBy === 'name') {
                     filters.sortBy = 'name'
                     filters.sortOrder = 'asc'
+                } else if (sortBy === 'relevance') {
+                    // Let backend default relevance ordering drive results
                 }
 
                 // Log final filters before API call
@@ -879,6 +917,59 @@ const CategoryPage: React.FC = () => {
                             return v.toLowerCase().includes(rp)
                         })
                     }
+                    if (categoryText.trim() && filteredProducts.length > 0) {
+                        const q = categoryText.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const slug = String((p.category as any)?.slug ?? '').toLowerCase()
+                            const name = String((p.category as any)?.name ?? '').toLowerCase()
+                            return slug.includes(q) || name.includes(q)
+                        })
+                    }
+                    if (model.trim() && filteredProducts.length > 0) {
+                        const q = model.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            const modelValue = String(x.model ?? x.model_name ?? x.sku ?? '').toLowerCase()
+                            return modelValue.includes(q)
+                        })
+                    }
+                    if (features.trim() && filteredProducts.length > 0) {
+                        const q = features.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            const featureText = Array.isArray(x.features)
+                                ? x.features.join(' ')
+                                : String(x.features ?? x.tags ?? '')
+                            return featureText.toLowerCase().includes(q)
+                        })
+                    }
+                    if (caliber.trim() && filteredProducts.length > 0) {
+                        const q = caliber.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
+                            const value = String(x.caliber ?? x.mm ?? x.size ?? firstFrame?.size_label ?? '').toLowerCase()
+                            return value.includes(q)
+                        })
+                    }
+                    if (bridge.trim() && filteredProducts.length > 0) {
+                        const q = bridge.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
+                            const value = String(x.bridge ?? firstFrame?.bridge_width ?? '').toLowerCase()
+                            return value.includes(q)
+                        })
+                    }
+                    if (temples.trim() && filteredProducts.length > 0) {
+                        const q = temples.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => {
+                            const x = p as any
+                            const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
+                            const value = String(x.temples ?? firstFrame?.temple_length ?? '').toLowerCase()
+                            return value.includes(q)
+                        })
+                    }
                     
                     if (import.meta.env.DEV) {
                         console.log('🔍 CategoryPage - Final filtered products:', filteredProducts.length)
@@ -939,6 +1030,12 @@ const CategoryPage: React.FC = () => {
         baseCurve,
         diameter,
         replacementPeriod,
+        categoryText,
+        model,
+        features,
+        caliber,
+        bridge,
+        temples,
     ])
 
     if (!isBootstrappingCategory && !categoryInfo.category && categorySlug) {
