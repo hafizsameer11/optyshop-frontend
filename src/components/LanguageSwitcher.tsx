@@ -25,10 +25,14 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
   const { i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
+  const activeLangCode = (i18n.resolvedLanguage || i18n.language || 'it').split('-')[0]
+  const currentLanguage =
+    languages.find((lang) => lang.code === activeLangCode) ||
+    languages.find((l) => l.code === 'it') ||
+    languages[0]
 
-  const changeLanguage = (langCode: string) => {
-    i18n.changeLanguage(langCode)
+  const changeLanguage = (code: string) => {
+    i18n.changeLanguage(code)
     setIsOpen(false)
   }
 
@@ -63,7 +67,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
                   key={lang.code}
                   onClick={() => changeLanguage(lang.code)}
                   className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                    i18n.language === lang.code ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
+                    activeLangCode === lang.code ? 'bg-purple-50 text-purple-600' : 'text-gray-700'
                   }`}
                 >
                   <span className="text-xl">{lang.flag}</span>
@@ -136,20 +140,20 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
                   key={lang.code}
                   onClick={() => changeLanguage(lang.code)}
                   className={`group relative w-full flex items-center gap-3 px-4 py-3 text-left transition-all duration-200 mx-1.5 rounded-xl ${
-                    i18n.language === lang.code 
+                    activeLangCode === lang.code 
                       ? 'bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 shadow-md' 
                       : 'text-slate-700 hover:bg-gradient-to-r hover:from-cyan-50 hover:to-blue-50 hover:shadow-sm hover:scale-[1.02]'
                   }`}
                 >
                   {/* Flag with animation */}
-                  <span className={`text-2xl transition-transform duration-200 ${i18n.language === lang.code ? 'scale-110' : 'group-hover:scale-110'}`}>
+                  <span className={`text-2xl transition-transform duration-200 ${activeLangCode === lang.code ? 'scale-110' : 'group-hover:scale-110'}`}>
                     {lang.flag}
                   </span>
                   
                   {/* Language Info */}
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm font-semibold transition-colors ${
-                      i18n.language === lang.code ? 'text-cyan-700' : 'text-gray-800 group-hover:text-cyan-600'
+                      activeLangCode === lang.code ? 'text-cyan-700' : 'text-gray-800 group-hover:text-cyan-600'
                     }`}>
                       {lang.name}
                     </div>
@@ -161,7 +165,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
                   </div>
                   
                   {/* Checkmark for active language */}
-                  {i18n.language === lang.code && (
+                  {activeLangCode === lang.code && (
                     <svg 
                       className="w-5 h-5 text-cyan-600 transition-transform duration-200" 
                       fill="currentColor" 
@@ -179,7 +183,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ variant = 'navbar' 
                   )}
                   
                   {/* Hover indicator */}
-                  {i18n.language !== lang.code && (
+                  {activeLangCode !== lang.code && (
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-cyan-400 to-blue-500 rounded-r-full transition-all duration-200 group-hover:h-8" />
                   )}
                 </button>

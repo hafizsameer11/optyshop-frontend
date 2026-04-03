@@ -77,6 +77,14 @@
       "visitorsTitle": "More visitors in the store",
       "caption": "*based on an A/B test on Fielmann's e-commerce site, based on 5 million page views."
     },
+    "flashOffers": {
+      "eyebrow": "Limited time",
+      "title": "Flash offers",
+      "titleHighlight": "on these products",
+      "badge": "Flash sale",
+      "endsOn": "Ends on {{date}}",
+      "shopNow": "Shop now"
+    },
     "testimonials": {
       "titlePart1": "What do they think of",
       "titlePart2": "Virtual Glasses Try‑On?",
@@ -99,7 +107,8 @@
     },
     "trustedBrands": {
       "titlePart1": "They already",
-      "titlePart2": "trust us"
+      "titlePart2": "trust us",
+      "showcaseSubtitle": "Leading eyewear brands and partners in the OptiShop ecosystem — quality you can shop with confidence."
     },
     "purchasingJourney": {
       "titlePart1": "An engaging experience to",
@@ -128,6 +137,21 @@
     "compatibility": {
       "ecommercePlatforms": "Supported by all major e-commerce platforms",
       "worksOnAnyDevice": "Works on any system and device"
+    },
+    "shoppingInfo": {
+      "title": "Shop with confidence",
+      "secureTitle": "Secure checkout",
+      "secureDesc": "Your payment details are protected with industry-standard encryption.",
+      "deliveryTitle": "Delivery & orders",
+      "deliveryDesc": "We process orders promptly and keep you informed from checkout to delivery.",
+      "helpTitle": "Need help?",
+      "helpDesc": "Browse answers to common questions or speak with our team.",
+      "helpLink": "Help center",
+      "contactLink": "Contact us"
+    },
+    "contactTeaser": {
+      "title": "Contact us",
+      "subtitle": "Questions about an order or our products? Send a message and we will get back to you."
     }
   },
   "shop": {
@@ -160,6 +184,17 @@
     "sortNameAZ": "Name: A to Z",
     "sortNameZA": "Name: Z to A",
     "clearFilters": "Clear Filters",
+    "shopNow": "Shop now",
+    "viewOffer": "View offer",
+    "flashFreeShipping": "Free shipping",
+    "flashOfferNotFound": "This flash offer could not be found.",
+    "backToFlashOffers": "Back to flash offers",
+    "flashOfferEndedOn": "Ended on {{date}}",
+    "flashOfferExpiredBanner": "This promotion has ended. Product prices shown are regular catalog prices unless otherwise marked.",
+    "flashPriceDisclaimer": "Flash prices shown here are for reference only; your cart may show standard prices until checkout supports flash offers.",
+    "flashOfferProducts": "Products in this offer",
+    "noProductsInFlashOffer": "No active products in this offer right now.",
+    "flashPriceLabel": "Flash",
     "results": "results",
     "showing": "Showing",
     "unit": "Unit",

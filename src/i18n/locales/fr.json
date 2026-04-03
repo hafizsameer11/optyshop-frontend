@@ -77,6 +77,14 @@
       "visitorsTitle": "Plus de visiteurs en magasin",
       "caption": "*basé sur un test A/B sur le site e-commerce de Fielmann, basé sur 5 millions de pages vues."
     },
+    "flashOffers": {
+      "eyebrow": "Temps limité",
+      "title": "Offres flash",
+      "titleHighlight": "sur ces produits",
+      "badge": "Vente flash",
+      "endsOn": "Se termine le {{date}}",
+      "shopNow": "Acheter"
+    },
     "testimonials": {
       "titlePart1": "Que pensent-ils de",
       "titlePart2": "l'Essai Virtuel de Lunettes?",
@@ -99,7 +107,8 @@
     },
     "trustedBrands": {
       "titlePart1": "Ils nous",
-      "titlePart2": "font déjà confiance"
+      "titlePart2": "font déjà confiance",
+      "showcaseSubtitle": "Marques et partenaires de référence dans l'écosystème OptiShop — une qualité sur laquelle vous pouvez compter."
     },
     "purchasingJourney": {
       "titlePart1": "Une expérience engageante pour",
@@ -128,6 +137,21 @@
     "compatibility": {
       "ecommercePlatforms": "Pris en charge par toutes les principales plateformes e-commerce",
       "worksOnAnyDevice": "Fonctionne sur n'importe quel système et appareil"
+    },
+    "shoppingInfo": {
+      "title": "Achetez en toute confiance",
+      "secureTitle": "Paiement sécurisé",
+      "secureDesc": "Vos informations de paiement sont protégées par un chiffrement conforme aux standards du secteur.",
+      "deliveryTitle": "Livraison & commandes",
+      "deliveryDesc": "Nous traitons les commandes rapidement et vous tenons informé jusqu’à la livraison.",
+      "helpTitle": "Besoin d’aide ?",
+      "helpDesc": "Consultez notre centre d’aide ou contactez notre équipe.",
+      "helpLink": "Centre d’aide",
+      "contactLink": "Nous contacter"
+    },
+    "contactTeaser": {
+      "title": "Contactez-nous",
+      "subtitle": "Une question sur une commande ou nos produits ? Envoyez-nous un message, nous vous répondrons rapidement."
     }
   },
   "dashboard": {

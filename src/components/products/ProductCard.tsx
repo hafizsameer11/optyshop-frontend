@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
+import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { getProxiedImageUrl } from '../../services/imageProxyService'
 import type { Product } from '../../services/productsService'
 
@@ -193,7 +194,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             const cartProduct = {
                 id: product?.id || 0,
                 name: product?.name || '',
-                brand: product?.brand || '',
+                brand: getShopProductBrandLabel(product) || '',
                 category: product?.category?.slug || 'contact-lenses',
                 price: finalPrice,
                 image: displayImage,
@@ -226,6 +227,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const colorOptions = normalizeCardColors(product)
     const swatches = colorOptions.slice(0, MAX_SWATCHES)
     const moreColors = colorOptions.length - swatches.length
+    const brandLabel = getShopProductBrandLabel(product)
 
     return (
         <article
@@ -285,9 +287,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             </div>
 
             <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                {product.brand ? (
+                {brandLabel ? (
                     <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        {product.brand}
+                        {brandLabel}
                     </p>
                 ) : null}
                 <Link

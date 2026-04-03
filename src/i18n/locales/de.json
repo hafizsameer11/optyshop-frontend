@@ -77,6 +77,14 @@
       "visitorsTitle": "Mehr Besucher im Geschäft",
       "caption": "*basierend auf einem A/B-Test auf der E-Commerce-Website von Fielmann, basierend auf 5 Millionen Seitenaufrufen."
     },
+    "flashOffers": {
+      "eyebrow": "Nur für kurze Zeit",
+      "title": "Blitzangebote",
+      "titleHighlight": "auf diese Produkte",
+      "badge": "Blitzangebot",
+      "endsOn": "Endet am {{date}}",
+      "shopNow": "Jetzt shoppen"
+    },
     "testimonials": {
       "titlePart1": "Was denken sie über",
       "titlePart2": "die virtuelle Brillenanprobe?",
@@ -99,7 +107,8 @@
     },
     "trustedBrands": {
       "titlePart1": "Sie vertrauen uns",
-      "titlePart2": "bereits"
+      "titlePart2": "bereits",
+      "showcaseSubtitle": "Führende Brillenmarken und Partner im OptiShop-Ökosystem — Qualität, der Sie beim Einkaufen vertrauen können."
     },
     "purchasingJourney": {
       "titlePart1": "Ein ansprechendes Erlebnis zur",
@@ -128,6 +137,21 @@
     "compatibility": {
       "ecommercePlatforms": "Unterstützt von allen großen E-Commerce-Plattformen",
       "worksOnAnyDevice": "Funktioniert auf jedem System und Gerät"
+    },
+    "shoppingInfo": {
+      "title": "Sicher einkaufen",
+      "secureTitle": "Sicherer Checkout",
+      "secureDesc": "Ihre Zahlungsdaten sind mit branchenüblicher Verschlüsselung geschützt.",
+      "deliveryTitle": "Lieferung & Bestellungen",
+      "deliveryDesc": "Wir bearbeiten Bestellungen zügig und halten Sie vom Checkout bis zur Lieferung auf dem Laufenden.",
+      "helpTitle": "Hilfe benötigt?",
+      "helpDesc": "Antworten auf häufige Fragen oder Kontakt mit unserem Team.",
+      "helpLink": "Hilfe-Center",
+      "contactLink": "Kontakt"
+    },
+    "contactTeaser": {
+      "title": "Kontakt",
+      "subtitle": "Fragen zu einer Bestellung oder unseren Produkten? Schreiben Sie uns – wir melden uns bei Ihnen."
     }
   },
   "dashboard": {

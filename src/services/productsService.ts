@@ -171,13 +171,29 @@ export interface EyeHygieneVariant {
   updated_at?: string;
 }
 
+/** Flash promo metadata on single-product responses (may include compare_at / original_price on the product). */
+export interface ProductFlashOfferSummary {
+  id: number;
+  title?: string;
+  discount_type?: string;
+  discount_value?: string | number | null;
+  starts_at: string;
+  ends_at: string;
+  is_active?: boolean;
+}
+
 export interface Product {
   id: number;
   name: string;
   slug: string;
   description?: string;
   price: number;
+  /** List / MSRP when API sends discounted `price` (e.g. flash promos). */
+  compare_at_price?: number | string | null;
+  /** Alternative list price from backend (often mirrors compare_at during flash). */
+  original_price?: number | string | null;
   sale_price?: number;
+  flash_offer?: ProductFlashOfferSummary | null;
   sku?: string;
   in_stock?: boolean;
   stock_quantity?: number;

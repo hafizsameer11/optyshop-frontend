@@ -11,7 +11,13 @@ const initialForm = {
     message: ''
 }
 
-const ContactFormSection: React.FC = () => {
+interface ContactFormSectionProps {
+    /** `compact`: single-column form only (e.g. home page). `default`: full layout with locations column. */
+    variant?: 'default' | 'compact'
+}
+
+const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'default' }) => {
+    const isCompact = variant === 'compact'
     const { t } = useTranslation()
     const formPanelRef = useRef<HTMLDivElement>(null)
     const [formData, setFormData] = useState({
@@ -114,14 +120,22 @@ const ContactFormSection: React.FC = () => {
     }
 
     return (
-        <section className="bg-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
-            <div className="w-[90%] mx-auto max-w-7xl">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+        <section
+            className={`bg-gray-50 px-4 sm:px-6 ${isCompact ? 'py-10 md:py-14' : 'py-12 md:py-16 lg:py-20'}`}
+        >
+            <div className={`w-[90%] mx-auto ${isCompact ? 'max-w-3xl' : 'max-w-7xl'}`}>
+                <div className={isCompact ? '' : 'grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12'}>
                     {/* Left Section - Contact Form */}
-                    <div ref={formPanelRef} className="bg-white rounded-2xl p-6 md:p-8 lg:h-[880px] lg:p-10 shadow-lg">
+                    <div
+                        ref={formPanelRef}
+                        className={`bg-white rounded-2xl p-6 md:p-8 shadow-lg ${isCompact ? '' : 'lg:h-[880px] lg:p-10'}`}
+                    >
                         <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8">
-                            {t('contact.sendRequest') || 'Send us your request'}
+                            {isCompact ? t('home.contactTeaser.title') : t('contact.sendRequest') || 'Send us your request'}
                         </h2>
+                        {isCompact && (
+                            <p className="text-sm text-gray-600 mb-6 -mt-2">{t('home.contactTeaser.subtitle')}</p>
+                        )}
 
                         {submitSuccess && (
                             <div
@@ -303,6 +317,7 @@ const ContactFormSection: React.FC = () => {
                     </div>
 
                     {/* Right Section - Locations and Contact Details */}
+                    {!isCompact && (
                     <div className="bg-white rounded-2xl p-6 md:p-8 lg:p-10 shadow-lg">
                         <h2 className="text-2xl md:text-3xl font-bold text-blue-950 mb-6 md:mb-8">
                             {t('contact.locations') || 'Locations'}
@@ -425,6 +440,7 @@ const ContactFormSection: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </section>

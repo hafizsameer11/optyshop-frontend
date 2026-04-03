@@ -41,6 +41,7 @@ const JobApplication = lazy(() => import('./pages/whoWeAre/JobApplication'))
 const Products = lazy(() => import('./pages/shop/Products'))
 const ProductDetail = lazy(() => import('./pages/shop/ProductDetail'))
 const FlashOffers = lazy(() => import('./pages/shop/FlashOffers'))
+const FlashOfferLanding = lazy(() => import('./pages/shop/FlashOfferLanding'))
 const CategoryPage = lazy(() => import('./pages/shop/CategoryPage'))
 const Cart = lazy(() => import('./pages/shop/Cart'))
 const Checkout = lazy(() => import('./pages/shop/Checkout'))
@@ -116,6 +117,7 @@ function App() {
                         <Route path="/job-application/:jobId" element={<JobApplication />} />
                         <Route path="/shop" element={<Products />} />
                         <Route path="/shop/flash-offers" element={<FlashOffers />} />
+                        <Route path="/flash-offers/:id" element={<FlashOfferLanding />} />
                         <Route path="/shop/sunglasses" element={<Products />} />
                         <Route path="/shop/eyeglasses" element={<Products />} />
                         <Route path="/shop/contact-lenses" element={<Products />} />

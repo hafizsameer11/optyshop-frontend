@@ -77,6 +77,14 @@
       "visitorsTitle": "Più visitatori nel negozio",
       "caption": "*basato su un test A/B sul sito e-commerce di Fielmann, basato su 5 milioni di visualizzazioni di pagina."
     },
+    "flashOffers": {
+      "eyebrow": "Tempo limitato",
+      "title": "Offerte lampo",
+      "titleHighlight": "su questi prodotti",
+      "badge": "Offerta lampo",
+      "endsOn": "Termina il {{date}}",
+      "shopNow": "Acquista ora"
+    },
     "testimonials": {
       "titlePart1": "Cosa ne pensano di",
       "titlePart2": "la Prova Virtuale degli Occhiali?",
@@ -99,7 +107,8 @@
     },
     "trustedBrands": {
       "titlePart1": "Si fidano già",
-      "titlePart2": "di noi"
+      "titlePart2": "di noi",
+      "showcaseSubtitle": "Brand e partner dell'ottica nell'ecosistema OptiShop — qualità su cui puoi contare quando acquisti."
     },
     "purchasingJourney": {
       "titlePart1": "Un'esperienza coinvolgente per",
@@ -128,6 +137,21 @@
     "compatibility": {
       "ecommercePlatforms": "Supportato da tutte le principali piattaforme e-commerce",
       "worksOnAnyDevice": "Funziona su qualsiasi sistema e dispositivo"
+    },
+    "shoppingInfo": {
+      "title": "Acquista in sicurezza",
+      "secureTitle": "Pagamento sicuro",
+      "secureDesc": "I tuoi dati di pagamento sono protetti con crittografia di livello industriale.",
+      "deliveryTitle": "Consegne e ordini",
+      "deliveryDesc": "Gestiamo gli ordini rapidamente e ti teniamo informato dall’acquisto alla consegna.",
+      "helpTitle": "Serve aiuto?",
+      "helpDesc": "Consulta le domande frequenti o contatta il nostro team.",
+      "helpLink": "Centro assistenza",
+      "contactLink": "Contattaci"
+    },
+    "contactTeaser": {
+      "title": "Contattaci",
+      "subtitle": "Domande su un ordine o sui nostri prodotti? Scrivici e ti risponderemo al più presto."
     }
   },
   "dashboard": {
@@ -203,6 +227,17 @@
     "sortNameAZ": "Nome: A a Z",
     "sortNameZA": "Nome: Z a A",
     "clearFilters": "Cancella Filtri",
+    "shopNow": "Acquista ora",
+    "viewOffer": "Vedi offerta",
+    "flashFreeShipping": "Spedizione gratuita",
+    "flashOfferNotFound": "Questa offerta lampo non è stata trovata.",
+    "backToFlashOffers": "Torna alle offerte lampo",
+    "flashOfferEndedOn": "Terminata il {{date}}",
+    "flashOfferExpiredBanner": "Questa promozione è terminata. I prezzi mostrati sono quelli di listino salvo diversa indicazione.",
+    "flashPriceDisclaimer": "I prezzi lampo sono indicativi; il carrello può mostrare i prezzi standard finché il checkout non applicherà le offerte lampo.",
+    "flashOfferProducts": "Prodotti in questa offerta",
+    "noProductsInFlashOffer": "Nessun prodotto attivo in questa offerta al momento.",
+    "flashPriceLabel": "Lampo",
     "results": "risultati",
     "showing": "Mostrando",
     "of": "di",

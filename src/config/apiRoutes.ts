@@ -420,6 +420,8 @@ export const API_ROUTES = {
   FLASH_OFFERS: {
     LIST: (activeOnly?: boolean) => `/flash-offers${activeOnly ? '?activeOnly=true' : ''}`, // PUBLIC
     ACTIVE: `/flash-offers/active`, // PUBLIC - Get currently active flash offer with countdown
+    /** Offer + listing-shaped products (ordered like product_ids). Public. */
+    BY_ID: (id: number | string) => `/flash-offers/${id}`,
   },
 
   // ============================================

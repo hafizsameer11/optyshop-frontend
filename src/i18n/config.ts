@@ -22,15 +22,27 @@ i18n
       pt: { translation: ptTranslations }
     },
     fallbackLng: 'it',
+    load: 'languageOnly',
     debug: false,
     interpolation: {
       escapeValue: false
     },
+    // First visit: Italian (fallback). Returning users keep their choice from localStorage.
+    // Do not use browser navigator here or most visitors would get English.
     detection: {
-      order: ['localStorage', 'navigator'],
-      caches: ['localStorage']
+      order: ['localStorage'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'i18nextLng'
     }
   })
+
+if (typeof document !== 'undefined') {
+  const setHtmlLang = (lng: string) => {
+    document.documentElement.setAttribute('lang', lng.split('-')[0])
+  }
+  setHtmlLang(i18n.language || 'it')
+  i18n.on('languageChanged', setHtmlLang)
+}
 
 export default i18n
 

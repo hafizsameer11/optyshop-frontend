@@ -47,6 +47,14 @@
       "visitorsTitle": "Más visitantes en la tienda",
       "caption": "*basado en una prueba A/B en el sitio de comercio electrónico de Fielmann, basado en 5 millones de visualizaciones de página."
     },
+    "flashOffers": {
+      "eyebrow": "Tiempo limitado",
+      "title": "Ofertas flash",
+      "titleHighlight": "en estos productos",
+      "badge": "Oferta flash",
+      "endsOn": "Finaliza el {{date}}",
+      "shopNow": "Comprar ahora"
+    },
     "testimonials": {
       "titlePart1": "¿Qué piensan de",
       "titlePart2": "la Prueba Virtual de Gafas?",
@@ -69,7 +77,8 @@
     },
     "trustedBrands": {
       "titlePart1": "Ya confían",
-      "titlePart2": "en nosotros"
+      "titlePart2": "en nosotros",
+      "showcaseSubtitle": "Marcas y socios líderes en el ecosistema OptiShop — calidad en la que puedes confiar al comprar."
     },
     "purchasingJourney": {
       "titlePart1": "Una experiencia atractiva para",
@@ -98,6 +107,21 @@
     "compatibility": {
       "ecommercePlatforms": "Compatible con todas las principales plataformas de comercio electrónico",
       "worksOnAnyDevice": "Funciona en cualquier sistema y dispositivo"
+    },
+    "shoppingInfo": {
+      "title": "Compra con confianza",
+      "secureTitle": "Pago seguro",
+      "secureDesc": "Tus datos de pago están protegidos con cifrado estándar del sector.",
+      "deliveryTitle": "Envíos y pedidos",
+      "deliveryDesc": "Gestionamos los pedidos con rapidez y te mantenemos informado hasta la entrega.",
+      "helpTitle": "¿Necesitas ayuda?",
+      "helpDesc": "Consulta el centro de ayuda o habla con nuestro equipo.",
+      "helpLink": "Centro de ayuda",
+      "contactLink": "Contacto"
+    },
+    "contactTeaser": {
+      "title": "Contáctanos",
+      "subtitle": "¿Dudas sobre un pedido o nuestros productos? Escríbenos y te responderemos pronto."
     }
   },
   "dashboard": {

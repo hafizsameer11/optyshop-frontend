@@ -16,6 +16,7 @@ import {
 } from '../../services/productsService'
 import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
+import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import EyeAxisDiagram from '../../components/shop/EyeAxisDiagram'
@@ -33,6 +34,11 @@ import {
     type ContactLensCheckoutRequest
 } from '../../services/contactLensFormsService'
 import { getGiftsByProduct, type ProductGift } from '../../services/productGiftsService'
+import {
+    flashDiscountBadgeLabel,
+    isFlashOfferCurrentlyActive,
+    normalizeFlashDiscountType
+} from '../../utils/flashOfferDisplay'
 import {
     getEyeHygieneOptions,
     getSizeVolumeVariants,
@@ -101,6 +107,12 @@ function collectPerEyeLensOptions(
     if (acc.size) return sortOptometricStringList(Array.from(acc))
     if (aggregatedFallback.length) return sortOptometricStringList(aggregatedFallback)
     return []
+}
+
+function parseOptionalProductMoney(value: unknown): number | null {
+    if (value == null || value === '') return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
 }
 
 const ProductDetail = () => {
@@ -571,14 +583,46 @@ const ProductDetail = () => {
         }
 
         const isValidSale = !!(salePrice && salePrice < basePrice)
-        const finalPrice = isValidSale ? salePrice : basePrice
+        let displayPrice = isValidSale ? (salePrice as number) : basePrice
+        let originalPrice = isValidSale ? basePrice : null
+        let hasValidSale = isValidSale
+
+        // API may return discounted `price` with MSRP in compare_at_price / original_price (e.g. flash promos).
+        if (!hasValidSale && product) {
+            const p = product as Product
+            let listCandidate: number | null = null
+            if (!selectedEyeHygieneVariant && !selectedSizeVolumeVariant) {
+                if (selectedColorVariant) {
+                    listCandidate = parseOptionalProductMoney((selectedColorVariant as { compare_at_price?: unknown }).compare_at_price)
+                }
+                if (listCandidate == null) {
+                    const c = parseOptionalProductMoney(p.compare_at_price)
+                    const o = parseOptionalProductMoney(p.original_price)
+                    if (c != null && o != null) listCandidate = Math.max(c, o)
+                    else listCandidate = c ?? o
+                }
+            }
+            if (listCandidate != null && listCandidate > displayPrice + 1e-9) {
+                originalPrice = listCandidate
+                hasValidSale = true
+            }
+        }
 
         return {
-            displayPrice: finalPrice,
-            originalPrice: isValidSale ? basePrice : null,
-            hasValidSale: isValidSale
+            displayPrice,
+            originalPrice,
+            hasValidSale
         }
     }, [product, selectedColorVariant, selectedSizeVolumeVariant, selectedEyeHygieneVariant, selectedCaliber])
+
+    const pdpFlashOffer = product?.flash_offer
+    const pdpFlashActive = isFlashOfferCurrentlyActive(pdpFlashOffer ?? null)
+    const pdpFlashBadgeLabel =
+        pdpFlashOffer && pdpFlashActive
+            ? flashDiscountBadgeLabel(pdpFlashOffer, t('shop.flashFreeShipping', 'Free shipping'))
+            : null
+
+    const productBrandEyebrow = getShopProductBrandLabel(product)
 
     // Helper variables for backward compatibility with legacy JSX sections
     const regularPriceNum = originalPrice || displayPrice
@@ -3129,7 +3173,7 @@ const ProductDetail = () => {
             const cartProduct = {
                 id: product.id || 0,
                 name: product.name || '',
-                brand: product.brand || '',
+                brand: getShopProductBrandLabel(product) || '',
                 category: product.category?.slug || 'eyeglasses',
                 price: displayPrice || 0,
                 image: getVariantSpecificImageUrl(product, selectedImageIndex), // Use variant-specific image (supports caliber images)
@@ -3318,7 +3362,7 @@ const ProductDetail = () => {
                     const cartProduct = {
                         id: product.id || 0,
                         name: product.name || '',
-                        brand: product.brand || '',
+                        brand: getShopProductBrandLabel(product) || '',
                         category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
                         price: finalPrice,
                         image: getColorSpecificImageUrl(product, selectedImageIndex),
@@ -3391,7 +3435,7 @@ const ProductDetail = () => {
                 const cartProduct = {
                     id: product.id || 0,
                     name: product.name || '',
-                    brand: product.brand || '',
+                    brand: getShopProductBrandLabel(product) || '',
                     category: product.category?.slug || 'contact-lenses',
                     price: calculateContactLensTotal,
                     image: getColorSpecificImageUrl(product, selectedImageIndex),
@@ -5006,9 +5050,11 @@ const ProductDetail = () => {
                             {/* Product Info (Right Column) */}
                             <div>
                                 <div className="mb-6">
-                                    <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2 px-1">
-                                        {product.brand || product.category?.name || 'Brand'}
-                                    </p>
+                                    {productBrandEyebrow ? (
+                                        <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-2 px-1">
+                                            {productBrandEyebrow}
+                                        </p>
+                                    ) : null}
                                     <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 leading-tight">
                                         {product.name}
                                     </h1>
@@ -5032,25 +5078,49 @@ const ProductDetail = () => {
 
                                     {/* Price */}
                                     <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
-                                        {originalPrice ? (
-                                            <div className="flex items-center gap-6">
+                                        <div className="flex flex-wrap items-center gap-4">
+                                            {originalPrice ? (
+                                                <div className="flex items-center gap-6">
+                                                    <span className="text-5xl font-extrabold text-blue-950">
+                                                        €{(displayPrice || 0).toFixed(2)}
+                                                    </span>
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-xl text-gray-400 line-through font-medium">
+                                                            €{(originalPrice || 0).toFixed(2)}
+                                                        </span>
+                                                        {pdpFlashBadgeLabel &&
+                                                        pdpFlashActive &&
+                                                        normalizeFlashDiscountType(pdpFlashOffer?.discount_type) !==
+                                                            'free_shipping' ? (
+                                                            <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px] w-fit">
+                                                                {pdpFlashBadgeLabel}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px] w-fit">
+                                                                SAVE{' '}
+                                                                {Math.round(
+                                                                    ((originalPrice - (displayPrice || 0)) / originalPrice) * 100
+                                                                )}
+                                                                %
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
                                                 <span className="text-5xl font-extrabold text-blue-950">
                                                     €{(displayPrice || 0).toFixed(2)}
                                                 </span>
-                                                <div className="flex flex-col">
-                                                    <span className="text-xl text-gray-400 line-through font-medium">
-                                                        €{(originalPrice || 0).toFixed(2)}
+                                            )}
+                                            {pdpFlashBadgeLabel &&
+                                                pdpFlashActive &&
+                                                (normalizeFlashDiscountType(pdpFlashOffer?.discount_type) ===
+                                                    'free_shipping' ||
+                                                    !originalPrice) && (
+                                                    <span className="shrink-0 rounded-md bg-red-600 px-2.5 py-1 text-sm font-bold text-white">
+                                                        {pdpFlashBadgeLabel}
                                                     </span>
-                                                    <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded ml-[-4px]">
-                                                        SAVE {Math.round(((originalPrice - (displayPrice || 0)) / originalPrice) * 100)}%
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <span className="text-5xl font-extrabold text-blue-950">
-                                                €{(displayPrice || 0).toFixed(2)}
-                                            </span>
-                                        )}
+                                                )}
+                                        </div>
                                     </div>
 
                                     {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
@@ -5937,7 +6007,7 @@ const ProductDetail = () => {
                                                 const cartProduct: CartProduct = {
                                                     id: product?.id || 0,
                                                     name: variant.name,
-                                                    brand: product?.brand || '',
+                                                    brand: getShopProductBrandLabel(product) || '',
                                                     category: 'eye-hygiene',
                                                     price: variant.price,
                                                     image: variant.image_url || getProductImageUrl(product),
@@ -5997,6 +6067,7 @@ const ProductDetail = () => {
                                     relatedProduct.slug?.toLowerCase().includes('contact') ||
                                     relatedProduct.name?.toLowerCase().includes('contact') ||
                                     false
+                                const relatedBrandLine = getShopProductBrandLabel(relatedProduct)
 
                                 return (
                                     <Link
@@ -6025,11 +6096,11 @@ const ProductDetail = () => {
                                             <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
                                                 {relatedProduct.name}
                                             </h3>
-                                            {relatedProduct.brand && (
+                                            {relatedBrandLine ? (
                                                 <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
-                                                    {relatedProduct.brand}
+                                                    {relatedBrandLine}
                                                 </p>
-                                            )}
+                                            ) : null}
                                             <div className="mt-auto pt-4">
                                                 {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
                                                     <div className="flex items-center gap-2">

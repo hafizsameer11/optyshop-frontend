@@ -44,13 +44,27 @@ const FlashOffersManagement: React.FC = () => {
     }
   };
 
+  const buildApiPayload = (): Record<string, unknown> => ({
+    title: formData.title,
+    description: formData.description || null,
+    product_ids: formData.product_ids,
+    starts_at: formData.starts_at,
+    ends_at: formData.ends_at,
+    is_active: formData.is_active,
+    link_url: formData.link_url || null,
+    image_url: formData.image_url || null,
+    discount_type: 'percentage',
+    discount_value: formData.discount_percentage,
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = buildApiPayload();
       if (editingOffer) {
-        await adminUpdateFlashOffer(editingOffer.id, formData);
+        await adminUpdateFlashOffer(editingOffer.id, payload);
       } else {
-        await adminCreateFlashOffer(formData);
+        await adminCreateFlashOffer(payload);
       }
       
       fetchFlashOffers();
@@ -70,7 +84,11 @@ const FlashOffersManagement: React.FC = () => {
       ends_at: offer.ends_at,
       is_active: offer.is_active,
       link_url: offer.link_url || '',
-      discount_percentage: (offer as any).discount_percentage || 0,
+      discount_percentage:
+        String(offer.discount_type || '').toLowerCase() === 'percentage' &&
+        offer.discount_value != null
+          ? Number(offer.discount_value)
+          : Number((offer as any).discount_percentage) || 0,
       image_url: offer.image_url || ''
     });
     setShowForm(true);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { getProductImageUrl } from '../../utils/productImage'
+import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import type { Product } from '../../services/productsService'
 
 interface EyeHygieneProductCardProps {
@@ -42,6 +43,7 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
 
     const variants = getVariants()
     const hasVariants = variants && variants.length > 0
+    const brandLabel = getShopProductBrandLabel(product)
 
     return (
         <div className={`bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col group ${className}`}>
@@ -101,6 +103,11 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
 
             {/* Product Info */}
             <div className="p-4 flex-1 flex flex-col">
+                {brandLabel ? (
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {brandLabel}
+                    </p>
+                ) : null}
                 {/* Product Name */}
                 <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-3">
                     <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">

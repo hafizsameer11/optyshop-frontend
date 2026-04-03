@@ -5,26 +5,34 @@
 
 import { apiClient } from '../utils/api';
 import { API_ROUTES } from '../config/apiRoutes';
+import type { Product } from './productsService';
+
+/** Backend Prisma enum + legacy `fixed` seen in older data. */
+export type FlashDiscountType = 'percentage' | 'fixed_amount' | 'free_shipping' | 'fixed';
 
 export interface FlashOffer {
   id: number;
   title: string;
-  description: string;
+  description: string | null;
   product_ids: number[];
-  discount_type?: string;
+  discount_type?: FlashDiscountType | string;
   discount_value?: number;
   starts_at: string;
   ends_at: string;
   is_active: boolean;
-  image_url?: string;
-  link_url?: string;
+  image_url?: string | null;
+  link_url?: string | null;
   countdown?: {
     hours: number;
     minutes: number;
     seconds: number;
     totalSeconds: number;
-  };
+  } | null;
   is_expired?: boolean;
+  /** Present on GET /flash-offers/:id — whether offer is in its active time window. */
+  is_currently_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface FlashOffersResponse {
@@ -35,7 +43,13 @@ export interface FlashOffersResponse {
     offer?: FlashOffer;
     flashOffers?: FlashOffer[];
     flashOffer?: FlashOffer;
+    products?: Product[];
   };
+}
+
+export interface FlashOfferWithProducts {
+  offer: FlashOffer;
+  products: Product[];
 }
 
 /**
@@ -74,6 +88,32 @@ export const getActiveFlashOffer = async (): Promise<FlashOffer | null> => {
     return null;
   } catch (error) {
     console.error('Error fetching active flash offer:', error);
+    return null;
+  }
+};
+
+/**
+ * Single-offer landing: full offer + listing-shaped products (order matches product_ids).
+ * 404 if id does not exist. Expired/inactive offers may still return with products for "ended" UI.
+ */
+export const getFlashOfferWithProducts = async (
+  id: number | string
+): Promise<FlashOfferWithProducts | null> => {
+  try {
+    const response = await apiClient.get<{ offer: FlashOffer; products: Product[] }>(
+      API_ROUTES.FLASH_OFFERS.BY_ID(id),
+      false
+    );
+
+    if (response.success && response.data?.offer) {
+      return {
+        offer: response.data.offer,
+        products: Array.isArray(response.data.products) ? response.data.products : [],
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching flash offer by id:', error);
     return null;
   }
 };
@@ -125,7 +165,9 @@ export const adminGetFlashOffer = async (id: number | string): Promise<FlashOffe
 /**
  * Create flash offer (Admin)
  */
-export const adminCreateFlashOffer = async (flashOfferData: Omit<FlashOffer, 'id' | 'countdown' | 'is_expired'>): Promise<FlashOffer | null> => {
+export const adminCreateFlashOffer = async (
+  flashOfferData: Record<string, unknown>
+): Promise<FlashOffer | null> => {
   try {
     const response = await apiClient.post<FlashOffersResponse>(
       '/admin/flash-offers',
@@ -146,7 +188,10 @@ export const adminCreateFlashOffer = async (flashOfferData: Omit<FlashOffer, 'id
 /**
  * Update flash offer (Admin)
  */
-export const adminUpdateFlashOffer = async (id: number | string, flashOfferData: Partial<FlashOffer>): Promise<FlashOffer | null> => {
+export const adminUpdateFlashOffer = async (
+  id: number | string,
+  flashOfferData: Record<string, unknown>
+): Promise<FlashOffer | null> => {
   try {
     const response = await apiClient.put<FlashOffersResponse>(
       `/admin/flash-offers/${id}`,

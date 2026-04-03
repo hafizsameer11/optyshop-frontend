@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { getCategories, type Category, type CategoryProduct } from '../../services/categoriesService'
 import { type Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
+import { getProductDisplayName } from '../../utils/productDisplayName'
 import { useTranslation } from 'react-i18next'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
-import VirtualTryOnModal from './VirtualTryOnModal'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -33,8 +33,6 @@ const ShopCategories: React.FC = () => {
     const { isAuthenticated } = useAuth()
     const [categorySections, setCategorySections] = useState<ShopCategorySection[]>([])
     const [loading, setLoading] = useState(true)
-    const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
-    const [showTryOnModal, setShowTryOnModal] = useState(false)
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
 
     // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
@@ -256,15 +254,20 @@ const ShopCategories: React.FC = () => {
                                     subcategoryId={parent ? category.id : undefined}
                                     position={parent ? 'subcategory_page' : 'category_section'}
                                 />
-                                <Link
-                                    to={categoryPath}
-                                    className="text-blue-600 hover:text-blue-800 font-medium text-sm md:text-base flex items-center gap-2 transition-colors"
-                                >
-                                    {t('navbar.viewAll')}
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </Link>
+                                <div className="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="min-w-0 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
+                                        {translateCategory(category)}
+                                    </h2>
+                                    <Link
+                                        to={categoryPath}
+                                        className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-blue-600 transition-colors hover:text-blue-800 md:text-base"
+                                    >
+                                        {t('navbar.viewAll')}
+                                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </Link>
+                                </div>
 
                                 {/* Products Grid */}
                                 {(() => {
@@ -301,7 +304,7 @@ const ShopCategories: React.FC = () => {
                                                         return colorImage?.images?.[0] || (isApiProduct ? getProductImageUrl(productAsProduct) : (Array.isArray(product) && product[0] ? getImageUrl(product[0]) : '/assets/images/frame1.png'))
                                                     })()
                                                     : (isApiProduct ? getProductImageUrl(productAsProduct) : (Array.isArray(product) && product[0] ? getImageUrl(product[0]) : '/assets/images/frame1.png'))
-                                                const productName = (product as any).name || product.name
+                                                const displayName = getProductDisplayName(product)
                                                 const productPrice = (product as any).price || product.price || '0'
                                                 const productSlug = (product as any).slug || (product as any).id || product.id
                                                 const productSku = (product as any).sku
@@ -318,7 +321,7 @@ const ShopCategories: React.FC = () => {
                                                             <img
                                                                     src={productImageUrl}
                                                                     key={`${product.id}-${selectedColor || 'default'}`}
-                                                                alt={productName}
+                                                                alt={displayName || 'Product'}
                                                                     className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
                                                                     style={{ transition: 'opacity 0.3s ease-in-out' }}
                                                                 onError={(e) => {
@@ -352,6 +355,48 @@ const ShopCategories: React.FC = () => {
                                                         
                                                         {/* Product Info */}
                                                         <div className="p-4 flex-grow flex flex-col">
+                                                            <div className="mb-3 flex items-start justify-between gap-2">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <Link
+                                                                        to={`/shop/product/${productSlug}`}
+                                                                        className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                                                                    >
+                                                                        <h3 className="text-sm sm:text-base font-semibold text-gray-900 leading-snug line-clamp-2 text-left hover:text-blue-800 transition-colors">
+                                                                            {displayName || t('shop.viewDetails', 'View product')}
+                                                                        </h3>
+                                                                    </Link>
+                                                                    {productSku ? (
+                                                                        <p className="mt-1 text-xs font-medium text-gray-500 tabular-nums">
+                                                                            {productSku}
+                                                                        </p>
+                                                                    ) : null}
+                                                                </div>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.preventDefault()
+                                                                        e.stopPropagation()
+                                                                        toggleWishlist(productAsProduct)
+                                                                    }}
+                                                                    className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-red-500 transition-colors"
+                                                                    title={
+                                                                        isInWishlist(product.id)
+                                                                            ? t('shop.removeFromWishlist', 'Remove from wishlist')
+                                                                            : t('shop.addToWishlist', 'Add to wishlist')
+                                                                    }
+                                                                >
+                                                                    {isInWishlist(product.id) ? (
+                                                                        <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                                        </svg>
+                                                                    ) : (
+                                                                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                                        </svg>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+
                                                             {/* Color Swatches - Below Image - Only for Glasses */}
                                                             {isGlassesProduct(product) && productColorImages && productColorImages.length > 0 && (
                                                                 <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
@@ -448,50 +493,6 @@ const ShopCategories: React.FC = () => {
                                                                 </div>
                                                             )}
 
-                                                            {/* Model Number and Heart Icon - Same Row */}
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                {productSku && (
-                                                                    <p className="text-xs text-gray-500 font-semibold">
-                                                                        {productSku}
-                                                                    </p>
-                                                                )}
-                                                                {!productSku && <div />}
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault()
-                                                                        e.stopPropagation()
-                                                                        toggleWishlist(productAsProduct)
-                                                                    }}
-                                                                    className="w-6 h-6 flex items-center justify-center hover:text-red-500 transition-colors"
-                                                                    title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
-                                                                >
-                                                                    {isInWishlist(product.id) ? (
-                                                                        <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                                            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                                        </svg>
-                                                                    ) : (
-                                                                        <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                                        </svg>
-                                                                    )}
-                                                                </button>
-                                                            </div>
-
-                                                            {/* Try On Button - Only for Glasses - HIDDEN */}
-                                                            {false && isGlassesProduct(product) && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.preventDefault()
-                                                                        e.stopPropagation()
-                                                                        setSelectedProductForTryOn(productAsProduct)
-                                                                        setShowTryOnModal(true)
-                                                                    }}
-                                                                    className="mb-3 w-full border-2 border-blue-500 bg-white hover:bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
-                                                                >
-                                                                    {t('shop.tryOn', 'Try on')}
-                                                                </button>
-                                                            )}
-
                                                             {/* Add to Cart Button */}
                                                             <button
                                                                 onClick={async (e) => {
@@ -519,7 +520,7 @@ const ShopCategories: React.FC = () => {
                                                                         
                                                                         const cartProduct = {
                                                                             id: product.id,
-                                                                            name: productName || '',
+                                                                            name: displayName || String(product.name || ''),
                                                                             brand: (product as any).brand || '',
                                                                             category: (product as any).category?.slug || 'eyeglasses',
                                                                             price: finalPrice,
@@ -605,13 +606,6 @@ const ShopCategories: React.FC = () => {
                     </div>
                 )}
             </div>
-            
-            {/* Virtual Try-On Modal */}
-            <VirtualTryOnModal
-                open={showTryOnModal}
-                onClose={() => setShowTryOnModal(false)}
-                selectedProduct={selectedProductForTryOn}
-            />
         </section>
     )
 }

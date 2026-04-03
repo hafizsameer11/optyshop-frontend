@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import type { FlashOffer } from '../../services/flashOffersService';
 import { getFlashOffers } from '../../services/flashOffersService';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { flashDiscountBadgeLabel, resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
 
 interface FlashOffersListProps {
   className?: string;
@@ -14,8 +16,10 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
   limit,
   showExpired = false 
 }) => {
+  const { t } = useTranslation();
   const [flashOffers, setFlashOffers] = useState<FlashOffer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const freeShipLabel = t('shop.flashFreeShipping', 'Free shipping');
 
   useEffect(() => {
     const fetchFlashOffers = async () => {
@@ -84,7 +88,9 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${className}`}>
-      {flashOffers.map((offer) => (
+      {flashOffers.map((offer) => {
+        const discountBadge = flashDiscountBadgeLabel(offer, freeShipLabel);
+        return (
         <div
           key={offer.id}
           className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
@@ -114,14 +120,9 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
           <div className="p-4">
             <div className="flex items-start justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-900">{offer.title}</h3>
-              {offer.discount_type === 'percentage' && offer.discount_value && (
+              {discountBadge && (
                 <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                  -{offer.discount_value}%
-                </span>
-              )}
-              {offer.discount_type === 'fixed' && offer.discount_value && (
-                <span className="bg-red-100 text-red-800 text-xs font-semibold px-2 py-1 rounded">
-                  -${offer.discount_value}
+                  {discountBadge}
                 </span>
               )}
             </div>
@@ -141,24 +142,27 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
               )}
             </div>
             
-            {offer.link_url ? (
-              <Link
-                to={offer.link_url}
-                className="block w-full bg-red-500 text-white text-center py-2 px-4 rounded hover:bg-red-600 transition-colors font-medium"
-              >
-                {offer.is_active ? 'Shop Now' : 'View Offer'}
-              </Link>
-            ) : (
-              <button
-                disabled={!offer.is_active}
-                className="block w-full bg-gray-300 text-gray-500 text-center py-2 px-4 rounded font-medium cursor-not-allowed"
-              >
-                {offer.is_active ? 'Shop Now' : 'Expired'}
-              </button>
-            )}
+            {(() => {
+              const href = resolveFlashOfferCtaPath(offer);
+              const external = /^https?:\/\//i.test(href);
+              const className = `block w-full text-white text-center py-2 px-4 rounded font-medium transition-colors ${
+                offer.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 hover:bg-gray-500'
+              }`;
+              const label = offer.is_active ? t('shop.shopNow', 'Shop now') : t('shop.viewOffer', 'View offer');
+              return external ? (
+                <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+                  {label}
+                </a>
+              ) : (
+                <Link to={href} className={className}>
+                  {label}
+                </Link>
+              );
+            })()}
           </div>
         </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

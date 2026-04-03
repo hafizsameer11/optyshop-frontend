@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getProducts, type Product, type MMCaliber } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
-import VirtualTryOnModal from './VirtualTryOnModal'
+import { getProductDisplayName } from '../../utils/productDisplayName'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { useAuth } from '../../context/AuthContext'
@@ -16,8 +16,6 @@ const LatestArrivals: React.FC = () => {
     const { isAuthenticated } = useAuth()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
-    const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
-    const [showTryOnModal, setShowTryOnModal] = useState(false)
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
     const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
     const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
@@ -172,6 +170,7 @@ const LatestArrivals: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     {products.map((product) => {
                         const p = product as any
+                        const displayName = getProductDisplayName(product)
                         // Get available colors - prefer 'colors' array, fallback to 'color_images'
                         const colorsArray = (p.colors && Array.isArray(p.colors) && p.colors.length > 0)
                             ? p.colors
@@ -317,7 +316,7 @@ const LatestArrivals: React.FC = () => {
                                 <img
                                         src={productImageUrl}
                                         key={`${product.id}-${displayColor || 'default'}`}
-                                    alt={product.name}
+                                    alt={displayName || 'Product'}
                                         className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
                                         style={{ 
                                             opacity: imageOpacity[product.id] ?? 1,
@@ -388,6 +387,46 @@ const LatestArrivals: React.FC = () => {
                             
                             {/* Product Info */}
                             <div className="p-4 flex-grow flex flex-col">
+                                <div className="mb-3 flex items-start justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                        <Link
+                                            to={`/shop/product/${product.slug || product.id}`}
+                                            className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+                                        >
+                                            <h3 className="text-left text-sm sm:text-base font-semibold leading-snug text-gray-900 line-clamp-2 hover:text-blue-800 transition-colors">
+                                                {displayName || t('shop.viewDetails', 'View product')}
+                                            </h3>
+                                        </Link>
+                                        {product.sku ? (
+                                            <p className="mt-1 text-xs font-medium text-gray-500 tabular-nums">{product.sku}</p>
+                                        ) : null}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            toggleWishlist(product)
+                                        }}
+                                        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-gray-400 hover:text-red-500 transition-colors"
+                                        title={
+                                            isInWishlist(product.id)
+                                                ? t('shop.removeFromWishlist', 'Remove from wishlist')
+                                                : t('shop.addToWishlist', 'Add to wishlist')
+                                        }
+                                    >
+                                        {isInWishlist(product.id) ? (
+                                            <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
+
                                 {/* Color Swatches - Below Image - Only for Glasses */}
                                 {isGlassesProduct(product) && colorsArray.length > 0 && (
                                     <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
@@ -465,35 +504,6 @@ const LatestArrivals: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Model Number and Heart Icon - Same Row */}
-                                <div className="flex items-center justify-between mb-2">
-                                    {product.sku && (
-                                        <p className="text-xs text-gray-500 font-semibold">
-                                            {product.sku}
-                                        </p>
-                                    )}
-                                    {!product.sku && <div />}
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            toggleWishlist(product)
-                                        }}
-                                        className="w-6 h-6 flex items-center justify-center hover:text-red-500 transition-colors"
-                                        title={isInWishlist(product.id) ? t('shop.removeFromWishlist', 'Remove from wishlist') : t('shop.addToWishlist', 'Add to wishlist')}
-                                    >
-                                        {isInWishlist(product.id) ? (
-                                            <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                        ) : (
-                                            <svg className="w-5 h-5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                            </svg>
-                                        )}
-                                    </button>
-                                </div>
-
                                 {/* Caliber Sizes - Show available calibers if product has them */}
                                 {hasCalibers && (
                                     <div className="mb-3">
@@ -514,21 +524,6 @@ const LatestArrivals: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                )}
-
-                                {/* Try On Button - Only for Glasses - HIDDEN */}
-                                {false && isGlassesProduct(product) && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            setSelectedProductForTryOn(product)
-                                            setShowTryOnModal(true)
-                                        }}
-                                        className="mb-3 w-full border-2 border-blue-500 bg-white hover:bg-blue-50 text-blue-600 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
-                                    >
-                                        {t('shop.tryOn', 'Try on')}
-                                    </button>
                                 )}
 
                                 {/* Add to Cart Button */}
@@ -560,7 +555,7 @@ const LatestArrivals: React.FC = () => {
                                             
                                             const cartProduct = {
                                                 id: product?.id || 0,
-                                                name: product?.name || '',
+                                                name: displayName || product?.name || '',
                                                 brand: product?.brand || '',
                                                 category: product?.category?.slug || 'eyeglasses',
                                                 price: finalPrice,
@@ -623,13 +618,6 @@ const LatestArrivals: React.FC = () => {
                     })}
                 </div>
             </div>
-            
-            {/* Virtual Try-On Modal */}
-            <VirtualTryOnModal
-                open={showTryOnModal}
-                onClose={() => setShowTryOnModal(false)}
-                selectedProduct={selectedProductForTryOn}
-            />
         </section>
     )
 }

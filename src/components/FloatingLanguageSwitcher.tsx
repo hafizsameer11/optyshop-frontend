@@ -21,10 +21,14 @@ const FloatingLanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
-  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0]
+  const activeLangCode = (i18n.resolvedLanguage || i18n.language || 'it').split('-')[0]
+  const currentLanguage =
+    languages.find((lang) => lang.code === activeLangCode) ||
+    languages.find((l) => l.code === 'it') ||
+    languages[0]
 
-  const changeLanguage = (langCode: string) => {
-    i18n.changeLanguage(langCode)
+  const changeLanguage = (code: string) => {
+    i18n.changeLanguage(code)
     setIsOpen(false)
   }
 
@@ -97,14 +101,14 @@ const FloatingLanguageSwitcher: React.FC = () => {
                     {/* Language Info */}
                     <div className="flex-1 min-w-0">
                       <div className={`text-sm font-bold transition-colors duration-200 ${
-                        i18n.language === lang.code 
+                        activeLangCode === lang.code 
                           ? 'text-cyan-700' 
                           : 'text-gray-800 group-hover:text-cyan-600'
                       }`}>
                         {lang.name}
                       </div>
                       <div className={`text-xs transition-colors duration-200 ${
-                        i18n.language === lang.code 
+                        activeLangCode === lang.code 
                           ? 'text-cyan-600' 
                           : 'text-gray-500 group-hover:text-gray-600'
                       }`}>
@@ -113,7 +117,7 @@ const FloatingLanguageSwitcher: React.FC = () => {
                     </div>
                     
                     {/* Checkmark with animation */}
-                    {i18n.language === lang.code && (
+                    {activeLangCode === lang.code && (
                       <svg 
                         className="w-5 h-5 text-cyan-600 transition-transform duration-300" 
                         fill="currentColor" 
@@ -131,12 +135,12 @@ const FloatingLanguageSwitcher: React.FC = () => {
                     )}
                     
                     {/* Hover indicator bar */}
-                    {i18n.language !== lang.code && (
+                    {activeLangCode !== lang.code && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-gradient-to-b from-cyan-400 via-blue-500 to-cyan-400 rounded-r-full transition-all duration-300 group-hover:h-10 opacity-0 group-hover:opacity-100" />
                     )}
                     
                     {/* Active language indicator */}
-                    {i18n.language === lang.code && (
+                    {activeLangCode === lang.code && (
                       <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-10 bg-gradient-to-b from-cyan-400 via-blue-500 to-cyan-400 rounded-r-full" />
                     )}
                   </button>

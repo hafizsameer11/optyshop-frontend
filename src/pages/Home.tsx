@@ -1,44 +1,16 @@
-import React, { useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
+import React from 'react'
 import Navbar from '../components/Navbar'
 import Banner, { HOME_HERO_BANNER_HEIGHT } from '../components/home/Banner'
-import FlashOfferBanner from '../components/flashOffers/FlashOfferBanner'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
-import TrustedBrands from '../components/home/TrustedBrands'
-import StatsHighlight from '../components/home/StatsHighlight'
+import FlashOffersProductHighlight from '../components/home/FlashOffersProductHighlight'
 import ShopCategories from '../components/home/ShopCategories'
 import LatestArrivals from '../components/home/LatestArrivals'
-import LiveDemoSection from '../components/home/LiveDemoSection'
-import Testimonials from '../components/home/Testimonials'
-import PurchasingJourneySection from '../components/home/PurchasingJourneySection'
-import UltraRealisticSection from '../components/home/UltraRealisticSection'
-import Viewer3DSection from '../components/home/Viewer3DSection'
 import CompatibilitySection from '../components/home/CompatibilitySection'
+import HomeShoppingInfoSection from '../components/home/HomeShoppingInfoSection'
+import ContactFormSection from '../components/contact/ContactFormSection'
 import Footer from '../components/Footer'
-import ErrorBoundary from '../components/ErrorBoundary'
 
 const Home: React.FC = () => {
-    const location = useLocation()
-
-    useEffect(() => {
-        if (location.hash === '#live-demo') {
-            // Small delay to ensure the page has rendered
-            setTimeout(() => {
-                const element = document.getElementById('live-demo')
-                if (element) {
-                    const offset = 100 // Account for fixed navbar
-                    const elementPosition = element.getBoundingClientRect().top
-                    const offsetPosition = elementPosition + window.pageYOffset - offset
-
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    })
-                }
-            }, 100)
-        }
-    }, [location.hash])
-
     return (
         <div className="bg-slate-950 text-white w-full min-h-screen">
             {/* Navbar - Always shown (navbar itself is fixed positioned) */}
@@ -53,23 +25,13 @@ const Home: React.FC = () => {
             />
             
             <div className="w-full">
-                <FlashOfferBanner />
-            </div>
-            
-            <div className="w-full">
                 <SmallSlidingBanners />
-                <TrustedBrands />
-                <StatsHighlight />
+                <FlashOffersProductHighlight />
                 <ShopCategories />
                 <LatestArrivals />
-                <LiveDemoSection />
-                <ErrorBoundary>
-                    <Testimonials />
-                </ErrorBoundary>
-                <PurchasingJourneySection />
-                <UltraRealisticSection />
-                <Viewer3DSection />
                 <CompatibilitySection />
+                <HomeShoppingInfoSection />
+                <ContactFormSection variant="compact" />
             </div>
             
             <Footer />

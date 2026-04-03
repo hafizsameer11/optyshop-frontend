@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getActiveFlashOffer, FlashOffer } from '../../services/flashOffersService';
+import { resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
 import CountdownTimer from './CountdownTimer';
 
 const FlashOfferBanner: React.FC = () => {
@@ -26,6 +27,9 @@ const FlashOfferBanner: React.FC = () => {
     return null;
   }
 
+  const ctaHref = resolveFlashOfferCtaPath(offer);
+  const ctaExternal = /^https?:\/\//i.test(ctaHref);
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white py-8 md:py-12 px-4 mb-12 rounded-2xl shadow-2xl border border-emerald-400/30">
       {/* Background Decoration */}
@@ -45,9 +49,18 @@ const FlashOfferBanner: React.FC = () => {
               {offer.description}
             </p>
             
-            {offer.link_url && (
+            {ctaExternal ? (
+              <a
+                href={ctaHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block bg-yellow-300 text-emerald-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-200 transition-all transform hover:scale-105 shadow-lg border-2 border-yellow-200"
+              >
+                Shop Now
+              </a>
+            ) : (
               <Link
-                to={offer.link_url}
+                to={ctaHref}
                 className="inline-block bg-yellow-300 text-emerald-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-200 transition-all transform hover:scale-105 shadow-lg border-2 border-yellow-200"
               >
                 Shop Now

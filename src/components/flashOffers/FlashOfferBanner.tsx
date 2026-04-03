@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { FlashOffer } from '../../services/flashOffersService';
 import { getActiveFlashOffer } from '../../services/flashOffersService';
 import { Link } from 'react-router-dom';
+import { resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
 
 interface FlashOfferBannerProps {
   className?: string;
@@ -71,6 +72,8 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
   }
 
   const formatTime = (value: number) => value.toString().padStart(2, '0');
+  const ctaHref = resolveFlashOfferCtaPath(flashOffer);
+  const ctaExternal = /^https?:\/\//i.test(ctaHref);
 
   return (
     <div className={`bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-2xl ${className}`}>
@@ -107,9 +110,18 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
               </div>
             </div>
             
-            {flashOffer.link_url && (
+            {ctaExternal ? (
+              <a
+                href={ctaHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white text-emerald-600 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-50 transition-all transform hover:scale-105 shadow-lg border-2 border-white/30"
+              >
+                Shop Now →
+              </a>
+            ) : (
               <Link
-                to={flashOffer.link_url}
+                to={ctaHref}
                 className="bg-white text-emerald-600 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-50 transition-all transform hover:scale-105 shadow-lg border-2 border-white/30"
               >
                 Shop Now →

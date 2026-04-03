@@ -24,8 +24,18 @@ const BRAND_LOGO_MAP: { [key: string]: string } = {
     'multiopticas': '/assets/images/multiopticas.webp'
 }
 
-const TrustedBrands: React.FC = () => {
+export type TrustedBrandsVariant = 'default' | 'showcase'
+
+interface TrustedBrandsProps {
+    /** `showcase`: larger strip, slower scroll, extra copy — used on home where demo / 3D blocks were removed */
+    variant?: TrustedBrandsVariant
+}
+
+const TrustedBrands: React.FC<TrustedBrandsProps> = ({ variant = 'default' }) => {
     const { t } = useTranslation()
+    const isShowcase = variant === 'showcase'
+    const cellWidth = isShowcase ? 240 : 200
+    const scrollDurationSec = isShowcase ? 52 : 15
     const [brands, setBrands] = useState<Brand[]>([])
     const [loading, setLoading] = useState(true)
 
@@ -265,21 +275,32 @@ const TrustedBrands: React.FC = () => {
     const duplicatedTrack = Array.isArray(brands) && brands.length > 0 ? [...brands, ...brands] : []
 
     return (
-        <section className="bg-white text-slate-900">
+        <section
+            id={isShowcase ? 'live-demo' : undefined}
+            className={`bg-white text-slate-900 ${isShowcase ? 'border-t border-slate-200/90 shadow-[0_-12px_40px_-24px_rgba(15,23,42,0.15)]' : ''}`}
+        >
             <div className="h-1 bg-gradient-to-r from-orange-400 via-teal-400 to-purple-600" />
 
-            <div className="max-w-6xl mx-auto px-6 py-6 text-center space-y-2">
-                <h2 className="text-lg sm:text-xl font-semibold text-slate-700 tracking-wide">
-                    {t('home.trustedBrands.titlePart1')} <span className="text-blue-700">{t('home.trustedBrands.titlePart2')}</span>
+            <div className={`max-w-6xl mx-auto px-6 text-center space-y-2 ${isShowcase ? 'py-10 sm:py-12' : 'py-6'}`}>
+                <h2
+                    className={`font-semibold text-slate-800 tracking-tight ${isShowcase ? 'text-xl sm:text-2xl md:text-3xl' : 'text-lg sm:text-xl text-slate-700 tracking-wide'}`}
+                >
+                    {t('home.trustedBrands.titlePart1')}{' '}
+                    <span className="text-blue-700">{t('home.trustedBrands.titlePart2')}</span>
                 </h2>
+                {isShowcase && (
+                    <p className="mx-auto max-w-2xl text-sm sm:text-base text-slate-600 leading-relaxed">
+                        {t('home.trustedBrands.showcaseSubtitle')}
+                    </p>
+                )}
             </div>
 
-            <div className="overflow-hidden pb-6 relative bg-slate-50">
+            <div className={`overflow-hidden relative bg-slate-50 ${isShowcase ? 'pb-10 sm:pb-12' : 'pb-6'}`}>
                 <div 
                     className="flex items-center animate-scroll"
                     style={{
-                        animation: 'scroll 15s linear infinite 2s',
-                        width: `${duplicatedTrack.length * 200}px` // Give each brand more space
+                        animation: `scroll ${scrollDurationSec}s linear infinite 2s`,
+                        width: `${duplicatedTrack.length * cellWidth}px`
                     }}
                 >
                     {duplicatedTrack.map((brand: Brand, index: number) => {
@@ -295,14 +316,18 @@ const TrustedBrands: React.FC = () => {
                             <div
                                 key={`${brand.id}-${index}`}
                                 className={`flex-shrink-0 flex items-center justify-center px-4 ${hasLink ? 'cursor-pointer' : ''}`}
-                                style={{ width: '200px' }} // Fixed width like campaign section
+                                style={{ width: `${cellWidth}px` }}
                                 onClick={() => hasLink && handleBrandClick(brand)}
                             >
                                 {imageUrl ? (
                                     <img
                                         src={imageUrl}
                                         alt={brand.name}
-                                        className="h-16 sm:h-20 md:h-24 lg:h-32 object-contain opacity-80 hover:opacity-100 transition-opacity"
+                                        className={
+                                            isShowcase
+                                                ? 'h-20 sm:h-24 md:h-28 lg:h-36 object-contain opacity-90 hover:opacity-100 transition-all duration-300 hover:scale-[1.04]'
+                                                : 'h-16 sm:h-20 md:h-24 lg:h-32 object-contain opacity-80 hover:opacity-100 transition-opacity'
+                                        }
                                         onLoad={() => {
                                             console.log(`✅ Image loaded successfully: ${brand.name} -> ${imageUrl}`)
                                         }}
@@ -336,7 +361,13 @@ const TrustedBrands: React.FC = () => {
                                     />
                                 ) : (
                                     // Show a placeholder div when no image is available to maintain spacing
-                                    <div className="h-16 sm:h-20 md:h-24 lg:h-32 w-24 sm:w-32 md:w-40 lg:w-48 bg-slate-100 rounded flex items-center justify-center">
+                                    <div
+                                        className={
+                                            isShowcase
+                                                ? 'h-20 sm:h-24 md:h-28 lg:h-36 w-28 sm:w-36 md:w-44 lg:w-52 bg-slate-100 rounded-lg flex items-center justify-center'
+                                                : 'h-16 sm:h-20 md:h-24 lg:h-32 w-24 sm:w-32 md:w-40 lg:w-48 bg-slate-100 rounded flex items-center justify-center'
+                                        }
+                                    >
                                         <span className="text-xs text-slate-400 text-center px-2">
                                             {showImageOnly ? '' : displayName}
                                         </span>
