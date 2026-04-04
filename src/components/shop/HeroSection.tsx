@@ -12,10 +12,10 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     showRelatedPages = true
 }) => {
     return (
-        <section className="bg-gradient-to-r from-blue-900 to-blue-950 text-white py-8 px-4 sm:px-6 lg:px-8">
+        <section className="bg-gradient-to-r from-blue-900 to-blue-950 text-white pt-24 pb-8 px-4 sm:px-6 lg:px-8">
             <div className="w-[90%] mx-auto max-w-7xl">
                 <div className="text-center mb-4">
-                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 leading-tight tracking-tight [text-wrap:balance]">
                         {title}
                     </h1>
                     <p className="text-sm md:text-base lg:text-lg text-blue-100 max-w-2xl mx-auto">

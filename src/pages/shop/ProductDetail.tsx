@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -120,7 +120,7 @@ const ProductDetail = () => {
     const { slug } = useParams<{ slug: string }>()
     const navigate = useNavigate()
     const location = useLocation()
-    const { addToCart } = useCart()
+    const { addToCart, syncCart } = useCart()
     const { isAuthenticated } = useAuth()
     const [product, setProduct] = useState<Product | null>(null)
     const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
@@ -2329,9 +2329,88 @@ const ProductDetail = () => {
             }
         }
 
-        // For spherical forms or fallback, return empty array (qty is number input)
+        // Spherical: aggregate allowed qty values from all configs (for legacy callers)
+        if (formType === 'spherical' && sphericalConfigs.length > 0) {
+            const allQtyValues = new Set<string>()
+            sphericalConfigs.forEach(config => {
+                const rightQty = Array.isArray(config.right_qty) ? config.right_qty : []
+                const leftQty = Array.isArray(config.left_qty) ? config.left_qty : []
+                rightQty.forEach(v => {
+                    if (v != null && v !== '') allQtyValues.add(String(v))
+                })
+                leftQty.forEach(v => {
+                    if (v != null && v !== '') allQtyValues.add(String(v))
+                })
+            })
+            if (allQtyValues.size > 0) {
+                return Array.from(allQtyValues).sort((a, b) => {
+                    const numA = parseFloat(a)
+                    const numB = parseFloat(b)
+                    if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+                    return a.localeCompare(b)
+                })
+            }
+        }
+
         return []
-    }, [contactLensFormConfig?.formType, astigmatismConfigs, isAstigmatismSubSubcategory])
+    }, [contactLensFormConfig?.formType, astigmatismConfigs, sphericalConfigs, isAstigmatismSubSubcategory])
+
+    /** API max quantity per eye (values in right_qty / left_qty arrays are treated as the ceiling, not an exclusive list). */
+    const contactLensRightQtyMaxFromApi = useMemo((): number | null => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        const cfg: SphericalConfig | AstigmatismConfig | null =
+            formType === 'astigmatism' ? selectedAstigmatismConfig : selectedConfig
+        if (!cfg) return null
+        const nums = normalizeLensFieldToStrings(cfg.right_qty as unknown)
+            .map(s => parseInt(s, 10))
+            .filter(n => !Number.isNaN(n) && n >= 1)
+        return nums.length ? Math.max(...nums) : null
+    }, [contactLensFormConfig?.formType, isAstigmatismSubSubcategory, selectedConfig, selectedAstigmatismConfig])
+
+    const contactLensLeftQtyMaxFromApi = useMemo((): number | null => {
+        const formType = contactLensFormConfig?.formType || (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        const cfg: SphericalConfig | AstigmatismConfig | null =
+            formType === 'astigmatism' ? selectedAstigmatismConfig : selectedConfig
+        if (!cfg) return null
+        const nums = normalizeLensFieldToStrings(cfg.left_qty as unknown)
+            .map(s => parseInt(s, 10))
+            .filter(n => !Number.isNaN(n) && n >= 1)
+        return nums.length ? Math.max(...nums) : null
+    }, [contactLensFormConfig?.formType, isAstigmatismSubSubcategory, selectedConfig, selectedAstigmatismConfig])
+
+    const contactLensStockQty = useMemo(() => {
+        if (product?.stock_quantity != null && Number(product.stock_quantity) > 0) {
+            return Number(product.stock_quantity)
+        }
+        return null
+    }, [product?.stock_quantity])
+
+    /** Min of API max and stock when each applies; null = no upper bound (still min 1). */
+    const contactLensEffectiveRightQtyMax = useMemo(() => {
+        const caps: number[] = []
+        if (contactLensRightQtyMaxFromApi != null) caps.push(contactLensRightQtyMaxFromApi)
+        if (contactLensStockQty != null) caps.push(contactLensStockQty)
+        return caps.length ? Math.min(...caps) : null
+    }, [contactLensRightQtyMaxFromApi, contactLensStockQty])
+
+    const contactLensEffectiveLeftQtyMax = useMemo(() => {
+        const caps: number[] = []
+        if (contactLensLeftQtyMaxFromApi != null) caps.push(contactLensLeftQtyMaxFromApi)
+        if (contactLensStockQty != null) caps.push(contactLensStockQty)
+        return caps.length ? Math.min(...caps) : null
+    }, [contactLensLeftQtyMaxFromApi, contactLensStockQty])
+
+    const contactLensRightQtySelectOptions = useMemo(() => {
+        const m = contactLensEffectiveRightQtyMax
+        if (m == null) return []
+        return Array.from({ length: m }, (_, i) => i + 1)
+    }, [contactLensEffectiveRightQtyMax])
+
+    const contactLensLeftQtySelectOptions = useMemo(() => {
+        const m = contactLensEffectiveLeftQtyMax
+        if (m == null) return []
+        return Array.from({ length: m }, (_, i) => i + 1)
+    }, [contactLensEffectiveLeftQtyMax])
 
     // Generate axis options from astigmatism configs
     const axisOptions = useMemo(() => {
@@ -2475,6 +2554,27 @@ const ProductDetail = () => {
             }))
         }
     }, [fixedBaseCurveAndDiameter, selectedConfig, selectedAstigmatismConfig, isContactLens])
+
+    // Clamp per-eye qty to 1..effective max when API and/or stock impose a ceiling (before paint to avoid wrong select value)
+    useLayoutEffect(() => {
+        if (!isContactLens) return
+        const rMax = contactLensEffectiveRightQtyMax
+        const lMax = contactLensEffectiveLeftQtyMax
+        if (rMax == null && lMax == null) return
+
+        setContactLensFormData(prev => {
+            let rq = prev.right_qty
+            let lq = prev.left_qty
+            if (rMax != null) {
+                rq = Math.min(Math.max(rq < 1 ? 1 : rq, 1), rMax)
+            }
+            if (lMax != null) {
+                lq = Math.min(Math.max(lq < 1 ? 1 : lq, 1), lMax)
+            }
+            if (rq === prev.right_qty && lq === prev.left_qty) return prev
+            return { ...prev, right_qty: rq, left_qty: lq }
+        })
+    }, [isContactLens, contactLensEffectiveRightQtyMax, contactLensEffectiveLeftQtyMax])
 
     // Initialize contact lens form when product loads
     useEffect(() => {
@@ -2891,6 +2991,27 @@ const ProductDetail = () => {
             return // Ignore changes to fixed fields
         }
 
+        if (field === 'right_qty' || field === 'left_qty') {
+            const num = typeof value === 'number' ? value : parseInt(String(value), 10)
+            if (!Number.isFinite(num)) return
+            const effMax =
+                field === 'right_qty' ? contactLensEffectiveRightQtyMax : contactLensEffectiveLeftQtyMax
+            if (num < 1) {
+                setContactLensErrors(prev => ({
+                    ...prev,
+                    [field]: 'Quantity must be at least 1',
+                }))
+                return
+            }
+            if (effMax != null && num > effMax) {
+                setContactLensErrors(prev => ({
+                    ...prev,
+                    [field]: `Maximum quantity is ${effMax}.`,
+                }))
+                return
+            }
+        }
+
         setContactLensFormData(prev => ({ ...prev, [field]: value }))
 
         // Debug: Log unit changes in development
@@ -3106,17 +3227,27 @@ const ProductDetail = () => {
 
         if (contactLensFormData.right_qty < 1) {
             newErrors.right_qty = 'Quantity must be at least 1'
+        } else if (
+            contactLensEffectiveRightQtyMax != null &&
+            contactLensFormData.right_qty > contactLensEffectiveRightQtyMax
+        ) {
+            newErrors.right_qty = `Maximum quantity is ${contactLensEffectiveRightQtyMax}.`
         }
 
         if (contactLensFormData.left_qty < 1) {
             newErrors.left_qty = 'Quantity must be at least 1'
+        } else if (
+            contactLensEffectiveLeftQtyMax != null &&
+            contactLensFormData.left_qty > contactLensEffectiveLeftQtyMax
+        ) {
+            newErrors.left_qty = `Maximum quantity is ${contactLensEffectiveLeftQtyMax}.`
         }
 
         setContactLensErrors(newErrors)
         return Object.keys(newErrors).length === 0
     }
 
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         // Enforce Login: Redirect to login if not authenticated
         if (!isAuthenticated) {
             const currentPath = location.pathname + location.search
@@ -3198,78 +3329,65 @@ const ProductDetail = () => {
                 })
             }
 
-            // Use services/cartService addItemToCart if authenticated
-            if (isAuthenticated) {
-                // Get color value (hex code) - prefer value from 'colors' array, fallback to selectedColor
-                let colorValue = selectedColor
-                if (selectedColorVariant) {
-                    const variant = selectedColorVariant as any
-                    colorValue = variant.value || variant.hexCode || variant.color || selectedColor
-                }
-
-                const cartRequest: AddToCartRequest = {
-                    product_id: cartProduct.id,
-                    quantity: productQuantity,
-                    selected_color: colorValue || undefined, // Pass color value (hex code) for variant matching
-                    selected_mm_caliber: selectedCaliber?.toString() || undefined, // Pass selected MM caliber
-                    size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined, // Variant ID for Eye Hygiene products
-                    eye_hygiene_variant_id: selectedEyeHygieneVariant?.id || undefined, // Eye hygiene variant ID
-                    customization: {
-                        frame_material: cartProduct.frame_material,
-                        color: colorValue || undefined,
-                        lens_color: selectedLensColor || undefined,
-                        // Store caliber selection in customization
-                        ...(selectedCaliber && {
-                            selected_mm_caliber: selectedCaliber.toString(),
-                            caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber.toString())?.image_url
-                        }),
-                        // Store color variant details if available
-                        ...(selectedColorVariant ? {
-                            color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
-                            color_display_name: (selectedColorVariant as any).display_name || (selectedColorVariant as any).name || (selectedColorVariant as any).color,
-                            variant_price: (selectedColorVariant as any).price,
-                            variant_images: (selectedColorVariant as any).images || []
-                        } : {}),
-                        // Store eye hygiene variant details if available
-                        ...(selectedEyeHygieneVariant && {
-                            eye_hygiene_variant_id: selectedEyeHygieneVariant.id,
-                            eye_hygiene_variant_name: selectedEyeHygieneVariant.name,
-                            eye_hygiene_variant_price: selectedEyeHygieneVariant.price,
-                            eye_hygiene_variant_image_url: selectedEyeHygieneVariant.image_url
-                        }),
-                        // Eye Hygiene specific customization (legacy - for backward compatibility)
-                        ...(isEyeHygiene && !hasVariants && {
-                            size_volume: eyeHygieneFormData.size_volume || undefined,
-                            pack_type: eyeHygieneFormData.pack_type || undefined
-                        }),
-                        // Variant-specific customization (new)
-                        ...(hasVariants && selectedSizeVolumeVariant && {
-                            size_volume: selectedSizeVolumeVariant.size_volume,
-                            pack_type: selectedSizeVolumeVariant.pack_type || undefined,
-                            size_volume_variant_id: selectedSizeVolumeVariant.id
-                        })
-                    },
-                    lens_type: selectedLensType === '' ? undefined : selectedLensType
-                }
-
-                // Try to add to cart via API, but don't block local cart if it fails
-                addItemToCart(cartRequest).then(result => {
-                    if (!result.success) {
-                        console.error('Failed to add to cart via API:', result.message)
-                        // Still add to local cart as fallback
-                    }
-                }).catch(err => {
-                    console.error('API cart error:', err)
-                    // Still add to local cart as fallback
-                })
+            // Logged-in only (guests are redirected above). One addItemToCart with full quantity, then sync —
+            // do not loop addToCart: CartContext would call the API once per iteration with quantity 1.
+            let colorValue = selectedColor
+            if (selectedColorVariant) {
+                const variant = selectedColorVariant as any
+                colorValue = variant.value || variant.hexCode || variant.color || selectedColor
             }
 
-            // Always add to local cart context
-            for (let i = 0; i < productQuantity; i++) {
-                addToCart(cartProduct)
+            const cartRequest: AddToCartRequest = {
+                product_id: cartProduct.id,
+                quantity: productQuantity,
+                selected_color: colorValue || undefined,
+                selected_mm_caliber: selectedCaliber?.toString() || undefined,
+                size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined,
+                eye_hygiene_variant_id: selectedEyeHygieneVariant?.id || undefined,
+                customization: {
+                    frame_material: cartProduct.frame_material,
+                    color: colorValue || undefined,
+                    lens_color: selectedLensColor || undefined,
+                    ...(selectedCaliber && {
+                        selected_mm_caliber: selectedCaliber.toString(),
+                        caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber.toString())?.image_url
+                    }),
+                    ...(selectedColorVariant ? {
+                        color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
+                        color_display_name: (selectedColorVariant as any).display_name || (selectedColorVariant as any).name || (selectedColorVariant as any).color,
+                        variant_price: (selectedColorVariant as any).price,
+                        variant_images: (selectedColorVariant as any).images || []
+                    } : {}),
+                    ...(selectedEyeHygieneVariant && {
+                        eye_hygiene_variant_id: selectedEyeHygieneVariant.id,
+                        eye_hygiene_variant_name: selectedEyeHygieneVariant.name,
+                        eye_hygiene_variant_price: selectedEyeHygieneVariant.price,
+                        eye_hygiene_variant_image_url: selectedEyeHygieneVariant.image_url
+                    }),
+                    ...(isEyeHygiene && !hasVariants && {
+                        size_volume: eyeHygieneFormData.size_volume || undefined,
+                        pack_type: eyeHygieneFormData.pack_type || undefined
+                    }),
+                    ...(hasVariants && selectedSizeVolumeVariant && {
+                        size_volume: selectedSizeVolumeVariant.size_volume,
+                        pack_type: selectedSizeVolumeVariant.pack_type || undefined,
+                        size_volume_variant_id: selectedSizeVolumeVariant.id
+                    })
+                },
+                lens_type: selectedLensType === '' ? undefined : selectedLensType
             }
 
-            // Navigate to cart after adding
+            try {
+                const result = await addItemToCart(cartRequest)
+                if (result.success) {
+                    await syncCart()
+                } else {
+                    console.error('Failed to add to cart via API:', result.message)
+                }
+            } catch (err) {
+                console.error('API cart error:', err)
+            }
+
             navigate('/cart')
         } catch (error) {
             console.error('Error adding to cart:', error)
@@ -4206,21 +4324,30 @@ const ProductDetail = () => {
                                                     <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                         Quantity (Qty)
                                                     </label>
-                                                    {quantityOptions.length > 0 ? (
+                                                    {contactLensRightQtySelectOptions.length > 0 ? (
                                                         <div className="relative">
                                                             <select
-                                                                value={contactLensFormData.right_qty || 1}
+                                                                value={String(
+                                                                    (() => {
+                                                                        const opts = contactLensRightQtySelectOptions
+                                                                        const q = contactLensFormData.right_qty
+                                                                        const hi = opts[opts.length - 1]
+                                                                        return Math.min(Math.max(q < 1 ? 1 : q, 1), hi)
+                                                                    })()
+                                                                )}
                                                                 onChange={(e) => {
-                                                                    const selectedValue = parseInt(e.target.value) || 1
+                                                                    const selectedValue = parseInt(e.target.value, 10)
+                                                                    if (!Number.isFinite(selectedValue)) return
                                                                     handleContactLensFieldChange('right_qty', selectedValue)
                                                                 }}
                                                                 disabled={!rightEyeEnabled}
                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm hover:shadow-md text-sm appearance-none cursor-pointer ${contactLensErrors.right_qty ? 'border-red-500' : 'border-gray-300'
                                                                     } ${!rightEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                             >
-                                                                <option value="1">1</option>
-                                                                {quantityOptions.map((v: string) => (
-                                                                    <option key={v} value={v.toString()}>{v}</option>
+                                                                {contactLensRightQtySelectOptions.map((n) => (
+                                                                    <option key={n} value={String(n)}>
+                                                                        {n}
+                                                                    </option>
                                                                 ))}
                                                             </select>
                                                             <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
@@ -4232,10 +4359,22 @@ const ProductDetail = () => {
                                                     ) : (
                                                         <input
                                                             type="number"
-                                                            min="1"
-                                                            value={contactLensFormData.right_qty || 1}
+                                                            min={1}
+                                                            max={
+                                                                product?.stock_quantity != null &&
+                                                                Number(product.stock_quantity) > 0
+                                                                    ? Number(product.stock_quantity)
+                                                                    : undefined
+                                                            }
+                                                            value={contactLensFormData.right_qty > 0 ? contactLensFormData.right_qty : ''}
                                                             onChange={(e) => {
-                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                const raw = e.target.value
+                                                                if (raw === '') {
+                                                                    handleContactLensFieldChange('right_qty', 0)
+                                                                    return
+                                                                }
+                                                                const selectedValue = parseInt(raw, 10)
+                                                                if (!Number.isFinite(selectedValue)) return
                                                                 handleContactLensFieldChange('right_qty', selectedValue)
                                                             }}
                                                             disabled={!rightEyeEnabled}
@@ -4450,21 +4589,30 @@ const ProductDetail = () => {
                                                     <label className="block text-xs font-semibold text-gray-600 mb-2">
                                                         Quantity (Qty)
                                                     </label>
-                                                    {quantityOptions.length > 0 ? (
+                                                    {contactLensLeftQtySelectOptions.length > 0 ? (
                                                         <div className="relative">
                                                             <select
-                                                                value={contactLensFormData.left_qty || 1}
+                                                                value={String(
+                                                                    (() => {
+                                                                        const opts = contactLensLeftQtySelectOptions
+                                                                        const q = contactLensFormData.left_qty
+                                                                        const hi = opts[opts.length - 1]
+                                                                        return Math.min(Math.max(q < 1 ? 1 : q, 1), hi)
+                                                                    })()
+                                                                )}
                                                                 onChange={(e) => {
-                                                                    const selectedValue = parseInt(e.target.value) || 1
+                                                                    const selectedValue = parseInt(e.target.value, 10)
+                                                                    if (!Number.isFinite(selectedValue)) return
                                                                     handleContactLensFieldChange('left_qty', selectedValue)
                                                                 }}
                                                                 disabled={!leftEyeEnabled}
                                                                 className={`w-full px-3 py-2 border-2 rounded-lg bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm hover:shadow-md text-sm appearance-none cursor-pointer ${contactLensErrors.left_qty ? 'border-red-500' : 'border-gray-300'
                                                                     } ${!leftEyeEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                                                             >
-                                                                <option value="1">1</option>
-                                                                {quantityOptions.map((v: string) => (
-                                                                    <option key={v} value={v.toString()}>{v}</option>
+                                                                {contactLensLeftQtySelectOptions.map((n) => (
+                                                                    <option key={n} value={String(n)}>
+                                                                        {n}
+                                                                    </option>
                                                                 ))}
                                                             </select>
                                                             <div className="absolute right-2 bottom-2 pointer-events-none opacity-40">
@@ -4476,10 +4624,22 @@ const ProductDetail = () => {
                                                     ) : (
                                                         <input
                                                             type="number"
-                                                            min="1"
-                                                            value={contactLensFormData.left_qty || 1}
+                                                            min={1}
+                                                            max={
+                                                                product?.stock_quantity != null &&
+                                                                Number(product.stock_quantity) > 0
+                                                                    ? Number(product.stock_quantity)
+                                                                    : undefined
+                                                            }
+                                                            value={contactLensFormData.left_qty > 0 ? contactLensFormData.left_qty : ''}
                                                             onChange={(e) => {
-                                                                const selectedValue = parseInt(e.target.value) || 1
+                                                                const raw = e.target.value
+                                                                if (raw === '') {
+                                                                    handleContactLensFieldChange('left_qty', 0)
+                                                                    return
+                                                                }
+                                                                const selectedValue = parseInt(raw, 10)
+                                                                if (!Number.isFinite(selectedValue)) return
                                                                 handleContactLensFieldChange('left_qty', selectedValue)
                                                             }}
                                                             disabled={!leftEyeEnabled}

@@ -119,7 +119,7 @@ interface PrescriptionFormData {
 const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, initialSelectedColor, initialSelectedImageIndex, initialSelectedCaliber, categoryContext }) => {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { addToCart } = useCart()
+  const { addToCart, syncCart } = useCart()
   const { isAuthenticated } = useAuth()
   const [showCheckoutLoginModal, setShowCheckoutLoginModal] = useState(false)
 
@@ -2407,7 +2407,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         }
       }
 
-      // Also add to local cart for immediate UI update (for both authenticated and guest users)
+      // Guests: local cart only. Authenticated: cart already updated via addItemToCart — sync once (avoid second API add).
       // Ensure finalPrice is a proper number (not string concatenation)
       const finalPriceNumber = typeof finalPrice === 'string'
         ? parseFloat(String(finalPrice).replace(/[^0-9.]/g, '')) || 0
@@ -2471,7 +2471,11 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         })
       }
 
-      addToCart(cartProduct)
+      if (isAuthenticated) {
+        await syncCart()
+      } else {
+        addToCart(cartProduct)
+      }
 
       // Navigate to cart or close modal
       if (onClose) {

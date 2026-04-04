@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
@@ -20,13 +20,13 @@ import {
     type Category 
 } from '../../services/categoriesService'
 import CategoryBanner from '../../components/home/CategoryBanner'
-import Campaigns from '../../components/home/Campaigns'
+import SmallSlidingBanners, { SHOP_SLIDING_BANNER_POSITION_PRIORITY } from '../../components/home/SmallSlidingBanners'
 import ProductCard from '../../components/products/ProductCard'
 import HeroSection from '../../components/shop/HeroSection'
-import ComprehensiveFilters from '../../components/shop/ComprehensiveFilters'
+import ComprehensiveFilters, { type ShopFilterPayload } from '../../components/shop/ComprehensiveFilters'
 
 const Products: React.FC = () => {
-    const { } = useTranslation()
+    const { t } = useTranslation()
     const { } = useCategoryTranslation()
     const [searchParams] = useSearchParams()
     const location = useLocation()
@@ -86,8 +86,163 @@ const Products: React.FC = () => {
     const [sortBy, setSortBy] = useState<string>('newest') // 'newest', 'oldest', 'price_low', 'price_high', 'name'
     const [selectedProductForTryOn, setSelectedProductForTryOn] = useState<Product | null>(null)
     const [showTryOnModal, setShowTryOnModal] = useState(false)
-    const [showFilters, setShowFilters] = useState(false)
 
+    const [frameShape, setFrameShape] = useState<string>('')
+    const [frameMaterial, setFrameMaterial] = useState<string>('')
+    const [isFeaturedOnly, setIsFeaturedOnly] = useState<boolean>(false)
+    const [baseCurve, setBaseCurve] = useState<string>('')
+    const [diameter, setDiameter] = useState<string>('')
+    const [replacementPeriod, setReplacementPeriod] = useState<string>('')
+    const [categoryText, setCategoryText] = useState<string>('')
+    const [model, setModel] = useState<string>('')
+    const [features, setFeatures] = useState<string>('')
+    const [caliber, setCaliber] = useState<string>('')
+    const [bridge, setBridge] = useState<string>('')
+    const [temples, setTemples] = useState<string>('')
+
+    const filtersCategorySlug = currentSection ?? ''
+
+    const shopPageTitle = useMemo(() => {
+        switch (currentSection) {
+            case 'sunglasses':
+                return t('shop.sectionSunglasses', 'Sunglasses')
+            case 'eyeglasses':
+                return t('shop.sectionEyeglasses', 'Eyeglasses')
+            case 'contact-lenses':
+                return t('shop.sectionContactLenses', 'Contact lenses')
+            case 'eye-hygiene':
+                return t('shop.sectionEyeHygiene', 'Eye hygiene')
+            default:
+                return t('shop.allProducts', 'All products')
+        }
+    }, [currentSection, t])
+
+    const handleComprehensiveFilterChange = useCallback((filters: ShopFilterPayload) => {
+        if ('minPrice' in filters) {
+            setMinPrice(filters.minPrice)
+            setCurrentPage(1)
+        }
+        if ('maxPrice' in filters) {
+            setMaxPrice(filters.maxPrice)
+            setCurrentPage(1)
+        }
+        if (filters.sortBy !== undefined) {
+            setSortBy(filters.sortBy)
+            setCurrentPage(1)
+        }
+        if (filters.color !== undefined) {
+            setSelectedColor(filters.color ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.brand !== undefined) {
+            setBrand(filters.brand ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.lensType !== undefined) {
+            setLensType(filters.lensType ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.lensCoating !== undefined) {
+            setLensCoating(filters.lensCoating ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.inStock !== undefined) {
+            setInStockOnly(!!filters.inStock)
+            setCurrentPage(1)
+        }
+        if (filters.search !== undefined) {
+            setSearchTerm(filters.search ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.gender !== undefined) {
+            setGender(filters.gender ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.frameShape !== undefined) {
+            setFrameShape(filters.frameShape ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.frameMaterial !== undefined) {
+            setFrameMaterial(filters.frameMaterial ?? '')
+            setCurrentPage(1)
+        }
+        if (typeof filters.featuredOnly === 'boolean') {
+            setIsFeaturedOnly(filters.featuredOnly)
+            setCurrentPage(1)
+        }
+        if (filters.baseCurve !== undefined) {
+            setBaseCurve(filters.baseCurve ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.diameter !== undefined) {
+            setDiameter(filters.diameter ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.replacementPeriod !== undefined) {
+            setReplacementPeriod(filters.replacementPeriod ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.categoryText !== undefined) {
+            setCategoryText(filters.categoryText ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.model !== undefined) {
+            setModel(filters.model ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.features !== undefined) {
+            setFeatures(filters.features ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.caliber !== undefined) {
+            setCaliber(filters.caliber ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.bridge !== undefined) {
+            setBridge(filters.bridge ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.temples !== undefined) {
+            setTemples(filters.temples ?? '')
+            setCurrentPage(1)
+        }
+        if (filters.category !== undefined) {
+            setSelectedCategory(filters.category ?? 'all')
+            setCurrentPage(1)
+        }
+        if (filters.subcategory !== undefined) {
+            setSelectedSubcategory(filters.subcategory ?? null)
+            setCurrentPage(1)
+        }
+    }, [])
+
+    const handleClearAllComprehensiveFilters = useCallback(() => {
+        setSearchTerm('')
+        setLensType('')
+        setLensCoating('')
+        setMinPrice(undefined)
+        setMaxPrice(undefined)
+        setGender('')
+        setSelectedColor('')
+        setBrand('')
+        setInStockOnly(false)
+        setSortBy('newest')
+        setFrameShape('')
+        setFrameMaterial('')
+        setIsFeaturedOnly(false)
+        setBaseCurve('')
+        setDiameter('')
+        setReplacementPeriod('')
+        setCategoryText('')
+        setModel('')
+        setFeatures('')
+        setCaliber('')
+        setBridge('')
+        setTemples('')
+        setSelectedCategory('all')
+        setSelectedSubcategory(null)
+        setCurrentPage(1)
+    }, [])
 
     // Read URL parameters and fetch category/subcategory info
     useEffect(() => {
@@ -495,9 +650,9 @@ const Products: React.FC = () => {
                 />
             )}
             
-            {/* General Campaigns Section - Show for non-specific categories */}
+            {/* Same small marquee banners as home (not the tall shop Campaigns strip) */}
             {currentSection !== 'eye-hygiene' && (
-                <Campaigns position="shop" variant="compact" />
+                <SmallSlidingBanners positionPriority={SHOP_SLIDING_BANNER_POSITION_PRIORITY} />
             )}
 
 
@@ -554,180 +709,124 @@ const Products: React.FC = () => {
                 </div>
             </section>
 
-            
-            {/* Main Content Area with Sidebar */}
-            <div className="w-[90%] mx-auto max-w-screen-2xl px-4 sm:px-6 mb-6">
-                {/* Filter Toggle Button - Only visible when filters are hidden */}
-                {!showFilters && (
-                    <div className="mb-6">
-                        <button
-                            onClick={() => setShowFilters(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 shadow-sm"
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                            </svg>
-                            <span className="font-medium">Filters</span>
-                        </button>
-                    </div>
-                )}
-                
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Filters Sidebar - Only visible when showFilters is true */}
-                    {showFilters && (
-                        <div className="w-full lg:w-80 flex-shrink-0">
-                            <ComprehensiveFilters
-                                onFilterChange={(filters) => {
-                                    // Apply filters from comprehensive filter component
-                                    if (filters.gender !== undefined) {
-                                        setGender(filters.gender)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.minPrice !== undefined) {
-                                        setMinPrice(filters.minPrice)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.maxPrice !== undefined) {
-                                        setMaxPrice(filters.maxPrice)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.sortBy !== undefined) {
-                                        setSortBy(filters.sortBy)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.color !== undefined) {
-                                        setSelectedColor(filters.color)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.brand !== undefined) {
-                                        setBrand(filters.brand)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.lensType !== undefined) {
-                                        setLensType(filters.lensType)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.lensCoating !== undefined) {
-                                        setLensCoating(filters.lensCoating)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.inStock !== undefined) {
-                                        setInStockOnly(filters.inStock)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.search !== undefined) {
-                                        if (import.meta.env.DEV) {
-                                            console.log('🔍 Products.tsx received search term:', filters.search)
-                                        }
-                                        setSearchTerm(filters.search)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.category !== undefined) {
-                                        setSelectedCategory(filters.category)
-                                        setCurrentPage(1)
-                                    }
-                                    if (filters.subcategory !== undefined) {
-                                        setSelectedSubcategory(filters.subcategory)
-                                        setCurrentPage(1)
-                                    }
-                                }}
-                                availableColors={availableColors}
-                                availableBrands={availableBrands}
-                                availableLensTypes={availableLensTypes}
-                                availableLensCoatings={availableLensCoatings}
-                                availableCategories={[
-                                    { id: 'men', name: 'Men', slug: 'men' },
-                                    { id: 'women', name: 'Women', slug: 'women' },
-                                    { id: 'kids', name: 'Kids', slug: 'kids' }
-                                ]} // Sample categories for demonstration
-                                availableSubcategories={availableSubcategories}
-                                selectedCategory={selectedCategory}
-                                selectedSubcategory={selectedSubcategory}
-                                categoryLevel="category"
-                                onClose={() => setShowFilters(false)}
-                                showCloseButton={true}
-                                className="sticky top-24"
-                            />
-                        </div>
-                    )}
+            {/* Main content: same structure as CategoryPage (sidebar + grid + pagination) */}
+            <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+                    <aside className="w-full shrink-0 lg:w-72 xl:w-80">
+                        <ComprehensiveFilters
+                            onFilterChange={handleComprehensiveFilterChange}
+                            onClearAll={handleClearAllComprehensiveFilters}
+                            availableColors={availableColors}
+                            availableBrands={availableBrands}
+                            availableLensTypes={availableLensTypes}
+                            availableLensCoatings={availableLensCoatings}
+                            availableCategories={[
+                                { id: 'men', name: 'Men', slug: 'men' },
+                                { id: 'women', name: 'Women', slug: 'women' },
+                                { id: 'kids', name: 'Kids', slug: 'kids' },
+                            ]}
+                            availableSubcategories={availableSubcategories}
+                            selectedCategory={selectedCategory}
+                            selectedSubcategory={selectedSubcategory}
+                            categoryLevel="category"
+                            categorySlug={filtersCategorySlug}
+                            className="sticky top-24"
+                        />
+                    </aside>
 
-                    {/* Products Content */}
-                    <div className="flex-1">
-                        {/* Products Grid */}
-                        <div className="bg-white rounded-lg">
+                    <div className="min-w-0 flex-1">
+                        <header className="mb-8 border-b border-slate-200/90 pb-6">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                {shopPageTitle}
+                            </h1>
+                            <p className="mt-2 text-sm text-slate-600">
+                                {!loading && products.length > 0
+                                    ? `${products.length} product${products.length === 1 ? '' : 's'}`
+                                    : !loading
+                                      ? t('shop.noProductsMatch', 'No products match these filters')
+                                      : '\u00a0'}
+                            </p>
+                        </header>
+
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 sm:p-6 lg:p-8">
                             {loading ? (
-                                <div className="text-center py-12">
-                                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
-                                    <p className="mt-4 text-lg text-gray-600">Loading products...</p>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div
+                                            key={i}
+                                            className="animate-pulse rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm"
+                                        >
+                                            <div className="aspect-[4/3] rounded-xl bg-slate-200/80" />
+                                            <div className="mt-4 h-4 w-[80%] rounded bg-slate-200/80" />
+                                            <div className="mt-2 h-3 w-1/3 rounded bg-slate-100" />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : !products || products.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <p className="text-lg md:text-xl text-gray-600">
-                                        No products found. Try adjusting your filters.
-                                    </p>
+                                <div className="py-16 text-center">
+                                    <div className="mx-auto max-w-lg">
+                                        <svg
+                                            className="mx-auto mb-6 h-32 w-32 text-gray-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                                            />
+                                        </svg>
+                                        <p className="mb-4 text-xl font-semibold text-gray-600 md:text-2xl">
+                                            {t('shop.noProductsMatch', 'No products match these filters')}
+                                        </p>
+                                        <p className="mb-8 text-base text-gray-500">
+                                            {t('shop.adjustFiltersHint', 'Try adjusting filters or browse another section.')}
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="max-h-[80vh] overflow-y-auto pr-2">
                                 <>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 mb-8">
-                                        {products && products.length > 0 && products.map((product) => (
+                                    <div className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                        {products.map((product) => (
                                             <ProductCard key={product.id} product={product} />
                                         ))}
                                     </div>
 
-                                    {/* Pagination */}
                                     {pagination && pagination.pages > 1 && (
-                                        <div className="flex justify-center items-center gap-2 mt-8">
+                                        <div className="mt-12 flex items-center justify-center gap-4">
                                             <button
-                                                onClick={() => handlePageChange(currentPage - 1)}
+                                                type="button"
+                                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                                                 disabled={currentPage === 1}
-                                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === 1
-                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-blue-950 text-white hover:bg-blue-900'
-                                                    }`}
+                                                className="rounded-xl border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 shadow-md transition-all duration-200 hover:scale-105 hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                Previous
+                                                ← {t('shop.previous', 'Previous')}
                                             </button>
 
-                                            {Array.from({ length: Math.max(0, pagination.pages || 0) }).map((_, i) => {
-                                                const page = i + 1
-                                                if (
-                                                    page === 1 ||
-                                                    page === pagination.pages ||
-                                                    (page >= currentPage - 1 && page <= currentPage + 1)
-                                                ) {
-                                                    return (
-                                                        <button
-                                                            key={page}
-                                                            onClick={() => handlePageChange(page)}
-                                                            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === page
-                                                                ? 'bg-blue-950 text-white'
-                                                                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                                                }`}
-                                                        >
-                                                            {page}
-                                                        </button>
-                                                    )
-                                                } else if (page === currentPage - 2 || page === currentPage + 2) {
-                                                    return <span key={page} className="px-2">...</span>
-                                                }
-                                                return null
-                                            })}
+                                            <div className="flex items-center gap-2">
+                                                <span className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white">
+                                                    {currentPage}
+                                                </span>
+                                                <span className="font-medium text-gray-500">
+                                                    of {pagination.pages}
+                                                </span>
+                                            </div>
 
                                             <button
-                                                onClick={() => handlePageChange(currentPage + 1)}
+                                                type="button"
+                                                onClick={() =>
+                                                    handlePageChange(Math.min(pagination.pages, currentPage + 1))
+                                                }
                                                 disabled={currentPage === pagination.pages}
-                                                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${currentPage === pagination.pages
-                                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                                    : 'bg-blue-950 text-white hover:bg-blue-900'
-                                                    }`}
+                                                className="rounded-xl border-2 border-gray-300 bg-white px-6 py-3 font-semibold text-gray-700 shadow-md transition-all duration-200 hover:scale-105 hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                Next
+                                                {t('shop.next', 'Next')} →
                                             </button>
                                         </div>
                                     )}
                                 </>
-                                </div>
                             )}
                         </div>
                     </div>
