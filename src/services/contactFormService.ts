@@ -16,8 +16,9 @@ export type ContactFormPayload = {
   firstName: string
   lastName: string
   country: string
-  company: string
   message: string
+  /** Optional; omitted from the public contact form but kept for callers that still send it. */
+  company?: string
 }
 
 function isTruthyApiBody<T>(response: ApiResponse<T>): boolean {
@@ -55,10 +56,10 @@ export async function submitContactForm(
       message: [
         payload.message,
         '',
-        `Company: ${payload.company}`,
+        ...(payload.company?.trim() ? [`Company: ${payload.company.trim()}`] : []),
         `Country: ${payload.country}`,
       ].join('\n'),
-      company: payload.company,
+      ...(payload.company?.trim() ? { company: payload.company.trim() } : {}),
       country: payload.country,
       firstName: payload.firstName,
       lastName: payload.lastName,

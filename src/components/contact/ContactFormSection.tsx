@@ -7,7 +7,6 @@ const initialForm = {
     firstName: '',
     lastName: '',
     country: '',
-    companyName: '',
     message: ''
 }
 
@@ -25,7 +24,6 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
         firstName: '',
         lastName: '',
         country: '',
-        companyName: '',
         message: ''
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -62,12 +60,11 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
             firstName: formData.firstName.trim(),
             lastName: formData.lastName.trim(),
             country: formData.country.trim(),
-            companyName: formData.companyName.trim(),
             message: formData.message.trim(),
         }
 
         // Basic validation
-        if (!normalized.email || !normalized.firstName || !normalized.lastName || !normalized.country || !normalized.companyName || !normalized.message) {
+        if (!normalized.email || !normalized.firstName || !normalized.lastName || !normalized.country || !normalized.message) {
             setSubmitError(t('contact.fillAllFields') || 'Please fill in all required fields')
             return
         }
@@ -87,7 +84,6 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
                 firstName: normalized.firstName,
                 lastName: normalized.lastName,
                 country: normalized.country,
-                company: normalized.companyName,
                 message: normalized.message
             }
 
@@ -241,23 +237,6 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
                                     <option value="ES">Spain</option>
                                     <option value="Other">Other</option>
                                 </select>
-                            </div>
-
-                            {/* Company Name */}
-                            <div>
-                                <label htmlFor="companyName" className="block text-sm font-medium text-gray-700 mb-2">
-                                    {t('contact.companyName') || 'Company name'} <span className="text-red-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    id="companyName"
-                                    name="companyName"
-                                    required
-                                    autoComplete="organization"
-                                    value={formData.companyName}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
                             </div>
 
                             {/* Message */}

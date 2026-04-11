@@ -4,6 +4,7 @@ import { getFlashOffers } from '../../services/flashOffersService';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { flashDiscountBadgeLabel, resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
+import { prefetchFlashOfferShopIntent } from '../../utils/flashOfferShopIntentPrefetch';
 
 interface FlashOffersListProps {
   className?: string;
@@ -149,12 +150,25 @@ const FlashOffersList: React.FC<FlashOffersListProps> = ({
                 offer.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 hover:bg-gray-500'
               }`;
               const label = offer.is_active ? t('shop.shopNow', 'Shop now') : t('shop.viewOffer', 'View offer');
+              const intentPrefetch = () => prefetchFlashOfferShopIntent(offer.id, href);
               return external ? (
-                <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={href}
+                  className={className}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onPointerEnter={intentPrefetch}
+                  onFocus={intentPrefetch}
+                >
                   {label}
                 </a>
               ) : (
-                <Link to={href} className={className}>
+                <Link
+                  to={href}
+                  className={className}
+                  onPointerEnter={intentPrefetch}
+                  onFocus={intentPrefetch}
+                >
                   {label}
                 </Link>
               );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getActiveFlashOffer, FlashOffer } from '../../services/flashOffersService';
 import { resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
+import { prefetchFlashOfferShopIntent } from '../../utils/flashOfferShopIntentPrefetch';
 import CountdownTimer from './CountdownTimer';
 
 const FlashOfferBanner: React.FC = () => {
@@ -62,6 +63,8 @@ const FlashOfferBanner: React.FC = () => {
               <Link
                 to={ctaHref}
                 className="inline-block bg-yellow-300 text-emerald-900 font-bold px-8 py-3 rounded-full hover:bg-yellow-200 transition-all transform hover:scale-105 shadow-lg border-2 border-yellow-200"
+                onPointerEnter={() => prefetchFlashOfferShopIntent(offer.id, ctaHref)}
+                onFocus={() => prefetchFlashOfferShopIntent(offer.id, ctaHref)}
               >
                 Shop Now
               </Link>

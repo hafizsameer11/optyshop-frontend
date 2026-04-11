@@ -2647,8 +2647,11 @@ const ProductDetail = () => {
             return 0
         }
 
-        // Power is required for price calculation for BOTH Spherical and Astigmatism forms
-        if (!contactLensFormData.right_power || !contactLensFormData.left_power) {
+        // Power required per enabled eye only
+        if (
+            (rightEyeEnabled && !contactLensFormData.right_power) ||
+            (leftEyeEnabled && !contactLensFormData.left_power)
+        ) {
             return 0
         }
 
@@ -2689,7 +2692,9 @@ const ProductDetail = () => {
         selectedUnit,
         selectedConfig,
         selectedAstigmatismConfig,
-        getUnitPrice
+        getUnitPrice,
+        rightEyeEnabled,
+        leftEyeEnabled
         // Note: Price updates when:
         // 1. Unit is selected (selectedUnit changes) → unit price changes
         // 2. Qty changes (right_qty/left_qty changes) → total = unit_price * qty changes
@@ -3200,47 +3205,59 @@ const ProductDetail = () => {
 
         const newErrors: Record<string, string> = {}
 
-        // Power is required for BOTH Spherical and Astigmatism forms
-        if (!contactLensFormData.right_power) {
+        if (!rightEyeEnabled && !leftEyeEnabled) {
+            newErrors.right_power = t('shop.contactLensSelectOneEye', 'Select at least one eye (right and/or left).')
+        }
+
+        // Power required only for enabled eyes
+        if (rightEyeEnabled && !contactLensFormData.right_power) {
             newErrors.right_power = 'Power is required for right eye'
         }
 
-        if (!contactLensFormData.left_power) {
+        if (leftEyeEnabled && !contactLensFormData.left_power) {
             newErrors.left_power = 'Power is required for left eye'
         }
 
-        // For Astigmatism forms, cylinder and axis are also required
+        // For Astigmatism forms, cylinder and axis only for enabled eyes
         if (formType === 'astigmatism') {
-            if (!contactLensFormData.right_cylinder) {
-                newErrors.right_cylinder = 'Cylinder is required for right eye'
+            if (rightEyeEnabled) {
+                if (!contactLensFormData.right_cylinder) {
+                    newErrors.right_cylinder = 'Cylinder is required for right eye'
+                }
+                if (!contactLensFormData.right_axis) {
+                    newErrors.right_axis = 'Axis is required for right eye'
+                }
             }
-            if (!contactLensFormData.right_axis) {
-                newErrors.right_axis = 'Axis is required for right eye'
-            }
-            if (!contactLensFormData.left_cylinder) {
-                newErrors.left_cylinder = 'Cylinder is required for left eye'
-            }
-            if (!contactLensFormData.left_axis) {
-                newErrors.left_axis = 'Axis is required for left eye'
+            if (leftEyeEnabled) {
+                if (!contactLensFormData.left_cylinder) {
+                    newErrors.left_cylinder = 'Cylinder is required for left eye'
+                }
+                if (!contactLensFormData.left_axis) {
+                    newErrors.left_axis = 'Axis is required for left eye'
+                }
             }
         }
 
-        if (contactLensFormData.right_qty < 1) {
-            newErrors.right_qty = 'Quantity must be at least 1'
-        } else if (
-            contactLensEffectiveRightQtyMax != null &&
-            contactLensFormData.right_qty > contactLensEffectiveRightQtyMax
-        ) {
-            newErrors.right_qty = `Maximum quantity is ${contactLensEffectiveRightQtyMax}.`
+        if (rightEyeEnabled) {
+            if (contactLensFormData.right_qty < 1) {
+                newErrors.right_qty = 'Quantity must be at least 1'
+            } else if (
+                contactLensEffectiveRightQtyMax != null &&
+                contactLensFormData.right_qty > contactLensEffectiveRightQtyMax
+            ) {
+                newErrors.right_qty = `Maximum quantity is ${contactLensEffectiveRightQtyMax}.`
+            }
         }
 
-        if (contactLensFormData.left_qty < 1) {
-            newErrors.left_qty = 'Quantity must be at least 1'
-        } else if (
-            contactLensEffectiveLeftQtyMax != null &&
-            contactLensFormData.left_qty > contactLensEffectiveLeftQtyMax
-        ) {
-            newErrors.left_qty = `Maximum quantity is ${contactLensEffectiveLeftQtyMax}.`
+        if (leftEyeEnabled) {
+            if (contactLensFormData.left_qty < 1) {
+                newErrors.left_qty = 'Quantity must be at least 1'
+            } else if (
+                contactLensEffectiveLeftQtyMax != null &&
+                contactLensFormData.left_qty > contactLensEffectiveLeftQtyMax
+            ) {
+                newErrors.left_qty = `Maximum quantity is ${contactLensEffectiveLeftQtyMax}.`
+            }
         }
 
         setContactLensErrors(newErrors)
@@ -3414,30 +3431,32 @@ const ProductDetail = () => {
             const formType = contactLensFormConfig?.formType ||
                 (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
 
+            const effRightQty = rightEyeEnabled ? contactLensFormData.right_qty : 0
+            const effLeftQty = leftEyeEnabled ? contactLensFormData.left_qty : 0
+
             // Prepare checkout request for new API endpoint
             // Note: API expects all values as strings (per Postman collection)
             const checkoutRequest: ContactLensCheckoutRequest = {
                 product_id: product!.id,
                 form_type: formType,
-                // Send as strings (API will convert internally if needed)
-                right_qty: contactLensFormData.right_qty,
-                right_base_curve: contactLensFormData.right_base_curve,
-                right_diameter: contactLensFormData.right_diameter,
-                left_qty: contactLensFormData.left_qty,
-                left_base_curve: contactLensFormData.left_base_curve,
-                left_diameter: contactLensFormData.left_diameter,
-                // Power is required for BOTH Spherical and Astigmatism forms (already strings)
-                right_power: contactLensFormData.right_power,
-                left_power: contactLensFormData.left_power,
-                // Cylinder and Axis are ONLY for Astigmatism forms
-                // Note: Per Postman collection, axis values should be strings (e.g., "180", "90")
+                right_qty: effRightQty,
+                right_base_curve: rightEyeEnabled ? contactLensFormData.right_base_curve : '0',
+                right_diameter: rightEyeEnabled ? contactLensFormData.right_diameter : '0',
+                left_qty: effLeftQty,
+                left_base_curve: leftEyeEnabled ? contactLensFormData.left_base_curve : '0',
+                left_diameter: leftEyeEnabled ? contactLensFormData.left_diameter : '0',
+                right_power: rightEyeEnabled ? contactLensFormData.right_power : '0.00',
+                left_power: leftEyeEnabled ? contactLensFormData.left_power : '0.00',
                 ...(formType === 'astigmatism' && {
-                    right_cylinder: contactLensFormData.right_cylinder,
-                    right_axis: contactLensFormData.right_axis || undefined, // Keep as string
-                    left_cylinder: contactLensFormData.left_cylinder,
-                    left_axis: contactLensFormData.left_axis || undefined // Keep as string
+                    ...(rightEyeEnabled && {
+                        right_cylinder: contactLensFormData.right_cylinder,
+                        right_axis: contactLensFormData.right_axis || undefined,
+                    }),
+                    ...(leftEyeEnabled && {
+                        left_cylinder: contactLensFormData.left_cylinder,
+                        left_axis: contactLensFormData.left_axis || undefined,
+                    }),
                 }),
-                // Unit selection (pack size) - independent from qty
                 selected_unit: selectedUnit || undefined
             }
 
@@ -3452,74 +3471,9 @@ const ProductDetail = () => {
                         console.log('✅ Contact lens added to cart successfully:', result.data.item)
                     }
 
-                    // Calculate total price from API response
-                    // API returns unit_price (price per unit/box/pack) and quantities
-                    const apiItem = result.data.item
-                    const apiUnitPrice = typeof apiItem.unit_price === 'string'
-                        ? parseFloat(apiItem.unit_price)
-                        : Number(apiItem.unit_price) || 0
-
-                    // For contact lenses, calculate total based on unit_price and quantities
-                    // The API's unit_price is the price per unit/box/pack (based on product pricing)
-                    // Total = unit_price * (right_qty + left_qty)
-                    // This correctly accounts for the selected purchase type (unit/box/pack)
-                    // calculateContactLensTotal returns the price per unit/pack
-                    // We need to multiply by the total number of units (right + left)
-
-                    // Use our calculated price which properly accounts for unit/box/pack selection
-                    // The API might not know about the unit type, so we use our local calculation
-                    // which uses getUnitPrice() to get the correct price for unit/box/pack
-                    // Fix: Multiply unit price by total quantity
-                    // calculateContactLensTotal returns the price *per unit/pack*
-                    // We need to multiply by the total number of units (right + left)
-                    const totalQty = contactLensFormData.right_qty + contactLensFormData.left_qty
-                    const unitPriceToUse = calculateContactLensTotal > 0 ? calculateContactLensTotal : apiUnitPrice
-                    const finalPrice = unitPriceToUse * totalQty
-
-                    // Also add to local cart for UI consistency
-                    const cartProduct = {
-                        id: product.id || 0,
-                        name: product.name || '',
-                        brand: getShopProductBrandLabel(product) || '',
-                        category: product.category?.slug || (isContactLens ? 'contact-lenses' : ''),
-                        price: finalPrice,
-                        image: getColorSpecificImageUrl(product, selectedImageIndex),
-                        description: product.description || '',
-                        inStock: product.in_stock || false,
-                        unit: contactLensFormData.unit,
-                        isContactLens: true,
-                        customization: {
-                            contactLens: {
-                                unit: contactLensFormData.unit,
-                                formType: formType, // Store form type (spherical or astigmatism)
-                                right: {
-                                    qty: contactLensFormData.right_qty,
-                                    baseCurve: parseFloat(contactLensFormData.right_base_curve),
-                                    diameter: parseFloat(contactLensFormData.right_diameter),
-                                    // Power is required for BOTH Spherical and Astigmatism
-                                    power: parseFloat(contactLensFormData.right_power) || 0,
-                                    // Cylinder and Axis are ONLY for Astigmatism
-                                    ...(formType === 'astigmatism' && {
-                                        cylinder: contactLensFormData.right_cylinder ? parseFloat(contactLensFormData.right_cylinder) : undefined,
-                                        axis: contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : undefined
-                                    })
-                                },
-                                left: {
-                                    qty: contactLensFormData.left_qty,
-                                    baseCurve: parseFloat(contactLensFormData.left_base_curve),
-                                    diameter: parseFloat(contactLensFormData.left_diameter),
-                                    // Power is required for BOTH Spherical and Astigmatism
-                                    power: parseFloat(contactLensFormData.left_power) || 0,
-                                    // Cylinder and Axis are ONLY for Astigmatism
-                                    ...(formType === 'astigmatism' && {
-                                        cylinder: contactLensFormData.left_cylinder ? parseFloat(contactLensFormData.left_cylinder) : undefined,
-                                        axis: contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : undefined
-                                    })
-                                }
-                            }
-                        }
-                    }
-                    addToCart(cartProduct)
+                    // Contact lens endpoint already created the cart line — only refresh from API.
+                    // (Calling addToCart here would POST addItem with quantity 1 again and inflate line qty, e.g. 2→3.)
+                    await syncCart()
                     navigate('/cart')
                 } else {
                     // Handle structured error response from improved service

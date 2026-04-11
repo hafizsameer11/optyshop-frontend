@@ -3,7 +3,10 @@ import { Link, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { getFlashOfferWithProducts } from '../../services/flashOffersService'
+import {
+    getFlashOfferWithProducts,
+    peekFlashOfferWithProducts,
+} from '../../services/flashOffersService'
 import type { FlashOffer } from '../../services/flashOffersService'
 import type { Product } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
@@ -44,13 +47,38 @@ function formatEndDate(endsAt: string, lang: string | undefined): string {
     }
 }
 
-const FlashOfferLanding: React.FC = () => {
+function initialLandingState(id: string | undefined): {
+    offer: FlashOffer | null
+    products: Product[]
+    loading: boolean
+    notFound: boolean
+} {
+    if (!id) {
+        return { offer: null, products: [], loading: false, notFound: true }
+    }
+    const peeked = peekFlashOfferWithProducts(id)
+    if (peeked === undefined) {
+        return { offer: null, products: [], loading: true, notFound: false }
+    }
+    if (peeked === null) {
+        return { offer: null, products: [], loading: false, notFound: true }
+    }
+    return {
+        offer: peeked.offer,
+        products: peeked.products,
+        loading: false,
+        notFound: false,
+    }
+}
+
+const FlashOfferLandingPage: React.FC = () => {
     const { id } = useParams<{ id: string }>()
     const { t, i18n } = useTranslation()
-    const [offer, setOffer] = useState<FlashOffer | null>(null)
-    const [products, setProducts] = useState<Product[]>([])
-    const [loading, setLoading] = useState(true)
-    const [notFound, setNotFound] = useState(false)
+    const [init] = useState(() => initialLandingState(id))
+    const [offer, setOffer] = useState<FlashOffer | null>(init.offer)
+    const [products, setProducts] = useState<Product[]>(init.products)
+    const [loading, setLoading] = useState(init.loading)
+    const [notFound, setNotFound] = useState(init.notFound)
 
     const freeShipLabel = t('shop.flashFreeShipping', 'Free shipping')
 
@@ -59,11 +87,31 @@ const FlashOfferLanding: React.FC = () => {
         const run = async () => {
             if (!id) {
                 setNotFound(true)
+                setOffer(null)
+                setProducts([])
                 setLoading(false)
                 return
             }
+
+            const peeked = peekFlashOfferWithProducts(id)
+            if (peeked !== undefined) {
+                if (peeked === null) {
+                    setNotFound(true)
+                    setOffer(null)
+                    setProducts([])
+                } else {
+                    setNotFound(false)
+                    setOffer(peeked.offer)
+                    setProducts(peeked.products)
+                }
+                setLoading(false)
+                return
+            }
+
             setLoading(true)
             setNotFound(false)
+            setOffer(null)
+            setProducts([])
             const res = await getFlashOfferWithProducts(id)
             if (cancelled) return
             if (!res) {
@@ -123,6 +171,8 @@ const FlashOfferLanding: React.FC = () => {
                                     <img
                                         src={offer.image_url}
                                         alt=""
+                                        decoding="async"
+                                        fetchPriority="high"
                                         className="h-full w-full object-cover object-center"
                                     />
                                 </div>
@@ -140,7 +190,7 @@ const FlashOfferLanding: React.FC = () => {
                                     <p className="mt-3 text-slate-600">{offer.description}</p>
                                 )}
                                 {formatEndDate(offer.ends_at, i18n.language) && (
-                                    <p className="mt-4 text-sm font-medium text-slate-700">
+                                    <p className="mt-4 text-sm font-bold tracking-tight text-slate-900">
                                         {offer.is_expired
                                             ? t('shop.flashOfferEndedOn', {
                                                   date: formatEndDate(offer.ends_at, i18n.language),
@@ -200,7 +250,13 @@ const FlashOfferLanding: React.FC = () => {
                                                 className="block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md"
                                             >
                                                 <div className="aspect-[4/3] bg-slate-100 p-3">
-                                                    <img src={img} alt="" className="h-full w-full object-contain" />
+                                                    <img
+                                                        src={img}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        className="h-full w-full object-contain"
+                                                    />
                                                 </div>
                                                 <div className="space-y-2 p-4">
                                                     <h3 className="line-clamp-2 font-semibold text-slate-900">{name}</h3>
@@ -232,6 +288,12 @@ const FlashOfferLanding: React.FC = () => {
             <Footer />
         </div>
     )
+}
+
+/** Remount when `:id` changes so state always matches the URL (client nav between offers). */
+const FlashOfferLanding: React.FC = () => {
+    const { id } = useParams<{ id: string }>()
+    return <FlashOfferLandingPage key={id ?? ''} />
 }
 
 export default FlashOfferLanding

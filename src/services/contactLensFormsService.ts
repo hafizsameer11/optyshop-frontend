@@ -623,6 +623,10 @@ export const addContactLensToCart = async (
       apiRequest.left_axis = String(request.left_axis) // Convert to string
     }
 
+    if (request.selected_unit !== undefined && request.selected_unit !== null && request.selected_unit !== '') {
+      apiRequest.selected_unit = String(request.selected_unit)
+    }
+
     if (import.meta.env.DEV) {
       console.log('📤 Sending contact lens checkout request:', apiRequest)
     }

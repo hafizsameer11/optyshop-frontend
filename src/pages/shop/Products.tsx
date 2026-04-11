@@ -712,7 +712,7 @@ const Products: React.FC = () => {
             {/* Main content: same structure as CategoryPage (sidebar + grid + pagination) */}
             <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-                    <aside className="w-full shrink-0 lg:w-72 xl:w-80">
+                    <aside className="w-full shrink-0 lg:w-64 xl:w-72">
                         <ComprehensiveFilters
                             onFilterChange={handleComprehensiveFilterChange}
                             onClearAll={handleClearAllComprehensiveFilters}

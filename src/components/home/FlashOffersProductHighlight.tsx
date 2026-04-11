@@ -8,6 +8,7 @@ import { getProductById } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
 import { getProductDisplayName } from '../../utils/productDisplayName'
 import { flashDiscountBadgeLabel, resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay'
+import { prefetchFlashOfferShopIntent } from '../../utils/flashOfferShopIntentPrefetch'
 
 const MAX_OFFERS = 3
 
@@ -98,6 +99,30 @@ const FlashOffersProductHighlight: React.FC = () => {
         }
     }, [])
 
+    useEffect(() => {
+        if (loading || rows.length === 0) return
+
+        const prefetchVisibleOffers = () => {
+            for (const { offer, product } of rows) {
+                const slug = product ? product.slug || String(product.id) : null
+                const to = resolveFlashOfferCtaPath(offer, slug)
+                prefetchFlashOfferShopIntent(offer.id, to)
+            }
+        }
+
+        let idleHandle: number | undefined
+        let timeoutHandle: number | undefined
+        if (typeof requestIdleCallback !== 'undefined') {
+            idleHandle = requestIdleCallback(prefetchVisibleOffers, { timeout: 2500 })
+        } else {
+            timeoutHandle = window.setTimeout(prefetchVisibleOffers, 1200)
+        }
+        return () => {
+            if (idleHandle !== undefined) cancelIdleCallback(idleHandle)
+            if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle)
+        }
+    }, [loading, rows])
+
     const visibleRows = rows.filter(({ offer }) => new Date(offer.ends_at).getTime() > Date.now())
 
     if (!loading && visibleRows.length === 0) {
@@ -143,8 +168,9 @@ const FlashOffersProductHighlight: React.FC = () => {
     const ctaClassName =
         'mt-1 inline-flex w-full items-center justify-center rounded-xl bg-blue-900 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-800'
 
-    const renderCta = (to: string) => {
+    const renderCta = (to: string, offerId: number) => {
         const external = /^https?:\/\//i.test(to)
+        const intentPrefetch = () => prefetchFlashOfferShopIntent(offerId, to)
         if (external) {
             return (
                 <a
@@ -152,13 +178,20 @@ const FlashOffersProductHighlight: React.FC = () => {
                     className={ctaClassName}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onPointerEnter={intentPrefetch}
+                    onFocus={intentPrefetch}
                 >
                     {t('home.flashOffers.shopNow')}
                 </a>
             )
         }
         return (
-            <Link to={to} className={ctaClassName}>
+            <Link
+                to={to}
+                className={ctaClassName}
+                onPointerEnter={intentPrefetch}
+                onFocus={intentPrefetch}
+            >
                 {t('home.flashOffers.shopNow')}
             </Link>
         )
@@ -235,11 +268,11 @@ const FlashOffersProductHighlight: React.FC = () => {
                                           </div>
                                       )}
                                       {endDateLabel && (
-                                          <p className="text-xs font-medium text-slate-600">
+                                          <p className="text-sm font-bold tracking-tight text-slate-900">
                                               {t('home.flashOffers.endsOn', { date: endDateLabel })}
                                           </p>
                                       )}
-                                      {renderCta(to)}
+                                      {renderCta(to, offer.id)}
                                   </div>
                               </div>
                           )

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
@@ -145,8 +145,10 @@ function normalizeCardColors(product: Product): CardColorOption[] {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) => {
     const { t } = useTranslation()
+    const navigate = useNavigate()
     const { toggleWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
+    const [previewColorKey, setPreviewColorKey] = React.useState<string | null>(null)
 
     // Get calibers for this product (moved outside of functions for reuse)
     const p = product as any
@@ -175,12 +177,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     )
     
     const firstCaliber = validCalibers.length > 0 ? validCalibers[0] : null
-    
-    // Determine which image to use for display
-    let displayImage = getProductImageUrl(product)
-    if (firstCaliber && firstCaliber.image_url) {
-        displayImage = firstCaliber.image_url
-    }
+
+    const colorOptions = normalizeCardColors(product)
+    const swatches = colorOptions.slice(0, MAX_SWATCHES)
+    const moreColors = colorOptions.length - swatches.length
+
+    const baseListingImage = React.useMemo(() => {
+        let img = getProductImageUrl(product)
+        if (firstCaliber && firstCaliber.image_url) {
+            img = firstCaliber.image_url
+        }
+        return img
+    }, [product, firstCaliber])
+
+    const heroImage = React.useMemo(() => {
+        if (previewColorKey) {
+            const opt = colorOptions.find((o) => o.key === previewColorKey)
+            if (opt?.thumbUrl) {
+                return resolveThumbUrl(opt.thumbUrl)
+            }
+        }
+        return baseListingImage
+    }, [previewColorKey, colorOptions, baseListingImage])
 
     const handleAddToCart = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -197,7 +215,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 brand: getShopProductBrandLabel(product) || '',
                 category: product?.category?.slug || 'contact-lenses',
                 price: finalPrice,
-                image: displayImage,
+                image: heroImage,
                 description: product?.description || '',
                 inStock: product?.in_stock !== false,
                 rating: product?.rating ? Number(product.rating) : undefined,
@@ -224,9 +242,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const isOutOfStock = product.in_stock === false
     const onSale = product.sale_price != null && Number(product.sale_price) < Number(product.price)
 
-    const colorOptions = normalizeCardColors(product)
-    const swatches = colorOptions.slice(0, MAX_SWATCHES)
-    const moreColors = colorOptions.length - swatches.length
     const brandLabel = getShopProductBrandLabel(product)
 
     return (
@@ -237,7 +252,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                     <div className="flex h-full w-full items-center justify-center p-5">
                         <img
-                            src={displayImage}
+                            src={heroImage}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
@@ -310,6 +325,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                             className="flex flex-wrap items-center gap-1.5"
                             role="list"
                             aria-label={t('shop.availableColors', 'Available colors')}
+                            onMouseLeave={() => setPreviewColorKey(null)}
                         >
                             {swatches.map((opt) => {
                                 const thumb = opt.thumbUrl ? resolveThumbUrl(opt.thumbUrl) : ''
@@ -321,11 +337,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                                           ? solidFromColorName(`${opt.label} ${opt.key}`)
                                           : null
                                 return (
-                                    <span
+                                    <button
                                         key={opt.key}
+                                        type="button"
                                         role="listitem"
                                         title={opt.label}
-                                        className="h-6 w-6 shrink-0 rounded-full border border-slate-200/90 bg-slate-100 shadow-sm ring-2 ring-white"
+                                        onMouseEnter={() => setPreviewColorKey(opt.key)}
+                                        onClick={(e) => {
+                                            e.preventDefault()
+                                            e.stopPropagation()
+                                            const slug = product.slug || product.id
+                                            navigate(
+                                                `/shop/product/${slug}?color=${encodeURIComponent(opt.key)}`
+                                            )
+                                        }}
+                                        className="h-6 w-6 shrink-0 cursor-pointer rounded-full border border-slate-200/90 bg-slate-100 shadow-sm ring-2 ring-white outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500"
                                         style={
                                             thumb
                                                 ? {

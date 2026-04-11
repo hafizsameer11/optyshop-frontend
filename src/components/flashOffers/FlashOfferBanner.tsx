@@ -3,6 +3,7 @@ import type { FlashOffer } from '../../services/flashOffersService';
 import { getActiveFlashOffer } from '../../services/flashOffersService';
 import { Link } from 'react-router-dom';
 import { resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay';
+import { prefetchFlashOfferShopIntent } from '../../utils/flashOfferShopIntentPrefetch';
 
 interface FlashOfferBannerProps {
   className?: string;
@@ -123,6 +124,8 @@ const FlashOfferBanner: React.FC<FlashOfferBannerProps> = ({ className = '' }) =
               <Link
                 to={ctaHref}
                 className="bg-white text-emerald-600 px-4 py-2 rounded-full text-sm font-bold hover:bg-emerald-50 transition-all transform hover:scale-105 shadow-lg border-2 border-white/30"
+                onPointerEnter={() => prefetchFlashOfferShopIntent(flashOffer.id, ctaHref)}
+                onFocus={() => prefetchFlashOfferShopIntent(flashOffer.id, ctaHref)}
               >
                 Shop Now →
               </Link>

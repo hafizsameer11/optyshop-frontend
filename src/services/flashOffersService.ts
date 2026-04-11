@@ -52,6 +52,47 @@ export interface FlashOfferWithProducts {
   products: Product[];
 }
 
+const flashOfferDetailCache = new Map<string, FlashOfferWithProducts | null>();
+const flashOfferDetailInflight = new Map<string, Promise<FlashOfferWithProducts | null>>();
+
+/** Sync read after a completed fetch — avoids a loading flash when data was prefetched. */
+export function peekFlashOfferWithProducts(
+  id: number | string
+): FlashOfferWithProducts | null | undefined {
+  const key = String(id);
+  if (!flashOfferDetailCache.has(key)) return undefined;
+  return flashOfferDetailCache.get(key) as FlashOfferWithProducts | null;
+}
+
+async function fetchFlashOfferWithProductsFromApi(
+  id: number | string
+): Promise<FlashOfferWithProducts | null> {
+  try {
+    const response = await apiClient.get<{ offer: FlashOffer; products: Product[] }>(
+      API_ROUTES.FLASH_OFFERS.BY_ID(id),
+      false
+    );
+
+    if (response.success && response.data?.offer) {
+      return {
+        offer: response.data.offer,
+        products: Array.isArray(response.data.products) ? response.data.products : [],
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching flash offer by id:', error);
+    return null;
+  }
+}
+
+/**
+ * Start loading flash-offer landing data early (hover, idle). Deduplicates with the landing page fetch.
+ */
+export function prefetchFlashOfferWithProducts(id: number | string): void {
+  void getFlashOfferWithProducts(id);
+}
+
 /**
  * Get all flash offers
  */
@@ -95,27 +136,25 @@ export const getActiveFlashOffer = async (): Promise<FlashOffer | null> => {
 /**
  * Single-offer landing: full offer + listing-shaped products (order matches product_ids).
  * 404 if id does not exist. Expired/inactive offers may still return with products for "ended" UI.
+ * Cached and deduplicated so prefetch + landing share one request.
  */
 export const getFlashOfferWithProducts = async (
   id: number | string
 ): Promise<FlashOfferWithProducts | null> => {
-  try {
-    const response = await apiClient.get<{ offer: FlashOffer; products: Product[] }>(
-      API_ROUTES.FLASH_OFFERS.BY_ID(id),
-      false
-    );
-
-    if (response.success && response.data?.offer) {
-      return {
-        offer: response.data.offer,
-        products: Array.isArray(response.data.products) ? response.data.products : [],
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching flash offer by id:', error);
-    return null;
+  const key = String(id);
+  if (flashOfferDetailCache.has(key)) {
+    return flashOfferDetailCache.get(key)!;
   }
+  let pending = flashOfferDetailInflight.get(key);
+  if (!pending) {
+    pending = fetchFlashOfferWithProductsFromApi(id).then((res) => {
+      flashOfferDetailCache.set(key, res);
+      flashOfferDetailInflight.delete(key);
+      return res;
+    });
+    flashOfferDetailInflight.set(key, pending);
+  }
+  return pending;
 };
 
 // ============================================

@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getProducts, type Product, type MMCaliber } from '../../services/productsService'
 import { getProductImageUrl } from '../../utils/productImage'
@@ -11,16 +11,15 @@ import { addItemToCart } from '../../services/cartService'
 
 const LatestArrivals: React.FC = () => {
     const { t } = useTranslation()
+    const navigate = useNavigate()
     const { toggleWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
     const { isAuthenticated } = useAuth()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [productColorSelections, setProductColorSelections] = useState<Record<number, string>>({})
-    const [hoverColorCycles, setHoverColorCycles] = useState<Record<number, number>>({}) // Track current hover color index per product
-    const [isHovering, setIsHovering] = useState<Record<number, boolean>>({}) // Track if product is being hovered
-    const [imageOpacity, setImageOpacity] = useState<Record<number, number>>({}) // Track image opacity for fade effect
-    const hoverIntervals = useRef<Record<number, ReturnType<typeof setInterval>>>({}) // Store intervals for cleanup
+    /** While pointer is over a swatch, preview that color’s image only (no cycling). */
+    const [hoverPreviewColor, setHoverPreviewColor] = useState<Partial<Record<number, string>>>({})
 
     // Helper function to check if product is glasses (including sunglasses, optyglasses, kids glasses, etc.)
     // Detects glasses by: name/category keywords, color_images (glasses typically have multiple colors), 
@@ -139,15 +138,6 @@ const LatestArrivals: React.FC = () => {
         }
     }, [products]) // Only depend on products, not productColorSelections
     
-    // Cleanup intervals on unmount
-    useEffect(() => {
-        return () => {
-            Object.values(hoverIntervals.current).forEach(interval => {
-                if (interval) clearInterval(interval)
-            })
-        }
-    }, [])
-
     if (loading) {
         return (
             <section className="bg-gray-50 py-12 md:py-16 px-4 sm:px-6">
@@ -199,30 +189,15 @@ const LatestArrivals: React.FC = () => {
                                 ? (colorsArray[0].value || colorsArray[0].color || colorsArray[0].hexCode)
                                 : null)
                         
-                        // Find current selected color index
-                        const selectedColorIndex = colorsArray.length > 0 && selectedColor
-                            ? colorsArray.findIndex((c: any) => 
-                                (c.value && c.value.toLowerCase() === selectedColor.toLowerCase()) ||
-                                (c.color && c.color.toLowerCase() === selectedColor.toLowerCase()) ||
-                                (c.hexCode && c.hexCode.toLowerCase() === selectedColor.toLowerCase())
-                            )
-                            : -1
-                        const startIndex = selectedColorIndex >= 0 ? selectedColorIndex : 0
-                        
-                        // Get hover color index (for auto-cycling on hover) - cycle continuously
-                        const hoverColorIndex = hoverColorCycles[product.id] ?? startIndex
-                        const currentIndex = isHovering[product.id] && colorsArray.length > 0
-                            ? hoverColorIndex % colorsArray.length
-                            : (selectedColorIndex >= 0 ? selectedColorIndex : 0)
-                        const displayColor = colorsArray.length > 0 && colorsArray[currentIndex]
-                            ? (colorsArray[currentIndex].value || colorsArray[currentIndex].color || colorsArray[currentIndex].hexCode)
-                            : selectedColor
-                        
-                        // Get image URL based on display color (hover or selected)
-                        const productImageUrl = displayColor && colorsArray.length > 0
+                        const previewHue = hoverPreviewColor[product.id]
+                        const activeColorForImage =
+                            previewHue != null && previewHue !== '' ? previewHue : selectedColor
+
+                        // Get image URL for the active (hovered or selected) color only — no cycling
+                        const productImageUrl = activeColorForImage && colorsArray.length > 0
                             ? (() => {
-                                const displayColorLower = (displayColor || '').toLowerCase()
-                                const colorData = colorsArray.find((c: any) => 
+                                const displayColorLower = (activeColorForImage || '').toLowerCase()
+                                const colorData = colorsArray.find((c: any) =>
                                     (c.value && c.value.toLowerCase() === displayColorLower) ||
                                     (c.color && c.color.toLowerCase() === displayColorLower) ||
                                     (c.hexCode && c.hexCode.toLowerCase() === displayColorLower)
@@ -230,7 +205,6 @@ const LatestArrivals: React.FC = () => {
                                 if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
                                     return colorData.images[0]
                                 }
-                                // Fallback to color_images if colors array doesn't have images
                                 if (product.color_images) {
                                     const colorImage = product.color_images.find((ci: any) =>
                                         (ci.color && ci.color.toLowerCase() === displayColorLower) ||
@@ -241,103 +215,26 @@ const LatestArrivals: React.FC = () => {
                                 return getProductImageUrl(product)
                             })()
                             : getProductImageUrl(product)
-                        
-                        // Handle hover color cycling with smooth transitions
-                        const handleMouseEnter = () => {
-                            if (colorsArray.length <= 1) return // No need to cycle if only one color
-                            
-                            setIsHovering(prev => ({ ...prev, [product.id]: true }))
-                            
-                            // Clear any existing interval for this product
-                            if (hoverIntervals.current[product.id]) {
-                                clearInterval(hoverIntervals.current[product.id])
-                            }
-                            
-                            // Start from selected color index
-                            const startIdx = selectedColorIndex >= 0 ? selectedColorIndex : 0
-                            setHoverColorCycles(prev => ({ ...prev, [product.id]: startIdx }))
-                            setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
-                            
-                            // Start cycling through colors with smooth fade transitions
-                            let currentIndex = startIdx
-                            hoverIntervals.current[product.id] = setInterval(() => {
-                                // Fade out
-                                setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
-                                
-                                setTimeout(() => {
-                                    // Move to next color (cycle back to 0 after last)
-                                    currentIndex = (currentIndex + 1) % colorsArray.length
-                                    setHoverColorCycles(prev => ({
-                                        ...prev,
-                                        [product.id]: currentIndex
-                                    }))
-                                    
-                                    // Fade in
-                                    setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
-                                }, 200) // Half of transition time
-                            }, 1500) // Change color every 1.5 seconds
-                        }
-                        
-                        const handleMouseLeave = () => {
-                            setIsHovering(prev => {
-                                const newState = { ...prev }
-                                delete newState[product.id]
-                                return newState
-                            })
-                            
-                            // Clear interval and reset to selected color
-                            if (hoverIntervals.current[product.id]) {
-                                clearInterval(hoverIntervals.current[product.id])
-                                delete hoverIntervals.current[product.id]
-                            }
-                            
-                            // Smooth fade back to selected color
-                            setImageOpacity(prev => ({ ...prev, [product.id]: 0 }))
-                            setTimeout(() => {
-                                setHoverColorCycles(prev => {
-                                    const newState = { ...prev }
-                                    delete newState[product.id]
-                                    return newState
-                                })
-                                setImageOpacity(prev => ({ ...prev, [product.id]: 1 }))
-                            }, 200)
-                        }
-                        
+
                         return (
                         <div
                             key={product.id}
                             className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg border border-gray-100 transition-all duration-300 flex flex-col group"
-                            onMouseEnter={handleMouseEnter}
-                            onMouseLeave={handleMouseLeave}
                         >
                             {/* Product Image */}
                             <div className="relative h-64 md:h-72 bg-white overflow-hidden">
                                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                                 <img
                                         src={productImageUrl}
-                                        key={`${product.id}-${displayColor || 'default'}`}
+                                        key={`${product.id}-${activeColorForImage || 'default'}`}
                                     alt={displayName || 'Product'}
-                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-all duration-300"
-                                        style={{ 
-                                            opacity: imageOpacity[product.id] ?? 1,
-                                            transition: 'opacity 0.4s ease-in-out, transform 0.3s ease-in-out'
-                                        }}
+                                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                                     onError={(e) => {
                                         const target = e.target as HTMLImageElement
                                         target.src = '/assets/images/frame1.png'
                                     }}
                                 />
                                 </Link>
-                                
-                                {/* Next Color Indicator - Shows when hovering and multiple colors available */}
-                                {isHovering[product.id] && colorsArray.length > 1 && (
-                                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 animate-pulse z-30">
-                                        <span>Next Color</span>
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </div>
-                                )}
                                 
                                 {/* Favorite/Wishlist Icon - Always Visible */}
                                 <button
@@ -429,7 +326,16 @@ const LatestArrivals: React.FC = () => {
 
                                 {/* Color Swatches - Below Image - Only for Glasses */}
                                 {isGlassesProduct(product) && colorsArray.length > 0 && (
-                                    <div className="mb-3 flex gap-2 flex-wrap items-center justify-center">
+                                    <div
+                                        className="mb-3 flex gap-2 flex-wrap items-center justify-center"
+                                        onMouseLeave={() => {
+                                            setHoverPreviewColor((prev) => {
+                                                const next = { ...prev }
+                                                delete next[product.id]
+                                                return next
+                                            })
+                                        }}
+                                    >
                                         {colorsArray.map((colorData: any, index: number) => {
                                             const colorValue = colorData.value || colorData.color || colorData.hexCode
                                             const hexCode = colorData.hexCode || '#E5E5E5'
@@ -471,13 +377,18 @@ const LatestArrivals: React.FC = () => {
                                                 <button
                                                     key={`${product.id}-${index}-${colorValue}`}
                                                     type="button"
+                                                    onMouseEnter={() => {
+                                                        setHoverPreviewColor((prev) => ({
+                                                            ...prev,
+                                                            [product.id]: String(colorValue),
+                                                        }))
+                                                    }}
                                                     onClick={(e) => {
                                                         e.preventDefault()
                                                         e.stopPropagation()
-                                                        setProductColorSelections(prev => ({
-                                                            ...prev,
-                                                            [product.id]: colorValue
-                                                        }))
+                                                        const slug = product.slug || product.id
+                                                        const q = encodeURIComponent(String(colorValue))
+                                                        navigate(`/shop/product/${slug}?color=${q}`)
                                                     }}
                                                     className={`w-7 h-7 rounded-full border-2 transition-all hover:scale-110 flex items-center justify-center ${
                                                         isSelected
