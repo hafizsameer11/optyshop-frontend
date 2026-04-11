@@ -14,7 +14,7 @@ import {
     type MMCaliber,
     type EyeHygieneVariant
 } from '../../services/productsService'
-import { addItemToCart, type AddToCartRequest } from '../../services/cartService'
+import { addItemToCart, updateCartItem, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import ProductCheckout from '../../components/shop/ProductCheckout'
@@ -384,6 +384,8 @@ const ProductDetail = () => {
     const [rightEyeEnabled, setRightEyeEnabled] = useState(true)
     const [leftEyeEnabled, setLeftEyeEnabled] = useState(true)
     const [contactLensLoading, setContactLensLoading] = useState(false)
+    /** Prevents double-submit before React state updates (duplicate checkout → wrong quantity). */
+    const contactLensCheckoutLockRef = useRef(false)
     const [selectedConfig, setSelectedConfig] = useState<SphericalConfig | null>(null)
     const [sphericalConfigs, setSphericalConfigs] = useState<SphericalConfig[]>([])
     const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
@@ -3421,10 +3423,15 @@ const ProductDetail = () => {
             return
         }
 
+        if (contactLensCheckoutLockRef.current) {
+            return
+        }
+
         if (!validateContactLensForm()) {
             return
         }
 
+        contactLensCheckoutLockRef.current = true
         setContactLensLoading(true)
         try {
             // Determine form type from config or subcategory
@@ -3471,8 +3478,27 @@ const ProductDetail = () => {
                         console.log('✅ Contact lens added to cart successfully:', result.data.item)
                     }
 
+                    const apiItem = result.data.item
+                    const expectedLineQty = effRightQty + effLeftQty
+                    const reportedQty = Number(apiItem.quantity)
+                    if (
+                        apiItem.id &&
+                        expectedLineQty > 0 &&
+                        Number.isFinite(reportedQty) &&
+                        reportedQty !== expectedLineQty
+                    ) {
+                        const fix = await updateCartItem(apiItem.id, expectedLineQty)
+                        if (!fix.success && import.meta.env.DEV) {
+                            console.warn('[Contact lens] Cart quantity mismatch; correction failed:', {
+                                cartItemId: apiItem.id,
+                                expectedLineQty,
+                                reportedQty,
+                                message: fix.message,
+                            })
+                        }
+                    }
+
                     // Contact lens endpoint already created the cart line — only refresh from API.
-                    // (Calling addToCart here would POST addItem with quantity 1 again and inflate line qty, e.g. 2→3.)
                     await syncCart()
                     navigate('/cart')
                 } else {
@@ -3552,6 +3578,7 @@ const ProductDetail = () => {
             console.error('Error adding contact lens to cart:', error)
             alert('Failed to add to cart. Please try again.')
         } finally {
+            contactLensCheckoutLockRef.current = false
             setContactLensLoading(false)
         }
     }

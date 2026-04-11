@@ -1077,7 +1077,7 @@ const CategoryPage: React.FC = () => {
             
             <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
                 <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-                    <aside className="w-full shrink-0 lg:w-64 xl:w-72">
+                    <aside className="w-full shrink-0 lg:w-52 xl:w-60">
                         <ComprehensiveFilters
                             onFilterChange={handleComprehensiveFilterChange}
                             onClearAll={handleClearAllComprehensiveFilters}
@@ -1110,7 +1110,7 @@ const CategoryPage: React.FC = () => {
 
                         <div className="rounded-2xl border border-slate-100 bg-slate-50/40 p-4 sm:p-6 lg:p-8">
                             {isFetchingProducts ? (
-                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5 xl:gap-4">
                                     {Array.from({ length: 8 }).map((_, i) => (
                                         <div
                                             key={i}
@@ -1172,7 +1172,7 @@ const CategoryPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="mb-16 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                                    <div className="mb-16 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5 xl:gap-4">
                                         {products.map((product) => (
                                             <ProductCard key={product.id} product={product} />
                                         ))}
