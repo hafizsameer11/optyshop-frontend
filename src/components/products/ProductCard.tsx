@@ -6,7 +6,7 @@ import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { getProxiedImageUrl } from '../../services/imageProxyService'
-import type { Product } from '../../services/productsService'
+import { normalizeProductSubcategory, type Product } from '../../services/productsService'
 
 interface ProductCardProps {
     product: Product
@@ -143,6 +143,67 @@ function normalizeCardColors(product: Product): CardColorOption[] {
     return out
 }
 
+/** Human-readable segment: "eye-glasses" → "Eye Glasses" */
+function formatCategorySegment(raw: string): string {
+    const s = raw.replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim()
+    if (!s) return ''
+    return s
+        .split(/\s+/)
+        .map((w) => (w.length ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ''))
+        .join(' ')
+}
+
+/**
+ * Category › subcategory line: uses category.parent, nested subcategory helpers, deduped.
+ * Order: root parent → sub-parent (from API) → leaf category name → subcategory name.
+ */
+function buildListingBreadcrumb(product: Product): string | null {
+    const p = product as any
+    const sub = normalizeProductSubcategory(product)
+    const ordered: (string | null | undefined)[] = [
+        p.category?.parent?.name,
+        sub.parentName,
+        p.category?.name,
+        sub.name,
+    ]
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const raw of ordered) {
+        if (!raw?.trim()) continue
+        const seg = formatCategorySegment(String(raw))
+        if (!seg) continue
+        const key = seg.toLowerCase()
+        if (seen.has(key)) continue
+        seen.add(key)
+        out.push(seg)
+    }
+    if (out.length === 0) return null
+    return out.slice(0, 4).join(' > ')
+}
+
+function resolveListAndCurrentPrice(product: Product): {
+    current: number
+    compare: number | null
+} {
+    const numPrice = Number(product.price) || 0
+    const numSale = product.sale_price != null ? Number(product.sale_price) : null
+    const rawCompare = product.compare_at_price ?? product.original_price
+    const numCompare =
+        rawCompare != null && rawCompare !== ''
+            ? Number(rawCompare)
+            : null
+
+    const hasSale = numSale != null && !isNaN(numSale) && numSale < numPrice
+    const current = hasSale ? numSale! : numPrice
+    let compare: number | null = null
+    if (hasSale) {
+        compare = numPrice
+    } else if (numCompare != null && !isNaN(numCompare) && numCompare > current) {
+        compare = numCompare
+    }
+    return { current, compare }
+}
+
 const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) => {
     const { t } = useTranslation()
     const navigate = useNavigate()
@@ -205,9 +266,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         e.stopPropagation()
         
         try {
-            const salePrice = product?.sale_price ? Number(product.sale_price) : null
-            const regularPrice = product?.price ? Number(product.price) : 0
-            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
+            const { current: finalPrice } = resolveListAndCurrentPrice(product)
             
             const cartProduct = {
                 id: product?.id || 0,
@@ -240,24 +299,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     }
 
     const isOutOfStock = product.in_stock === false
-    const onSale = product.sale_price != null && Number(product.sale_price) < Number(product.price)
+    const { current: displayPrice, compare: comparePrice } = resolveListAndCurrentPrice(product)
 
     const brandLabel = getShopProductBrandLabel(product)
+    const breadcrumb = buildListingBreadcrumb(product)
 
     return (
         <article
-            className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-xl ${className}`}
+            className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md ${className}`}
         >
-            <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-50/90">
+            <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                    <div className="flex h-full w-full items-center justify-center p-5">
+                    <div className="flex h-full w-full items-center justify-center bg-white/40 p-4 sm:p-5">
                         <img
                             src={heroImage}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
-                            className="max-h-full max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                            style={{ filter: 'drop-shadow(0 8px 24px rgba(15, 23, 42, 0.08))' }}
+                            className="max-h-full max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                            style={{ filter: 'drop-shadow(0 6px 20px rgba(15, 23, 42, 0.06))' }}
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 if (import.meta.env.DEV) {
@@ -294,32 +354,25 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </div>
                 )}
 
-                {onSale && !isOutOfStock && (
-                    <div className="absolute bottom-3 left-3 z-10 rounded-md bg-rose-600 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-sm">
-                        {t('shop.sale', 'Sale')}
-                    </div>
-                )}
             </div>
 
-            <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
-                {brandLabel ? (
-                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        {brandLabel}
-                    </p>
+            <div className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+                {breadcrumb ? (
+                    <p className="mb-1.5 line-clamp-1 text-[11px] leading-tight text-slate-400">{breadcrumb}</p>
                 ) : null}
                 <Link
                     to={`/shop/product/${product.slug || product.id}`}
-                    className="mb-2 flex-1 min-h-[2.5rem]"
+                    className="mb-2 min-h-[2.35rem] flex-1"
                 >
-                    <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-700">
+                    <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-600">
                         {product.name}
                     </h3>
                 </Link>
 
                 {swatches.length > 0 ? (
                     <div className="mb-3">
-                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            {t('shop.colors', 'Colors')}
+                        <p className="mb-1 text-[12px] text-slate-600">
+                            <span className="font-medium text-slate-700">{t('shop.colors', 'Colors')}:</span>
                         </p>
                         <div
                             className="flex flex-wrap items-center gap-1.5"
@@ -375,31 +428,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </div>
                 ) : null}
 
-                <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    {onSale ? (
-                        <>
-                            <span className="text-lg font-bold tracking-tight text-slate-900">
-                                €{Number(product.sale_price).toFixed(2)}
-                            </span>
-                            <span className="text-sm text-slate-400 line-through">
-                                €{Number(product.price).toFixed(2)}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-lg font-bold tracking-tight text-slate-900">
-                            €{Number(product.price).toFixed(2)}
+                <div
+                    className={`mb-3 flex items-baseline gap-3 ${comparePrice != null ? 'justify-between' : ''}`}
+                >
+                    <span className="text-xl font-bold tabular-nums text-blue-600">€{displayPrice.toFixed(2)}</span>
+                    {comparePrice != null ? (
+                        <span className="text-sm tabular-nums text-slate-400 line-through">
+                            €{comparePrice.toFixed(2)}
                         </span>
-                    )}
+                    ) : null}
                 </div>
+
+                {brandLabel ? (
+                    <p className="mb-3 text-[12px] text-slate-400">
+                        {t('shop.byVendor', 'by')} <span className="text-slate-500">{brandLabel}</span>
+                    </p>
+                ) : null}
 
                 <button
                     type="button"
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
-                    className={`mt-auto w-full rounded-xl py-3 text-sm font-semibold transition-all ${
+                    className={`mt-auto w-full rounded-lg border py-2.5 text-sm font-semibold transition-all ${
                         isOutOfStock
-                            ? 'cursor-not-allowed bg-slate-100 text-slate-400'
-                            : 'bg-slate-900 text-white shadow-md hover:bg-slate-800 hover:shadow-lg active:scale-[0.98]'
+                            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                            : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'
                     }`}
                 >
                     {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}

@@ -99,6 +99,7 @@ const CategoryPage: React.FC = () => {
         pages: 0
     })
     const [currentPage, setCurrentPage] = useState(1)
+    const [filtersOpen, setFiltersOpen] = useState(false)
 
     // Enhanced Filter states
     const [searchTerm, setSearchTerm] = useState('')
@@ -1076,35 +1077,32 @@ const CategoryPage: React.FC = () => {
             />
             
             <div className="mx-auto max-w-screen-2xl px-4 pb-16 sm:px-6 lg:px-8">
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-                    <aside className="w-full shrink-0 lg:w-52 xl:w-60">
-                        <ComprehensiveFilters
-                            onFilterChange={handleComprehensiveFilterChange}
-                            onClearAll={handleClearAllComprehensiveFilters}
-                            availableColors={availableColors}
-                            availableBrands={availableBrands}
-                            availableLensTypes={availableLensTypes}
-                            availableLensCoatings={availableLensCoatings}
-                            categoryLevel={
-                                subSubcategorySlug ? 'subsubcategory' :
-                                subcategorySlug ? 'subcategory' : 'category'
-                            }
-                            categorySlug={categoryInfo.category?.slug || categorySlug || ''}
-                            className="sticky top-24"
-                        />
-                    </aside>
-
-                    <div className="min-w-0 flex-1">
+                <div className="flex flex-col gap-8">
+                    <div className="min-w-0 w-full">
                         <header className="mb-8 border-b border-slate-200/90 pb-6">
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                                {pageTitleLabel}
-                            </h1>
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                    {pageTitleLabel}
+                                </h1>
+                                <button
+                                    type="button"
+                                    onClick={() => setFiltersOpen(true)}
+                                    className="inline-flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                >
+                                    <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    </svg>
+                                    {t('shop.filters.filters', 'Filters')}
+                                </button>
+                            </div>
                             <p className="mt-2 text-sm text-slate-600">
-                                {!isFetchingProducts && products.length > 0
-                                    ? `${products.length} product${products.length === 1 ? '' : 's'}`
-                                    : !isFetchingProducts
-                                      ? 'No products match these filters'
-                                      : '\u00a0'}
+                                {isFetchingProducts || isBootstrappingCategory
+                                    ? '\u00a0'
+                                    : products.length > 0
+                                      ? pagination.total > 0
+                                          ? `Showing ${products.length} of ${pagination.total} product${pagination.total === 1 ? '' : 's'}`
+                                          : `${products.length} product${products.length === 1 ? '' : 's'}`
+                                      : t('shop.noProductsMatch', 'No products match these filters')}
                             </p>
                         </header>
 
@@ -1211,6 +1209,42 @@ const CategoryPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            <ComprehensiveFilters
+                onFilterChange={handleComprehensiveFilterChange}
+                onClearAll={handleClearAllComprehensiveFilters}
+                availableColors={availableColors}
+                availableBrands={availableBrands}
+                availableLensTypes={availableLensTypes}
+                availableLensCoatings={availableLensCoatings}
+                categoryLevel={
+                    subSubcategorySlug ? 'subsubcategory' :
+                    subcategorySlug ? 'subcategory' : 'category'
+                }
+                categorySlug={categoryInfo.category?.slug || categorySlug || ''}
+                showDesktopSidebar={false}
+                filterDrawerOpen={filtersOpen}
+                onFilterDrawerOpenChange={setFiltersOpen}
+                showCloseButton
+                onClose={() => setFiltersOpen(false)}
+            />
+
+            <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className={`fixed bottom-6 right-6 z-[90] flex h-14 min-w-[3.5rem] items-center justify-center gap-2 rounded-full border-2 border-blue-600/25 bg-white px-3 text-blue-700 shadow-lg ring-1 ring-slate-900/5 transition-all hover:border-blue-600/40 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 sm:bottom-8 sm:right-8 sm:min-w-0 sm:px-4 ${
+                    filtersOpen ? 'pointer-events-none scale-95 opacity-0' : 'opacity-100'
+                }`}
+                aria-expanded={filtersOpen}
+                aria-controls="shop-filters-panel"
+                aria-label={t('shop.filters.filters', 'Filters')}
+            >
+                <svg className="h-6 w-6 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <span className="hidden pr-0.5 text-sm font-semibold sm:inline">{t('shop.filters.filters', 'Filters')}</span>
+            </button>
+
             <Footer />
         </div>
     )

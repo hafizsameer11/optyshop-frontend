@@ -164,6 +164,8 @@
     "selectOptions": "Select Options",
     "viewDetails": "View Details",
     "noProducts": "No products found in {{category}}",
+    "noProductsMatch": "No products match these filters",
+    "byVendor": "by",
     "viewProducts": "View {{category}} Products",
     "filterBy": "Filter by",
     "category": "Category",

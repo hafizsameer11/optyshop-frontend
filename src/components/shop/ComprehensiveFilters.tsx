@@ -48,6 +48,11 @@ interface ComprehensiveFiltersProps {
     categorySlug?: string
     onClose?: () => void
     showCloseButton?: boolean
+    /** When false, the left sidebar is never shown (use floating FAB + drawer instead). */
+    showDesktopSidebar?: boolean
+    /** Controlled drawer: when set, open state is driven by the parent (FAB / floating control). */
+    filterDrawerOpen?: boolean
+    onFilterDrawerOpenChange?: (open: boolean) => void
 }
 
 const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
@@ -65,12 +70,39 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     categoryLevel = 'category',
     categorySlug = '',
     onClose,
-    showCloseButton = false
+    showCloseButton = false,
+    showDesktopSidebar = true,
+    filterDrawerOpen: filterDrawerOpenProp,
+    onFilterDrawerOpenChange
 }) => {
     const { t } = useTranslation()
     const [productOptions, setProductOptions] = useState<ProductOptions | null>(null)
     const [isExpanded, setIsExpanded] = useState(true)
-    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false)
+    const [localDrawerOpen, setLocalDrawerOpen] = useState(false)
+
+    const drawerOpen = filterDrawerOpenProp !== undefined ? filterDrawerOpenProp : localDrawerOpen
+    const setDrawerOpen = (open: boolean) => {
+        onFilterDrawerOpenChange?.(open)
+        if (filterDrawerOpenProp === undefined) setLocalDrawerOpen(open)
+    }
+
+    useEffect(() => {
+        if (!drawerOpen) return
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setDrawerOpen(false)
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [drawerOpen])
+
+    useEffect(() => {
+        if (!drawerOpen) return
+        const prev = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        return () => {
+            document.body.style.overflow = prev
+        }
+    }, [drawerOpen])
 
     const isContactLenses = categorySlug === 'contact-lenses'
     const isEyeHygiene = categorySlug === 'eye-hygiene'
@@ -289,7 +321,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                 <div className="mb-4 lg:hidden">
                     <button
                         type="button"
-                        onClick={() => setIsMobileFilterOpen(true)}
+                        onClick={() => setDrawerOpen(true)}
                         className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-800 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +338,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
             )}
 
             {/* Desktop sidebar */}
-            <div className={`hidden lg:block ${className}`}>
+            <div className={`${showDesktopSidebar ? 'hidden lg:block' : 'hidden'} ${className}`}>
                 <div className="rounded-2xl border border-slate-200/90 bg-white shadow-sm">
                     {/* Header */}
                     <div className="p-3 border-b border-gray-100">
@@ -744,18 +776,26 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                 </div>
             </div>
 
-            {/* Filter Drawer - Slides from Left (Both Mobile and Desktop) */}
-            <div className={`fixed inset-0 z-50 ${isMobileFilterOpen ? 'block' : 'hidden'}`}>
-                {/* Backdrop */}
-                <div 
-                    className="absolute inset-0 bg-black bg-opacity-50 transition-opacity duration-300"
-                    onClick={() => setIsMobileFilterOpen(false)}
+            {/* Filter Drawer — z above app chrome (e.g. Navbar z-50) so controls stay visible */}
+            <div className={`fixed inset-0 z-[100] ${drawerOpen ? 'block' : 'hidden'}`}>
+                {/* Backdrop — use bg-black/50 (Tailwind v4); bg-black + bg-opacity-* can render as solid black */}
+                <div
+                    className="absolute inset-0 z-0 bg-black/50 transition-opacity duration-300"
+                    onClick={() => setDrawerOpen(false)}
+                    aria-hidden
                 />
-                
+
                 {/* Filter Drawer */}
-                <div className={`absolute top-0 left-0 h-full w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div
+                    id="shop-filters-panel"
+                    role="dialog"
+                    aria-modal="true"
+                    className={`absolute top-0 left-0 z-10 flex h-full max-h-screen flex-col bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+                        showDesktopSidebar ? 'w-64' : 'w-full max-w-sm sm:max-w-md'
+                    } ${drawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                >
                     {/* Drawer Header */}
-                    <div className="p-3 border-b border-gray-100 bg-white sticky top-0 z-10">
+                    <div className="shrink-0 border-b border-gray-100 bg-white p-3">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -778,7 +818,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                     </button>
                                 )}
                                 <button
-                                    onClick={() => setIsMobileFilterOpen(false)}
+                                    onClick={() => setDrawerOpen(false)}
                                     className="text-gray-400 hover:text-gray-600 transition-colors"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -789,8 +829,8 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         </div>
                     </div>
 
-                    {/* Drawer Content - Scrollable */}
-                    <div className="h-full overflow-y-auto pb-16">
+                    {/* Drawer Content — flex-1 + min-h-0 so the scroll region gets real height (h-full alone breaks with header/footer) */}
+                    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3">
                         {/* Search Section */}
                         <div className="p-3 space-y-2 border-b border-gray-100">
                             <div className="relative">
@@ -1166,10 +1206,10 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                         </div>
                     </div>
 
-                    {/* Apply Button - Fixed at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 bg-white border-t border-gray-100">
+                    <div className="shrink-0 border-t border-gray-100 bg-white p-3">
                         <button
-                            onClick={() => setIsMobileFilterOpen(false)}
+                            type="button"
+                            onClick={() => setDrawerOpen(false)}
                             className="w-full bg-blue-500 text-white font-medium py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm"
                         >
                             {t('shop.filters.applyFilters', 'Applica filtri')}
