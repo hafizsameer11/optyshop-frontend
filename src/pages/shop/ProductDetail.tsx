@@ -420,7 +420,7 @@ const ProductDetail = () => {
 
 
     // Check if product is a contact lens
-    const { translateCategory } = useCategoryTranslation()
+    const { menuCategoryLabel } = useCategoryTranslation()
 
     // Fetched variants from API
     const [fetchedVariants, setFetchedVariants] = useState<SizeVolumeVariant[]>([])
@@ -2917,42 +2917,58 @@ const ProductDetail = () => {
             return getVariantImageUrl(product, selectedSizeVolumeVariant as any, imageIndex)
         }
 
-        // Priority 5: Use color-specific images if color is selected
+        // Priority 5: Use color-specific images if color is selected (prepend main product images so the primary photo stays in the gallery)
         if (selectedColor) {
             const p = product as any
             const selectedColorLower = (selectedColor || '').toLowerCase()
 
-            // First try 'colors' array (preferred format from API)
+            const mainUrls: string[] = []
+            if (p.images) {
+                if (typeof p.images === 'string') {
+                    try {
+                        const parsed = JSON.parse(p.images)
+                        if (Array.isArray(parsed)) mainUrls.push(...parsed.filter(Boolean))
+                        else if (parsed) mainUrls.push(String(parsed))
+                    } catch {
+                        if (p.images.trim()) mainUrls.push(p.images)
+                    }
+                } else if (Array.isArray(p.images)) {
+                    mainUrls.push(...p.images.filter(Boolean))
+                }
+            }
+            const mergeUnique = (base: string[], extra: string[]) => {
+                const out = [...base.filter(Boolean)]
+                extra.filter(Boolean).forEach((u) => {
+                    if (!out.includes(u)) out.push(u)
+                })
+                return out
+            }
+
+            let colorUrls: string[] = []
             if (p.colors && Array.isArray(p.colors)) {
                 const colorData = p.colors.find((c: any) =>
                     (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                    (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                    (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
                     (c.name && c.name.toLowerCase() === selectedColorLower)
                 )
                 if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                    if (colorData.images[imageIndex]) {
-                        return colorData.images[imageIndex]
-                    } else if (colorData.images[0]) {
-                        // Fallback to first image of selected color if selected index doesn't exist
-                        return colorData.images[0]
-                    }
+                    colorUrls = colorData.images.filter(Boolean)
                 }
             }
-
-            // Fallback to 'color_images' array
-            if (product.color_images) {
-                const colorImage = product.color_images.find(ci =>
+            if (!colorUrls.length && product.color_images) {
+                const colorImage = product.color_images.find((ci: any) =>
                     (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                    (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                    (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
+                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
                 )
-                if (colorImage && colorImage.images) {
-                    if (colorImage.images[imageIndex]) {
-                        return colorImage.images[imageIndex]
-                    } else if (colorImage.images[0]) {
-                        // Fallback to first image of selected color if selected index doesn't exist
-                        return colorImage.images[0]
-                    }
+                if (colorImage && colorImage.images && Array.isArray(colorImage.images)) {
+                    colorUrls = colorImage.images.filter(Boolean)
                 }
+            }
+            const combined = mergeUnique(mainUrls, colorUrls)
+            if (combined.length > 0) {
+                if (combined[imageIndex]) return combined[imageIndex]
+                return combined[0]
             }
         }
 
@@ -3799,7 +3815,7 @@ const ProductDetail = () => {
                                                     ? product.color_images.map((ci: any) => ({
                                                         name: ci.name || ci.color,
                                                         display_name: ci.display_name || ci.name || ci.color,
-                                                        value: ci.value || ci.color,
+                                                        value: ci.value || ci.hexCode || ci.color,
                                                         hexCode: ci.hexCode || '#E5E5E5',
                                                         price: ci.price,
                                                         images: ci.images || []
@@ -4025,30 +4041,49 @@ const ProductDetail = () => {
                                                 const p = product as any
 
                                                 if (selectedColor) {
+                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
+                                                    let colorOnly: string[] = []
                                                     // First try 'colors' array (preferred)
                                                     if (p.colors && Array.isArray(p.colors)) {
-                                                        const selectedColorLower = (selectedColor || '').toLowerCase()
                                                         const colorData = p.colors.find((c: any) =>
                                                             (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                            (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                            (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
                                                             (c.name && c.name.toLowerCase() === selectedColorLower)
                                                         )
                                                         if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                            imagesArray = colorData.images
+                                                            colorOnly = colorData.images.filter(Boolean)
                                                         }
                                                     }
 
                                                     // Fallback to 'color_images' array
-                                                    if (imagesArray.length === 0 && product.color_images) {
-                                                        const selectedColorLower = (selectedColor || '').toLowerCase()
-                                                        const colorImage = product.color_images.find(ci =>
+                                                    if (colorOnly.length === 0 && product.color_images) {
+                                                        const colorImage = product.color_images.find((ci: any) =>
                                                             (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                            (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                                            (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
+                                                            (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
                                                         )
                                                         if (colorImage && colorImage.images) {
-                                                            imagesArray = colorImage.images
+                                                            colorOnly = Array.isArray(colorImage.images) ? colorImage.images.filter(Boolean) : [colorImage.images]
                                                         }
                                                     }
+
+                                                    let mainUrls: string[] = []
+                                                    if (product.images) {
+                                                        if (typeof product.images === 'string') {
+                                                            try {
+                                                                const parsed = JSON.parse(product.images)
+                                                                mainUrls = Array.isArray(parsed) ? parsed.filter(Boolean) : [product.images]
+                                                            } catch {
+                                                                mainUrls = [product.images]
+                                                            }
+                                                        } else if (Array.isArray(product.images)) {
+                                                            mainUrls = product.images.filter(Boolean)
+                                                        }
+                                                    }
+                                                    imagesArray = [...mainUrls]
+                                                    colorOnly.forEach((u) => {
+                                                        if (u && !imagesArray.includes(u)) imagesArray.push(u)
+                                                    })
                                                 }
 
                                                 // Fallback to regular images if no color images or no color selected
@@ -4975,30 +5010,47 @@ const ProductDetail = () => {
                                                 imagesArray = [variantImageUrl]
                                             }
                                         } else if (selectedColor) {
-                                            // First try 'colors' array (preferred)
+                                            const selectedColorLower = (selectedColor || '').toLowerCase()
+                                            let colorOnly: string[] = []
                                             if (p.colors && Array.isArray(p.colors)) {
-                                                const selectedColorLower = (selectedColor || '').toLowerCase()
                                                 const colorData = p.colors.find((c: any) =>
                                                     (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                    (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                                                    (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
                                                     (c.name && c.name.toLowerCase() === selectedColorLower)
                                                 )
                                                 if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                    imagesArray = colorData.images
+                                                    colorOnly = colorData.images.filter(Boolean)
                                                 }
                                             }
 
-                                            // Fallback to 'color_images' array
-                                            if (imagesArray.length === 0 && product.color_images) {
-                                                const selectedColorLower = (selectedColor || '').toLowerCase()
+                                            if (colorOnly.length === 0 && product.color_images) {
                                                 const colorImage = product.color_images.find((ci: any) =>
                                                     (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                    (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                                                    (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
+                                                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
                                                 )
                                                 if (colorImage && colorImage.images) {
-                                                    imagesArray = colorImage.images
+                                                    colorOnly = Array.isArray(colorImage.images) ? colorImage.images.filter(Boolean) : [colorImage.images]
                                                 }
                                             }
+
+                                            let mainUrls: string[] = []
+                                            if (product.images) {
+                                                if (typeof product.images === 'string') {
+                                                    try {
+                                                        const parsed = JSON.parse(product.images)
+                                                        mainUrls = Array.isArray(parsed) ? parsed.filter(Boolean) : [product.images]
+                                                    } catch {
+                                                        mainUrls = [product.images]
+                                                    }
+                                                } else if (Array.isArray(product.images)) {
+                                                    mainUrls = product.images.filter(Boolean)
+                                                }
+                                            }
+                                            imagesArray = [...mainUrls]
+                                            colorOnly.forEach((u) => {
+                                                if (u && !imagesArray.includes(u)) imagesArray.push(u)
+                                            })
                                         }
 
                                         // Fallback to regular images if no color images or no color selected
@@ -5679,7 +5731,7 @@ const ProductDetail = () => {
                                             {product.category && (
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-bold text-gray-400 uppercase mb-1">Category</span>
-                                                    <span className="text-gray-700 font-semibold">{translateCategory(product.category)}</span>
+                                                    <span className="text-gray-700 font-semibold">{menuCategoryLabel(product.category)}</span>
                                                 </div>
                                             )}
                                             {(() => {

@@ -72,7 +72,7 @@ const validateProductFiltering = (products: Product[], categoryInfo: {
 
 const CategoryPage: React.FC = () => {
     const { t } = useTranslation()
-    const { translateCategory } = useCategoryTranslation()
+    const { menuCategoryLabel } = useCategoryTranslation()
     const { categorySlug, subcategorySlug, subSubcategorySlug } = useParams<{ 
         categorySlug: string; 
         subcategorySlug?: string;
@@ -275,13 +275,13 @@ const CategoryPage: React.FC = () => {
 
     const pageTitleLabel = useMemo(() => {
         if (categoryInfo.category) {
-            return translateCategory(
+            return menuCategoryLabel(
                 categoryInfo.subSubcategory || categoryInfo.subcategory || categoryInfo.category
             )
         }
         const leaf = subSubcategorySlug || subcategorySlug || categorySlug || ''
         return leaf.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-    }, [categoryInfo, categorySlug, subcategorySlug, subSubcategorySlug, translateCategory])
+    }, [categoryInfo, categorySlug, subcategorySlug, subSubcategorySlug, menuCategoryLabel])
 
     // Fetch category, subcategory, and sub-subcategory info
     useEffect(() => {
@@ -1130,11 +1130,11 @@ const CategoryPage: React.FC = () => {
                                             {t('shop.noProducts', {
                                                 category:
                                                     categoryInfo.subSubcategory
-                                                        ? translateCategory(categoryInfo.subSubcategory)
+                                                        ? menuCategoryLabel(categoryInfo.subSubcategory)
                                                         : categoryInfo.subcategory
-                                                          ? translateCategory(categoryInfo.subcategory)
+                                                          ? menuCategoryLabel(categoryInfo.subcategory)
                                                           : categoryInfo.category
-                                                            ? translateCategory(categoryInfo.category)
+                                                            ? menuCategoryLabel(categoryInfo.category)
                                                             : pageTitleLabel,
                                             })}
                                         </p>
@@ -1150,14 +1150,14 @@ const CategoryPage: React.FC = () => {
                                                 to={`/category/${categoryInfo.category?.slug || ''}/${categoryInfo.subcategory?.slug || ''}`}
                                                 className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
                                             >
-                                                {t('shop.viewProducts', { category: translateCategory(categoryInfo.subcategory) })}
+                                                {t('shop.viewProducts', { category: menuCategoryLabel(categoryInfo.subcategory) })}
                                             </Link>
                                         ) : categoryInfo.subcategory ? (
                                             <Link 
                                                 to={`/category/${categoryInfo.category?.slug || ''}`}
                                                 className="inline-block px-8 py-4 bg-blue-950 text-white rounded-xl hover:bg-blue-900 transition-all duration-200 transform hover:scale-105 shadow-lg mr-4 font-semibold"
                                             >
-                                                {t('shop.viewProducts', { category: translateCategory(categoryInfo.category || { name: '', slug: '' }) })}
+                                                {t('shop.viewProducts', { category: menuCategoryLabel(categoryInfo.category || { name: '', slug: '' }) })}
                                             </Link>
                                         ) : null}
                                         <Link 

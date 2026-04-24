@@ -27,7 +27,7 @@ interface ShopCategorySection {
 
 const ShopCategories: React.FC = () => {
     const { t } = useTranslation()
-    const { translateCategory } = useCategoryTranslation()
+    const { menuCategoryLabel } = useCategoryTranslation()
     const { toggleWishlist, isInWishlist } = useWishlist()
     const { addToCart } = useCart()
     const { isAuthenticated } = useAuth()
@@ -249,14 +249,14 @@ const ShopCategories: React.FC = () => {
                             return (
                             <div key={section.rowKey} className="category-section">
                                 <CategoryBanner 
-                                    categoryName={translateCategory(category)}
+                                    categoryName={menuCategoryLabel(category)}
                                     categoryId={parent ? parent.id : category.id}
                                     subcategoryId={parent ? category.id : undefined}
                                     position={parent ? 'subcategory_page' : 'category_section'}
                                 />
                                 <div className="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
                                     <h2 className="min-w-0 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
-                                        {translateCategory(category)}
+                                        {menuCategoryLabel(category)}
                                     </h2>
                                     <Link
                                         to={categoryPath}

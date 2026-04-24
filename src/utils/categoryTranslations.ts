@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { getMenuCategoryLabel } from './menuCategoryName'
 
 /**
  * Maps category slugs to translation keys
@@ -69,7 +70,7 @@ const normalizeSlug = (slug: string): string[] => {
  * - Sub-subcategories (via subcategories.{slug} - uses unique slug)
  */
 export const useCategoryTranslation = () => {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const translateCategory = (category: { name: string; slug: string } | null | undefined): string => {
     if (!category) return ''
@@ -142,7 +143,18 @@ export const useCategoryTranslation = () => {
     return category.name
   }
 
-  return { translateCategory }
+  const menuCategoryLabel = (
+    category: { name: string; slug: string; name_it?: string | null } | null | undefined
+  ): string => {
+    if (!category) return ''
+    return getMenuCategoryLabel(
+      category,
+      i18n.resolvedLanguage || i18n.language,
+      translateCategory
+    )
+  }
+
+  return { translateCategory, menuCategoryLabel }
 }
 
 /**

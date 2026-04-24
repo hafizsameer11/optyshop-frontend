@@ -19,6 +19,7 @@ export interface CategoryProduct {
 export interface Category {
   id: number;
   name: string;
+  name_it?: string | null;
   slug: string;
   description: string | null;
   image: string | null;

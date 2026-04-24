@@ -11,9 +11,9 @@ import { searchAll, type SearchResult } from '../services/searchService'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar: React.FC = () => {
-    const { t } = useTranslation()
+    const { t, i18n } = useTranslation()
     const { user } = useAuth()
-    const { translateCategory } = useCategoryTranslation()
+    const { menuCategoryLabel } = useCategoryTranslation()
     const location = useLocation()
     const navigate = useNavigate()
     const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -447,7 +447,7 @@ const Navbar: React.FC = () => {
                                             : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
                                     }`}
                                 >
-                                    <span>{translateCategory(category)}</span>
+                                    <span>{menuCategoryLabel(category)}</span>
                                 </Link>
                                 {category.subcategories && category.subcategories.length > 0 && (
                                     <button
@@ -563,7 +563,7 @@ const Navbar: React.FC = () => {
                                                         }}
                                                     >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 group-hover/item:bg-cyan-400 transition-colors"></span>
-                                                        <span>{translateCategory(subcategory)}</span>
+                                                        <span>{menuCategoryLabel(subcategory)}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
                                                         <button
@@ -631,7 +631,7 @@ const Navbar: React.FC = () => {
                                                     >
                                                         <div className="px-2">
                                                             <div className="px-3 py-1.5 mb-1">
-                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{translateCategory(subcategory)}</p>
+                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{menuCategoryLabel(subcategory)}</p>
                                                             </div>
                                                             {subcategory.children.map((child, childIndex) => (
                                                                 <React.Fragment key={child.id}>
@@ -649,7 +649,7 @@ const Navbar: React.FC = () => {
                                                                         }}
                                                                     >
                                                                         <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
-                                                                        <span>{translateCategory(child)}</span>
+                                                                        <span>{menuCategoryLabel(child)}</span>
                                                                     </Link>
                                                                 </React.Fragment>
                                                             ))}
@@ -668,6 +668,34 @@ const Navbar: React.FC = () => {
                 
                 {/* Right side actions - Compact */}
                 <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                    <div
+                        className="flex rounded-md border border-cyan-400/45 overflow-hidden flex-shrink-0"
+                        role="group"
+                        aria-label={t('navbar.menuLanguage', 'Shop menu language')}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => i18n.changeLanguage('en')}
+                            className={`px-2 py-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                                (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'en'
+                                    ? 'bg-cyan-400 text-blue-950'
+                                    : 'text-white/85 hover:bg-blue-900/50'
+                            }`}
+                        >
+                            EN
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => i18n.changeLanguage('it')}
+                            className={`px-2 py-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                                (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'it'
+                                    ? 'bg-cyan-400 text-blue-950'
+                                    : 'text-white/85 hover:bg-blue-900/50'
+                            }`}
+                        >
+                            IT
+                        </button>
+                    </div>
                     {/* Language Switcher - Always visible */}
                     <div className="flex-shrink-0">
                         <LanguageSwitcher variant="navbar" />
@@ -866,7 +894,7 @@ const Navbar: React.FC = () => {
                                         }`}
                                     >
                                         <span className="w-2 h-2 rounded-full bg-cyan-400/60"></span>
-                                        <span>{translateCategory(category)}</span>
+                                        <span>{menuCategoryLabel(category)}</span>
                                     </Link>
                                     {category.subcategories && category.subcategories.length > 0 && (
                                         <button
@@ -901,7 +929,7 @@ const Navbar: React.FC = () => {
                                                         className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-950/80 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 transition-all duration-200 flex items-center gap-2"
                                                     >
                                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60"></span>
-                                                        <span>{translateCategory(subcategory)}</span>
+                                                        <span>{menuCategoryLabel(subcategory)}</span>
                                                     </Link>
                                                     {subcategory.children && subcategory.children.length > 0 && (
                                                         <button
@@ -925,7 +953,7 @@ const Navbar: React.FC = () => {
                                                 {mobileOpenSubcategory === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
                                                     <div className="ml-4 space-y-1 border-l-2 border-cyan-400/25 pl-3 mt-1 transition-all duration-200">
                                                         <div className="px-2 py-1 mb-1">
-                                                            <p className="text-xs font-semibold text-cyan-400/70 uppercase tracking-wider">{translateCategory(subcategory)}</p>
+                                                            <p className="text-xs font-semibold text-cyan-400/70 uppercase tracking-wider">{menuCategoryLabel(subcategory)}</p>
                                                         </div>
                                                         {subcategory.children.map((child, childIndex) => (
                                                             <React.Fragment key={child.id}>
@@ -938,7 +966,7 @@ const Navbar: React.FC = () => {
                                                                     className="block px-4 py-2 rounded-lg text-sm bg-blue-950/70 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 transition-all duration-200 flex items-center gap-2"
                                                                 >
                                                                     <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
-                                                                    <span>{translateCategory(child)}</span>
+                                                                    <span>{menuCategoryLabel(child)}</span>
                                                                 </Link>
                                                             </React.Fragment>
                                                         ))}
@@ -964,6 +992,37 @@ const Navbar: React.FC = () => {
                     </div>
 
                     <div className="pt-4 border-t border-cyan-400/30 space-y-3">
+                        <div className="pb-2">
+                            <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider mb-2 px-1">
+                                {t('navbar.menuLanguage', 'Shop menu (EN / IT)')}
+                            </p>
+                            <div className="flex justify-center gap-2">
+                                <div className="flex rounded-md border border-cyan-400/45 overflow-hidden">
+                                    <button
+                                        type="button"
+                                        onClick={() => i18n.changeLanguage('en')}
+                                        className={`px-3 py-1.5 text-xs font-bold uppercase ${
+                                            (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'en'
+                                                ? 'bg-cyan-400 text-blue-950'
+                                                : 'text-white/90 hover:bg-blue-900/50'
+                                        }`}
+                                    >
+                                        EN
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => i18n.changeLanguage('it')}
+                                        className={`px-3 py-1.5 text-xs font-bold uppercase ${
+                                            (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'it'
+                                                ? 'bg-cyan-400 text-blue-950'
+                                                : 'text-white/90 hover:bg-blue-900/50'
+                                        }`}
+                                    >
+                                        IT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                         {/* Language Switcher - Prominent in mobile menu */}
                         <div className="pb-2">
                             <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider mb-2 px-1">{t('common.language') || 'Language'}</p>
