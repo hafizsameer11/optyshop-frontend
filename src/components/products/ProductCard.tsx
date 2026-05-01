@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
-import { getShopProductBrandLabel } from '../../utils/productDisplayName'
+import { getShopProductBrandLabel, isShopContactLensProduct } from '../../utils/productDisplayName'
 import { getProxiedImageUrl } from '../../services/imageProxyService'
 import { normalizeProductSubcategory, type Product } from '../../services/productsService'
 
@@ -299,6 +299,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     }
 
     const isOutOfStock = product.in_stock === false
+    const hideAddToCartOnCard = isShopContactLensProduct(product)
     const { current: displayPrice, compare: comparePrice } = resolveListAndCurrentPrice(product)
 
     const brandLabel = getShopProductBrandLabel(product)
@@ -445,18 +446,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </p>
                 ) : null}
 
-                <button
-                    type="button"
-                    onClick={handleAddToCart}
-                    disabled={isOutOfStock}
-                    className={`mt-auto w-full rounded-lg border py-2.5 text-sm font-semibold transition-all ${
-                        isOutOfStock
-                            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
-                            : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'
-                    }`}
-                >
-                    {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}
-                </button>
+                {!hideAddToCartOnCard ? (
+                    <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        disabled={isOutOfStock}
+                        className={`mt-auto w-full rounded-lg border py-2.5 text-sm font-semibold transition-all ${
+                            isOutOfStock
+                                ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                                : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'
+                        }`}
+                    >
+                        {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}
+                    </button>
+                ) : null}
             </div>
         </article>
     )

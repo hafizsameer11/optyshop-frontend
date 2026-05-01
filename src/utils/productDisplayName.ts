@@ -1,6 +1,27 @@
 import type { Product } from '../services/productsService'
 
 /**
+ * Contact lens shop products: prescription / pack / toric options belong on the detail page,
+ * not on listing cards. Mirrors {@link ProductDetail} `isContactLens` logic.
+ */
+export function isShopContactLensProduct(product: Product | null | undefined): boolean {
+    if (!product) return false
+    const p = product as Record<string, unknown>
+    const categorySlug = (product.category?.slug || '').toLowerCase()
+    const categoryName = (product.category?.name || '').toLowerCase()
+    const clt = p.contact_lens_type
+    const hasContactLensType =
+        (typeof clt === 'string' && clt.length > 0) ||
+        (Array.isArray(clt) && clt.length > 0)
+    return (
+        categorySlug.includes('contact') ||
+        categoryName.includes('contact') ||
+        categorySlug.includes('lens') ||
+        hasContactLensType
+    )
+}
+
+/**
  * Eyebrow / card brand line: `brand`, then `contact_lens_brand`, then category name.
  * Returns null when nothing should be shown (avoids a fake "Brand" placeholder).
  */
