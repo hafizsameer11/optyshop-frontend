@@ -18,9 +18,9 @@ const Footer: React.FC = () => {
 
             <div className="w-[90%] max-w-7xl mx-auto py-12 px-4">
                 {/* Main footer content */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
-                    {/* Column 1: Logo & About */}
-                    <div className="lg:col-span-1">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 mb-12 items-start">
+                    {/* Brand: logo, tagline, social */}
+                    <div className="lg:col-span-5">
                         <div className="flex items-center space-x-2 mb-3">
                             <div className="h-10 w-10 border-2 border-blue-400 rounded-md flex items-center justify-center text-sm tracking-widest bg-white/10">
                                 OS
@@ -69,112 +69,8 @@ const Footer: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Column 2: Products */}
-                    <div>
-                        <h3 className="text-white font-semibold mb-3 text-base">{t('footer.products')}</h3>
-                        <div className="h-px bg-white/30 mb-4"></div>
-                        <ul className="space-y-2.5 text-sm text-slate-400">
-                            <li>
-                                <Link to="/digital-frames" className="hover:text-white transition-colors">
-                                    {t('products.digitalizedFrames')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/optical-instruments" className="hover:text-white transition-colors">
-                                    {t('products.opticiansInstruments')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/pd-measurement" className="hover:text-white transition-colors">
-                                    {t('products.measurementOfDP')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/open-innovation" className="hover:text-white transition-colors">
-                                    {t('products.openInnovation')}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 3: Solutions */}
-                    <div>
-                        <h3 className="text-white font-semibold mb-3 text-base">{t('footer.solutions')}</h3>
-                        <div className="h-px bg-white/30 mb-4"></div>
-                        <ul className="space-y-2.5 text-sm text-slate-400">
-                            <li>
-                                <Link to="/online" className="hover:text-white transition-colors">
-                                    {t('solutions.online')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/in-store" className="hover:text-white transition-colors">
-                                    {t('solutions.inStore')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/ecommerce" className="hover:text-white transition-colors">
-                                    {t('solutions.ecommerce')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/pupil-distance" className="hover:text-white transition-colors">
-                                    {t('solutions.pupilDistance')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/drive-to-store" className="hover:text-white transition-colors">
-                                    {t('solutions.driveToStore')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/webinar" className="hover:text-white transition-colors">
-                                    {t('solutions.webinar')}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 4: Resources */}
-                    <div>
-                        <h3 className="text-white font-semibold mb-3 text-base">{t('footer.resources')}</h3>
-                        <div className="h-px bg-white/30 mb-4"></div>
-                        <ul className="space-y-2.5 text-sm text-slate-400">
-                            <li>
-                                <Link to="/case-studies" className="hover:text-white transition-colors">
-                                    {t('resources.caseStudies')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/hq-packshots" className="hover:text-white transition-colors">
-                                    {t('resources.hqPackshots')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/support" className="hover:text-white transition-colors">
-                                    {t('resources.support')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/help-center" className="hover:text-white transition-colors">
-                                    {t('resources.helpCenter')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/guides-and-webinars" className="hover:text-white transition-colors">
-                                    {t('resources.guidesAndWebinars')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/blog" className="hover:text-white transition-colors">
-                                    {t('resources.blog')}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
-
-                    {/* Column 5: Company & Shop */}
-                    <div>
+                    {/* Company, shop, blog & account */}
+                    <div className="lg:col-span-7">
                         <h3 className="text-white font-semibold mb-3 text-base">{t('footer.companyAndShop')}</h3>
                         <div className="h-px bg-white/30 mb-4"></div>
                         {/* Language Switcher */}
@@ -184,7 +80,7 @@ const Footer: React.FC = () => {
                                 <LanguageSwitcher variant="navbar" />
                             </div>
                         </div>
-                        <ul className="space-y-2.5 text-sm text-slate-400 mb-6">
+                        <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2.5 text-sm text-slate-400 mb-6">
                             <li>
                                 <Link to="/our-history" className="hover:text-white transition-colors">
                                     {t('whoWeAre.ourHistory')}
@@ -203,6 +99,11 @@ const Footer: React.FC = () => {
                             <li>
                                 <Link to="/job-opportunities" className="hover:text-white transition-colors">
                                     {t('whoWeAre.jobOpportunities')}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to="/blog" className="hover:text-white transition-colors font-medium text-slate-300">
+                                    {t('resources.blog')}
                                 </Link>
                             </li>
                             <li>
@@ -233,8 +134,9 @@ const Footer: React.FC = () => {
                         </ul>
                         {/* Contact Us Button */}
                         <button
+                            type="button"
                             onClick={handleContactClick}
-                            className="w-full px-6 py-3 bg-[#212B47] border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 uppercase tracking-wide text-sm"
+                            className="inline-flex w-full sm:w-auto justify-center px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-full hover:bg-white/10 transition-colors duration-300 text-sm"
                         >
                             {t('footer.contactUs')}
                         </button>

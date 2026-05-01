@@ -711,16 +711,16 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
           </>
         )}
         
-        {/* TABO and INT. labels - shown only on left eye (Occhio Sinistro) */}
+        {/* TABO and INT. labels - shown only on left eye (Occhio Sinistro); INT. left (180°), TABO 0 right (0°) */}
         {eyeType === 'left' && (
           <>
-            {/* TABO 0 - below the diagram, aligned with the left side (180-degree mark) */}
+            {/* INT. - below the diagram, aligned with the left side (180-degree mark) */}
             {(() => {
-              const taboAngle = (180 * Math.PI) / 180
-              const taboX = centerX + Math.cos(taboAngle) * (radius - 50)
+              const intAngle = (180 * Math.PI) / 180
+              const intLabelX = centerX + Math.cos(intAngle) * (radius - 50)
               return (
                 <text
-                  x={taboX}
+                  x={intLabelX}
                   y={centerY + 45}
                   fontSize="22"
                   fill="#000"
@@ -728,11 +728,11 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
                   fontFamily="Arial, sans-serif"
                   textAnchor="middle"
                 >
-                  TABO 0
+                  INT.
                 </text>
               )
             })()}
-            {/* INT. - at the far right, horizontally aligned with the 0-degree mark on outer scale */}
+            {/* TABO 0 - at the far right, horizontally aligned with the 0-degree mark on outer scale */}
             <text
               x={centerX + radius + 30}
               y={centerY + 15}
@@ -742,7 +742,7 @@ const EyeAxisDiagram: React.FC<EyeAxisDiagramProps> = ({
               fontFamily="Arial, sans-serif"
               textAnchor="start"
             >
-              INT.
+              TABO 0
             </text>
             {/* Display TABO value for left eye - show the converted TABO value */}
             {(() => {

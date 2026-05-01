@@ -115,6 +115,68 @@ function parseOptionalProductMoney(value: unknown): number | null {
     return Number.isFinite(n) ? n : null
 }
 
+/** Merge parsed numeric prices from API unit_prices (values may be strings). */
+function mergeUnitPricesRecord(target: Record<string, number>, source: Record<string, unknown> | null | undefined) {
+    if (!source || typeof source !== 'object') return
+    for (const [k, v] of Object.entries(source)) {
+        const n = parseOptionalProductMoney(v)
+        if (n != null) target[k] = n
+    }
+}
+
+/**
+ * Pack sizes and merged prices for contact lens UI (must stay in sync with "Choose Pack Size"
+ * and with auto-selection of selectedUnit).
+ */
+function resolveContactLensPackUnits(
+    currentConfig: SphericalConfig | AstigmatismConfig | null,
+    allConfigs: (SphericalConfig | AstigmatismConfig)[]
+): { availableUnits: number[]; allUnitPrices: Record<string, number> } {
+    let availableUnits: number[] = []
+    const allUnitPrices: Record<string, number> = {}
+
+    if (currentConfig) {
+        const configAvailableUnits = (currentConfig as Record<string, unknown>).available_units
+        if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
+            availableUnits = configAvailableUnits
+                .filter((u: unknown) => u != null && u !== '' && !isNaN(Number(u)))
+                .map((u: unknown) => Number(u))
+                .filter((n: number) => !isNaN(n) && n > 0)
+        }
+        const configUnitPrices = (currentConfig as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
+        mergeUnitPricesRecord(allUnitPrices, configUnitPrices)
+
+        if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+            availableUnits = Object.keys(allUnitPrices)
+                .map((k) => Number(k))
+                .filter((n) => !isNaN(n) && n > 0)
+        }
+    }
+
+    if (availableUnits.length === 0 && allConfigs && allConfigs.length > 0) {
+        for (const config of allConfigs) {
+            const cau = (config as Record<string, unknown>).available_units
+            if (cau && Array.isArray(cau) && cau.length > 0) {
+                const units = cau
+                    .filter((u: unknown) => u != null && u !== '' && !isNaN(Number(u)))
+                    .map((u: unknown) => Number(u))
+                    .filter((n: number) => !isNaN(n) && n > 0)
+                availableUnits = [...new Set([...availableUnits, ...units])]
+            }
+            const cup = (config as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
+            mergeUnitPricesRecord(allUnitPrices, cup)
+        }
+        if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
+            availableUnits = Object.keys(allUnitPrices)
+                .map((k) => Number(k))
+                .filter((n) => !isNaN(n) && n > 0)
+        }
+    }
+
+    availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
+    return { availableUnits, allUnitPrices }
+}
+
 const ProductDetail = () => {
     const { t } = useTranslation()
     const { slug } = useParams<{ slug: string }>()
@@ -793,6 +855,22 @@ const ProductDetail = () => {
 
         return false
     }, [product, subSubcategoryOptions, selectedConfig])
+
+    const contactLensPackResolution = useMemo(() => {
+        if (!isContactLens) {
+            return { availableUnits: [] as number[], allUnitPrices: {} as Record<string, number> }
+        }
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
+        return resolveContactLensPackUnits(currentConfig, allConfigs)
+    }, [
+        isContactLens,
+        selectedConfig,
+        selectedAstigmatismConfig,
+        isAstigmatismSubSubcategory,
+        sphericalConfigs,
+        astigmatismConfigs,
+    ])
 
     useEffect(() => {
         let isCancelled = false
@@ -2657,27 +2735,31 @@ const ProductDetail = () => {
             return 0
         }
 
-        // Get unit price: priority 1) unit_prices from config (immediate), 2) fetched unitPrice, 3) base price
+        // Pack price: merged map (same as pack buttons) → selected config → fetched unitPrice → base
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         let pricePerPack = 0
 
-        // Priority 1: Use unit price directly from config (immediate, no API call needed)
-        if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
-            const configUnitPrice = (currentConfig as any).unit_prices[String(selectedUnit)]
-            if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
+        const mergedPackPrice =
+            selectedUnit != null
+                ? parseOptionalProductMoney(contactLensPackResolution.allUnitPrices[String(selectedUnit)])
+                : null
+
+        if (selectedUnit && mergedPackPrice != null) {
+            pricePerPack = mergedPackPrice
+        } else if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
+            const configUnitPrice = parseOptionalProductMoney(
+                (currentConfig as any).unit_prices[String(selectedUnit)]
+            )
+            if (configUnitPrice != null) {
                 pricePerPack = configUnitPrice
             } else if (unitPrice !== null) {
-                // Fallback to fetched unit price (from API)
                 pricePerPack = unitPrice
             } else {
-                // Fallback to base price
                 pricePerPack = getUnitPrice(contactLensFormData.unit)
             }
         } else if (unitPrice !== null) {
-            // Use fetched unit price (from API) if no config unit_prices
             pricePerPack = unitPrice
         } else {
-            // No unit selected or no unit pricing, use base price
             pricePerPack = getUnitPrice(contactLensFormData.unit)
         }
 
@@ -2694,6 +2776,7 @@ const ProductDetail = () => {
         selectedUnit,
         selectedConfig,
         selectedAstigmatismConfig,
+        contactLensPackResolution,
         getUnitPrice,
         rightEyeEnabled,
         leftEyeEnabled
@@ -3055,121 +3138,124 @@ const ProductDetail = () => {
         }
     }
 
-    // Auto-select first available unit when config loads or changes
+    // Auto-select first available unit when pack list / config changes (same list as "Choose Pack Size").
+    // Uses functional setState so we do not depend on selectedUnit and clearing selection is not immediately undone.
     useEffect(() => {
-        const currentConfig = selectedConfig || selectedAstigmatismConfig
-        if (currentConfig && isContactLens) {
-            // Get available units - check available_units first, then unit_prices keys as fallback
-            let availableUnits: number[] = []
-
-            // Priority 1: Check available_units array
-            if ((currentConfig as any).available_units && Array.isArray((currentConfig as any).available_units) && (currentConfig as any).available_units.length > 0) {
-                availableUnits = (currentConfig as any).available_units.filter((u: any) => u != null && !isNaN(Number(u))).map((u: any) => Number(u))
-            }
-
-            // Priority 2: If no available_units or empty, use unit_prices keys
-            if (availableUnits.length === 0 && (currentConfig as any).unit_prices && typeof (currentConfig as any).unit_prices === 'object') {
-                availableUnits = Object.keys((currentConfig as any).unit_prices)
-                    .map(k => Number(k))
-                    .filter(n => !isNaN(n) && n > 0)
-            }
-
-            if (availableUnits.length > 0) {
-                // If no unit selected, or selected unit is not in available units, select first available
-                if (!selectedUnit || !availableUnits.includes(selectedUnit)) {
-                    setSelectedUnit(availableUnits[0])
+        if (!isContactLens) {
+            setSelectedUnit(null)
+            return
+        }
+        const { availableUnits } = contactLensPackResolution
+        if (availableUnits.length > 0) {
+            setSelectedUnit((prev) => {
+                if (!prev || !availableUnits.includes(prev)) {
                     if (import.meta.env.DEV) {
                         console.log('✅ Auto-selected first available unit:', availableUnits[0])
                     }
+                    return availableUnits[0]
                 }
-            } else {
-                // No available units, clear selection
-                setSelectedUnit(null)
-            }
+                return prev
+            })
         } else {
-            // No config, clear selection
             setSelectedUnit(null)
         }
-    }, [selectedConfig, selectedAstigmatismConfig, isContactLens])
+    }, [isContactLens, contactLensPackResolution])
 
     // Update unit price and images when selected unit changes (independent from qty)
     useEffect(() => {
-        const updateUnitData = async () => {
-            const currentConfig = selectedConfig || selectedAstigmatismConfig
-            if (!currentConfig || !isContactLens || !selectedUnit) {
-                setUnitPrice(null)
-                setUnitImages([])
-                return
-            }
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        if (!currentConfig || !isContactLens || !selectedUnit) {
+            setUnitPrice(null)
+            setUnitImages([])
+            return
+        }
 
-            // Priority 1: Use unit price directly from config (immediate, no API call needed)
-            const configUnitPrice = (currentConfig as any).unit_prices?.[String(selectedUnit)]
-            if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
-                // Set price immediately from config
-                setUnitPrice(configUnitPrice)
+        let cancelled = false
+
+        const run = async () => {
+            const rawPrice = (currentConfig as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
+            const priceFromConfig = parseOptionalProductMoney(rawPrice?.[String(selectedUnit)])
+
+            const rawUnitImages = (currentConfig as Record<string, unknown>).unit_images as
+                | Record<string, string[]>
+                | undefined
+            const configUnitImages = rawUnitImages?.[String(selectedUnit)]
+            const imagesFromConfig =
+                configUnitImages && Array.isArray(configUnitImages) && configUnitImages.length > 0
+                    ? configUnitImages
+                    : null
+
+            if (priceFromConfig != null) {
+                if (!cancelled) setUnitPrice(priceFromConfig)
                 if (import.meta.env.DEV) {
                     console.log('✅ Unit price set from config (immediate):', {
                         unit: selectedUnit,
-                        price: configUnitPrice
+                        price: priceFromConfig,
                     })
                 }
-            } else {
-                // No unit price in config, try to fetch from API
-                const hasUnitPricing = (currentConfig as any).unit_prices || (currentConfig as any).unit_images
-                if (hasUnitPricing) {
-                    setLoadingUnitData(true)
-                    try {
-                        const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
-                        if (unitData && unitData.data) {
-                            setUnitPrice(unitData.data.price)
+            }
+
+            if (imagesFromConfig) {
+                if (!cancelled) setUnitImages(imagesFromConfig)
+            }
+
+            const hasUnitPricing =
+                !!(currentConfig as Record<string, unknown>).unit_prices ||
+                !!(currentConfig as Record<string, unknown>).unit_images
+            const needFetch =
+                priceFromConfig == null || imagesFromConfig == null
+
+            if (!needFetch) {
+                if (!cancelled) setLoadingUnitData(false)
+                return
+            }
+
+            if (hasUnitPricing) {
+                if (!cancelled) setLoadingUnitData(true)
+                try {
+                    const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
+                    if (cancelled) return
+                    if (unitData?.data) {
+                        if (priceFromConfig == null && unitData.data.price != null) {
+                            setUnitPrice(Number(unitData.data.price))
                             if (import.meta.env.DEV) {
                                 console.log('✅ Unit price fetched from API:', {
                                     unit: selectedUnit,
-                                    price: unitData.data.price
+                                    price: unitData.data.price,
                                 })
                             }
-                        } else {
-                            setUnitPrice(null)
                         }
-                    } catch (error) {
-                        console.error('Error fetching unit price:', error)
-                        setUnitPrice(null)
-                    } finally {
-                        setLoadingUnitData(false)
-                    }
-                } else {
-                    // No unit-based pricing configured
-                    setUnitPrice(null)
-                }
-            }
-
-            // Handle images: Priority 1) config unit_images, 2) API fetch
-            const configUnitImages = (currentConfig as any).unit_images?.[String(selectedUnit)]
-            if (configUnitImages && Array.isArray(configUnitImages) && configUnitImages.length > 0) {
-                setUnitImages(configUnitImages)
-            } else {
-                // Fetch images from API if not in config
-                try {
-                    const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
-                    if (unitData && unitData.data && unitData.data.images) {
-                        setUnitImages(unitData.data.images)
+                        if (!imagesFromConfig) {
+                            setUnitImages(
+                                unitData.data.images?.length ? unitData.data.images : []
+                            )
+                        }
                     } else {
-                        setUnitImages([])
+                        if (priceFromConfig == null) setUnitPrice(null)
+                        if (!imagesFromConfig) setUnitImages([])
                     }
                 } catch (error) {
-                    console.error('Error fetching unit images:', error)
-                    setUnitImages([])
+                    if (!cancelled) {
+                        console.error('Error fetching unit price/images:', error)
+                        if (priceFromConfig == null) setUnitPrice(null)
+                        if (!imagesFromConfig) setUnitImages([])
+                    }
+                } finally {
+                    setLoadingUnitData(false)
                 }
+            } else {
+                if (priceFromConfig == null && !cancelled) setUnitPrice(null)
+                if (!imagesFromConfig && !cancelled) setUnitImages([])
+                if (!cancelled) setLoadingUnitData(false)
             }
         }
 
-        updateUnitData()
-    }, [
-        selectedConfig,
-        selectedAstigmatismConfig,
-        selectedUnit,
-        isContactLens
-    ])
+        void run()
+        return () => {
+            cancelled = true
+            setLoadingUnitData(false)
+        }
+    }, [selectedConfig, selectedAstigmatismConfig, selectedUnit, isContactLens])
 
     // NOW we can do conditional returns AFTER all hooks have been called
     if (loading) {
@@ -3653,7 +3739,7 @@ const ProductDetail = () => {
                                                             </div>
                                                         )}
                                                         <img
-                                                            key={`product-${product.id}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
+                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
                                                             src={productImage}
                                                             alt={product.name}
                                                             className="w-full h-full object-contain p-6"
@@ -3692,13 +3778,25 @@ const ProductDetail = () => {
                                             </p>
                                             {(() => {
                                                 const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                                const hasUnitPricing = currentConfig && ((currentConfig as any).unit_prices || (currentConfig as any).unit_images)
+                                                const hasUnitPricing =
+                                                    (Object.keys(contactLensPackResolution.allUnitPrices).length > 0) ||
+                                                    (currentConfig &&
+                                                        ((currentConfig as any).unit_prices || (currentConfig as any).unit_images))
 
-                                                // Get unit price: priority 1) config unit_prices (immediate), 2) fetched unitPrice, 3) base price
                                                 let displayUnitPrice: number | null = null
-                                                if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
-                                                    const configUnitPrice = (currentConfig as any).unit_prices[String(selectedUnit)]
-                                                    if (configUnitPrice !== undefined && typeof configUnitPrice === 'number') {
+                                                const mergedDisplay =
+                                                    selectedUnit != null
+                                                        ? parseOptionalProductMoney(
+                                                              contactLensPackResolution.allUnitPrices[String(selectedUnit)]
+                                                          )
+                                                        : null
+                                                if (selectedUnit && mergedDisplay != null) {
+                                                    displayUnitPrice = mergedDisplay
+                                                } else if (selectedUnit && currentConfig && (currentConfig as any).unit_prices) {
+                                                    const configUnitPrice = parseOptionalProductMoney(
+                                                        (currentConfig as any).unit_prices[String(selectedUnit)]
+                                                    )
+                                                    if (configUnitPrice != null) {
                                                         displayUnitPrice = configUnitPrice
                                                     } else if (unitPrice !== null) {
                                                         displayUnitPrice = unitPrice
@@ -4145,139 +4243,16 @@ const ProductDetail = () => {
                                     </div>
 
                                     {/* Unit Selection (Pack Sizes) - Independent from Qty */}
-                                    {(() => {
-                                        // Check both selected config and all configs to find units
-                                        const currentConfig = selectedConfig || selectedAstigmatismConfig
-                                        const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
-
-                                        // Debug logging
-                                        if (import.meta.env.DEV) {
-                                            console.log('🔍 Unit Selection Debug:', {
-                                                hasSelectedConfig: !!currentConfig,
-                                                selectedConfigId: currentConfig ? (currentConfig as any).id : null,
-                                                allConfigsCount: allConfigs.length,
-                                                selectedConfigAvailableUnits: currentConfig ? (currentConfig as any).available_units : null,
-                                                selectedConfigUnitPrices: currentConfig ? (currentConfig as any).unit_prices : null
-                                            })
-                                        }
-
-                                        // Get available units - check selected config first, then all configs
-                                        let availableUnits: number[] = []
-                                        const allUnitPrices: Record<string, number> = {}
-
-                                        // Priority 1: Check selected config first
-                                        if (currentConfig) {
-                                            const configAvailableUnits = (currentConfig as any).available_units
-                                            if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
-                                                availableUnits = configAvailableUnits
-                                                    .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
-                                                    .map((u: any) => Number(u))
-                                                    .filter((n: number) => !isNaN(n) && n > 0)
-
-                                                if (import.meta.env.DEV) {
-                                                    console.log('✅ Found units from selected config available_units:', availableUnits)
-                                                }
-                                            }
-
-                                            // Also collect unit prices from selected config
-                                            const configUnitPrices = (currentConfig as any).unit_prices
-                                            if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
-                                                Object.assign(allUnitPrices, configUnitPrices)
-                                            }
-
-                                            // Priority 2: If no available_units, use unit_prices keys from selected config
-                                            if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
-                                                availableUnits = Object.keys(allUnitPrices)
-                                                    .map(k => Number(k))
-                                                    .filter(n => !isNaN(n) && n > 0)
-
-                                                if (import.meta.env.DEV) {
-                                                    console.log('✅ Found units from selected config unit_prices keys:', availableUnits)
-                                                }
-                                            }
-                                        }
-
-                                        // Priority 3: If still no units, check all configs
-                                        if (availableUnits.length === 0 && allConfigs && allConfigs.length > 0) {
-                                            if (import.meta.env.DEV) {
-                                                console.log('🔍 Checking all configs for units. Config count:', allConfigs.length)
-                                            }
-
-                                            for (const config of allConfigs) {
-                                                if (import.meta.env.DEV) {
-                                                    console.log('🔍 Checking config:', {
-                                                        id: (config as any).id,
-                                                        name: (config as any).name,
-                                                        available_units: (config as any).available_units,
-                                                        unit_prices: (config as any).unit_prices
-                                                    })
-                                                }
-
-                                                const configAvailableUnits = (config as any).available_units
-                                                if (configAvailableUnits && Array.isArray(configAvailableUnits) && configAvailableUnits.length > 0) {
-                                                    const units = configAvailableUnits
-                                                        .filter((u: any) => u != null && u !== '' && !isNaN(Number(u)))
-                                                        .map((u: any) => Number(u))
-                                                        .filter((n: number) => !isNaN(n) && n > 0)
-                                                    availableUnits = [...new Set([...availableUnits, ...units])]
-
-                                                    if (import.meta.env.DEV && units.length > 0) {
-                                                        console.log('✅ Found units in config:', (config as any).id, units)
-                                                    }
-                                                }
-
-                                                const configUnitPrices = (config as any).unit_prices
-                                                if (configUnitPrices && typeof configUnitPrices === 'object' && configUnitPrices !== null) {
-                                                    Object.assign(allUnitPrices, configUnitPrices)
-
-                                                    if (import.meta.env.DEV) {
-                                                        console.log('✅ Found unit_prices in config:', (config as any).id, configUnitPrices)
-                                                    }
-                                                }
-                                            }
-
-                                            // If we have unit_prices but no available_units, use unit_prices keys
-                                            if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
-                                                availableUnits = Object.keys(allUnitPrices)
-                                                    .map(k => Number(k))
-                                                    .filter(n => !isNaN(n) && n > 0)
-
-                                                if (import.meta.env.DEV) {
-                                                    console.log('✅ Using unit_prices keys as available units:', availableUnits)
-                                                }
-                                            }
-
-                                            if (import.meta.env.DEV && availableUnits.length > 0) {
-                                                console.log('✅ Found units from all configs:', availableUnits)
-                                            }
-                                        }
-
-                                        // Only show if we have units to display
-                                        if (availableUnits.length === 0) {
-                                            if (import.meta.env.DEV) {
-                                                console.log('⚠️ No units found to display after checking all configs')
-                                            }
-                                            return null
-                                        }
-
-                                        // Sort units for consistent display
-                                        availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
-
-                                        if (import.meta.env.DEV) {
-                                            console.log('✅ Displaying unit buttons:', availableUnits, 'with prices:', allUnitPrices)
-                                        }
-
-                                        return (
+                                    {contactLensPackResolution.availableUnits.length > 0 ? (
                                             <div className="mb-8">
                                                 <label className="block text-sm font-semibold text-gray-700 mb-4">
                                                     Choose Pack Size
                                                 </label>
                                                 <div className="flex flex-wrap gap-2">
-                                                    {availableUnits.map((unit: number) => {
+                                                    {contactLensPackResolution.availableUnits.map((unit: number) => {
                                                         const isSelected = selectedUnit === unit
-                                                        // Get unit price from collected prices (from selected config or all configs)
-                                                        const unitPrice = allUnitPrices[String(unit)]
-                                                        const hasPrice = unitPrice !== undefined && typeof unitPrice === 'number'
+                                                        const packPrice = contactLensPackResolution.allUnitPrices[String(unit)]
+                                                        const hasPrice = packPrice !== undefined && Number.isFinite(packPrice)
 
                                                         return (
                                                             <button
@@ -4302,7 +4277,7 @@ const ProductDetail = () => {
                                                                     <span className="font-medium text-xs">{unit} {unit === 1 ? 'Pack' : 'Packs'}</span>
                                                                     {hasPrice && (
                                                                         <span className="text-xs font-normal">
-                                                                            €{unitPrice.toFixed(2)}
+                                                                            €{packPrice.toFixed(2)}
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -4311,8 +4286,7 @@ const ProductDetail = () => {
                                                     })}
                                                 </div>
                                             </div>
-                                        )
-                                    })()}
+                                    ) : null}
 
                                     {/* Eyes Section - Horizontal Layout */}
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 items-start">
