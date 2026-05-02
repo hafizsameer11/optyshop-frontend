@@ -19,7 +19,6 @@ import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
-import EyeAxisDiagram from '../../components/shop/EyeAxisDiagram'
 import { useAuth } from '../../context/AuthContext'
 import {
     getContactLensFormConfig,
@@ -453,7 +452,6 @@ const ProductDetail = () => {
     const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
     const [selectedAstigmatismConfig, setSelectedAstigmatismConfig] = useState<AstigmatismConfig | null>(null)
     const [subSubcategoryOptions, setSubSubcategoryOptions] = useState<any>(null)
-    const [showAxisGuide, setShowAxisGuide] = useState(false) // Toggle for Axis Measurement Guide
 
     // Unit-based pricing and images state (independent from qty)
     const [selectedUnit, setSelectedUnit] = useState<number | null>(null) // Selected unit (pack size), e.g., 10, 20, 30
@@ -3733,11 +3731,6 @@ const ProductDetail = () => {
 
                                                 return (
                                                     <>
-                                                        {isUsingUnitImages && selectedUnit && (
-                                                            <div className="absolute top-2 left-2 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10 shadow-lg">
-                                                                Unit {selectedUnit} Pack Images
-                                                            </div>
-                                                        )}
                                                         <img
                                                             key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
                                                             src={productImage}
@@ -4846,86 +4839,6 @@ const ProductDetail = () => {
                                             Copy Right to Left
                                         </button>
                                     </div>
-
-                                    {/* Axis Diagram - Below both sections */}
-                                    {(() => {
-                                        // Show diagram if axis options exist or axis fields are present
-                                        // This includes: Near Vision, Distance Vision, Astigmatism, and any form with axis fields
-                                        const hasAxisFields = axisOptions.length > 0 ||
-                                            contactLensFormData.right_axis !== undefined ||
-                                            contactLensFormData.left_axis !== undefined ||
-                                            selectedLensType === 'near_vision' ||
-                                            selectedLensType === 'distance_vision' ||
-                                            (contactLensFormConfig?.formType === 'astigmatism') ||
-                                            (isAstigmatismSubSubcategory)
-
-                                        if (hasAxisFields) {
-                                            return (
-                                                <div className="mb-6">
-                                                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all duration-300">
-                                                        <button
-                                                            onClick={() => setShowAxisGuide(!showAxisGuide)}
-                                                            className="w-full flex items-center justify-between p-4 bg-white hover:bg-gray-50 transition-colors"
-                                                            type="button"
-                                                        >
-                                                            <div className="flex items-center gap-3">
-                                                                <div className="p-2 bg-blue-100 rounded-lg">
-                                                                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                    </svg>
-                                                                </div>
-                                                                <div className="text-left">
-                                                                    <h4 className="text-base font-bold text-gray-900">Axis Measurement Guide</h4>
-                                                                    <p className="text-xs text-gray-500 mt-0.5">For Customer Support</p>
-                                                                </div>
-                                                            </div>
-                                                            <svg
-                                                                className={`w-5 h-5 text-gray-400 transform transition-transform duration-300 ${showAxisGuide ? 'rotate-180' : ''}`}
-                                                                fill="none"
-                                                                stroke="currentColor"
-                                                                viewBox="0 0 24 24"
-                                                            >
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        </button>
-
-                                                        {showAxisGuide && (
-                                                            <div className="p-4 pt-0 border-t border-gray-100 bg-gray-50/50">
-                                                                <div className="mt-4 flex justify-center">
-                                                                    <EyeAxisDiagram 
-                                                                        compact={true} 
-                                                                        rightEyeAxis={contactLensFormData.right_axis ? parseInt(contactLensFormData.right_axis) : 0}
-                                                                        leftEyeAxis={contactLensFormData.left_axis ? parseInt(contactLensFormData.left_axis) : 0}
-                                                                        onRightEyeAxisChange={(value) => {
-                                                                            setContactLensFormData(prev => ({ ...prev, right_axis: value.toString() }))
-                                                                        }}
-                                                                        onLeftEyeAxisChange={(value) => {
-                                                                            setContactLensFormData(prev => ({ ...prev, left_axis: value.toString() }))
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )
-                                        }
-                                        return null
-                                    })()}
-
-                                    {/* Stock Quantity Display for Contact Lenses */}
-                                    {product.stock_quantity !== undefined && product.stock_quantity !== null && product.stock_quantity > 0 && (
-                                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span className="text-green-700 font-semibold">
-                                                    {product.stock_quantity} items available
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
 
                                     {/* Add to Cart Button */}
                                     <div className="mt-6 pt-4 border-t-2 border-gray-200">
