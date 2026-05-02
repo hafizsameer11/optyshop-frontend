@@ -3701,7 +3701,7 @@ const ProductDetail = () => {
                                 {isContactLens ? (
                                     <div className="space-y-4">
                                         {/* Single Product Image */}
-                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
+                                        <div className="relative bg-slate-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
                                                 // Parse images if it's a JSON string
                                                 let imagesArray: string[] = []
@@ -3742,7 +3742,7 @@ const ProductDetail = () => {
                                                             key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
                                                             src={productImage}
                                                             alt={product.name}
-                                                            className="w-full h-full object-contain p-6"
+                                                            className="w-full h-full object-contain p-3 sm:p-4"
                                                             onError={(e) => {
                                                                 const target = e.target as HTMLImageElement
                                                                 if (import.meta.env.DEV) {
@@ -5087,12 +5087,12 @@ const ProductDetail = () => {
 
                                             {/* Right: Large main image display area */}
                                             <div className="flex-1">
-                                                <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-gray-100 flex items-center justify-center">
+                                                <div className="relative aspect-square bg-slate-100 rounded-2xl overflow-hidden shadow-inner border border-slate-200/80 flex items-center justify-center">
                                                     <img
                                                         key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         src={selectedImage}
                                                         alt={product.name}
-                                                        className="w-full h-full object-contain p-8 transform transition-transform duration-500 hover:scale-105"
+                                                        className="w-full h-full object-contain p-4 sm:p-6 transform transition-transform duration-500 hover:scale-105"
                                                         onError={(e) => {
                                                             const target = e.target as HTMLImageElement
                                                             const attemptedUrl = target.src

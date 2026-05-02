@@ -311,7 +311,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         >
             <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                    <div className="flex h-full w-full items-center justify-center bg-white/40 p-4 sm:p-5">
+                    <div className="flex h-full w-full items-center justify-center bg-transparent p-4 sm:p-5">
                         <img
                             src={heroImage}
                             alt={product.name}
