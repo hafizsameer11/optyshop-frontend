@@ -169,7 +169,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 )}
               </div>
               <span className="text-gray-900 font-medium">
-                +${(item.price * item.quantity).toFixed(2)}
+                +€{(item.price * item.quantity).toFixed(2)}
               </span>
             </div>
           ))}
@@ -181,7 +181,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           <span className="text-gray-600">
             Subtotal ({items.filter(item => item.type !== 'shipping' && item.type !== 'discount').length} items)
           </span>
-          <span className="text-gray-900 font-medium">${subtotal.toFixed(2)}</span>
+          <span className="text-gray-900 font-medium">€{subtotal.toFixed(2)}</span>
         </div>
       </div>
 
@@ -216,7 +216,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                   </div>
                 </div>
                 <span className="font-medium text-gray-900">
-                  {method.price === 0 ? 'FREE' : `$${method.price.toFixed(2)}`}
+                  {method.price === 0 ? 'FREE' : `€${method.price.toFixed(2)}`}
                 </span>
               </label>
             ))}

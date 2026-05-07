@@ -2758,7 +2758,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         <span className="text-gray-700 flex-1 pr-2">{item.name}</span>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-900 font-medium whitespace-nowrap">
-                            {item.price > 0 ? `+$${item.price.toFixed(2)}` : 'Free'}
+                            {item.price > 0 ? `+€${item.price.toFixed(2)}` : 'Free'}
                           </span>
                           {item.removable && (
                             <button
@@ -2816,7 +2816,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                                 {method.price === 0 ? (
                                   <span className="text-green-600">{t('shop.free', 'Free')}</span>
                                 ) : (
-                                  `$${method.price.toFixed(2)}`
+                                  `€${method.price.toFixed(2)}`
                                 )}
                               </div>
                             </div>
@@ -2892,7 +2892,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                       {t('common.subtotal')} ({orderSummary.filter(item => item.type !== 'shipping').length} {t('shop.items', 'items')})
                     </div>
                     <div className="text-sm font-medium text-gray-900">
-                      ${getSubtotal().toFixed(2)}
+                      €{getSubtotal().toFixed(2)}
                     </div>
                   </div>
                   {appliedCoupon && getDiscountAmount() > 0 && (
@@ -2901,7 +2901,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         Discount ({couponCode})
                       </div>
                       <div className="text-sm font-medium text-green-600">
-                        -${getDiscountAmount().toFixed(2)}
+                        -€{getDiscountAmount().toFixed(2)}
                       </div>
                     </div>
                   )}
@@ -2919,13 +2919,13 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
                         )}
                       </div>
                       <div className={`text-sm font-medium ${selectedShippingMethod.price === 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                        {selectedShippingMethod.price === 0 ? t('shop.free', 'Free') : `$${selectedShippingMethod.price.toFixed(2)}`}
+                        {selectedShippingMethod.price === 0 ? t('shop.free', 'Free') : `€${selectedShippingMethod.price.toFixed(2)}`}
                       </div>
                     </div>
                   )}
                   <div className="text-sm text-gray-500 mb-1 mt-3">{t('shop.estimateTotal', 'Estimate Total')}</div>
                   <div className="text-2xl font-bold text-gray-900">
-                    ${getFinalTotal().toFixed(2)}
+                    €{getFinalTotal().toFixed(2)}
                   </div>
                 </div>
               </div>
@@ -3674,7 +3674,7 @@ const ProgressiveLensStep: React.FC<ProgressiveLensStepProps> = ({
                       </div>
                       {option.price > 0 && (
                         <div className="text-lg font-semibold text-gray-900 mb-2">
-                          ${option.price.toFixed(2)}
+                          €{option.price.toFixed(2)}
                         </div>
                       )}
                       {option.description && (
@@ -3827,7 +3827,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
                     className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                   />
                   <span className="flex-1 text-sm font-medium text-gray-900">{material.name}</span>
-                  <span className="text-sm font-semibold text-gray-700">${material.price.toFixed(2)}</span>
+                  <span className="text-sm font-semibold text-gray-700">€{material.price.toFixed(2)}</span>
                 </label>
               )
             })
@@ -4590,7 +4590,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                             {mainOption.name}
                             {mainOption.price > 0 && (
                               <span className="text-sm font-medium text-blue-600">
-                                (+${mainOption.price.toFixed(2)})
+                                (+€{mainOption.price.toFixed(2)})
                               </span>
                             )}
                           </div>
@@ -4607,7 +4607,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                   {subOption.name}
                                   {subOption.price > 0 && (
                                     <span className="text-sm font-medium text-blue-600">
-                                      (+${subOption.price.toFixed(2)})
+                                      (+€{subOption.price.toFixed(2)})
                                     </span>
                                   )}
                                   {subOption.price === 0 && subOption.name && subOption.name.toLowerCase().includes('free') && (
@@ -4633,7 +4633,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                             }
                                           }}
                                           className="relative flex flex-col items-center gap-1 group"
-                                          title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
+                                          title={`${color.name}${totalPrice > 0 ? ` (+€${totalPrice.toFixed(2)})` : ''}`}
                                         >
                                           <div
                                             className={`w-14 h-14 rounded-full border-2 transition-all ${isSelected
@@ -4684,7 +4684,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                                     }
                                   }}
                                   className="relative flex flex-col items-center gap-1 group"
-                                  title={`${color.name}${totalPrice > 0 ? ` (+$${totalPrice.toFixed(2)})` : ''}`}
+                                  title={`${color.name}${totalPrice > 0 ? ` (+€${totalPrice.toFixed(2)})` : ''}`}
                                 >
                                   <div
                                     className={`w-14 h-14 rounded-full border-2 transition-all ${isSelected
@@ -4742,7 +4742,7 @@ const TreatmentStep: React.FC<TreatmentStepProps> = ({
                         <div className="text-sm text-gray-500 mt-1">{treatment.description}</div>
                       )}
                     </div>
-                    <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">${treatment.price.toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-gray-700 whitespace-nowrap">€{treatment.price.toFixed(2)}</span>
                   </label>
                 )
               })
@@ -5584,7 +5584,7 @@ const SummaryStep: React.FC<SummaryStepProps> = ({
         <div className="pt-4 border-t border-gray-200">
           <div className="flex justify-between items-center">
             <div className="text-lg font-semibold text-gray-900">Total</div>
-            <div className="text-2xl font-bold text-blue-950">${total.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-blue-950">€{total.toFixed(2)}</div>
           </div>
         </div>
       </div>

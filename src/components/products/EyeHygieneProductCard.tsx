@@ -48,9 +48,9 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
     return (
         <div className={`bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 flex flex-col group ${className}`}>
             {/* Product Image */}
-            <div className="relative aspect-[3/4] bg-white overflow-hidden">
+            <div className="relative aspect-[5/4] bg-white overflow-hidden">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                    <div className="relative w-full h-full flex items-center justify-center p-4">
+                    <div className="relative w-full h-full flex items-center justify-center p-3 bg-white">
                         <img
                             src={getProductImageUrl(product)}
                             alt={product.name}
@@ -89,58 +89,58 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
                 )}
 
                 {/* Eye Hygiene Badge */}
-                <div className="absolute bottom-3 left-3 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                <div className="absolute bottom-2 left-2 bg-green-600 text-white px-2 py-0.5 rounded-md text-[10px] font-semibold z-10">
                     Eye Care
                 </div>
 
                 {/* Variants Badge */}
                 {hasVariants && (
-                    <div className="absolute bottom-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold z-10">
+                    <div className="absolute bottom-2 right-2 bg-blue-600 text-white px-2 py-0.5 rounded-md text-[10px] font-semibold z-10">
                         {variants.length} Variants
                     </div>
                 )}
             </div>
 
             {/* Product Info */}
-            <div className="p-4 flex-1 flex flex-col">
-                {brandLabel ? (
-                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        {brandLabel}
-                    </p>
-                ) : null}
+            <div className="px-3 pt-2 pb-3 flex-1 flex flex-col">
                 {/* Product Name */}
-                <Link to={`/shop/product/${product.slug || product.id}`} className="flex-1 mb-3">
-                    <h3 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors leading-tight">
+                <Link to={`/shop/product/${product.slug || product.id}`} className="mb-1.5">
+                    <h3 className="text-[13px] font-semibold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors leading-snug">
                         {product.name}
                     </h3>
                 </Link>
 
-                {/* Price */}
-                <div className="mb-4">
-                    {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg font-bold text-gray-900">
-                                €{Number(product.sale_price).toFixed(2)}
-                            </span>
-                            <span className="text-sm text-gray-400 line-through">
+                {/* Brand + Price (inline) */}
+                <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="min-w-0 flex-1 truncate text-[10px] text-slate-500">
+                        {brandLabel ? `${t('shop.byVendor', 'by')} ${brandLabel}` : ''}
+                    </span>
+                    <div className="flex shrink-0 items-baseline gap-1.5">
+                        {product.sale_price && Number(product.sale_price) < Number(product.price) ? (
+                            <>
+                                <span className="text-[15px] font-bold tabular-nums text-blue-600">
+                                    €{Number(product.sale_price).toFixed(2)}
+                                </span>
+                                <span className="text-[11px] tabular-nums text-slate-400 line-through">
+                                    €{Number(product.price).toFixed(2)}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-[15px] font-bold tabular-nums text-blue-600">
                                 €{Number(product.price).toFixed(2)}
                             </span>
-                        </div>
-                    ) : (
-                        <span className="text-lg font-bold text-gray-900">
-                            €{Number(product.price).toFixed(2)}
-                        </span>
-                    )}
+                        )}
+                    </div>
                 </div>
 
                 {/* Add to Cart Button */}
                 <button
                     onClick={handleAddToCartClick}
                     disabled={isOutOfStock}
-                    className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-200 transform hover:scale-105 ${
+                    className={`mt-auto w-full rounded-md border py-1.5 text-[12px] font-semibold transition-all ${
                         isOutOfStock
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                            ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                            : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'
                     }`}
                 >
                     {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}

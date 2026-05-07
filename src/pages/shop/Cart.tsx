@@ -284,7 +284,7 @@ const Cart: React.FC = () => {
                                             )}
                                             <div className="mt-2">
                                                 <p className="text-lg font-semibold text-blue-950">
-                                                    ${(() => {
+                                                    €{(() => {
                                                         // Ensure price is properly converted to number
                                                         let price = 0
                                                         if (typeof item.price === 'string') {
@@ -326,7 +326,7 @@ const Cart: React.FC = () => {
                                                 {/* Show item total if quantity > 1 for regular products */}
                                                 {item.quantity > 1 && item.category !== 'contact-lenses' && !(item as any).isContactLens && !(item as any).customization?.contactLens && (
                                                     <p className="text-sm text-gray-500">
-                                                        ${(() => {
+                                                        €{(() => {
                                                             let price = 0
                                                             if (typeof item.price === 'string') {
                                                                 const cleaned = item.price.replace(/[^0-9.]/g, '')
@@ -335,7 +335,7 @@ const Cart: React.FC = () => {
                                                                 price = Number(item.price) || 0
                                                             }
                                                             return (price * item.quantity).toFixed(2)
-                                                        })()} total ({item.quantity} × ${(() => {
+                                                        })()} total ({item.quantity} × €{(() => {
                                                             let price = 0
                                                             if (typeof item.price === 'string') {
                                                                 const cleaned = item.price.replace(/[^0-9.]/g, '')
@@ -528,8 +528,8 @@ const Cart: React.FC = () => {
                                                             const discountValue = Number(coupon.discount_value)
                                                             const discountText = coupon.discount_type === 'percentage' 
                                                                 ? `${discountValue}% off` 
-                                                                : `$${discountValue} off`
-                                                            const minOrderText = minOrder > 0 ? ` (Min: $${minOrder.toFixed(2)})` : ''
+                                                                : `€${discountValue} off`
+                                                            const minOrderText = minOrder > 0 ? ` (Min: €${minOrder.toFixed(2)})` : ''
                                                             
                                                             return (
                                                                 <option key={coupon.id} value={coupon.code}>
@@ -578,7 +578,7 @@ const Cart: React.FC = () => {
                                                             const discountValue = Number(coupon.discount_value)
                                                             const discountText = coupon.discount_type === 'percentage' 
                                                                 ? `${discountValue}% off` 
-                                                                : `$${discountValue} off`
+                                                                : `€${discountValue} off`
                                                             const currentSubtotal = getTotalPrice()
                                                             const canApply = minOrder === 0 || currentSubtotal >= minOrder
                                                             
@@ -591,14 +591,14 @@ const Cart: React.FC = () => {
                                                                     <div className="text-blue-800">
                                                                         Discount: {discountText}
                                                                         {coupon.max_discount && coupon.discount_type === 'percentage' && (
-                                                                            <span> (Max: ${Number(coupon.max_discount).toFixed(2)})</span>
+                                                                            <span> (Max: €{Number(coupon.max_discount).toFixed(2)})</span>
                                                                         )}
                                                                     </div>
                                                                     {minOrder > 0 && (
                                                                         <div className={canApply ? 'text-green-700' : 'text-red-700'}>
-                                                                            Minimum order: ${minOrder.toFixed(2)}
+                                                                            Minimum order: €{minOrder.toFixed(2)}
                                                                             {!canApply && (
-                                                                                <span> (Current: ${currentSubtotal.toFixed(2)})</span>
+                                                                                <span> (Current: €{currentSubtotal.toFixed(2)})</span>
                                                                             )}
                                                                         </div>
                                                                     )}
@@ -705,12 +705,12 @@ const Cart: React.FC = () => {
                                 <div className="space-y-4 mb-6">
                                     <div className="flex justify-between text-gray-700">
                                         <span>Subtotal ({getTotalItems()} items)</span>
-                                        <span>${getSubtotal().toFixed(2)}</span>
+                                        <span>€{getSubtotal().toFixed(2)}</span>
                                     </div>
                                     {appliedCoupon && getDiscountAmount() > 0 && (
                                         <div className="flex justify-between text-green-600">
                                             <span>Discount</span>
-                                            <span>-${getDiscountAmount().toFixed(2)}</span>
+                                            <span>-€{getDiscountAmount().toFixed(2)}</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between text-gray-700">
@@ -720,7 +720,7 @@ const Cart: React.FC = () => {
                                                 selectedShippingMethod.price === 0 ? (
                                                     t('shop.free', 'Free')
                                                 ) : (
-                                                    `$${selectedShippingMethod.price.toFixed(2)}`
+                                                    `€${selectedShippingMethod.price.toFixed(2)}`
                                                 )
                                             ) : (
                                                 t('shop.calculatedAtCheckout', 'Calculated at checkout')
@@ -730,7 +730,7 @@ const Cart: React.FC = () => {
                                     <div className="border-t border-gray-200 pt-4">
                                         <div className="flex justify-between text-lg md:text-xl font-bold text-gray-900">
                                             <span>{t('common.total')}</span>
-                                            <span>${getFinalTotal().toFixed(2)}</span>
+                                            <span>€{getFinalTotal().toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>

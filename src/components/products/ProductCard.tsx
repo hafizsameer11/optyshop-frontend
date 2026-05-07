@@ -309,16 +309,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         <article
             className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:border-slate-300 hover:shadow-md ${className}`}
         >
-            <div className="relative aspect-[4/5] overflow-hidden bg-slate-100">
+            <div className="relative aspect-[5/4] overflow-hidden bg-white">
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
-                    <div className="flex h-full w-full items-center justify-center bg-transparent p-4 sm:p-5">
+                    <div className="flex h-full w-full items-center justify-center bg-white p-3 sm:p-4">
                         <img
                             src={heroImage}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
                             className="max-h-full max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                            style={{ filter: 'drop-shadow(0 6px 20px rgba(15, 23, 42, 0.06))' }}
+                            style={{ filter: 'drop-shadow(0 4px 12px rgba(15, 23, 42, 0.05))' }}
                             onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 if (import.meta.env.DEV) {
@@ -335,53 +335,52 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 <button
                     type="button"
                     onClick={handleWishlistToggle}
-                    className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-600 shadow-sm backdrop-blur-sm transition-colors hover:border-slate-300 hover:text-rose-600"
+                    className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-slate-200/80 bg-white/95 text-slate-600 shadow-sm backdrop-blur-sm transition-colors hover:border-slate-300 hover:text-rose-600"
                     title={isInWishlist(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                 >
                     {isInWishlist(product.id) ? (
-                        <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                     ) : (
-                        <svg className="w-4 h-4 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                         </svg>
                     )}
                 </button>
 
                 {isOutOfStock && (
-                    <div className="absolute left-3 top-3 z-10 rounded-md bg-slate-900/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
+                    <div className="absolute left-2 top-2 z-10 rounded-md bg-slate-900/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                         {t('shop.outOfStock')}
                     </div>
                 )}
 
             </div>
 
-            <div className="flex flex-1 flex-col px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+            <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-3.5 sm:pb-3 sm:pt-2.5">
                 {breadcrumb ? (
-                    <p className="mb-1.5 line-clamp-1 text-[11px] leading-tight text-slate-400">{breadcrumb}</p>
+                    <p className="mb-0.5 line-clamp-1 text-[10px] leading-tight text-slate-400">{breadcrumb}</p>
                 ) : null}
                 <Link
                     to={`/shop/product/${product.slug || product.id}`}
-                    className="mb-2 min-h-[2.35rem] flex-1"
+                    className="mb-1.5"
                 >
-                    <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-600">
+                    <h3 className="line-clamp-1 text-[13px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-600">
                         {product.name}
                     </h3>
                 </Link>
 
-                {swatches.length > 0 ? (
-                    <div className="mb-3">
-                        <p className="mb-1 text-[12px] text-slate-600">
-                            <span className="font-medium text-slate-700">{t('shop.colors', 'Colors')}:</span>
-                        </p>
+                <div
+                    className="mb-2 flex items-center justify-between gap-2"
+                    onMouseLeave={() => setPreviewColorKey(null)}
+                >
+                    {swatches.length > 0 ? (
                         <div
-                            className="flex flex-wrap items-center gap-1.5"
+                            className="flex min-w-0 flex-1 items-center gap-1"
                             role="list"
                             aria-label={t('shop.availableColors', 'Available colors')}
-                            onMouseLeave={() => setPreviewColorKey(null)}
                         >
-                            {swatches.map((opt) => {
+                            {swatches.slice(0, 4).map((opt) => {
                                 const thumb = opt.thumbUrl ? resolveThumbUrl(opt.thumbUrl) : ''
                                 const grad = !thumb ? gradientFromColorName(`${opt.label} ${opt.key}`) : null
                                 const solid =
@@ -405,7 +404,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                                                 `/shop/product/${slug}?color=${encodeURIComponent(opt.key)}`
                                             )
                                         }}
-                                        className="h-6 w-6 shrink-0 cursor-pointer rounded-full border border-slate-200/90 bg-slate-100 shadow-sm ring-2 ring-white outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500"
+                                        className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-slate-200/90 bg-slate-100 shadow-sm ring-1 ring-white outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500"
                                         style={
                                             thumb
                                                 ? {
@@ -420,38 +419,36 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                                     />
                                 )
                             })}
-                            {moreColors > 0 ? (
-                                <span className="pl-0.5 text-[11px] font-semibold tabular-nums text-slate-500">
-                                    +{moreColors}
+                            {colorOptions.length - Math.min(4, swatches.length) > 0 ? (
+                                <span className="pl-0.5 text-[10px] font-semibold tabular-nums text-slate-500">
+                                    +{colorOptions.length - Math.min(4, swatches.length)}
                                 </span>
                             ) : null}
                         </div>
+                    ) : (
+                        <div className="min-w-0 flex-1 truncate text-[10px] text-slate-400">
+                            {brandLabel ? (
+                                <span>{t('shop.byVendor', 'by')} {brandLabel}</span>
+                            ) : null}
+                        </div>
+                    )}
+
+                    <div className="flex shrink-0 items-baseline gap-1.5">
+                        <span className="text-[15px] font-bold tabular-nums text-blue-600">€{displayPrice.toFixed(2)}</span>
+                        {comparePrice != null ? (
+                            <span className="text-[11px] tabular-nums text-slate-400 line-through">
+                                €{comparePrice.toFixed(2)}
+                            </span>
+                        ) : null}
                     </div>
-                ) : null}
-
-                <div
-                    className={`mb-3 flex items-baseline gap-3 ${comparePrice != null ? 'justify-between' : ''}`}
-                >
-                    <span className="text-xl font-bold tabular-nums text-blue-600">€{displayPrice.toFixed(2)}</span>
-                    {comparePrice != null ? (
-                        <span className="text-sm tabular-nums text-slate-400 line-through">
-                            €{comparePrice.toFixed(2)}
-                        </span>
-                    ) : null}
                 </div>
-
-                {brandLabel ? (
-                    <p className="mb-3 text-[12px] text-slate-400">
-                        {t('shop.byVendor', 'by')} <span className="text-slate-500">{brandLabel}</span>
-                    </p>
-                ) : null}
 
                 {!hideAddToCartOnCard ? (
                     <button
                         type="button"
                         onClick={handleAddToCart}
                         disabled={isOutOfStock}
-                        className={`mt-auto w-full rounded-lg border py-2.5 text-sm font-semibold transition-all ${
+                        className={`mt-auto w-full rounded-md border py-1.5 text-[12px] font-semibold transition-all ${
                             isOutOfStock
                                 ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
                                 : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'

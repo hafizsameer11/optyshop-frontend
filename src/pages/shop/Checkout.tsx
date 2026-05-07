@@ -799,12 +799,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                 <div className="space-y-3 border-t border-gray-200 pt-4">
                                     <div className="flex justify-between text-gray-700">
                                         <span>Subtotal ({getTotalItems()} items)</span>
-                                        <span>${getTotalPrice().toFixed(2)}</span>
+                                        <span>€{getTotalPrice().toFixed(2)}</span>
                                     </div>
                                     {appliedCoupon && getDiscountAmount() > 0 && (
                                         <div className="flex justify-between text-green-600">
                                             <span>Discount</span>
-                                            <span>-${Number(getDiscountAmount()).toFixed(2)}</span>
+                                            <span>-€{Number(getDiscountAmount()).toFixed(2)}</span>
                                         </div>
                                     )}
                                     {/* Shipping Method Selection */}
@@ -847,7 +847,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                                                     {method.price === 0 ? (
                                                                         <span className="text-green-600">{t('shop.free', 'Free')}</span>
                                                                     ) : (
-                                                                        `$${method.price.toFixed(2)}`
+                                                                        `€${method.price.toFixed(2)}`
                                                                     )}
                                                                 </div>
                                                             </div>
