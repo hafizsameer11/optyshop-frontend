@@ -235,7 +235,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 <span className="text-green-700 text-sm ml-2">
                   {appliedCoupon.discount_type === 'percentage' 
                     ? `-${appliedCoupon.discount_value}%`
-                    : `-$${appliedCoupon.discount_value.toFixed(2)}`
+                    : `-€${appliedCoupon.discount_value.toFixed(2)}`
                   }
                 </span>
               </div>
@@ -283,7 +283,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                 Shipping ({selectedShipping.name} - {selectedShipping.delivery_days} business days)
               </span>
               <span className="text-gray-900">
-                {selectedShipping.price === 0 ? 'FREE' : `$${selectedShipping.price.toFixed(2)}`}
+                {selectedShipping.price === 0 ? 'FREE' : `€${selectedShipping.price.toFixed(2)}`}
               </span>
             </div>
           )}
@@ -291,13 +291,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           {discountAmount > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-green-600">Discount</span>
-              <span className="text-green-600">-${discountAmount.toFixed(2)}</span>
+              <span className="text-green-600">-€{discountAmount.toFixed(2)}</span>
             </div>
           )}
           
           <div className="flex justify-between items-center pt-2 border-t">
             <span className="text-lg font-bold text-gray-900">Estimate Total</span>
-            <span className="text-lg font-bold text-gray-900">${total.toFixed(2)}</span>
+            <span className="text-lg font-bold text-gray-900">€{total.toFixed(2)}</span>
           </div>
         </div>
       </div>

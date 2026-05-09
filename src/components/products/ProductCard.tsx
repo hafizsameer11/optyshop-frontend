@@ -2,9 +2,8 @@ import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
-import { useCart } from '../../context/CartContext'
 import { getProductImageUrl } from '../../utils/productImage'
-import { getShopProductBrandLabel, isShopContactLensProduct } from '../../utils/productDisplayName'
+import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { getProxiedImageUrl } from '../../services/imageProxyService'
 import { normalizeProductSubcategory, type Product } from '../../services/productsService'
 
@@ -208,14 +207,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { toggleWishlist, isInWishlist } = useWishlist()
-    const { addToCart } = useCart()
     const [previewColorKey, setPreviewColorKey] = React.useState<string | null>(null)
 
-    // Get calibers for this product (moved outside of functions for reuse)
+    // First mm caliber (if any) — used as the listing hero image when the product has variant images.
     const p = product as any
-    let calibers = []
-    
-    // Parse mm_calibers if it's a string or array
+    let calibers: any[] = []
     if (p.mm_calibers) {
         try {
             if (typeof p.mm_calibers === 'string') {
@@ -228,20 +224,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
             calibers = []
         }
     }
-    
-    // Filter out blob URLs and get first valid caliber
-    const validCalibers = calibers.filter((c: any) => 
-        c && c.image_url && 
-        !c.image_url.startsWith('blob:') && 
-        c.image_url !== 'null' && 
+    const validCalibers = calibers.filter((c: any) =>
+        c && c.image_url &&
+        !c.image_url.startsWith('blob:') &&
+        c.image_url !== 'null' &&
         c.image_url !== ''
     )
-    
     const firstCaliber = validCalibers.length > 0 ? validCalibers[0] : null
 
     const colorOptions = normalizeCardColors(product)
     const swatches = colorOptions.slice(0, MAX_SWATCHES)
-    const moreColors = colorOptions.length - swatches.length
 
     const baseListingImage = React.useMemo(() => {
         let img = getProductImageUrl(product)
@@ -261,37 +253,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         return baseListingImage
     }, [previewColorKey, colorOptions, baseListingImage])
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        
-        try {
-            const { current: finalPrice } = resolveListAndCurrentPrice(product)
-            
-            const cartProduct = {
-                id: product?.id || 0,
-                name: product?.name || '',
-                brand: getShopProductBrandLabel(product) || '',
-                category: product?.category?.slug || 'contact-lenses',
-                price: finalPrice,
-                image: heroImage,
-                description: product?.description || '',
-                inStock: product?.in_stock !== false,
-                rating: product?.rating ? Number(product.rating) : undefined,
-                caliber: firstCaliber?.mm,
-                caliberImageUrl: firstCaliber?.image_url,
-                type: 'main_product' as const,
-                customization: {
-                    selected_mm_caliber: firstCaliber?.mm,
-                    caliber_image_url: firstCaliber?.image_url
-                }
-            }
-            addToCart(cartProduct)
-        } catch (error) {
-            console.error('Error adding to cart:', error)
-        }
-    }
-
     const handleWishlistToggle = (e: React.MouseEvent) => {
         e.preventDefault()
         e.stopPropagation()
@@ -299,7 +260,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     }
 
     const isOutOfStock = product.in_stock === false
-    const hideAddToCartOnCard = isShopContactLensProduct(product)
     const { current: displayPrice, compare: comparePrice } = resolveListAndCurrentPrice(product)
 
     const brandLabel = getShopProductBrandLabel(product)
@@ -443,20 +403,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </div>
                 </div>
 
-                {!hideAddToCartOnCard ? (
-                    <button
-                        type="button"
-                        onClick={handleAddToCart}
-                        disabled={isOutOfStock}
-                        className={`mt-auto w-full rounded-md border py-1.5 text-[12px] font-semibold transition-all ${
-                            isOutOfStock
-                                ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
-                                : 'border-slate-200 bg-white text-slate-900 shadow-sm hover:border-blue-200 hover:bg-slate-50 active:scale-[0.99]'
-                        }`}
-                    >
-                        {isOutOfStock ? t('shop.outOfStock') : t('shop.addToCart')}
-                    </button>
-                ) : null}
             </div>
         </article>
     )

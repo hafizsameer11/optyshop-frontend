@@ -3995,7 +3995,7 @@ const ProductDetail = () => {
                                                                     key={caliber.mm} 
                                                                     value={caliber.mm.toString()}
                                                                 >
-                                                                    {caliber.mm}mm{caliber.price ? ` (+$${caliber.price})` : ''}
+                                                                    {caliber.mm}mm{caliber.price ? ` (+€${caliber.price})` : ''}
                                                                 </option>
                                                             ))}
                                                     </select>
@@ -5558,7 +5558,7 @@ const ProductDetail = () => {
                                                                 key={caliber.mm} 
                                                                 value={caliber.mm.toString()}
                                                             >
-                                                                {caliber.mm}mm{caliber.price ? ` (+$${caliber.price})` : ''}
+                                                                {caliber.mm}mm{caliber.price ? ` (+€${caliber.price})` : ''}
                                                             </option>
                                                         ))}
                                                 </select>

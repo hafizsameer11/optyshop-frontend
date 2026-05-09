@@ -13,7 +13,7 @@ export interface LensTypeOption {
   name: string
   description: string
   price?: number
-  priceLabel?: string // e.g., "+$60.90" or "Free"
+  priceLabel?: string // e.g., "+€60.90" or "Free"
   colors: ColorSwatch[]
   selectedColorId?: string
   selected?: boolean

@@ -99,7 +99,7 @@ const transformLensOption = (option: LensOption): LensTypeOption => {
     description: option.description || '',
     price: basePrice,
     priceLabel: basePrice && basePrice > 0 
-      ? `+$${basePrice.toFixed(2)}` 
+      ? `+€${basePrice.toFixed(2)}` 
       : 'Free',
     colors,
   }

@@ -3853,7 +3853,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
                   className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                 />
                 <span className="flex-1 text-sm font-medium text-gray-900">Unbreakable (Plastic)</span>
-                <span className="text-sm font-semibold text-gray-700">$30.00</span>
+                <span className="text-sm font-semibold text-gray-700">€30.00</span>
               </label>
 
               <label className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition-colors ${lensSelection.lensThickness === 'glass'
@@ -3875,7 +3875,7 @@ const LensThicknessStep: React.FC<LensThicknessStepProps> = ({
                   className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                 />
                 <span className="flex-1 text-sm font-medium text-gray-900">Minerals (Glass)</span>
-                <span className="text-sm font-semibold text-gray-700">$60.00</span>
+                <span className="text-sm font-semibold text-gray-700">€60.00</span>
               </label>
             </>
           )}

@@ -2,14 +2,11 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import { useCart, type CartProduct } from '../../context/CartContext'
 import { getProducts, type Product } from '../../services/productsService'
-import { getProductImageUrl } from '../../utils/productImage'
 import EyeHygieneProductCard from '../../components/products/EyeHygieneProductCard'
 
 const EyeHygieneCategory = () => {
     const { t } = useTranslation()
-    const { addToCart } = useCart()
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
     const [filters, setFilters] = useState({
@@ -45,35 +42,6 @@ const EyeHygieneCategory = () => {
             setProducts([])
         } finally {
             setLoading(false)
-        }
-    }
-
-    const handleAddToCart = (product: Product, variant?: any) => {
-        try {
-            const salePrice = product?.sale_price ? Number(product.sale_price) : null
-            const regularPrice = variant?.price || product?.price ? Number(product.price) : 0
-            const finalPrice = salePrice && salePrice < regularPrice ? salePrice : regularPrice
-            
-            const cartProduct = {
-                id: product?.id || 0,
-                name: variant?.name || product?.name || '',
-                brand: product?.brand || '',
-                category: 'eye-hygiene',
-                price: finalPrice,
-                image: variant?.image_url || getProductImageUrl(product),
-                description: variant?.description || product?.description || '',
-                inStock: variant?.stock_quantity > 0 || product?.in_stock !== false,
-                rating: product?.rating ? Number(product.rating) : undefined,
-                type: 'eye_hygiene_variant' as const,
-                customization: {
-                    variant_id: variant?.id,
-                    size_volume: variant?.size_volume,
-                    pack_type: variant?.pack_type
-                }
-            }
-            addToCart(cartProduct as unknown as CartProduct)
-        } catch (error) {
-            console.error('Error adding to cart:', error)
         }
     }
 
@@ -145,7 +113,6 @@ const EyeHygieneCategory = () => {
                                     <EyeHygieneProductCard
                                         key={product.id}
                                         product={product}
-                                        onAddToCart={handleAddToCart}
                                     />
                                 ))}
                             </div>
