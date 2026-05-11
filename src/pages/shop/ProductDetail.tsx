@@ -114,6 +114,14 @@ function parseOptionalProductMoney(value: unknown): number | null {
     return Number.isFinite(n) ? n : null
 }
 
+function stringValue(value: unknown): string | null {
+    return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+}
+
+function isHexColorValue(value: string | null): boolean {
+    return value ? /^#(?:[0-9a-f]{3}){1,2}$/i.test(value) : false
+}
+
 /** Merge parsed numeric prices from API unit_prices (values may be strings). */
 function mergeUnitPricesRecord(target: Record<string, number>, source: Record<string, unknown> | null | undefined) {
     if (!source || typeof source !== 'object') return
@@ -533,6 +541,31 @@ const ProductDetail = () => {
 
         return null
     }, [product, selectedColor])
+
+    const selectedProductColorLabel = useMemo(() => {
+        if (!product) return null
+
+        const variant = selectedColorVariant as Record<string, unknown> | null
+        const variantLabel = variant
+            ? stringValue(variant.display_name) ||
+              stringValue(variant.displayName) ||
+              stringValue(variant.name) ||
+              stringValue(variant.color) ||
+              (!isHexColorValue(stringValue(variant.value)) ? stringValue(variant.value) : null) ||
+              (!isHexColorValue(stringValue(variant.hexCode)) ? stringValue(variant.hexCode) : null)
+            : null
+
+        if (variantLabel) return variantLabel
+
+        const selectedLabel = stringValue(selectedColor)
+        if (selectedLabel && !isHexColorValue(selectedLabel)) return selectedLabel
+
+        const p = product as any
+        return stringValue(p.color) ||
+            stringValue(p.frame_color) ||
+            (p.color_images && p.color_images.length > 0 ? stringValue(p.color_images[0].name || p.color_images[0].color) : null) ||
+            (p.colors && p.colors.length > 0 ? stringValue(p.colors[0].display_name || p.colors[0].name || p.colors[0].color || p.colors[0].value) : null)
+    }, [product, selectedColor, selectedColorVariant])
 
     const lensColorOptions = useMemo(() => {
         if (!product) return [] as string[]
@@ -3699,7 +3732,7 @@ const ProductDetail = () => {
                                 {isContactLens ? (
                                     <div className="space-y-4">
                                         {/* Single Product Image */}
-                                        <div className="relative bg-slate-100 rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
+                                        <div className="relative bg-white rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
                                                 // Parse images if it's a JSON string
                                                 let imagesArray: string[] = []
@@ -3859,7 +3892,7 @@ const ProductDetail = () => {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
+                                        <div className="relative bg-white rounded-lg overflow-hidden mb-4" style={{ aspectRatio: '1/1' }}>
                                             {(() => {
                                                 // Use color-specific image if color is selected
                                                 const imageUrl = getColorSpecificImageUrl(product, selectedImageIndex)
@@ -5000,7 +5033,7 @@ const ProductDetail = () => {
 
                                             {/* Right: Large main image display area */}
                                             <div className="flex-1">
-                                                <div className="relative aspect-square bg-slate-100 rounded-2xl overflow-hidden shadow-inner border border-slate-200/80 flex items-center justify-center">
+                                                <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-slate-200/80 flex items-center justify-center">
                                                     <img
                                                         key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         src={selectedImage}
@@ -5622,13 +5655,10 @@ const ProductDetail = () => {
                                                 </div>
                                             )}
                                             {(() => {
-                                                const p = product as any
-                                                // Get color from product.color, product.frame_color, or first color from color_images
-                                                const color = p.color || p.frame_color || (p.color_images && p.color_images.length > 0 ? p.color_images[0].name : null) || (p.colors && p.colors.length > 0 ? p.colors[0].name : null)
-                                                return color ? (
+                                                return selectedProductColorLabel ? (
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-gray-400 uppercase mb-1">Color</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{color}</span>
+                                                        <span className="text-gray-700 font-semibold capitalize">{selectedProductColorLabel}</span>
                                                     </div>
                                                 ) : null
                                             })()}
