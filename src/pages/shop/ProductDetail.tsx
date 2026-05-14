@@ -15,7 +15,7 @@ import {
     type EyeHygieneVariant
 } from '../../services/productsService'
 import { addItemToCart, updateCartItem, type AddToCartRequest } from '../../services/cartService'
-import { getProductImageUrl, getVariantImageUrl } from '../../utils/productImage'
+import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageUrl, getDefaultContactLensMainImageIndex } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
@@ -951,8 +951,6 @@ const ProductDetail = () => {
             if (isCancelled) return
 
             if (productData) {
-                // Reset selected image index when loading a new product
-                setSelectedImageIndex(0)
                 setIsManuallySelectingImage(false) // Reset manual selection flag
                 // Reset selections when product changes
                 setSelectedFrameMaterial('')
@@ -1044,6 +1042,10 @@ const ProductDetail = () => {
                 } else {
                     setSelectedColor(null)
                 }
+
+                setSelectedImageIndex(
+                    getDefaultContactLensMainImageIndex(productData as Product, isContactLensProduct)
+                )
 
                 // Debug log product data and image info
                 if (import.meta.env.DEV) {
@@ -3820,7 +3822,7 @@ const ProductDetail = () => {
                                                     contactLensColorOptions.length > 0 && !!selectedColor
                                                 const productImage = preferColorGallery
                                                     ? getVariantSpecificImageUrl(product, selectedImageIndex)
-                                                    : getProductImageUrl(product, selectedImageIndex)
+                                                    : getContactLensMainGalleryImageUrl(product, selectedImageIndex)
 
                                                 return (
                                                     <>
@@ -4237,7 +4239,7 @@ const ProductDetail = () => {
                                                     }
                                                 }
                                                 if (imagesArray.length === 0) {
-                                                    const one = getProductImageUrl(product, 0)
+                                                    const one = getContactLensMainGalleryImageUrl(product, 0)
                                                     if (one) imagesArray = [one]
                                                 }
                                             } else if (preferColorThumbs) {
@@ -4424,7 +4426,9 @@ const ProductDetail = () => {
                                                     const v = e.target.value
                                                     if (!v) {
                                                         setSelectedColor(null)
-                                                        setSelectedImageIndex(0)
+                                                        setSelectedImageIndex(
+                                                            getDefaultContactLensMainImageIndex(product, isContactLens)
+                                                        )
                                                         setIsManuallySelectingImage(false)
                                                         const url = new URL(window.location.href)
                                                         url.searchParams.delete('color')

@@ -152,6 +152,69 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
     return imgUrl || '/assets/images/frame1.png'
 }
 
+/** Parsed `product.images` only (no scalar `image` / `image_url` fields). */
+export function parseProductImagesArray(product: Product | null | undefined): string[] {
+    if (!product?.images) return []
+    if (typeof product.images === 'string') {
+        const s = product.images.trim()
+        if (!s) return []
+        if (s.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(product.images) as unknown
+                return Array.isArray(parsed)
+                    ? parsed.filter((x): x is string => typeof x === 'string' && Boolean(x))
+                    : []
+            } catch {
+                return [product.images]
+            }
+        }
+        return [product.images]
+    }
+    if (Array.isArray(product.images)) {
+        return product.images.filter((x): x is string => typeof x === 'string' && Boolean(x))
+    }
+    return []
+}
+
+/**
+ * Contact lens PDP: use admin "general images" (`product.images`) only, not legacy
+ * `product.image` / `image_url` (often a wrong or variant pack shot). Falls back to {@link getProductImageUrl} if the gallery is empty.
+ */
+export function getContactLensMainGalleryImageUrl(product: Product, imageIndex: number = 0): string {
+    const urls = parseProductImagesArray(product)
+    if (urls.length === 0) {
+        return getProductImageUrl(product, imageIndex)
+    }
+    const idx = Math.max(0, Math.min(imageIndex, urls.length - 1))
+    const p = { ...(product as unknown as Record<string, unknown>) }
+    p.images = urls
+    delete p.image
+    delete p.image_url
+    delete p.thumbnail
+    delete p.primary_image
+    delete p.main_image
+    delete p.product_image
+    delete p.photo
+    delete p.photo_url
+    delete p.image_path
+    return getProductImageUrl(p as unknown as Product, idx)
+}
+
+/**
+ * Default gallery slot when no tint is selected (contact lenses only): if tint variants exist and there are 2+ general shots,
+ * index 0 is often a mistaken duplicate — prefer index 1.
+ */
+export function getDefaultContactLensMainImageIndex(product: Product, isContactLens: boolean): number {
+    if (!isContactLens) return 0
+    const urls = parseProductImagesArray(product)
+    const p = product as unknown as { colors?: unknown[]; color_images?: unknown[] | null }
+    const hasTint =
+        (Array.isArray(p.colors) && p.colors.length > 0) ||
+        (Array.isArray(product.color_images) && product.color_images.length > 0)
+    if (hasTint && urls.length > 1) return 1
+    return 0
+}
+
 /**
  * Gets the appropriate image URL for a size/volume variant
  * Priority: variant.image_url > variant.images > product images
