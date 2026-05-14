@@ -997,8 +997,19 @@ const ProductDetail = () => {
                         )
                     })()
 
-                // Auto-select color: URL parameter > product.selectedColor > first color (frames only — contact lenses start unselected unless URL/default)
-                if (colorParam) {
+                // Contact lenses: never pre-fill tint from URL, product default, or first variant — user must choose.
+                // (Frames / other: URL > product default > first variant.)
+                if (isContactLensProduct) {
+                    setSelectedColor(null)
+                    if (colorParam) {
+                        const url = new URL(window.location.href)
+                        if (url.searchParams.has('color')) {
+                            url.searchParams.delete('color')
+                            const next = `${url.pathname}${url.search}${url.hash}`
+                            window.history.replaceState({}, '', next)
+                        }
+                    }
+                } else if (colorParam) {
                     setSelectedColor(colorParam)
                     if (import.meta.env.DEV) {
                         console.log('🎨 Color from URL parameter:', colorParam)
@@ -3142,7 +3153,10 @@ const ProductDetail = () => {
                     }
                 }
             }
-            const combined = mergeUnique(mainUrls, colorUrls)
+            const combined =
+                colorUrls.length > 0 && isContactLens
+                    ? mergeUnique(colorUrls, mainUrls)
+                    : mergeUnique(mainUrls, colorUrls)
             if (combined.length > 0) {
                 if (combined[imageIndex]) return combined[imageIndex]
                 return combined[0]
