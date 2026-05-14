@@ -6415,10 +6415,10 @@ const ProductDetail = () => {
                                                 {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-xl font-bold text-blue-950">
-                                                            ${Number(relatedProduct.sale_price).toFixed(2)}
+                                                            €{Number(relatedProduct.sale_price).toFixed(2)}
                                                         </span>
                                                         <span className="text-sm text-gray-400 line-through">
-                                                            ${Number(relatedProduct.price).toFixed(2)}
+                                                            €{Number(relatedProduct.price).toFixed(2)}
                                                         </span>
                                                         <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
                                                             {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
@@ -6426,7 +6426,7 @@ const ProductDetail = () => {
                                                     </div>
                                                 ) : (
                                                     <span className="text-xl font-bold text-blue-950">
-                                                        ${Number(relatedProduct.price || 0).toFixed(2)}
+                                                        €{Number(relatedProduct.price || 0).toFixed(2)}
                                                     </span>
                                                 )}
                                                 {/* Show stock status - ONLY for non-contact lens products */}

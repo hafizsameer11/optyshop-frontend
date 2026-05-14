@@ -72,7 +72,7 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({ onFilterChange, className =
                     <label className="text-xs font-medium text-gray-700 whitespace-nowrap">Price:</label>
                     <div className="flex gap-1 items-center">
                         <div className="relative">
-                            <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                            <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                             <input
                                 type="number"
                                 placeholder="Min"
@@ -83,7 +83,7 @@ const QuickFilters: React.FC<QuickFiltersProps> = ({ onFilterChange, className =
                         </div>
                         <span className="text-xs text-gray-400">-</span>
                         <div className="relative">
-                            <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">$</span>
+                            <span className="absolute left-1.5 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">€</span>
                             <input
                                 type="number"
                                 placeholder="Max"

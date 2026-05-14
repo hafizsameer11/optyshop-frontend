@@ -3288,7 +3288,7 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
               <div className="mt-4">
                 <div className="text-lg font-semibold text-gray-900">{product.name}</div>
                 <div className="text-xl font-bold text-gray-900">
-                  ${(product.sale_price && Number(product.sale_price) < Number(product.price)
+                  €{(product.sale_price && Number(product.sale_price) < Number(product.price)
                     ? Number(product.sale_price)
                     : Number(product.price) || 0).toFixed(2)}
                 </div>

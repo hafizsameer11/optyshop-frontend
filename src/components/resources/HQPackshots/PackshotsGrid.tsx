@@ -205,7 +205,7 @@ const PackshotsGrid: React.FC = () => {
                                     {/* Price */}
                                     {packshot.price && (
                                         <p className="text-lg font-semibold text-gray-900 mb-4">
-                                            ${parseFloat(packshot.price).toFixed(2)}
+                                            €{parseFloat(packshot.price).toFixed(2)}
                                         </p>
                                     )}
 

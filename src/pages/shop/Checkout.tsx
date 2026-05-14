@@ -736,7 +736,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                                     Qty: {item.quantity}
                                                 </p>
                                                 <p className="text-sm font-semibold text-blue-950">
-                                                    ${(Number(item.price || 0) * item.quantity).toFixed(2)}
+                                                    €{(Number(item.price || 0) * item.quantity).toFixed(2)}
                                                 </p>
                                             </div>
                                         </div>

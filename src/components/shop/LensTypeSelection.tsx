@@ -34,7 +34,7 @@ const LensTypeSelection: React.FC<LensTypeSelectionProps> = ({
   selectedColorId,
   onSelectLensType,
   onSelectColor,
-  currency = '$'
+  currency = '€'
 }) => {
   return (
     <div className="space-y-6">

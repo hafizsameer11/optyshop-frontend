@@ -32,7 +32,7 @@ const ShippingPaymentSelection: React.FC<ShippingPaymentSelectionProps> = ({
   selectedPaymentId,
   onShippingSelect,
   onPaymentSelect,
-  currency = '$'
+  currency = '€'
 }) => {
   const [showShippingModal, setShowShippingModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
