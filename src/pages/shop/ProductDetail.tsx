@@ -122,6 +122,25 @@ function isHexColorValue(value: string | null): boolean {
     return value ? /^#(?:[0-9a-f]{3}){1,2}$/i.test(value) : false
 }
 
+/** Normalize hex / names so `#4A3728` matches `4a3728` and URL `color` values. */
+function contactLensColorMatchKey(value: unknown): string {
+    const s = String(value ?? '')
+        .trim()
+        .toLowerCase()
+    return s.startsWith('#') ? s.slice(1) : s
+}
+
+function contactLensColorEntryMatches(selected: string | null | undefined, entry: Record<string, unknown>): boolean {
+    if (!selected) return false
+    const k = contactLensColorMatchKey(selected)
+    for (const f of ['value', 'hexCode', 'hex_code', 'name', 'color'] as const) {
+        const v = entry[f]
+        if (v == null || String(v).trim() === '') continue
+        if (contactLensColorMatchKey(v) === k) return true
+    }
+    return false
+}
+
 /** Merge parsed numeric prices from API unit_prices (values may be strings). */
 function mergeUnitPricesRecord(target: Record<string, number>, source: Record<string, unknown> | null | undefined) {
     if (!source || typeof source !== 'object') return
@@ -519,26 +538,16 @@ const ProductDetail = () => {
         if (!product || !selectedColor) return null
 
         const p = product as any
-        const selectedColorLower = (selectedColor || '').toLowerCase()
 
         // First try to find in 'colors' array (preferred format from API)
         if (p.colors && Array.isArray(p.colors)) {
-            const colorData = p.colors.find((c: any) =>
-                (c.value && String(c.value).toLowerCase() === selectedColorLower) ||
-                (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
-                (c.name && c.name.toLowerCase() === selectedColorLower)
-            )
+            const colorData = p.colors.find((c: any) => contactLensColorEntryMatches(selectedColor, c as Record<string, unknown>))
             if (colorData) return colorData
         }
 
         // Fallback to 'color_images' array
         if (product.color_images) {
-            return product.color_images.find((ci: any) =>
-                (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
-                (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower) ||
-                (ci.value && String(ci.value).toLowerCase() === selectedColorLower)
-            ) || null
+            return product.color_images.find((ci: any) => contactLensColorEntryMatches(selectedColor, ci as Record<string, unknown>)) || null
         }
 
         return null
@@ -975,9 +984,21 @@ const ProductDetail = () => {
                 const urlParams = new URLSearchParams(window.location.search)
                 const colorParam = urlParams.get('color')
 
-                // Auto-select color: URL parameter > product.selectedColor > first color
+                const isContactLensProduct =
+                    (() => {
+                        const cat = productData.category
+                        const slug = (cat?.slug || '').toLowerCase()
+                        const name = (cat?.name || '').toLowerCase()
+                        return (
+                            slug.includes('contact') ||
+                            name.includes('contact') ||
+                            slug.includes('lens') ||
+                            (Array.isArray(p.contact_lens_type) && p.contact_lens_type.length > 0)
+                        )
+                    })()
+
+                // Auto-select color: URL parameter > product.selectedColor > first color (frames only — contact lenses start unselected unless URL/default)
                 if (colorParam) {
-                    // Color from URL parameter (hex code or color name)
                     setSelectedColor(colorParam)
                     if (import.meta.env.DEV) {
                         console.log('🎨 Color from URL parameter:', colorParam)
@@ -988,14 +1009,14 @@ const ProductDetail = () => {
                     if (import.meta.env.DEV) {
                         console.log('🎨 Using product default color:', p.selectedColor)
                     }
-                } else if (p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
+                } else if (!isContactLensProduct && p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
                     // Use first color from 'colors' array (preferred)
                     const firstColor = p.colors[0]
                     setSelectedColor(firstColor.value || firstColor.hexCode || firstColor.name)
                     if (import.meta.env.DEV) {
                         console.log('🎨 Auto-selected first color from colors array:', firstColor)
                     }
-                } else if (productData.color_images && productData.color_images.length > 0) {
+                } else if (!isContactLensProduct && productData.color_images && productData.color_images.length > 0) {
                     // Fallback to first color from 'color_images' (API may use hexCode/name/color)
                     const firstColor = productData.color_images[0] as any
                     const firstVal =
@@ -1125,19 +1146,22 @@ const ProductDetail = () => {
                 }
             }
 
-            // Priority 2: Check alternative field names
+            // Priority 2: Mid-level subcategory id on product (e.g. sub_category_id) → resolve to leaf sub-sub-category for GET /contact-lens-forms/config/:id
             if (!subCategoryId) {
-                const possibleFields = [
-                    p.sub_category_id,
-                    p.subcategory_id,
-                    p.sub_category?.id,
-                    p.subcategory?.id
-                ]
-
-                for (const field of possibleFields) {
-                    if (field) {
-                        subCategoryId = field
-                        break
+                const midId =
+                    p.sub_category_id ?? p.subcategory_id ?? p.sub_category?.id ?? p.subcategory?.id
+                if (midId != null && p.category?.subcategories && Array.isArray(p.category.subcategories)) {
+                    const mid = p.category.subcategories.find(
+                        (s: any) => Number(s.id) === Number(midId)
+                    )
+                    if (mid?.children?.length) {
+                        const leaf =
+                            mid.children.find((c: any) => Number(c.parent_id) === Number(mid.id)) ||
+                            mid.children[0]
+                        if (leaf?.id) {
+                            subCategoryId = leaf.id
+                            subCategoryData = leaf
+                        }
                     }
                 }
             }
@@ -3010,8 +3034,12 @@ const ProductDetail = () => {
 
     // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
-        // Priority 1: Use unit-specific images if available
-        if (unitImages.length > 0 && imageIndex < unitImages.length) {
+        // Priority 1: Pack unit images — skip when contact-lens colour is driving the hero (otherwise colour never wins inside this helper).
+        const skipUnitForContactLensColor =
+            isContactLens &&
+            !!selectedColor &&
+            contactLensColorOptions.length > 0
+        if (!skipUnitForContactLensColor && unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
 
@@ -3066,7 +3094,6 @@ const ProductDetail = () => {
         // Priority 5: Use color-specific images if color is selected (prepend main product images so the primary photo stays in the gallery)
         if (selectedColor) {
             const p = product as any
-            const selectedColorLower = (selectedColor || '').toLowerCase()
 
             const mainUrls: string[] = []
             if (p.images) {
@@ -3093,23 +3120,26 @@ const ProductDetail = () => {
             let colorUrls: string[] = []
             if (p.colors && Array.isArray(p.colors)) {
                 const colorData = p.colors.find((c: any) =>
-                    (c.value && String(c.value).toLowerCase() === selectedColorLower) ||
-                    (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
-                    (c.name && c.name.toLowerCase() === selectedColorLower)
+                    contactLensColorEntryMatches(selectedColor, c as Record<string, unknown>)
                 )
-                if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                    colorUrls = colorData.images.filter(Boolean)
+                if (colorData) {
+                    if (colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                        colorUrls = colorData.images.filter(Boolean)
+                    } else if (typeof colorData.image === 'string' && colorData.image.trim()) {
+                        colorUrls = [colorData.image.trim()]
+                    }
                 }
             }
             if (!colorUrls.length && product.color_images) {
                 const colorImage = product.color_images.find((ci: any) =>
-                    (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                    (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
-                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower) ||
-                    (ci.value && String(ci.value).toLowerCase() === selectedColorLower)
+                    contactLensColorEntryMatches(selectedColor, ci as Record<string, unknown>)
                 )
-                if (colorImage && colorImage.images && Array.isArray(colorImage.images)) {
-                    colorUrls = colorImage.images.filter(Boolean)
+                if (colorImage) {
+                    if (colorImage.images && Array.isArray(colorImage.images) && colorImage.images.length > 0) {
+                        colorUrls = colorImage.images.filter(Boolean)
+                    } else if (typeof (colorImage as any).image === 'string' && String((colorImage as any).image).trim()) {
+                        colorUrls = [String((colorImage as any).image).trim()]
+                    }
                 }
             }
             const combined = mergeUnique(mainUrls, colorUrls)
@@ -4307,12 +4337,13 @@ const ProductDetail = () => {
                                                 value={
                                                     contactLensColorOptions.some(
                                                         (o: { value: string; label: string }) =>
-                                                            o.value.toLowerCase() === (selectedColor || '').toLowerCase()
+                                                            contactLensColorMatchKey(o.value) ===
+                                                            contactLensColorMatchKey(selectedColor)
                                                     )
                                                         ? contactLensColorOptions.find(
                                                               (o: { value: string; label: string }) =>
-                                                                  o.value.toLowerCase() ===
-                                                                  (selectedColor || '').toLowerCase()
+                                                                  contactLensColorMatchKey(o.value) ===
+                                                                  contactLensColorMatchKey(selectedColor)
                                                           )!.value
                                                         : ''
                                                 }

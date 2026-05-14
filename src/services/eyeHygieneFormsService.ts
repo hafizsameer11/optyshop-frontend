@@ -153,7 +153,16 @@ export async function getSizeVolumeVariants(
     )
 
     if (response.success && response.data) {
-      const data = response.data as any;
+      const data = response.data as any
+      if (Array.isArray(data)) {
+        if (import.meta.env.DEV) {
+          console.log('✅ Size/Volume Variants loaded (array):', {
+            productId,
+            count: data.length,
+          })
+        }
+        return data
+      }
       if (data.variants && Array.isArray(data.variants)) {
         if (import.meta.env.DEV) {
           console.log('✅ Size/Volume Variants loaded:', {

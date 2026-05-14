@@ -670,7 +670,10 @@ export const getProductEyeHygieneVariants = async (id: number | string): Promise
     );
 
     if (response.success && response.data) {
-      return (response.data as any).variants || [];
+      const d = response.data as any
+      if (Array.isArray(d)) return d as EyeHygieneVariant[]
+      if (Array.isArray(d.variants)) return d.variants as EyeHygieneVariant[]
+      return []
     }
 
     // Handle 500 errors and other server issues gracefully
