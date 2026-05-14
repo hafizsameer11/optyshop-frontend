@@ -3,8 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
 import { getProductImageUrl } from '../../utils/productImage'
-import { getShopProductBrandLabel } from '../../utils/productDisplayName'
-import { getProxiedImageUrl } from '../../services/imageProxyService'
+import { getShopProductBrandLabel, isShopContactLensProduct } from '../../utils/productDisplayName'
+import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import { normalizeProductSubcategory, type Product } from '../../services/productsService'
 
 interface ProductCardProps {
@@ -68,14 +68,6 @@ function gradientFromColorName(name: string): string | null {
     return null
 }
 
-function resolveThumbUrl(url: string): string {
-    const u = url.trim()
-    if (!u) return ''
-    if (u.startsWith('blob:')) return u
-    const proxied = getProxiedImageUrl(u)
-    return proxied || u
-}
-
 /**
  * Colors on listings come from:
  * - `colors[]` (preferred on some APIs): name, display_name, value, hexCode, images[]
@@ -101,13 +93,16 @@ function normalizeCardColors(product: Product): CardColorOption[] {
     if (Array.isArray(colorsApi) && colorsApi.length > 0) {
         for (const c of colorsApi as Record<string, unknown>[]) {
             const key = String(c.value ?? c.color ?? c.name ?? c.hexCode ?? '').trim()
-            const label = String(c.display_name ?? c.name ?? c.color ?? c.value ?? 'Color').trim()
-            const imgs = c.images
-            const thumb =
-                Array.isArray(imgs) && imgs[0] && String(imgs[0]).trim() ? String(imgs[0]).trim() : undefined
+            const hexRaw = typeof c.hexCode === 'string' ? c.hexCode.trim() : ''
             const hex =
-                typeof c.hexCode === 'string' && /^#[0-9a-f]{3,8}$/i.test(c.hexCode) ? c.hexCode : undefined
-            add({ key: key || label, label, thumbUrl: thumb, hex })
+                hexRaw && /^#[0-9a-f]{3,8}$/i.test(hexRaw)
+                    ? hexRaw.startsWith('#')
+                        ? hexRaw
+                        : `#${hexRaw}`
+                    : undefined
+            const rawLabel = String(c.display_name ?? c.name ?? c.color ?? '').trim()
+            const label = contactLensColorDisplayLabel(rawLabel || null, hex ?? normalizeHexKey(key))
+            add({ key: key || label, label, hex })
         }
         if (out.length > 0) return out
     }
@@ -116,16 +111,17 @@ function normalizeCardColors(product: Product): CardColorOption[] {
     if (cis) {
         for (const raw of cis) {
             const ci = raw as Record<string, unknown>
-            const key = String(ci.color ?? '').trim()
-            const label = String(ci.display_name ?? ci.name ?? ci.color ?? 'Color').trim()
-            const imgs = ci.images
-            const thumb =
-                Array.isArray(imgs) && imgs[0] && String(imgs[0]).trim() ? String(imgs[0]).trim() : undefined
+            const key = String(ci.color ?? ci.value ?? ci.hexCode ?? '').trim()
+            const hexRaw = typeof ci.hexCode === 'string' ? ci.hexCode.trim() : ''
             const hex =
-                typeof ci.hexCode === 'string' && /^#[0-9a-f]{3,8}$/i.test(ci.hexCode)
-                    ? ci.hexCode
+                hexRaw && /^#[0-9a-f]{3,8}$/i.test(hexRaw)
+                    ? hexRaw.startsWith('#')
+                        ? hexRaw
+                        : `#${hexRaw}`
                     : undefined
-            add({ key: key || label, label, thumbUrl: thumb, hex })
+            const rawLabel = String(ci.display_name ?? ci.name ?? ci.color ?? '').trim()
+            const label = contactLensColorDisplayLabel(rawLabel || null, hex ?? normalizeHexKey(key))
+            add({ key: key || label, label, hex })
         }
     }
 
@@ -207,7 +203,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const { t } = useTranslation()
     const navigate = useNavigate()
     const { toggleWishlist, isInWishlist } = useWishlist()
-    const [previewColorKey, setPreviewColorKey] = React.useState<string | null>(null)
 
     // First mm caliber (if any) — used as the listing hero image when the product has variant images.
     const p = product as any
@@ -234,24 +229,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
 
     const colorOptions = normalizeCardColors(product)
     const swatches = colorOptions.slice(0, MAX_SWATCHES)
+    const isContactLensCard = isShopContactLensProduct(product)
 
     const baseListingImage = React.useMemo(() => {
         let img = getProductImageUrl(product)
-        if (firstCaliber && firstCaliber.image_url) {
+        if (!isContactLensCard && firstCaliber && firstCaliber.image_url) {
             img = firstCaliber.image_url
         }
         return img
-    }, [product, firstCaliber])
-
-    const heroImage = React.useMemo(() => {
-        if (previewColorKey) {
-            const opt = colorOptions.find((o) => o.key === previewColorKey)
-            if (opt?.thumbUrl) {
-                return resolveThumbUrl(opt.thumbUrl)
-            }
-        }
-        return baseListingImage
-    }, [previewColorKey, colorOptions, baseListingImage])
+    }, [product, firstCaliber, isContactLensCard])
 
     const handleWishlistToggle = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -273,7 +259,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                     <div className="flex h-full w-full items-center justify-center bg-white p-3 sm:p-4">
                         <img
-                            src={heroImage}
+                            src={baseListingImage}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
@@ -330,9 +316,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     </h3>
                 </Link>
 
-                <div
-                    className="mb-2 flex items-center justify-between gap-2"
-                    onMouseLeave={() => setPreviewColorKey(null)}
+                <div className="mb-2 flex items-center justify-between gap-2"
                 >
                     {swatches.length > 0 ? (
                         <div
@@ -341,12 +325,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                             aria-label={t('shop.availableColors', 'Available colors')}
                         >
                             {swatches.slice(0, 4).map((opt) => {
-                                const thumb = opt.thumbUrl ? resolveThumbUrl(opt.thumbUrl) : ''
-                                const grad = !thumb ? gradientFromColorName(`${opt.label} ${opt.key}`) : null
+                                const grad = gradientFromColorName(`${opt.label} ${opt.key}`)
                                 const solid =
                                     opt.hex && /^#[0-9a-f]{3,8}$/i.test(opt.hex)
                                         ? opt.hex
-                                        : !thumb && !grad
+                                        : !grad
                                           ? solidFromColorName(`${opt.label} ${opt.key}`)
                                           : null
                                 return (
@@ -355,7 +338,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                                         type="button"
                                         role="listitem"
                                         title={opt.label}
-                                        onMouseEnter={() => setPreviewColorKey(opt.key)}
                                         onClick={(e) => {
                                             e.preventDefault()
                                             e.stopPropagation()
@@ -366,15 +348,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                                         }}
                                         className="h-4 w-4 shrink-0 cursor-pointer rounded-full border border-slate-200/90 bg-slate-100 shadow-sm ring-1 ring-white outline-none transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500"
                                         style={
-                                            thumb
-                                                ? {
-                                                      backgroundImage: `url(${thumb})`,
-                                                      backgroundSize: 'cover',
-                                                      backgroundPosition: 'center',
-                                                  }
-                                                : grad
-                                                  ? { backgroundImage: grad }
-                                                  : { backgroundColor: solid || '#E2E8F0' }
+                                            grad
+                                                ? { backgroundImage: grad }
+                                                : { backgroundColor: solid || '#E2E8F0' }
                                         }
                                     />
                                 )

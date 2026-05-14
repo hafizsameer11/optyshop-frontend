@@ -17,6 +17,7 @@ import {
 import { addItemToCart, updateCartItem, type AddToCartRequest } from '../../services/cartService'
 import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageUrl, getDefaultContactLensMainImageIndex } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
+import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { useAuth } from '../../context/AuthContext'
@@ -557,7 +558,12 @@ const ProductDetail = () => {
         if (!product) return null
 
         const variant = selectedColorVariant as Record<string, unknown> | null
-        const variantLabel = variant
+        const hexHint = normalizeHexKey(
+            stringValue(variant?.hexCode) ||
+                stringValue(variant?.hex_code) ||
+                stringValue(variant?.value)
+        )
+        const rawVariantLabel = variant
             ? stringValue(variant.display_name) ||
               stringValue(variant.displayName) ||
               stringValue(variant.name) ||
@@ -565,11 +571,15 @@ const ProductDetail = () => {
               (!isHexColorValue(stringValue(variant.value)) ? stringValue(variant.value) : null) ||
               (!isHexColorValue(stringValue(variant.hexCode)) ? stringValue(variant.hexCode) : null)
             : null
+        const variantLabel =
+            variant && (rawVariantLabel || hexHint)
+                ? contactLensColorDisplayLabel(rawVariantLabel, hexHint)
+                : null
 
         if (variantLabel) return variantLabel
 
         const selectedLabel = stringValue(selectedColor)
-        if (selectedLabel && !isHexColorValue(selectedLabel)) return selectedLabel
+        if (selectedLabel) return contactLensColorDisplayLabel(selectedLabel, normalizeHexKey(selectedLabel))
 
         const p = product as any
         return stringValue(p.color) ||
@@ -822,9 +832,15 @@ const ProductDetail = () => {
         return raw
             .map((color: any) => {
                 const colorValue = String(color.value || color.hexCode || color.color || color.name || '').trim()
-                const label = String(
-                    color.display_name || color.name || color.color || colorValue || 'Color'
-                ).trim()
+                const hexRaw = typeof color.hexCode === 'string' ? color.hexCode.trim() : ''
+                const hex =
+                    hexRaw && /^#[0-9a-f]{3,8}$/i.test(hexRaw)
+                        ? hexRaw.startsWith('#')
+                            ? hexRaw
+                            : `#${hexRaw}`
+                        : undefined
+                const rawLabel = String(color.display_name || color.name || color.color || '').trim()
+                const label = contactLensColorDisplayLabel(rawLabel || null, hex ?? normalizeHexKey(colorValue))
                 return { value: colorValue, label }
             })
             .filter((x: { value: string; label: string }) => x.value.length > 0)
@@ -4019,7 +4035,11 @@ const ProductDetail = () => {
                                                         {colorsArray.map((color: any, index: number) => {
                                                             const colorValue = color.value || color.hexCode || color.color || color.name
                                                             const hexCode = color.hexCode || '#E5E5E5'
-                                                            const displayName = color.display_name || color.name || color.color || 'Color'
+                                                            const rawDisplay = String(color.display_name || color.name || color.color || '').trim()
+                                                            const displayName = contactLensColorDisplayLabel(
+                                                                rawDisplay || null,
+                                                                normalizeHexKey(String(color.hexCode || colorValue || ''))
+                                                            )
                                                             const isSelected = selectedColor && (
                                                                 (color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
                                                                 (color.hexCode && color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
