@@ -152,6 +152,9 @@ export interface ContactLensCheckoutRequest {
   right_axis?: string | number  // API expects string (e.g., "180", "90")
   // Unit selection (pack size) - independent from qty
   selected_unit?: number | string  // Selected unit (pack size), e.g., 10, 20, 30
+  /** PDP color variant (hex or value from product.colors) — stored on cart line customization */
+  selected_color?: string | null
+  color_display_name?: string | null
 }
 
 export interface ContactLensCheckoutResponse {
@@ -177,6 +180,10 @@ export interface ContactLensCheckoutResponse {
         right_cylinder?: number
         left_axis?: number
         right_axis?: number
+        selected_color?: string
+        color_display_name?: string
+        variant_images?: string[]
+        hex_code?: string
       } | null
       product?: {
         id: number
@@ -625,6 +632,13 @@ export const addContactLensToCart = async (
 
     if (request.selected_unit !== undefined && request.selected_unit !== null && request.selected_unit !== '') {
       apiRequest.selected_unit = String(request.selected_unit)
+    }
+
+    if (request.selected_color != null && String(request.selected_color).trim() !== '') {
+      apiRequest.selected_color = String(request.selected_color).trim()
+    }
+    if (request.color_display_name != null && String(request.color_display_name).trim() !== '') {
+      apiRequest.color_display_name = String(request.color_display_name).trim()
     }
 
     if (import.meta.env.DEV) {

@@ -524,8 +524,8 @@ const ProductDetail = () => {
         // First try to find in 'colors' array (preferred format from API)
         if (p.colors && Array.isArray(p.colors)) {
             const colorData = p.colors.find((c: any) =>
-                (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                (c.hexCode && c.hexCode.toLowerCase() === selectedColorLower) ||
+                (c.value && String(c.value).toLowerCase() === selectedColorLower) ||
+                (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
                 (c.name && c.name.toLowerCase() === selectedColorLower)
             )
             if (colorData) return colorData
@@ -533,9 +533,11 @@ const ProductDetail = () => {
 
         // Fallback to 'color_images' array
         if (product.color_images) {
-            return product.color_images.find(ci =>
+            return product.color_images.find((ci: any) =>
                 (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                (ci.name && ci.name.toLowerCase() === selectedColorLower)
+                (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
+                (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower) ||
+                (ci.value && String(ci.value).toLowerCase() === selectedColorLower)
             ) || null
         }
 
@@ -969,11 +971,18 @@ const ProductDetail = () => {
                         console.log('🎨 Auto-selected first color from colors array:', firstColor)
                     }
                 } else if (productData.color_images && productData.color_images.length > 0) {
-                    // Fallback to first color from 'color_images' array
-                    const firstColor = productData.color_images[0]
-                    setSelectedColor(firstColor.color)
+                    // Fallback to first color from 'color_images' (API may use hexCode/name/color)
+                    const firstColor = productData.color_images[0] as any
+                    const firstVal =
+                        (typeof firstColor.value === 'string' && firstColor.value) ||
+                        (typeof firstColor.hexCode === 'string' && firstColor.hexCode) ||
+                        (typeof firstColor.hex_code === 'string' && firstColor.hex_code) ||
+                        (typeof firstColor.name === 'string' && firstColor.name) ||
+                        (typeof firstColor.color === 'string' && firstColor.color) ||
+                        null
+                    setSelectedColor(firstVal)
                     if (import.meta.env.DEV) {
-                        console.log('🎨 Auto-selected first color from color_images:', firstColor.color, firstColor)
+                        console.log('🎨 Auto-selected first color from color_images:', firstVal, firstColor)
                     }
                 } else {
                     setSelectedColor(null)
@@ -2981,11 +2990,9 @@ const ProductDetail = () => {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Use regular product images FIRST - only use caliber/variant images if user has explicitly selected them
-        // Check if user has manually made a selection (either by clicking thumbnails or selecting variants)
-        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant) {
-            // No manual selection and no variant selected - use regular product images
-            // Caliber images are shown when user selects from dropdown or clicks "View Xmm Frame Image" button
+        // Priority 2: Default gallery — use main product images only when no color/caliber/eye variant drives the gallery
+        // If a frame/contact color is selected, fall through so Priority 5 can apply color-specific images
+        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant && !selectedColor) {
             return getProductImageUrl(product, imageIndex)
         }
 
@@ -3061,7 +3068,7 @@ const ProductDetail = () => {
             let colorUrls: string[] = []
             if (p.colors && Array.isArray(p.colors)) {
                 const colorData = p.colors.find((c: any) =>
-                    (c.value && c.value.toLowerCase() === selectedColorLower) ||
+                    (c.value && String(c.value).toLowerCase() === selectedColorLower) ||
                     (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
                     (c.name && c.name.toLowerCase() === selectedColorLower)
                 )
@@ -3073,7 +3080,8 @@ const ProductDetail = () => {
                 const colorImage = product.color_images.find((ci: any) =>
                     (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
                     (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
-                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
+                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower) ||
+                    (ci.value && String(ci.value).toLowerCase() === selectedColorLower)
                 )
                 if (colorImage && colorImage.images && Array.isArray(colorImage.images)) {
                     colorUrls = colorImage.images.filter(Boolean)
@@ -3597,7 +3605,11 @@ const ProductDetail = () => {
                         left_axis: contactLensFormData.left_axis || undefined,
                     }),
                 }),
-                selected_unit: selectedUnit || undefined
+                selected_unit: selectedUnit || undefined,
+                ...(selectedColor && {
+                    selected_color: selectedColor,
+                    color_display_name: selectedProductColorLabel || undefined
+                })
             }
 
             // Use new contact lens checkout API endpoint (requires authentication)
@@ -3675,6 +3687,10 @@ const ProductDetail = () => {
                     unit: contactLensFormData.unit,
                     isContactLens: true,
                     customization: {
+                        ...(selectedColor && {
+                            selected_color: selectedColor,
+                            color_display_name: selectedProductColorLabel || undefined
+                        }),
                         contactLens: {
                             unit: contactLensFormData.unit,
                             right: {
@@ -3734,38 +3750,16 @@ const ProductDetail = () => {
                                         {/* Single Product Image */}
                                         <div className="relative bg-white rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
-                                                // Parse images if it's a JSON string
-                                                let imagesArray: string[] = []
-                                                if (product.images) {
-                                                    if (typeof product.images === 'string') {
-                                                        try {
-                                                            imagesArray = JSON.parse(product.images)
-                                                        } catch (e) {
-                                                            imagesArray = [product.images]
-                                                        }
-                                                    } else if (Array.isArray(product.images)) {
-                                                        imagesArray = product.images
-                                                    }
-                                                }
-
-                                                // Use unit images if available, otherwise use color images or product images
-                                                let productImage: string
+                                                // Pack-size unit images take priority; otherwise color variants + main images via getVariantSpecificImageUrl
                                                 const isUsingUnitImages = unitImages.length > 0 && selectedImageIndex < unitImages.length
-                                                if (isUsingUnitImages) {
-                                                    // Use unit-specific images
-                                                    productImage = unitImages[selectedImageIndex]
-                                                } else if (imagesArray.length > 0 && selectedImageIndex < imagesArray.length) {
-                                                    // Use color-specific images
-                                                    productImage = imagesArray[selectedImageIndex]
-                                                } else {
-                                                    // Fallback to variant-specific image (includes size/volume variant images)
-                                                    productImage = getVariantSpecificImageUrl(product, selectedImageIndex)
-                                                }
+                                                const productImage = isUsingUnitImages
+                                                    ? unitImages[selectedImageIndex]
+                                                    : getVariantSpecificImageUrl(product, selectedImageIndex)
 
                                                 return (
                                                     <>
                                                         <img
-                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${isUsingUnitImages ? 'unit' : 'default'}`}
+                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${isUsingUnitImages ? 'unit' : 'gallery'}`}
                                                             src={productImage}
                                                             alt={product.name}
                                                             className="w-full h-full object-contain p-3 sm:p-4"
@@ -3796,6 +3790,79 @@ const ProductDetail = () => {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Contact lens color variants (same data model as frames: colors / color_images) */}
+                                        {(() => {
+                                            const p = product as any
+                                            const colorsArray =
+                                                p.colors && Array.isArray(p.colors) && p.colors.length > 0
+                                                    ? p.colors
+                                                    : product.color_images && product.color_images.length > 0
+                                                      ? product.color_images.map((ci: any) => ({
+                                                            name: ci.name || ci.color,
+                                                            display_name: ci.display_name || ci.name || ci.color,
+                                                            value: ci.value || ci.hexCode || ci.color,
+                                                            hexCode: ci.hexCode || '#E5E5E5',
+                                                            price: ci.price,
+                                                            images: ci.images || [],
+                                                        }))
+                                                      : []
+
+                                            if (colorsArray.length === 0) return null
+
+                                            return (
+                                                <div className="max-w-md mx-auto">
+                                                    <label className="block text-sm font-semibold text-blue-950 mb-2">
+                                                        {t('shop.selectColor', 'Select Color')}
+                                                    </label>
+                                                    <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
+                                                        {colorsArray.map((color: any, index: number) => {
+                                                            const colorValue = color.value || color.hexCode || color.color || color.name
+                                                            const hexCode = color.hexCode || '#E5E5E5'
+                                                            const displayName = color.display_name || color.name || color.color || 'Color'
+                                                            const isSelected =
+                                                                selectedColor &&
+                                                                ((color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                    (color.hexCode &&
+                                                                        color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                    (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
+                                                                    (color.name && color.name.toLowerCase() === selectedColor.toLowerCase()))
+
+                                                            return (
+                                                                <button
+                                                                    key={index}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSelectedColor(colorValue)
+                                                                        setSelectedImageIndex(0)
+                                                                        setIsManuallySelectingImage(false)
+                                                                        const url = new URL(window.location.href)
+                                                                        url.searchParams.set('color', String(colorValue))
+                                                                        window.history.pushState({}, '', url)
+                                                                    }}
+                                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 shadow-sm flex-shrink-0 ${
+                                                                        isSelected
+                                                                            ? 'border-blue-950 bg-blue-50 text-blue-950 ring-1 ring-blue-950/20'
+                                                                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
+                                                                    }`}
+                                                                    title={displayName}
+                                                                >
+                                                                    <span
+                                                                        className="w-4 h-4 rounded-full border border-gray-200 shadow-inner shrink-0"
+                                                                        style={{ backgroundColor: hexCode }}
+                                                                    />
+                                                                    <div className="flex flex-col items-start leading-none">
+                                                                        <span className="text-xs font-semibold capitalize whitespace-nowrap">
+                                                                            {displayName}
+                                                                        </span>
+                                                                    </div>
+                                                                </button>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )
+                                        })()}
 
                                         {/* Price Display */}
                                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100 shadow-sm">
@@ -5929,6 +5996,19 @@ const ProductDetail = () => {
                                         specs.push({
                                             label: 'Product Type',
                                             value: (product as any).contact_lens_type
+                                        })
+                                    }
+
+                                    // Color (from color variants when configured, else static contact_lens_color)
+                                    if ((product as any).colors && Array.isArray((product as any).colors) && (product as any).colors.length > 0 && selectedProductColorLabel) {
+                                        specs.push({
+                                            label: 'Color',
+                                            value: selectedProductColorLabel
+                                        })
+                                    } else if ((product as any).contact_lens_color) {
+                                        specs.push({
+                                            label: 'Color',
+                                            value: (product as any).contact_lens_color
                                         })
                                     }
 
