@@ -4411,7 +4411,7 @@ const ProductDetail = () => {
                                 <div className="bg-white border-2 border-gray-200 rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl w-full">
                                     <div className="mb-6 pb-4 border-b-2 border-gray-100">
                                         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-                                            Customize Your {product?.name || 'Lenses'}
+                                            {product?.name || 'Lenses'}
                                         </h2>
                                         <p className="text-base text-gray-600">
                                             Select your parameters for each eye
