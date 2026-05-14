@@ -796,6 +796,31 @@ const ProductDetail = () => {
         return result
     }, [product])
 
+    const contactLensColorOptions = useMemo(() => {
+        if (!product || !isContactLens) return [] as Array<{ value: string; label: string }>
+        const p = product as any
+        const raw =
+            p.colors && Array.isArray(p.colors) && p.colors.length > 0
+                ? p.colors
+                : product.color_images && product.color_images.length > 0
+                  ? product.color_images.map((ci: any) => ({
+                        name: ci.name || ci.color,
+                        display_name: ci.display_name || ci.name || ci.color,
+                        value: ci.value || ci.hexCode || ci.color,
+                        hexCode: ci.hexCode || '#E5E5E5',
+                    }))
+                  : []
+        return raw
+            .map((color: any) => {
+                const colorValue = String(color.value || color.hexCode || color.color || color.name || '').trim()
+                const label = String(
+                    color.display_name || color.name || color.color || colorValue || 'Color'
+                ).trim()
+                return { value: colorValue, label }
+            })
+            .filter((x: { value: string; label: string }) => x.value.length > 0)
+    }, [product, isContactLens])
+
     // Helper function to determine if calibers should be shown
     const shouldShowCalibers = useMemo(() => {
         if (!product) {
@@ -3750,8 +3775,14 @@ const ProductDetail = () => {
                                         {/* Single Product Image */}
                                         <div className="relative bg-white rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
-                                                // Pack-size unit images take priority; otherwise color variants + main images via getVariantSpecificImageUrl
-                                                const isUsingUnitImages = unitImages.length > 0 && selectedImageIndex < unitImages.length
+                                                // When contact lens has colour variants and a colour is selected, show that gallery
+                                                // (pack unit_images would otherwise always win and colour changes would not update the hero).
+                                                const preferColorGallery =
+                                                    isContactLens && contactLensColorOptions.length > 0 && !!selectedColor
+                                                const isUsingUnitImages =
+                                                    !preferColorGallery &&
+                                                    unitImages.length > 0 &&
+                                                    selectedImageIndex < unitImages.length
                                                 const productImage = isUsingUnitImages
                                                     ? unitImages[selectedImageIndex]
                                                     : getVariantSpecificImageUrl(product, selectedImageIndex)
@@ -3759,7 +3790,7 @@ const ProductDetail = () => {
                                                 return (
                                                     <>
                                                         <img
-                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${isUsingUnitImages ? 'unit' : 'gallery'}`}
+                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${preferColorGallery ? 'color' : isUsingUnitImages ? 'unit' : 'gallery'}`}
                                                             src={productImage}
                                                             alt={product.name}
                                                             className="w-full h-full object-contain p-3 sm:p-4"
@@ -3790,79 +3821,6 @@ const ProductDetail = () => {
                                                 </div>
                                             )}
                                         </div>
-
-                                        {/* Contact lens color variants (same data model as frames: colors / color_images) */}
-                                        {(() => {
-                                            const p = product as any
-                                            const colorsArray =
-                                                p.colors && Array.isArray(p.colors) && p.colors.length > 0
-                                                    ? p.colors
-                                                    : product.color_images && product.color_images.length > 0
-                                                      ? product.color_images.map((ci: any) => ({
-                                                            name: ci.name || ci.color,
-                                                            display_name: ci.display_name || ci.name || ci.color,
-                                                            value: ci.value || ci.hexCode || ci.color,
-                                                            hexCode: ci.hexCode || '#E5E5E5',
-                                                            price: ci.price,
-                                                            images: ci.images || [],
-                                                        }))
-                                                      : []
-
-                                            if (colorsArray.length === 0) return null
-
-                                            return (
-                                                <div className="max-w-md mx-auto">
-                                                    <label className="block text-sm font-semibold text-blue-950 mb-2">
-                                                        {t('shop.selectColor', 'Select Color')}
-                                                    </label>
-                                                    <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
-                                                        {colorsArray.map((color: any, index: number) => {
-                                                            const colorValue = color.value || color.hexCode || color.color || color.name
-                                                            const hexCode = color.hexCode || '#E5E5E5'
-                                                            const displayName = color.display_name || color.name || color.color || 'Color'
-                                                            const isSelected =
-                                                                selectedColor &&
-                                                                ((color.value && color.value.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                                    (color.hexCode &&
-                                                                        color.hexCode.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                                    (color.color && color.color.toLowerCase() === selectedColor.toLowerCase()) ||
-                                                                    (color.name && color.name.toLowerCase() === selectedColor.toLowerCase()))
-
-                                                            return (
-                                                                <button
-                                                                    key={index}
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedColor(colorValue)
-                                                                        setSelectedImageIndex(0)
-                                                                        setIsManuallySelectingImage(false)
-                                                                        const url = new URL(window.location.href)
-                                                                        url.searchParams.set('color', String(colorValue))
-                                                                        window.history.pushState({}, '', url)
-                                                                    }}
-                                                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 shadow-sm flex-shrink-0 ${
-                                                                        isSelected
-                                                                            ? 'border-blue-950 bg-blue-50 text-blue-950 ring-1 ring-blue-950/20'
-                                                                            : 'border-gray-200 bg-white hover:border-gray-300 text-gray-700'
-                                                                    }`}
-                                                                    title={displayName}
-                                                                >
-                                                                    <span
-                                                                        className="w-4 h-4 rounded-full border border-gray-200 shadow-inner shrink-0"
-                                                                        style={{ backgroundColor: hexCode }}
-                                                                    />
-                                                                    <div className="flex flex-col items-start leading-none">
-                                                                        <span className="text-xs font-semibold capitalize whitespace-nowrap">
-                                                                            {displayName}
-                                                                        </span>
-                                                                    </div>
-                                                                </button>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            )
-                                        })()}
 
                                         {/* Price Display */}
                                         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-100 shadow-sm">
@@ -4334,6 +4292,60 @@ const ProductDetail = () => {
                                             Select your parameters for each eye
                                         </p>
                                     </div>
+
+                                    {contactLensColorOptions.length > 0 ? (
+                                        <div className="mb-6">
+                                            <label
+                                                htmlFor="contact-lens-color-select"
+                                                className="block text-sm font-semibold text-gray-700 mb-2"
+                                            >
+                                                {t('shop.selectColor', 'Select Color')}
+                                            </label>
+                                            <select
+                                                id="contact-lens-color-select"
+                                                className="w-full max-w-md rounded-lg border-2 border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                value={
+                                                    contactLensColorOptions.some(
+                                                        (o: { value: string; label: string }) =>
+                                                            o.value.toLowerCase() === (selectedColor || '').toLowerCase()
+                                                    )
+                                                        ? contactLensColorOptions.find(
+                                                              (o: { value: string; label: string }) =>
+                                                                  o.value.toLowerCase() ===
+                                                                  (selectedColor || '').toLowerCase()
+                                                          )!.value
+                                                        : ''
+                                                }
+                                                onChange={(e) => {
+                                                    const v = e.target.value
+                                                    if (!v) {
+                                                        setSelectedColor(null)
+                                                        setSelectedImageIndex(0)
+                                                        setIsManuallySelectingImage(false)
+                                                        const url = new URL(window.location.href)
+                                                        url.searchParams.delete('color')
+                                                        window.history.pushState({}, '', url)
+                                                        return
+                                                    }
+                                                    setSelectedColor(v)
+                                                    setSelectedImageIndex(0)
+                                                    setIsManuallySelectingImage(false)
+                                                    const url = new URL(window.location.href)
+                                                    url.searchParams.set('color', v)
+                                                    window.history.pushState({}, '', url)
+                                                }}
+                                            >
+                                                <option value="">
+                                                    {t('shop.selectColorPlaceholder', 'Select a colour')}
+                                                </option>
+                                                {contactLensColorOptions.map((opt: { value: string; label: string }, idx: number) => (
+                                                    <option key={`${opt.value}-${idx}`} value={opt.value}>
+                                                        {opt.label}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    ) : null}
 
                                     {/* Unit Selection (Pack Sizes) - Independent from Qty */}
                                     {contactLensPackResolution.availableUnits.length > 0 ? (
