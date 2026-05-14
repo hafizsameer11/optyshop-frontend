@@ -3045,12 +3045,8 @@ const ProductDetail = () => {
 
     // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
-        // Priority 1: Pack unit images — skip when contact-lens colour is driving the hero (otherwise colour never wins inside this helper).
-        const skipUnitForContactLensColor =
-            isContactLens &&
-            !!selectedColor &&
-            contactLensColorOptions.length > 0
-        if (!skipUnitForContactLensColor && unitImages.length > 0 && imageIndex < unitImages.length) {
+        // Priority 1: Pack unit images (eye-hygiene / pack previews) — not used for contact lenses; CL hero is main gallery until a tint is chosen, then colour gallery.
+        if (!isContactLens && unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
 
@@ -3819,22 +3815,17 @@ const ProductDetail = () => {
                                         {/* Single Product Image */}
                                         <div className="relative bg-white rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
-                                                // When contact lens has colour variants and a colour is selected, show that gallery
-                                                // (pack unit_images would otherwise always win and colour changes would not update the hero).
+                                                // Contact lens: default hero = main product images only. After a tint is chosen, use colour gallery (not pack unit_images, which are often wrong or another SKU).
                                                 const preferColorGallery =
-                                                    isContactLens && contactLensColorOptions.length > 0 && !!selectedColor
-                                                const isUsingUnitImages =
-                                                    !preferColorGallery &&
-                                                    unitImages.length > 0 &&
-                                                    selectedImageIndex < unitImages.length
-                                                const productImage = isUsingUnitImages
-                                                    ? unitImages[selectedImageIndex]
-                                                    : getVariantSpecificImageUrl(product, selectedImageIndex)
+                                                    contactLensColorOptions.length > 0 && !!selectedColor
+                                                const productImage = preferColorGallery
+                                                    ? getVariantSpecificImageUrl(product, selectedImageIndex)
+                                                    : getProductImageUrl(product, selectedImageIndex)
 
                                                 return (
                                                     <>
                                                         <img
-                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${preferColorGallery ? 'color' : isUsingUnitImages ? 'unit' : 'gallery'}`}
+                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${preferColorGallery ? 'color' : 'main'}`}
                                                             src={productImage}
                                                             alt={product.name}
                                                             className="w-full h-full object-contain p-3 sm:p-4"
@@ -4223,11 +4214,79 @@ const ProductDetail = () => {
 
                                         {/* Thumbnail Images */}
                                         {(() => {
-                                            // Priority: Use unit images if available, otherwise use color images or product images
                                             let imagesArray: string[] = []
 
-                                            // First priority: Use unit-specific images
-                                            if (unitImages.length > 0) {
+                                            const preferColorThumbs =
+                                                isContactLens &&
+                                                contactLensColorOptions.length > 0 &&
+                                                !!selectedColor
+
+                                            if (isContactLens && !preferColorThumbs) {
+                                                if (product.images) {
+                                                    if (typeof product.images === 'string') {
+                                                        try {
+                                                            const parsed = JSON.parse(product.images)
+                                                            imagesArray = Array.isArray(parsed)
+                                                                ? parsed.filter(Boolean)
+                                                                : [product.images]
+                                                        } catch {
+                                                            imagesArray = [product.images]
+                                                        }
+                                                    } else if (Array.isArray(product.images)) {
+                                                        imagesArray = product.images.filter(Boolean)
+                                                    }
+                                                }
+                                                if (imagesArray.length === 0) {
+                                                    const one = getProductImageUrl(product, 0)
+                                                    if (one) imagesArray = [one]
+                                                }
+                                            } else if (preferColorThumbs) {
+                                                const p = product as any
+                                                const mainUrls: string[] = []
+                                                if (p.images) {
+                                                    if (typeof p.images === 'string') {
+                                                        try {
+                                                            const parsed = JSON.parse(p.images)
+                                                            if (Array.isArray(parsed)) mainUrls.push(...parsed.filter(Boolean))
+                                                            else if (parsed) mainUrls.push(String(parsed))
+                                                        } catch {
+                                                            if (p.images.trim()) mainUrls.push(p.images)
+                                                        }
+                                                    } else if (Array.isArray(p.images)) {
+                                                        mainUrls.push(...p.images.filter(Boolean))
+                                                    }
+                                                }
+                                                let colorUrls: string[] = []
+                                                if (p.colors && Array.isArray(p.colors)) {
+                                                    const colorData = p.colors.find((c: any) =>
+                                                        contactLensColorEntryMatches(selectedColor, c as Record<string, unknown>)
+                                                    )
+                                                    if (colorData?.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                        colorUrls = colorData.images.filter(Boolean)
+                                                    } else if (typeof colorData?.image === 'string' && colorData.image.trim()) {
+                                                        colorUrls = [colorData.image.trim()]
+                                                    }
+                                                }
+                                                if (!colorUrls.length && product.color_images) {
+                                                    const ci = product.color_images.find((x: any) =>
+                                                        contactLensColorEntryMatches(selectedColor, x as Record<string, unknown>)
+                                                    )
+                                                    if (ci?.images && Array.isArray(ci.images) && ci.images.length > 0) {
+                                                        colorUrls = ci.images.filter(Boolean)
+                                                    } else if (typeof (ci as any)?.image === 'string' && String((ci as any).image).trim()) {
+                                                        colorUrls = [String((ci as any).image).trim()]
+                                                    }
+                                                }
+                                                const mergeUnique = (base: string[], extra: string[]) => {
+                                                    const out = [...base.filter(Boolean)]
+                                                    extra.filter(Boolean).forEach((u) => {
+                                                        if (!out.includes(u)) out.push(u)
+                                                    })
+                                                    return out
+                                                }
+                                                imagesArray =
+                                                    colorUrls.length > 0 ? mergeUnique(colorUrls, mainUrls) : [...mainUrls]
+                                            } else if (unitImages.length > 0) {
                                                 imagesArray = unitImages
                                             } else {
                                                 // Second priority: Get images for selected color - supports both 'colors' array and 'color_images' array
