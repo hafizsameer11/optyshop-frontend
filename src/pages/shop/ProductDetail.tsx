@@ -19,12 +19,13 @@ import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageU
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import ProductCheckout from '../../components/shop/ProductCheckout'
+import ProductCard from '../../components/products/ProductCard'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
 import { useAuth } from '../../context/AuthContext'
 import {
     getContactLensFormConfig,
-    getAstigmatismConfigs,
-    getSphericalConfigs,
+    getAstigmatismConfigsForProduct,
+    getSphericalConfigsForProduct,
     addContactLensToCart,
     getContactLensOptions,
     getUnitPriceAndImages,
@@ -46,16 +47,32 @@ import {
     type SizeVolumeVariant
 } from '../../services/eyeHygieneFormsService'
 
-/** Backend may return a single scalar or an array for prescription fields */
+/** Backend may return a single scalar, JSON string, array, or object for prescription fields */
 function normalizeLensFieldToStrings(value: unknown): string[] {
     if (value == null) return []
+    if (typeof value === 'string') {
+        const trimmed = value.trim()
+        if (!trimmed) return []
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+                return normalizeLensFieldToStrings(JSON.parse(trimmed) as unknown)
+            } catch {
+                return [trimmed]
+            }
+        }
+        return [trimmed]
+    }
     if (Array.isArray(value)) {
         return value
-            .map((v) => (v != null && v !== '' ? String(v) : ''))
+            .flatMap((v) => normalizeLensFieldToStrings(v))
             .filter((s) => s !== '')
     }
     if (typeof value === 'number' && !Number.isNaN(value)) return [String(value)]
-    if (typeof value === 'string' && value.trim() !== '') return [value.trim()]
+    if (typeof value === 'object') {
+        return Object.values(value as Record<string, unknown>)
+            .flatMap((v) => normalizeLensFieldToStrings(v))
+            .filter((s) => s !== '')
+    }
     return []
 }
 
@@ -1271,7 +1288,7 @@ const ProductDetail = () => {
                         // For Spherical, fetch configurations which contain the dropdown values
                         // Filter by product_id to get only configs assigned to this product
                         // This ensures dropdown values are specific to the selected product
-                        const configs = await getSphericalConfigs(numericId, product.id)
+                        const configs = await getSphericalConfigsForProduct(numericId, product.id)
                         if (import.meta.env.DEV) {
                             console.log('📦 Fetched spherical configs (filtered by product_id):', {
                                 productId: product.id,
@@ -1404,7 +1421,7 @@ const ProductDetail = () => {
                     // Fallback: Try to fetch spherical configs directly
                     // If configs exist, assume it's a spherical form
                     // Filter by product_id to get only configs assigned to this product
-                    const configs = await getSphericalConfigs(numericId, product.id)
+                    const configs = await getSphericalConfigsForProduct(numericId, product.id)
                     if (configs && configs.length > 0) {
                         // Create a minimal config object for spherical form
                         setContactLensFormConfig({
@@ -1508,7 +1525,7 @@ const ProductDetail = () => {
                 // Try fallback on error as well
                 try {
                     // Filter by product_id to get only configs assigned to this product
-                    const configs = await getSphericalConfigs(numericId, product.id)
+                    const configs = await getSphericalConfigsForProduct(numericId, product.id)
                     if (configs && configs.length > 0) {
                         setContactLensFormConfig({
                             formType: 'spherical',
@@ -1960,7 +1977,7 @@ const ProductDetail = () => {
                     // Fetch astigmatism configurations
                     // Filter by product_id to get only configs assigned to this product
                     // This ensures dropdown values are specific to the selected product
-                    const configs = await getAstigmatismConfigs(numericId, product.id)
+                    const configs = await getAstigmatismConfigsForProduct(numericId, product.id)
 
                     if (import.meta.env.DEV) {
                         console.log('📦 Fetched astigmatism configs (filtered by product_id):', {
@@ -6388,78 +6405,9 @@ const ProductDetail = () => {
                             )}
                         </div>
                         <div className={`grid grid-cols-1 sm:grid-cols-2 ${isEyeHygiene ? 'lg:grid-cols-4 xl:grid-cols-4' : 'lg:grid-cols-4'} gap-6`}>
-                            {relatedProducts.map((relatedProduct) => {
-                                // Check if related product is a contact lens
-                                // Contact lenses don't use inventory stock, so we shouldn't show "Out of stock"
-                                const isRelatedContactLens =
-                                    relatedProduct.category?.slug?.toLowerCase().includes('contact') ||
-                                    relatedProduct.category?.name?.toLowerCase().includes('contact') ||
-                                    relatedProduct.slug?.toLowerCase().includes('contact') ||
-                                    relatedProduct.name?.toLowerCase().includes('contact') ||
-                                    false
-                                const relatedBrandLine = getShopProductBrandLabel(relatedProduct)
-
-                                return (
-                                    <Link
-                                        key={relatedProduct.id}
-                                        to={`/shop/product/${relatedProduct.slug}`}
-                                        className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 flex flex-col hover:-translate-y-1"
-                                    >
-                                        <div className="relative h-64 bg-gray-100 overflow-hidden">
-                                            <img
-                                                src={getProductImageUrl(relatedProduct)}
-                                                alt={relatedProduct.name}
-                                                className="w-full h-full object-contain p-4 transition-transform duration-300 hover:scale-105"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement
-                                                    target.src = '/assets/images/frame1.png'
-                                                }}
-                                            />
-                                            {/* Show variant badge for Eye Hygiene products */}
-                                            {false && (
-                                                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                                    0 sizes
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="p-4 flex-grow flex flex-col">
-                                            <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 min-h-[3.5rem]">
-                                                {relatedProduct.name}
-                                            </h3>
-                                            {relatedBrandLine ? (
-                                                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">
-                                                    {relatedBrandLine}
-                                                </p>
-                                            ) : null}
-                                            <div className="mt-auto pt-4">
-                                                {relatedProduct.sale_price && Number(relatedProduct.sale_price) < Number(relatedProduct.price) ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xl font-bold text-blue-950">
-                                                            €{Number(relatedProduct.sale_price).toFixed(2)}
-                                                        </span>
-                                                        <span className="text-sm text-gray-400 line-through">
-                                                            €{Number(relatedProduct.price).toFixed(2)}
-                                                        </span>
-                                                        <span className="text-xs font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                                                            {Math.round(((Number(relatedProduct.price) - Number(relatedProduct.sale_price)) / Number(relatedProduct.price)) * 100)}% OFF
-                                                        </span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xl font-bold text-blue-950">
-                                                        €{Number(relatedProduct.price || 0).toFixed(2)}
-                                                    </span>
-                                                )}
-                                                {/* Show stock status - ONLY for non-contact lens products */}
-                                                {!isRelatedContactLens && relatedProduct.stock_quantity !== undefined && (
-                                                    <p className={`text-xs mt-1 font-medium ${relatedProduct.stock_quantity > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {relatedProduct.stock_quantity > 0 ? `${relatedProduct.stock_quantity} in stock` : 'Out of stock'}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </Link>
-                                )
-                            })}
+                            {relatedProducts.map((relatedProduct) => (
+                                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                            ))}
                         </div>
                     </div>
                 </section>

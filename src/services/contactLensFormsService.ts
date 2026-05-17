@@ -335,12 +335,24 @@ export const getAstigmatismDropdownValues = async (
  * @param subCategoryId - Optional filter by sub-sub-category ID
  * @param productId - Optional filter by product ID (returns only configs assigned to this product)
  */
+const parseSphericalConfigsResponse = (data: unknown): SphericalConfig[] => {
+  if (!data) return []
+  const payload = data as { configs?: SphericalConfig[] }
+  if (payload.configs && Array.isArray(payload.configs)) {
+    return payload.configs
+  }
+  if (Array.isArray(data)) {
+    return data as SphericalConfig[]
+  }
+  return []
+}
+
 export const getSphericalConfigs = async (
   subCategoryId?: number | string,
   productId?: number | string
 ): Promise<SphericalConfig[]> => {
   try {
-    const response = await apiClient.get<{ 
+    const response = await apiClient.get<{
       success: boolean
       message: string
       data: {
@@ -358,17 +370,7 @@ export const getSphericalConfigs = async (
     )
 
     if (response.success && response.data) {
-      // Handle new response structure with data.configs
-      let configs: SphericalConfig[] = []
-      
-      if (response.data.configs && Array.isArray(response.data.configs)) {
-        configs = response.data.configs
-      } else if (Array.isArray(response.data)) {
-        // Fallback to old structure (direct array)
-        configs = response.data as any
-      }
-      
-      // Filter to only active configs (if is_active field exists)
+      const configs = parseSphericalConfigsResponse(response.data)
       return configs.filter((config: SphericalConfig) => config.is_active !== false)
     }
 
@@ -381,10 +383,31 @@ export const getSphericalConfigs = async (
 }
 
 /**
+ * Spherical configs for a product page: product-specific rows first, then sub-sub-category shared rows.
+ */
+export const getSphericalConfigsForProduct = async (
+  subCategoryId: number | string,
+  productId: number | string
+): Promise<SphericalConfig[]> => {
+  const scoped = await getSphericalConfigs(subCategoryId, productId)
+  if (scoped.length > 0) return scoped
+  return getSphericalConfigs(subCategoryId)
+}
+
+/**
  * Get astigmatism configurations
  * @param subCategoryId - Optional filter by sub-sub-category ID
  * @param productId - Optional filter by product ID (returns only configs assigned to this product)
  */
+export const getAstigmatismConfigsForProduct = async (
+  subCategoryId: number | string,
+  productId: number | string
+): Promise<AstigmatismConfig[]> => {
+  const scoped = await getAstigmatismConfigs(subCategoryId, productId)
+  if (scoped.length > 0) return scoped
+  return getAstigmatismConfigs(subCategoryId)
+}
+
 export const getAstigmatismConfigs = async (
   subCategoryId?: number | string,
   productId?: number | string
