@@ -133,6 +133,184 @@ export interface AstigmatismConfig {
   unit_images?: Record<string, string[]> // JSON object mapping unit to image URLs, e.g., {"10": ["url1"], "20": ["url2"], "30": ["url3"]}
 }
 
+// ============================================
+// Shared parsing (product payload + list APIs)
+// ============================================
+
+/** Backend may return a single scalar, JSON string, array, or object for prescription fields */
+export function normalizeLensFieldToStrings(value: unknown): string[] {
+  if (value == null) return []
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) return []
+    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+      try {
+        return normalizeLensFieldToStrings(JSON.parse(trimmed) as unknown)
+      } catch {
+        return [trimmed]
+      }
+    }
+    return [trimmed]
+  }
+  if (Array.isArray(value)) {
+    return value
+      .flatMap((v) => normalizeLensFieldToStrings(v))
+      .filter((s) => s !== '')
+  }
+  if (typeof value === 'number' && !Number.isNaN(value)) return [String(value)]
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>)
+      .flatMap((v) => normalizeLensFieldToStrings(v))
+      .filter((s) => s !== '')
+  }
+  return []
+}
+
+function normalizeConfigRecord<T extends SphericalConfig | AstigmatismConfig>(
+  raw: Record<string, unknown>
+): T {
+  const eyeFields = [
+    'right_qty',
+    'right_base_curve',
+    'right_diameter',
+    'right_power',
+    'right_cylinder',
+    'right_axis',
+    'left_qty',
+    'left_base_curve',
+    'left_diameter',
+    'left_power',
+    'left_cylinder',
+    'left_axis',
+  ] as const
+  const out: Record<string, unknown> = { ...raw }
+  for (const key of eyeFields) {
+    if (key in raw) {
+      out[key] = normalizeLensFieldToStrings(raw[key])
+    }
+  }
+  if (raw.available_units != null && typeof raw.available_units === 'string') {
+    try {
+      out.available_units = JSON.parse(raw.available_units)
+    } catch {
+      /* keep raw */
+    }
+  }
+  if (raw.unit_prices != null && typeof raw.unit_prices === 'string') {
+    try {
+      out.unit_prices = JSON.parse(raw.unit_prices)
+    } catch {
+      /* keep raw */
+    }
+  }
+  if (raw.unit_images != null && typeof raw.unit_images === 'string') {
+    try {
+      out.unit_images = JSON.parse(raw.unit_images)
+    } catch {
+      /* keep raw */
+    }
+  }
+  return out as T
+}
+
+/** Configs embedded on GET /products/slug/:slug — most reliable for product-specific values */
+export function getEmbeddedContactLensConfigsFromProduct(
+  product: unknown,
+  formType?: 'spherical' | 'astigmatism'
+): Array<SphericalConfig | AstigmatismConfig> {
+  const p = product as Record<string, unknown>
+  const raw = p.contact_lens_configs ?? p.contactLensConfigs
+  if (!Array.isArray(raw) || raw.length === 0) return []
+  return raw
+    .filter((row) => {
+      const r = row as Record<string, unknown>
+      if (r.is_active === false) return false
+      const t = String(r.configuration_type ?? '').toLowerCase()
+      if (!formType) return true
+      return t === formType
+    })
+    .map((row) => normalizeConfigRecord<SphericalConfig | AstigmatismConfig>(row as Record<string, unknown>))
+}
+
+/** Resolve leaf sub-sub-category id for contact lens form APIs */
+export function resolveContactLensSubSubCategoryId(product: unknown): {
+  id: number | null
+  data: { id: number; name: string; slug: string; parent_id?: number | null } | null
+} {
+  const p = product as Record<string, unknown>
+
+  const embedded = getEmbeddedContactLensConfigsFromProduct(product)
+  if (embedded.length > 0) {
+    const scId = (embedded[0] as { sub_category_id?: number }).sub_category_id
+    if (scId != null && !Number.isNaN(Number(scId))) {
+      return {
+        id: Number(scId),
+        data: { id: Number(scId), name: '', slug: '' },
+      }
+    }
+  }
+
+  const sub =
+    (p.subcategory as Record<string, unknown> | undefined) ||
+    (p.subCategory as Record<string, unknown> | undefined)
+  if (sub?.parent_id != null && sub.id != null) {
+    return {
+      id: Number(sub.id),
+      data: {
+        id: Number(sub.id),
+        name: String(sub.name ?? ''),
+        slug: String(sub.slug ?? ''),
+        parent_id: sub.parent_id != null ? Number(sub.parent_id) : null,
+      },
+    }
+  }
+
+  const midId =
+    p.sub_category_id ?? p.subcategory_id ?? (sub?.id as number | undefined)
+  const category = p.category as { subcategories?: Array<Record<string, unknown>> } | undefined
+  if (midId != null && category?.subcategories && Array.isArray(category.subcategories)) {
+    const mid = category.subcategories.find((s) => Number(s.id) === Number(midId))
+    const children = mid?.children as Array<Record<string, unknown>> | undefined
+    if (children?.length) {
+      const leaf =
+        children.find((c) => Number(c.parent_id) === Number(mid!.id)) || children[0]
+      if (leaf?.id != null) {
+        return {
+          id: Number(leaf.id),
+          data: {
+            id: Number(leaf.id),
+            name: String(leaf.name ?? ''),
+            slug: String(leaf.slug ?? ''),
+            parent_id: leaf.parent_id != null ? Number(leaf.parent_id) : null,
+          },
+        }
+      }
+    }
+  }
+
+  if (category?.subcategories && Array.isArray(category.subcategories)) {
+    for (const subcat of category.subcategories) {
+      const children = subcat.children as Array<Record<string, unknown>> | undefined
+      if (children?.length && children[0]?.id != null) {
+        return {
+          id: Number(children[0].id),
+          data: {
+            id: Number(children[0].id),
+            name: String(children[0].name ?? ''),
+            slug: String(children[0].slug ?? ''),
+          },
+        }
+      }
+    }
+  }
+
+  if (midId != null && !Number.isNaN(Number(midId))) {
+    return { id: Number(midId), data: null }
+  }
+
+  return { id: null, data: null }
+}
+
 export interface ContactLensCheckoutRequest {
   product_id: number
   form_type: 'spherical' | 'astigmatism'
@@ -370,7 +548,9 @@ export const getSphericalConfigs = async (
     )
 
     if (response.success && response.data) {
-      const configs = parseSphericalConfigsResponse(response.data)
+      const configs = parseSphericalConfigsResponse(response.data).map((c) =>
+        normalizeConfigRecord<SphericalConfig>(c as unknown as Record<string, unknown>)
+      )
       return configs.filter((config: SphericalConfig) => config.is_active !== false)
     }
 

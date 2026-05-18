@@ -29,6 +29,9 @@ import {
     addContactLensToCart,
     getContactLensOptions,
     getUnitPriceAndImages,
+    normalizeLensFieldToStrings,
+    getEmbeddedContactLensConfigsFromProduct,
+    resolveContactLensSubSubCategoryId,
     type ContactLensFormConfig,
     type SphericalConfig,
     type AstigmatismConfig,
@@ -46,35 +49,6 @@ import {
     type EyeHygieneOptions,
     type SizeVolumeVariant
 } from '../../services/eyeHygieneFormsService'
-
-/** Backend may return a single scalar, JSON string, array, or object for prescription fields */
-function normalizeLensFieldToStrings(value: unknown): string[] {
-    if (value == null) return []
-    if (typeof value === 'string') {
-        const trimmed = value.trim()
-        if (!trimmed) return []
-        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-            try {
-                return normalizeLensFieldToStrings(JSON.parse(trimmed) as unknown)
-            } catch {
-                return [trimmed]
-            }
-        }
-        return [trimmed]
-    }
-    if (Array.isArray(value)) {
-        return value
-            .flatMap((v) => normalizeLensFieldToStrings(v))
-            .filter((s) => s !== '')
-    }
-    if (typeof value === 'number' && !Number.isNaN(value)) return [String(value)]
-    if (typeof value === 'object') {
-        return Object.values(value as Record<string, unknown>)
-            .flatMap((v) => normalizeLensFieldToStrings(v))
-            .filter((s) => s !== '')
-    }
-    return []
-}
 
 function sortOptometricStringList(values: string[]): string[] {
     return Array.from(new Set(values.filter((v) => v !== ''))).sort((a, b) => {
@@ -1178,60 +1152,81 @@ const ProductDetail = () => {
 
             const p = product as any
 
-            // Enhanced sub-sub-category detection - try multiple possible structures
-            // A sub-sub-category must have a parent_id (it's a child of a subcategory)
-            let subCategoryId: number | string | undefined = undefined
-            let subCategoryData: any = null
+            const applySphericalConfigs = (configs: SphericalConfig[], subCatMeta: { id: number; name: string; slug: string }) => {
+                setContactLensFormConfig({
+                    formType: 'spherical',
+                    subCategory: subCatMeta,
+                    formFields: { rightEye: {}, leftEye: {} },
+                })
+                setSphericalConfigs(configs)
+                setSelectedConfig(configs[0])
+                const allPowerValues = new Set<string>()
+                configs.forEach((config) => {
+                    normalizeLensFieldToStrings(config.right_power).forEach((v) => allPowerValues.add(v))
+                    normalizeLensFieldToStrings(config.left_power).forEach((v) => allPowerValues.add(v))
+                })
+                setSphericalPowerValues(
+                    Array.from(allPowerValues).sort((a, b) => {
+                        const numA = parseFloat(a)
+                        const numB = parseFloat(b)
+                        if (!isNaN(numA) && !isNaN(numB)) return numA - numB
+                        return a.localeCompare(b)
+                    })
+                )
+            }
 
-            // Priority 1: Check direct subcategory field (most common)
-            if (p.subcategory) {
-                subCategoryData = p.subcategory
-                // Check if it has parent_id (indicates it's a sub-sub-category)
-                if (subCategoryData.parent_id) {
-                    subCategoryId = subCategoryData.id
+            const applyAstigmatismConfigs = (
+                configs: AstigmatismConfig[],
+                subCatMeta: { id: number; name: string; slug: string }
+            ) => {
+                setContactLensFormConfig({
+                    formType: 'astigmatism',
+                    subCategory: subCatMeta,
+                    formFields: { rightEye: {}, leftEye: {} },
+                })
+                setAstigmatismConfigs(configs)
+                setSelectedAstigmatismConfig(configs[0])
+            }
+
+            const embeddedSpherical = getEmbeddedContactLensConfigsFromProduct(
+                product,
+                'spherical'
+            ) as SphericalConfig[]
+            if (embeddedSpherical.length > 0) {
+                const { id: resolvedId, data: resolvedData } = resolveContactLensSubSubCategoryId(product)
+                const subCatMeta = {
+                    id: resolvedData?.id ?? embeddedSpherical[0].sub_category_id ?? resolvedId ?? 0,
+                    name: resolvedData?.name ?? '',
+                    slug: resolvedData?.slug ?? '',
                 }
-            }
-
-            // Priority 2: Mid-level subcategory id on product (e.g. sub_category_id) → resolve to leaf sub-sub-category for GET /contact-lens-forms/config/:id
-            if (!subCategoryId) {
-                const midId =
-                    p.sub_category_id ?? p.subcategory_id ?? p.sub_category?.id ?? p.subcategory?.id
-                if (midId != null && p.category?.subcategories && Array.isArray(p.category.subcategories)) {
-                    const mid = p.category.subcategories.find(
-                        (s: any) => Number(s.id) === Number(midId)
-                    )
-                    if (mid?.children?.length) {
-                        const leaf =
-                            mid.children.find((c: any) => Number(c.parent_id) === Number(mid.id)) ||
-                            mid.children[0]
-                        if (leaf?.id) {
-                            subCategoryId = leaf.id
-                            subCategoryData = leaf
-                        }
-                    }
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using embedded spherical configs from product:', embeddedSpherical.length)
                 }
+                applySphericalConfigs(embeddedSpherical, subCatMeta)
+                return
             }
 
-            // Priority 3: Check nested category structure (category -> subcategories -> children)
-            if (!subCategoryId && p.category) {
-                const category = p.category
-                // Check if category has subcategories with children (sub-sub-categories)
-                if (category.subcategories && Array.isArray(category.subcategories)) {
-                    for (const subcat of category.subcategories) {
-                        if (subcat.children && Array.isArray(subcat.children) && subcat.children.length > 0) {
-                            // Use the first child sub-sub-category (or find the one matching product)
-                            // For now, use the first one - in future could match by product association
-                            subCategoryId = subcat.children[0]?.id
-                            if (subCategoryId) break
-                        }
-                    }
+            const embeddedAstigmatism = getEmbeddedContactLensConfigsFromProduct(
+                product,
+                'astigmatism'
+            ) as AstigmatismConfig[]
+            if (embeddedAstigmatism.length > 0) {
+                const { id: resolvedId, data: resolvedData } = resolveContactLensSubSubCategoryId(product)
+                const subCatMeta = {
+                    id: resolvedData?.id ?? embeddedAstigmatism[0].sub_category_id ?? resolvedId ?? 0,
+                    name: resolvedData?.name ?? '',
+                    slug: resolvedData?.slug ?? '',
                 }
+                if (import.meta.env.DEV) {
+                    console.log('✅ Using embedded astigmatism configs from product:', embeddedAstigmatism.length)
+                }
+                applyAstigmatismConfigs(embeddedAstigmatism, subCatMeta)
+                return
             }
 
-            // Priority 4: Check if category itself might be the sub-sub-category (if it has parent_id)
-            if (!subCategoryId && p.category?.parent_id) {
-                subCategoryId = p.category.id
-            }
+            const { id: resolvedSubCategoryId, data: subCategoryData } =
+                resolveContactLensSubSubCategoryId(product)
+            const subCategoryId = resolvedSubCategoryId ?? undefined
 
             // Validate that we have a valid ID (must be a number, not a slug)
             if (!subCategoryId) {
@@ -1939,40 +1934,29 @@ const ProductDetail = () => {
                 return
             }
 
+            const embeddedAstigmatism = getEmbeddedContactLensConfigsFromProduct(
+                product,
+                'astigmatism'
+            ) as AstigmatismConfig[]
+            if (embeddedAstigmatism.length > 0) {
+                return
+            }
+
             // Clear configs at start of fetch to prevent stale data
             setAstigmatismConfigs([])
             setSelectedAstigmatismConfig(null)
 
             if (formType === 'astigmatism' && isContactLens && product) {
                 try {
-                    const p = product as any
-
-                    // Get sub-sub-category ID (same logic as fetchFormConfig)
-                    let subCategoryId: number | string | undefined = undefined
-
-                    if (p.subcategory?.parent_id) {
-                        subCategoryId = p.subcategory.id
-                    } else if (p.sub_category_id) {
-                        subCategoryId = p.sub_category_id
-                    } else if (p.subcategory_id) {
-                        subCategoryId = p.subcategory_id
-                    } else if (p.sub_category?.id) {
-                        subCategoryId = p.sub_category.id
-                    } else if (p.subcategory?.id) {
-                        subCategoryId = p.subcategory.id
-                    }
-
-                    if (!subCategoryId) {
+                    const { id: resolvedSubCategoryId } = resolveContactLensSubSubCategoryId(product)
+                    if (!resolvedSubCategoryId || resolvedSubCategoryId <= 0) {
                         if (import.meta.env.DEV) {
                             console.warn('⚠️ No sub-sub-category ID found for fetching astigmatism configs')
                         }
                         return
                     }
 
-                    const numericId = typeof subCategoryId === 'string' ? parseInt(subCategoryId, 10) : subCategoryId
-                    if (isNaN(numericId) || numericId <= 0) {
-                        return
-                    }
+                    const numericId = resolvedSubCategoryId
 
                     // Fetch astigmatism configurations
                     // Filter by product_id to get only configs assigned to this product
