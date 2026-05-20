@@ -143,6 +143,53 @@ function mergeUnitPricesRecord(target: Record<string, number>, source: Record<st
     }
 }
 
+function mergeUnitImagesRecord(
+    target: Record<string, string[]>,
+    source: Record<string, unknown> | null | undefined
+) {
+    if (!source || typeof source !== 'object') return
+    for (const [k, v] of Object.entries(source)) {
+        if (!Array.isArray(v)) continue
+        const urls = v.filter((u): u is string => typeof u === 'string' && u.trim() !== '')
+        if (urls.length > 0) target[k] = urls
+    }
+}
+
+function normalizePackUnitKey(value: unknown): string {
+    return String(value ?? '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/packs?$/i, '')
+}
+
+/** Pack-size hero images from config JSON (keys are string units, e.g. "30", "90"). */
+function getUnitImagesFromConfig(
+    config: SphericalConfig | AstigmatismConfig | null,
+    unit: number | string | null
+): string[] {
+    if (!config || unit == null) return []
+    const raw = (config as Record<string, unknown>).unit_images as Record<string, unknown> | undefined
+    if (!raw || typeof raw !== 'object') return []
+
+    const pickUrls = (entry: unknown): string[] => {
+        if (!Array.isArray(entry)) return []
+        return entry.filter((u): u is string => typeof u === 'string' && u.trim() !== '')
+    }
+
+    const direct = pickUrls(raw[String(unit)])
+    if (direct.length > 0) return direct
+
+    const target = normalizePackUnitKey(unit)
+    for (const [key, entry] of Object.entries(raw)) {
+        if (normalizePackUnitKey(key) === target) {
+            const urls = pickUrls(entry)
+            if (urls.length > 0) return urls
+        }
+    }
+    return []
+}
+
 /**
  * Pack sizes and merged prices for contact lens UI (must stay in sync with "Choose Pack Size"
  * and with auto-selection of selectedUnit).
@@ -150,9 +197,14 @@ function mergeUnitPricesRecord(target: Record<string, number>, source: Record<st
 function resolveContactLensPackUnits(
     currentConfig: SphericalConfig | AstigmatismConfig | null,
     allConfigs: (SphericalConfig | AstigmatismConfig)[]
-): { availableUnits: number[]; allUnitPrices: Record<string, number> } {
+): {
+    availableUnits: number[]
+    allUnitPrices: Record<string, number>
+    allUnitImages: Record<string, string[]>
+} {
     let availableUnits: number[] = []
     const allUnitPrices: Record<string, number> = {}
+    const allUnitImages: Record<string, string[]> = {}
 
     if (currentConfig) {
         const configAvailableUnits = (currentConfig as Record<string, unknown>).available_units
@@ -164,9 +216,18 @@ function resolveContactLensPackUnits(
         }
         const configUnitPrices = (currentConfig as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
         mergeUnitPricesRecord(allUnitPrices, configUnitPrices)
+        const configUnitImages = (currentConfig as Record<string, unknown>).unit_images as
+            | Record<string, unknown>
+            | undefined
+        mergeUnitImagesRecord(allUnitImages, configUnitImages)
 
         if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
             availableUnits = Object.keys(allUnitPrices)
+                .map((k) => Number(k))
+                .filter((n) => !isNaN(n) && n > 0)
+        }
+        if (availableUnits.length === 0 && Object.keys(allUnitImages).length > 0) {
+            availableUnits = Object.keys(allUnitImages)
                 .map((k) => Number(k))
                 .filter((n) => !isNaN(n) && n > 0)
         }
@@ -184,16 +245,23 @@ function resolveContactLensPackUnits(
             }
             const cup = (config as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
             mergeUnitPricesRecord(allUnitPrices, cup)
+            const cui = (config as Record<string, unknown>).unit_images as Record<string, unknown> | undefined
+            mergeUnitImagesRecord(allUnitImages, cui)
         }
         if (availableUnits.length === 0 && Object.keys(allUnitPrices).length > 0) {
             availableUnits = Object.keys(allUnitPrices)
                 .map((k) => Number(k))
                 .filter((n) => !isNaN(n) && n > 0)
         }
+        if (availableUnits.length === 0 && Object.keys(allUnitImages).length > 0) {
+            availableUnits = Object.keys(allUnitImages)
+                .map((k) => Number(k))
+                .filter((n) => !isNaN(n) && n > 0)
+        }
     }
 
     availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
-    return { availableUnits, allUnitPrices }
+    return { availableUnits, allUnitPrices, allUnitImages }
 }
 
 const ProductDetail = () => {
@@ -943,7 +1011,11 @@ const ProductDetail = () => {
 
     const contactLensPackResolution = useMemo(() => {
         if (!isContactLens) {
-            return { availableUnits: [] as number[], allUnitPrices: {} as Record<string, number> }
+            return {
+                availableUnits: [] as number[],
+                allUnitPrices: {} as Record<string, number>,
+                allUnitImages: {} as Record<string, string[]>,
+            }
         }
         const currentConfig = selectedConfig || selectedAstigmatismConfig
         const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
@@ -3099,18 +3171,41 @@ const ProductDetail = () => {
     }
 
     // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
+    const getPackImagesForSelectedUnit = (): string[] => {
+        if (selectedUnit == null) return []
+        if (unitImages.length > 0) return unitImages
+        const fromResolution = contactLensPackResolution.allUnitImages[String(selectedUnit)]
+        if (fromResolution?.length) return fromResolution
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        const fromConfig = getUnitImagesFromConfig(currentConfig, selectedUnit)
+        if (fromConfig.length > 0) return fromConfig
+        const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
+        for (const cfg of allConfigs) {
+            const imgs = getUnitImagesFromConfig(cfg, selectedUnit)
+            if (imgs.length > 0) return imgs
+        }
+        return []
+    }
+
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
         // Priority 1: Pack unit images when a pack size is selected (contact lenses + eye hygiene)
-        if (selectedUnit != null && unitImages.length > 0) {
-            return imageUrlFromStringList(unitImages, imageIndex)
+        const packImages = getPackImagesForSelectedUnit()
+        if (selectedUnit != null && packImages.length > 0) {
+            return imageUrlFromStringList(packImages, imageIndex)
         }
         if (!isContactLens && unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
 
-        // Priority 2: Default gallery — use main product images only when no color/caliber/eye variant drives the gallery
-        // If a frame/contact color is selected, fall through so Priority 5 can apply color-specific images
-        if (!isManuallySelectingImage && !selectedCaliber && !selectedEyeHygieneVariant && !selectedColor) {
+        // Priority 2: Default gallery — skip when a contact-lens pack is selected (avoid color gallery overriding pack)
+        const contactLensPackSelected = isContactLens && selectedUnit != null
+        if (
+            !contactLensPackSelected &&
+            !isManuallySelectingImage &&
+            !selectedCaliber &&
+            !selectedEyeHygieneVariant &&
+            !selectedColor
+        ) {
             return getProductImageUrl(product, imageIndex)
         }
 
@@ -3154,6 +3249,11 @@ const ProductDetail = () => {
         // Priority 4: Use eye hygiene size/volume variant-specific images if variant is selected
         if (isEyeHygiene && selectedSizeVolumeVariant) {
             return getVariantImageUrl(product, selectedSizeVolumeVariant as any, imageIndex)
+        }
+
+        // When a pack is selected but has no dedicated images, keep the main product gallery (not color override)
+        if (isContactLens && selectedUnit != null) {
+            return getContactLensMainGalleryImageUrl(product, imageIndex)
         }
 
         // Priority 5: Use color-specific images if color is selected (prepend main product images so the primary photo stays in the gallery)
@@ -3335,79 +3435,63 @@ const ProductDetail = () => {
         let cancelled = false
 
         const run = async () => {
+            const unitKey = String(selectedUnit)
             const rawPrice = (currentConfig as Record<string, unknown>).unit_prices as Record<string, unknown> | undefined
-            const priceFromConfig = parseOptionalProductMoney(rawPrice?.[String(selectedUnit)])
+            const priceFromConfig =
+                parseOptionalProductMoney(rawPrice?.[unitKey]) ??
+                parseOptionalProductMoney(contactLensPackResolution.allUnitPrices[unitKey])
 
-            const rawUnitImages = (currentConfig as Record<string, unknown>).unit_images as
-                | Record<string, string[]>
-                | undefined
-            const configUnitImages = rawUnitImages?.[String(selectedUnit)]
-            const imagesFromConfig =
-                configUnitImages && Array.isArray(configUnitImages) && configUnitImages.length > 0
-                    ? configUnitImages
-                    : null
-
-            if (priceFromConfig != null) {
-                if (!cancelled) setUnitPrice(priceFromConfig)
-                if (import.meta.env.DEV) {
-                    console.log('✅ Unit price set from config (immediate):', {
-                        unit: selectedUnit,
-                        price: priceFromConfig,
-                    })
+            let imagesFromConfig =
+                contactLensPackResolution.allUnitImages[unitKey] ||
+                getUnitImagesFromConfig(currentConfig, selectedUnit)
+            if (!imagesFromConfig.length) {
+                const allConfigs = isAstigmatismSubSubcategory ? astigmatismConfigs : sphericalConfigs
+                for (const cfg of allConfigs) {
+                    const imgs = getUnitImagesFromConfig(cfg, selectedUnit)
+                    if (imgs.length > 0) {
+                        imagesFromConfig = imgs
+                        break
+                    }
                 }
             }
 
-            if (imagesFromConfig) {
-                if (!cancelled) setUnitImages(imagesFromConfig)
+            // Avoid showing the previous pack's image while loading the new pack
+            if (!cancelled) {
+                setUnitImages(imagesFromConfig.length > 0 ? imagesFromConfig : [])
             }
 
-            const hasUnitPricing =
-                !!(currentConfig as Record<string, unknown>).unit_prices ||
-                !!(currentConfig as Record<string, unknown>).unit_images
-            const needFetch =
-                priceFromConfig == null || imagesFromConfig == null
+            if (priceFromConfig != null) {
+                if (!cancelled) setUnitPrice(priceFromConfig)
+            }
 
-            if (!needFetch) {
+            const needFetchPrice = priceFromConfig == null
+            const needFetchImages = imagesFromConfig.length === 0
+
+            if (!needFetchPrice && !needFetchImages) {
                 if (!cancelled) setLoadingUnitData(false)
                 return
             }
 
-            if (hasUnitPricing) {
-                if (!cancelled) setLoadingUnitData(true)
-                try {
-                    const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
-                    if (cancelled) return
-                    if (unitData?.data) {
-                        if (priceFromConfig == null && unitData.data.price != null) {
-                            setUnitPrice(Number(unitData.data.price))
-                            if (import.meta.env.DEV) {
-                                console.log('✅ Unit price fetched from API:', {
-                                    unit: selectedUnit,
-                                    price: unitData.data.price,
-                                })
-                            }
-                        }
-                        if (!imagesFromConfig) {
-                            setUnitImages(
-                                unitData.data.images?.length ? unitData.data.images : []
-                            )
-                        }
-                    } else {
-                        if (priceFromConfig == null) setUnitPrice(null)
-                        if (!imagesFromConfig) setUnitImages([])
+            if (!cancelled) setLoadingUnitData(true)
+            try {
+                const unitData = await getUnitPriceAndImages(currentConfig.id, selectedUnit)
+                if (cancelled) return
+                if (unitData?.data) {
+                    if (needFetchPrice && unitData.data.price != null) {
+                        setUnitPrice(Number(unitData.data.price))
                     }
-                } catch (error) {
-                    if (!cancelled) {
-                        console.error('Error fetching unit price/images:', error)
-                        if (priceFromConfig == null) setUnitPrice(null)
-                        if (!imagesFromConfig) setUnitImages([])
+                    if (needFetchImages && unitData.data.images?.length) {
+                        setUnitImages(unitData.data.images)
                     }
-                } finally {
-                    setLoadingUnitData(false)
+                } else {
+                    if (needFetchPrice) setUnitPrice(null)
                 }
-            } else {
-                if (priceFromConfig == null && !cancelled) setUnitPrice(null)
-                if (!imagesFromConfig && !cancelled) setUnitImages([])
+            } catch (error) {
+                if (!cancelled) {
+                    console.error('Error fetching unit price/images:', error)
+                    if (needFetchPrice) setUnitPrice(null)
+                }
+            } finally {
                 if (!cancelled) setLoadingUnitData(false)
             }
         }
@@ -3417,14 +3501,28 @@ const ProductDetail = () => {
             cancelled = true
             setLoadingUnitData(false)
         }
-    }, [selectedConfig, selectedAstigmatismConfig, selectedUnit, isContactLens])
+    }, [
+        selectedConfig,
+        selectedAstigmatismConfig,
+        selectedUnit,
+        isContactLens,
+        contactLensPackResolution,
+        isAstigmatismSubSubcategory,
+        sphericalConfigs,
+        astigmatismConfigs,
+    ])
 
     // When pack size or its images change, show the first image of that pack
     useEffect(() => {
-        if (!isContactLens || selectedUnit == null || unitImages.length === 0) return
+        if (!isContactLens || selectedUnit == null) return
+        const packImgs =
+            unitImages.length > 0
+                ? unitImages
+                : contactLensPackResolution.allUnitImages[String(selectedUnit)] || []
+        if (packImgs.length === 0) return
         setSelectedImageIndex(0)
         setIsManuallySelectingImage(false)
-    }, [isContactLens, selectedUnit, unitImages])
+    }, [isContactLens, selectedUnit, unitImages, contactLensPackResolution.allUnitImages])
 
     // NOW we can do conditional returns AFTER all hooks have been called
     if (loading) {
@@ -4318,12 +4416,9 @@ const ProductDetail = () => {
                                                 contactLensColorOptions.length > 0 &&
                                                 !!selectedColor
 
-                                            if (
-                                                isContactLens &&
-                                                selectedUnit != null &&
-                                                unitImages.length > 0
-                                            ) {
-                                                imagesArray = unitImages
+                                            const packThumbImages = getPackImagesForSelectedUnit()
+                                            if (isContactLens && selectedUnit != null && packThumbImages.length > 0) {
+                                                imagesArray = packThumbImages
                                             } else if (isContactLens && !preferColorThumbs) {
                                                 if (product.images) {
                                                     if (typeof product.images === 'string') {
@@ -4573,13 +4668,18 @@ const ProductDetail = () => {
                                                                 key={unit}
                                                                 type="button"
                                                                 onClick={() => {
-                                                                    // Toggle selection: if already selected, unselect; otherwise select
                                                                     if (isSelected) {
                                                                         setSelectedUnit(null)
+                                                                        setUnitImages([])
                                                                     } else {
+                                                                        const packImgs =
+                                                                            contactLensPackResolution.allUnitImages[
+                                                                                String(unit)
+                                                                            ] || []
                                                                         setSelectedUnit(unit)
-                                                                        setSelectedImageIndex(0) // Reset to first image when unit changes
-                                                                        setIsManuallySelectingImage(false) // Reset manual selection flag
+                                                                        setUnitImages(packImgs)
+                                                                        setSelectedImageIndex(0)
+                                                                        setIsManuallySelectingImage(false)
                                                                     }
                                                                 }}
                                                                 className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 border shadow-sm hover:shadow-md ${isSelected
@@ -5202,9 +5302,9 @@ const ProductDetail = () => {
                                     let imagesArray: string[] = []
                                     const p = product as any
 
-                                    // First priority: Use unit-specific images
-                                    if (unitImages.length > 0) {
-                                        imagesArray = unitImages
+                                    const packGalleryImages = getPackImagesForSelectedUnit()
+                                    if (packGalleryImages.length > 0) {
+                                        imagesArray = packGalleryImages
                                     } else {
                                         // For eye hygiene products with variants, use variant-specific images
                                         if (isEyeHygiene && selectedSizeVolumeVariant) {
