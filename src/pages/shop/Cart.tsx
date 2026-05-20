@@ -274,7 +274,11 @@ const Cart: React.FC = () => {
                                                 )}
                                             </div>
                                             <p className="text-sm text-gray-500">
-                                                {item.brand} - {item.category}
+                                                {item.brand
+                                                    ? item.brand
+                                                    : item.category === 'eye-hygiene'
+                                                      ? 'Eye Hygiene'
+                                                      : item.category}
                                             </p>
                                             {/* Show selected caliber if applicable */}
                                             {(item.customization as any)?.selected_mm_caliber && (

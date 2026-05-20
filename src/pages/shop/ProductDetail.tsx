@@ -344,9 +344,19 @@ const ProductDetail = () => {
         }
     }, [product?.id, product?.mm_calibers])
 
-    // Fetch eye hygiene variants
+    // Fetch named eye-hygiene variants only when product has no size/volume matrix
     useEffect(() => {
         if (product?.id) {
+            const p = product as any
+            const embeddedSizeVolume = (p.sizeVolumeVariants || p.size_volume_variants || []).filter(
+                (v: { size_volume?: string }) => v && v.size_volume
+            )
+            if (embeddedSizeVolume.length > 0) {
+                setProductEyeHygieneVariants([])
+                setSelectedEyeHygieneVariant(null)
+                return
+            }
+
             getProductEyeHygieneVariants(product.id).then(variants => {
                 if (variants && variants.length > 0) {
                     // Process variants to handle blob URLs and problematic images
@@ -3537,7 +3547,15 @@ const ProductDetail = () => {
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
-        const useNamedEyeHygieneVariant = isEyeHygiene && productEyeHygieneVariants.length > 0
+        // Size/volume dropdown (90ml, etc.) takes priority over named eye-hygiene variant cards
+        const useSizeVolumeForCart = Boolean(
+            isEyeHygiene && selectedSizeVolumeVariant?.size_volume && hasVariants
+        )
+        const useNamedEyeHygieneVariant = Boolean(
+            isEyeHygiene &&
+                productEyeHygieneVariants.length > 0 &&
+                !useSizeVolumeForCart
+        )
 
         // Validate Eye Hygiene form if it's an Eye Hygiene product
         if (isEyeHygiene) {
@@ -3617,7 +3635,6 @@ const ProductDetail = () => {
                 colorValue = variant.value || variant.hexCode || variant.color || selectedColor
             }
 
-            const useSizeVolumeForCart = hasVariants && selectedSizeVolumeVariant && !useNamedEyeHygieneVariant
             const useEyeHygieneForCart = useNamedEyeHygieneVariant && selectedEyeHygieneVariant
 
             const cartRequest: AddToCartRequest = {
@@ -3662,7 +3679,11 @@ const ProductDetail = () => {
                     ...(useSizeVolumeForCart && selectedSizeVolumeVariant && {
                         size_volume: selectedSizeVolumeVariant.size_volume,
                         pack_type: selectedSizeVolumeVariant.pack_type || undefined,
-                        size_volume_variant_id: selectedSizeVolumeVariant.id
+                        size_volume_variant_id: selectedSizeVolumeVariant.id,
+                        variant_price: selectedSizeVolumeVariant.price,
+                        variant_display_name: selectedSizeVolumeVariant.pack_type
+                            ? `${selectedSizeVolumeVariant.size_volume} ${selectedSizeVolumeVariant.pack_type}`
+                            : selectedSizeVolumeVariant.size_volume,
                     })
                 },
                 lens_type: selectedLensType === '' ? undefined : selectedLensType
@@ -3682,14 +3703,14 @@ const ProductDetail = () => {
                 const result = await addItemToCart(cartRequest)
                 if (result.success) {
                     await syncCart()
+                    navigate('/cart')
                 } else {
-                    console.error('Failed to add to cart via API:', result.message)
+                    alert(result.message || 'Failed to add product to cart. Please try again.')
                 }
             } catch (err) {
                 console.error('API cart error:', err)
+                alert('Failed to add product to cart. Please try again.')
             }
-
-            navigate('/cart')
         } catch (error) {
             console.error('Error adding to cart:', error)
             alert('Failed to add product to cart. Please try again.')
@@ -5540,23 +5561,27 @@ const ProductDetail = () => {
 
                                             const selectedSizeVolume = selectedSizeVolumeVariant?.size_volume || ''
 
-                                            // Find matching variant
+                                            const normalizeVolume = (v: string) =>
+                                                String(v).trim().toLowerCase().replace(/\s+/g, '')
+
+                                            // Find matching variant (case-insensitive: "90 Ml" vs "90ml")
                                             const findMatchingVariant = (sizeVol: string, packType: string | null) => {
                                                 if (!sizeVol) return null
+                                                const normVol = normalizeVolume(sizeVol)
 
                                                 if (packType) {
                                                     return activeVariants.find((v: SizeVolumeVariant | any) =>
-                                                        v.size_volume === sizeVol && v.pack_type === packType
+                                                        normalizeVolume(v.size_volume) === normVol &&
+                                                        v.pack_type === packType
                                                     ) || null
                                                 }
 
-                                                // If no pack_type, find variant without pack_type or first available
                                                 const variantWithoutPackType = activeVariants.find((v: SizeVolumeVariant | any) =>
-                                                    v.size_volume === sizeVol && !v.pack_type
+                                                    normalizeVolume(v.size_volume) === normVol && !v.pack_type
                                                 )
 
                                                 return variantWithoutPackType || activeVariants.find((v: SizeVolumeVariant | any) =>
-                                                    v.size_volume === sizeVol
+                                                    normalizeVolume(v.size_volume) === normVol
                                                 ) || null
                                             }
 
