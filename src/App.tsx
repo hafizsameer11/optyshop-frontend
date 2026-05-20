@@ -49,6 +49,8 @@ const Payment = lazy(() => import('./pages/shop/Payment'))
 const Wishlist = lazy(() => import('./pages/shop/Wishlist'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const Register = lazy(() => import('./pages/auth/Register'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
 const AccountLayout = lazy(() => import('./components/account/AccountLayout'))
 const CustomerOrders = lazy(() => import('./pages/customer/Orders'))
 const OrderDetail = lazy(() => import('./pages/customer/OrderDetail'))
@@ -133,6 +135,8 @@ function App() {
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/search" element={<SearchResults />} />
                         <Route path="/test-subcategories" element={<SubcategoryFilterTest />} />
 

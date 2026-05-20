@@ -124,11 +124,25 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             const backendCart = await getCart()
             if (backendCart) {
                 // Transform backend cart items to CartItem format
-                const transformedItems: CartItem[] = backendCart.items.map(item => ({
+                const transformedItems: CartItem[] = backendCart.items.map(item => {
+                    const customization = typeof item.customization === 'string'
+                        ? (() => { try { return JSON.parse(item.customization) } catch { return null } })()
+                        : item.customization
+                    const variantSubtitle = customization?.variant_display_name
+                        || customization?.eye_hygiene_variant_name
+                        || (customization?.size_volume
+                            ? [customization.size_volume, customization.pack_type].filter(Boolean).join(' ')
+                            : null)
+                    const productCategory = (item.product as any)?.category
+                    const categorySlug = typeof productCategory === 'object'
+                        ? (productCategory?.slug || productCategory?.name || 'eye-hygiene')
+                        : (productCategory || (variantSubtitle ? 'eye-hygiene' : 'general'))
+
+                    return {
                     id: item.id,
                     name: item.is_gift ? `FREE GIFT: ${item.gift_product?.name || item.product?.name}` : (item.product?.name || 'Unknown Product'),
-                    brand: (item.product as any)?.brand || 'Unknown',
-                    category: (item.product as any)?.category || 'general',
+                    brand: variantSubtitle || (item.product as any)?.brand || '',
+                    category: categorySlug,
                     price: item.unit_price,
                     image: item.display_image || item.product?.image || '',
                     description: (item.product as any)?.description || '',
@@ -136,9 +150,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     quantity: item.quantity,
                     isGift: item.is_gift,
                     gift_product: item.gift_product,
+                    customization,
                     // Store additional data for API operations
                     ...(item as any)
-                }))
+                }
+                })
                 setCartItems(transformedItems)
             }
         } catch (error) {

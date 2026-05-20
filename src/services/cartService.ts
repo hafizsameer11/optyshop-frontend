@@ -123,6 +123,8 @@ export interface AddToCartRequest {
   selected_mm_caliber?: string; // MM caliber value (e.g., "78", "58", "62")
   size_volume_variant_id?: number | null; // Size/Volume variant ID for Eye Hygiene products
   eye_hygiene_variant_id?: number | null; // Eye hygiene variant ID
+  selected_variant_id?: string; // e.g. eye_hygiene_1, size_volume_2
+  variant_type?: 'mm_caliber' | 'eye_hygiene' | 'size_volume';
   // Legacy fields for backward compatibility
   lens_index?: number | string;
   lens_coating?: string;

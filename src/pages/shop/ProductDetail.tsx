@@ -43,6 +43,7 @@ import {
     isFlashOfferCurrentlyActive,
     normalizeFlashDiscountType
 } from '../../utils/flashOfferDisplay'
+import { savePendingCartAction } from '../../utils/pendingCartAfterLogin'
 import {
     getEyeHygieneOptions,
     getSizeVolumeVariants,
@@ -1732,10 +1733,48 @@ const ProductDetail = () => {
         fetchEyeHygieneOptions()
     }, [product?.id, isEyeHygiene])
 
-    // Fetch Size/Volume Variants from API for Eye Hygiene products
+    // Load ProductSizeVolume variants (embedded on product or dedicated records with size_volume)
     useEffect(() => {
+        const applySizeVolumeVariantSelection = (variants: SizeVolumeVariant[]) => {
+            setFetchedVariants(variants)
+            const firstActiveVariant = variants.find((v) => v.is_active !== false && v.size_volume)
+            if (firstActiveVariant) {
+                setSelectedSizeVolumeVariant({
+                    id: firstActiveVariant.id,
+                    size_volume: firstActiveVariant.size_volume,
+                    pack_type: firstActiveVariant.pack_type || null,
+                    price: Number(firstActiveVariant.price || 0),
+                    compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
+                    stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
+                    stock_status: (firstActiveVariant.stock_status || 'in_stock') as 'in_stock' | 'out_of_stock' | 'backorder',
+                    expiry_date: firstActiveVariant.expiry_date || null,
+                    image_url: firstActiveVariant.image_url || null,
+                    is_active: firstActiveVariant.is_active !== false,
+                    sort_order: firstActiveVariant.sort_order || 0
+                })
+            } else {
+                setSelectedSizeVolumeVariant(null)
+            }
+        }
+
         const fetchVariants = async () => {
             if (!product || !isEyeHygiene || !product.id) {
+                setFetchedVariants([])
+                setSelectedSizeVolumeVariant(null)
+                return
+            }
+
+            const p = product as any
+            const embedded = (p.sizeVolumeVariants || p.size_volume_variants || []).filter(
+                (v: SizeVolumeVariant) => v && v.size_volume
+            )
+            if (embedded.length > 0) {
+                applySizeVolumeVariantSelection(embedded)
+                return
+            }
+
+            // Named eye-hygiene variants use productEyeHygieneVariants — do not treat as size/volume rows
+            if (productEyeHygieneVariants.length > 0) {
                 setFetchedVariants([])
                 setSelectedSizeVolumeVariant(null)
                 return
@@ -1744,32 +1783,12 @@ const ProductDetail = () => {
             setVariantsLoading(true)
             try {
                 const variants = await getSizeVolumeVariants(product.id)
-                if (variants && variants.length > 0) {
-                    setFetchedVariants(variants)
-                    // Auto-select first active variant
-                    const firstActiveVariant = variants.find((v) => v.is_active !== false)
-                    if (firstActiveVariant) {
-                        setSelectedSizeVolumeVariant({
-                            id: firstActiveVariant.id,
-                            size_volume: firstActiveVariant.size_volume,
-                            pack_type: firstActiveVariant.pack_type || null,
-                            price: Number(firstActiveVariant.price || 0),
-                            compare_at_price: firstActiveVariant.compare_at_price ? Number(firstActiveVariant.compare_at_price) : null,
-                            stock_quantity: Number(firstActiveVariant.stock_quantity || 0),
-                            stock_status: (firstActiveVariant.stock_status || 'in_stock') as 'in_stock' | 'out_of_stock' | 'backorder',
-                            expiry_date: firstActiveVariant.expiry_date || null,
-                            image_url: firstActiveVariant.image_url || null, // Include image_url field
-                            is_active: firstActiveVariant.is_active !== false,
-                            sort_order: firstActiveVariant.sort_order || 0
-                        })
-                    }
+                const sizeVolumeOnly = (variants || []).filter(
+                    (v: SizeVolumeVariant) => Boolean(v.size_volume)
+                )
+                if (sizeVolumeOnly.length > 0) {
+                    applySizeVolumeVariantSelection(sizeVolumeOnly)
                 } else {
-                    // Handle empty array (could be due to 500 error handled in service)
-                    if (variants === null) {
-                        console.warn('⚠️ Failed to fetch size-volume variants for product:', product.id)
-                    } else {
-                        console.log('ℹ️ No size-volume variants available for product:', product.id)
-                    }
                     setFetchedVariants([])
                     setSelectedSizeVolumeVariant(null)
                 }
@@ -1783,7 +1802,7 @@ const ProductDetail = () => {
         }
 
         fetchVariants()
-    }, [product?.id, isEyeHygiene])
+    }, [product?.id, isEyeHygiene, productEyeHygieneVariants.length])
 
     // Fetch Contact Lens Options from sub-subcategory (aggregated from products) as fallback
     useEffect(() => {
@@ -3062,9 +3081,19 @@ const ProductDetail = () => {
         }
     }, [selectedEyeHygieneVariant])
 
+    /** Resolve a gallery URL from a string list (pack unit_images, etc.) with proxy/fallback handling. */
+    const imageUrlFromStringList = (urls: string[], index: number): string => {
+        if (!product || !urls.length) return '/assets/images/frame1.png'
+        const idx = Math.max(0, Math.min(index, urls.length - 1))
+        return getProductImageUrl({ ...product, images: urls } as Product, idx)
+    }
+
     // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
     const getVariantSpecificImageUrl = (product: Product, imageIndex: number = 0): string => {
-        // Priority 1: Pack unit images (eye-hygiene / pack previews) — not used for contact lenses; CL hero is main gallery until a tint is chosen, then colour gallery.
+        // Priority 1: Pack unit images when a pack size is selected (contact lenses + eye hygiene)
+        if (selectedUnit != null && unitImages.length > 0) {
+            return imageUrlFromStringList(unitImages, imageIndex)
+        }
         if (!isContactLens && unitImages.length > 0 && imageIndex < unitImages.length) {
             return unitImages[imageIndex]
         }
@@ -3380,6 +3409,13 @@ const ProductDetail = () => {
         }
     }, [selectedConfig, selectedAstigmatismConfig, selectedUnit, isContactLens])
 
+    // When pack size or its images change, show the first image of that pack
+    useEffect(() => {
+        if (!isContactLens || selectedUnit == null || unitImages.length === 0) return
+        setSelectedImageIndex(0)
+        setIsManuallySelectingImage(false)
+    }, [isContactLens, selectedUnit, unitImages])
+
     // NOW we can do conditional returns AFTER all hooks have been called
     if (loading) {
         return (
@@ -3492,13 +3528,6 @@ const ProductDetail = () => {
     }
 
     const handleAddToCart = async () => {
-        // Enforce Login: Redirect to login if not authenticated
-        if (!isAuthenticated) {
-            const currentPath = location.pathname + location.search
-            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`)
-            return
-        }
-
         if (!product) return
 
         // Check if product has variants (new approach) - prioritize fetched variants, then check product object
@@ -3508,10 +3537,17 @@ const ProductDetail = () => {
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
+        const useNamedEyeHygieneVariant = isEyeHygiene && productEyeHygieneVariants.length > 0
+
         // Validate Eye Hygiene form if it's an Eye Hygiene product
         if (isEyeHygiene) {
-            if (hasVariants) {
-                // Variant-based validation
+            if (useNamedEyeHygieneVariant) {
+                if (!selectedEyeHygieneVariant) {
+                    alert('Please select a variant')
+                    return
+                }
+            } else if (hasVariants) {
+                // Size/volume variant validation
                 if (!selectedSizeVolumeVariant) {
                     alert('Please select a Capacity option')
                     return
@@ -3581,13 +3617,24 @@ const ProductDetail = () => {
                 colorValue = variant.value || variant.hexCode || variant.color || selectedColor
             }
 
+            const useSizeVolumeForCart = hasVariants && selectedSizeVolumeVariant && !useNamedEyeHygieneVariant
+            const useEyeHygieneForCart = useNamedEyeHygieneVariant && selectedEyeHygieneVariant
+
             const cartRequest: AddToCartRequest = {
                 product_id: cartProduct.id,
                 quantity: productQuantity,
                 selected_color: colorValue || undefined,
                 selected_mm_caliber: selectedCaliber?.toString() || undefined,
-                size_volume_variant_id: hasVariants && selectedSizeVolumeVariant ? selectedSizeVolumeVariant.id : undefined,
-                eye_hygiene_variant_id: selectedEyeHygieneVariant?.id || undefined,
+                ...(useEyeHygieneForCart && {
+                    selected_variant_id: `eye_hygiene_${selectedEyeHygieneVariant!.id}`,
+                    variant_type: 'eye_hygiene' as const,
+                    eye_hygiene_variant_id: selectedEyeHygieneVariant!.id,
+                }),
+                ...(useSizeVolumeForCart && {
+                    selected_variant_id: `size_volume_${selectedSizeVolumeVariant!.id}`,
+                    variant_type: 'size_volume' as const,
+                    size_volume_variant_id: selectedSizeVolumeVariant!.id,
+                }),
                 customization: {
                     frame_material: cartProduct.frame_material,
                     color: colorValue || undefined,
@@ -3612,13 +3659,23 @@ const ProductDetail = () => {
                         size_volume: eyeHygieneFormData.size_volume || undefined,
                         pack_type: eyeHygieneFormData.pack_type || undefined
                     }),
-                    ...(hasVariants && selectedSizeVolumeVariant && {
+                    ...(useSizeVolumeForCart && selectedSizeVolumeVariant && {
                         size_volume: selectedSizeVolumeVariant.size_volume,
                         pack_type: selectedSizeVolumeVariant.pack_type || undefined,
                         size_volume_variant_id: selectedSizeVolumeVariant.id
                     })
                 },
                 lens_type: selectedLensType === '' ? undefined : selectedLensType
+            }
+
+            if (!isAuthenticated) {
+                savePendingCartAction({
+                    type: 'standard',
+                    request: cartRequest,
+                    returnPath: '/cart',
+                })
+                navigate(`/login?redirect=${encodeURIComponent('/cart')}`)
+                return
             }
 
             try {
@@ -3640,14 +3697,6 @@ const ProductDetail = () => {
     }
 
     const handleContactLensAddToCart = async () => {
-        // Enforce Login: Redirect to login if not authenticated
-        if (!isAuthenticated) {
-            const currentPath = location.pathname + location.search
-            // Use encodeURIComponent to ensure the URL is safe
-            navigate(`/login?redirect=${encodeURIComponent(currentPath)}`)
-            return
-        }
-
         if (contactLensCheckoutLockRef.current) {
             return
         }
@@ -3656,19 +3705,13 @@ const ProductDetail = () => {
             return
         }
 
-        contactLensCheckoutLockRef.current = true
-        setContactLensLoading(true)
-        try {
-            // Determine form type from config or subcategory
-            const formType = contactLensFormConfig?.formType ||
-                (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
+        const formType = contactLensFormConfig?.formType ||
+            (isAstigmatismSubSubcategory ? 'astigmatism' : 'spherical')
 
-            const effRightQty = rightEyeEnabled ? contactLensFormData.right_qty : 0
-            const effLeftQty = leftEyeEnabled ? contactLensFormData.left_qty : 0
+        const effRightQty = rightEyeEnabled ? contactLensFormData.right_qty : 0
+        const effLeftQty = leftEyeEnabled ? contactLensFormData.left_qty : 0
 
-            // Prepare checkout request for new API endpoint
-            // Note: API expects all values as strings (per Postman collection)
-            const checkoutRequest: ContactLensCheckoutRequest = {
+        const checkoutRequest: ContactLensCheckoutRequest = {
                 product_id: product!.id,
                 form_type: formType,
                 right_qty: effRightQty,
@@ -3696,7 +3739,19 @@ const ProductDetail = () => {
                 })
             }
 
-            // Use new contact lens checkout API endpoint (requires authentication)
+        if (!isAuthenticated) {
+            savePendingCartAction({
+                type: 'contact_lens',
+                request: checkoutRequest,
+                returnPath: '/cart',
+            })
+            navigate(`/login?redirect=${encodeURIComponent('/cart')}`)
+            return
+        }
+
+        contactLensCheckoutLockRef.current = true
+        setContactLensLoading(true)
+        try {
             if (isAuthenticated) {
                 const result = await addContactLensToCart(checkoutRequest)
 
@@ -3834,17 +3889,15 @@ const ProductDetail = () => {
                                         {/* Single Product Image */}
                                         <div className="relative bg-white rounded-lg overflow-hidden max-w-md mx-auto" style={{ aspectRatio: '1/1', maxHeight: '300px' }}>
                                             {(() => {
-                                                // Contact lens: default hero = main product images only. After a tint is chosen, use colour gallery (not pack unit_images, which are often wrong or another SKU).
-                                                const preferColorGallery =
-                                                    contactLensColorOptions.length > 0 && !!selectedColor
-                                                const productImage = preferColorGallery
-                                                    ? getVariantSpecificImageUrl(product, selectedImageIndex)
-                                                    : getContactLensMainGalleryImageUrl(product, selectedImageIndex)
+                                                const productImage = getVariantSpecificImageUrl(
+                                                    product,
+                                                    selectedImageIndex
+                                                )
 
                                                 return (
                                                     <>
                                                         <img
-                                                            key={`product-${product.id}-${selectedUnit ?? 'nounit'}-${selectedImageIndex}-${selectedColor || 'default'}-${preferColorGallery ? 'color' : 'main'}`}
+                                                            key={`product-${product.id}-unit-${selectedUnit ?? 'nounit'}-img-${selectedImageIndex}-${selectedColor || 'default'}-${unitImages[0] ?? 'main'}`}
                                                             src={productImage}
                                                             alt={product.name}
                                                             className="w-full h-full object-contain p-3 sm:p-4"
@@ -4244,7 +4297,13 @@ const ProductDetail = () => {
                                                 contactLensColorOptions.length > 0 &&
                                                 !!selectedColor
 
-                                            if (isContactLens && !preferColorThumbs) {
+                                            if (
+                                                isContactLens &&
+                                                selectedUnit != null &&
+                                                unitImages.length > 0
+                                            ) {
+                                                imagesArray = unitImages
+                                            } else if (isContactLens && !preferColorThumbs) {
                                                 if (product.images) {
                                                     if (typeof product.images === 'string') {
                                                         try {

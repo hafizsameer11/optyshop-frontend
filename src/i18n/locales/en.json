@@ -593,7 +593,42 @@
       "passwordRequired": "Password is required",
       "passwordMinLength": "Password must be at least 6 characters",
       "loginFailed": "Login failed. Please check your credentials.",
-      "errorOccurred": "An error occurred during login."
+      "errorOccurred": "An error occurred during login.",
+      "loginSuccessful": "Login successful! Redirecting...",
+      "welcomeMessage": "Welcome back! Please enter your credentials."
+    },
+    "forgotPassword": {
+      "title": "Forgot your password?",
+      "description": "Enter your email and we will send you a link to reset your password.",
+      "heading": "Reset password",
+      "emailAddress": "Email Address",
+      "enterEmail": "Enter your email",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "sendLink": "Send reset link",
+      "sending": "Sending...",
+      "emailSent": "If an account exists with that email, you will receive reset instructions shortly.",
+      "checkInbox": "Check your inbox for a password reset link. The link expires in 1 hour.",
+      "backToLogin": "Back to sign in",
+      "requestFailed": "Could not send reset email. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "description": "Choose a strong password for your OptiShop account.",
+      "heading": "New password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm password",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "passwordComplexity": "Password must include uppercase, lowercase, and a number",
+      "passwordsDontMatch": "Passwords do not match",
+      "savePassword": "Save new password",
+      "saving": "Saving...",
+      "success": "Password updated. You can sign in now.",
+      "failed": "Could not reset password. The link may have expired.",
+      "invalidLink": "This reset link is invalid or has expired.",
+      "requestNewLink": "Request a new reset link",
+      "backToLogin": "Back to sign in"
     },
     "register": {
       "title": "Create Account",
@@ -682,7 +717,9 @@
     "invalidCoupon": "Invalid or expired coupon code",
     "discount": "Discount",
     "finalTotal": "Final Total",
-    "clearCart": "Clear Cart"
+    "clearCart": "Clear Cart",
+    "addedAfterLogin": "Your item was added to the cart.",
+    "addFailedAfterLogin": "You are signed in, but we could not add the item to your cart. Please try again from the product page."
   },
   "blog": {
     "andNews": "and news"

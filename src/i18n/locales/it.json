@@ -327,7 +327,9 @@
     "invalidCoupon": "Codice coupon non valido o scaduto",
     "discount": "Sconto",
     "finalTotal": "Totale Finale",
-    "clearCart": "Svuota Carrello"
+    "clearCart": "Svuota Carrello",
+    "addedAfterLogin": "Articolo aggiunto al carrello.",
+    "addFailedAfterLogin": "Accesso effettuato, ma non è stato possibile aggiungere l'articolo al carrello. Riprova dalla pagina prodotto."
   },
   "checkout": {
     "title": "Pagamento",
@@ -419,7 +421,41 @@
       "passwordMinLength": "La password deve contenere almeno 6 caratteri",
       "loginFailed": "Accesso fallito. Controlla le tue credenziali.",
       "errorOccurred": "Si è verificato un errore durante l'accesso.",
+      "loginSuccessful": "Accesso effettuato! Reindirizzamento...",
       "welcomeMessage": "Bentornato! Inserisci le tue credenziali."
+    },
+    "forgotPassword": {
+      "title": "Password dimenticata?",
+      "description": "Inserisci la tua email e ti invieremo un link per reimpostare la password.",
+      "heading": "Reimposta password",
+      "emailAddress": "Indirizzo Email",
+      "enterEmail": "Inserisci la tua email",
+      "emailRequired": "L'email è obbligatoria",
+      "emailInvalid": "Inserisci un indirizzo email valido",
+      "sendLink": "Invia link di reset",
+      "sending": "Invio in corso...",
+      "emailSent": "Se esiste un account con questa email, riceverai le istruzioni a breve.",
+      "checkInbox": "Controlla la posta per il link di reset. Il link scade tra 1 ora.",
+      "backToLogin": "Torna al login",
+      "requestFailed": "Impossibile inviare l'email di reset. Riprova."
+    },
+    "resetPassword": {
+      "title": "Imposta una nuova password",
+      "description": "Scegli una password sicura per il tuo account OptiShop.",
+      "heading": "Nuova password",
+      "newPassword": "Nuova password",
+      "confirmPassword": "Conferma password",
+      "passwordRequired": "La password è obbligatoria",
+      "passwordMinLength": "La password deve contenere almeno 6 caratteri",
+      "passwordComplexity": "La password deve includere maiuscole, minuscole e un numero",
+      "passwordsDontMatch": "Le password non coincidono",
+      "savePassword": "Salva nuova password",
+      "saving": "Salvataggio...",
+      "success": "Password aggiornata. Ora puoi accedere.",
+      "failed": "Impossibile reimpostare la password. Il link potrebbe essere scaduto.",
+      "invalidLink": "Questo link di reset non è valido o è scaduto.",
+      "requestNewLink": "Richiedi un nuovo link",
+      "backToLogin": "Torna al login"
     },
     "register": {
       "title": "Crea Account",

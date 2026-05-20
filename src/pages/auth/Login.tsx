@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuth } from '../../context/AuthContext'
+import { useCart } from '../../context/CartContext'
 import { useToast } from '../../context/ToastContext'
 import { formatErrorMessage } from '../../utils/errorUtils'
+import {
+    consumePendingCartAction,
+    executePendingCartAction,
+    getSafeRedirectPath,
+} from '../../utils/pendingCartAfterLogin'
 
 const Login: React.FC = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
+    const [searchParams] = useSearchParams()
     const { login, user, isLoading } = useAuth()
+    const { syncCart } = useCart()
     const { showSuccess, showError } = useToast()
     const [formData, setFormData] = useState({
         email: '',
@@ -19,23 +27,51 @@ const Login: React.FC = () => {
     const [errors, setErrors] = useState<{ [key: string]: string }>({})
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string>('')
-    const [shouldRedirect, setShouldRedirect] = useState(false)
+    const redirectDoneRef = useRef(false)
+
+    const redirectParam = getSafeRedirectPath(searchParams.get('redirect'))
+
+    const finishLoginRedirect = async () => {
+        if (redirectDoneRef.current) return
+        redirectDoneRef.current = true
+
+        const pending = consumePendingCartAction()
+        if (pending) {
+            const exec = await executePendingCartAction(pending)
+            if (exec.success) {
+                await syncCart()
+                showSuccess(
+                    t('cart.addedAfterLogin', 'Your item was added to the cart.')
+                )
+                navigate('/cart', { replace: true })
+                return
+            }
+            showError(
+                exec.message ||
+                    t(
+                        'cart.addFailedAfterLogin',
+                        'You are signed in, but we could not add the item to your cart. Please try again from the product page.'
+                    )
+            )
+            const fallback = getSafeRedirectPath(pending.returnPath) || redirectParam || '/shop'
+            navigate(fallback, { replace: true })
+            return
+        }
+
+        showSuccess(
+            t('auth.login.loginSuccessful', 'Login successful! Redirecting...')
+        )
+        const destination = redirectParam || '/account/orders'
+        navigate(destination, { replace: true })
+    }
 
     // Redirect if already logged in
     useEffect(() => {
         if (!isLoading && user && user.role === 'customer') {
-            // User is already logged in, redirect to account
-            navigate('/account/orders', { replace: true })
+            void finishLoginRedirect()
         }
-    }, [user, isLoading, navigate])
-
-    // Redirect after successful login when user state is updated
-    useEffect(() => {
-        if (shouldRedirect && user && user.role === 'customer' && !isLoading) {
-            navigate('/account/orders', { replace: true })
-            setShouldRedirect(false)
-        }
-    }, [user, shouldRedirect, isLoading, navigate])
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- only when auth state becomes ready
+    }, [user, isLoading])
 
     // Show loading state while checking authentication
     if (isLoading) {
@@ -52,7 +88,6 @@ const Login: React.FC = () => {
             ...prev,
             [name]: value
         }))
-        // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -95,28 +130,27 @@ const Login: React.FC = () => {
         try {
             const result = await login(formData.email, formData.password)
             if (result.success) {
-                // Show success message
-                showSuccess(t('auth.login.loginSuccessful') || 'Login successful! Redirecting...')
-                // Set flag to redirect after user state is updated
-                setShouldRedirect(true)
-                setIsSubmitting(false)
+                await finishLoginRedirect()
             } else {
-                // Handle different error structures using the utility function
                 const errorMessage = formatErrorMessage(result)
                 showError(errorMessage)
-                setIsSubmitting(false)
             }
-        } catch (error: any) {
+        } catch (error: unknown) {
             const errorMessage = formatErrorMessage(error)
             showError(errorMessage)
+        } finally {
             setIsSubmitting(false)
         }
     }
 
+    const registerTo =
+        redirectParam != null
+            ? `/register?redirect=${encodeURIComponent(redirectParam)}`
+            : '/register'
+
     return (
         <div className="bg-white min-h-screen">
             <Navbar />
-            {/* Hero Section */}
             <section
                 className="relative min-h-[300px] md:min-h-[350px] flex items-center pt-20 md:pt-0 bg-cover bg-center bg-no-repeat"
                 style={{
@@ -137,7 +171,6 @@ const Login: React.FC = () => {
                 </div>
             </section>
 
-            {/* Breadcrumbs Section */}
             <div className="bg-white py-4 px-4 sm:px-6 border-b border-gray-200">
                 <div className="w-[90%] mx-auto max-w-6xl">
                     <nav className="flex items-center gap-2 text-sm text-gray-900">
@@ -156,16 +189,13 @@ const Login: React.FC = () => {
             <section className="bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 py-12 md:py-16 lg:py-20 px-4 sm:px-6">
                 <div className="w-[90%] mx-auto max-w-xl">
                     <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-                        {/* Form Header */}
                         <div className="bg-gradient-to-r from-blue-950 to-blue-900 px-8 pt-8 pb-6">
                             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">{t('auth.login.signIn')}</h2>
                             <p className="text-blue-100 text-sm">{t('auth.login.welcomeMessage')}</p>
                         </div>
 
                         <div className="p-8 md:p-10">
-                            {/* Login Form */}
                             <form onSubmit={handleSubmit} className="space-y-5">
-                                {/* Email Field */}
                                 <div>
                                     <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2.5">
                                         {t('auth.login.emailAddress')}
@@ -196,7 +226,6 @@ const Login: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Password Field */}
                                 <div>
                                     <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2.5">
                                         {t('auth.login.password')}
@@ -227,17 +256,15 @@ const Login: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Forgot Password Link */}
                                 <div className="flex justify-end pt-1">
                                     <Link
-                                        to="#"
+                                        to="/forgot-password"
                                         className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors duration-200 hover:underline"
                                     >
                                         {t('auth.login.forgotPassword')}
                                     </Link>
                                 </div>
 
-                                {/* Submit Button */}
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
@@ -262,7 +289,6 @@ const Login: React.FC = () => {
                                 </button>
                             </form>
 
-                            {/* Divider */}
                             <div className="relative my-8">
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-gray-200"></div>
@@ -272,13 +298,12 @@ const Login: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Register Link */}
                             <div className="text-center">
                                 <p className="text-gray-600 text-sm mb-3">
                                     {t('auth.login.dontHaveAccount')}
                                 </p>
                                 <Link
-                                    to="/register"
+                                    to={registerTo}
                                     className="inline-block w-full rounded-xl border-2 border-blue-950 text-blue-950 font-semibold py-3.5 hover:bg-blue-950 hover:text-white transition-all duration-200 text-center"
                                 >
                                     {t('auth.login.createAccount')}
@@ -294,4 +319,3 @@ const Login: React.FC = () => {
 }
 
 export default Login
-

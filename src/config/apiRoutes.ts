@@ -24,6 +24,8 @@ export const API_ROUTES = {
     ME: `/auth/me`,                     // USER
     PROFILE: `/auth/profile`,           // USER
     CHANGE_PASSWORD: `/auth/change-password`, // USER
+    FORGOT_PASSWORD: `/auth/forgot-password`, // PUBLIC
+    RESET_PASSWORD: `/auth/reset-password`,   // PUBLIC
     LOGOUT: `/auth/logout`,             // USER
   },
 
