@@ -13,6 +13,7 @@ export interface CartProduct {
     image: string
     description: string
     inStock: boolean
+    quantity?: number
     rating?: number
     unit?: string // Unit for contact lenses (unit, box, pack)
     caliber?: string | number // Selected MM caliber for frames
@@ -169,9 +170,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             try {
                 setIsLoading(true)
                 // Add to backend cart
+                const qty = Math.max(1, Math.floor(Number(product.quantity) || 1))
                 const result = await addToCartApi({
                     product_id: product.id,
-                    quantity: 1,
+                    quantity: qty,
                     // Add other customization data if available
                     ...(product.customization && { customization: product.customization })
                 })

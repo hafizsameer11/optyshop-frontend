@@ -126,13 +126,55 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
     }
 
 
+    const renderBannerCard = (campaign: Campaign, key: string) => {
+        const imageUrl = getImageUrl(campaign.image_url)
+        return (
+            <div key={key} className="w-[min(280px,78vw)] shrink-0 snap-center sm:w-64 md:w-72 lg:w-80">
+                <div
+                    className={`relative h-28 overflow-hidden rounded-lg shadow-md transition-all duration-300 sm:h-32 md:h-36 ${
+                        campaign.link_url ? 'cursor-pointer hover:shadow-lg active:scale-[0.99]' : ''
+                    }`}
+                    onClick={() => handleBannerClick(campaign)}
+                >
+                    {imageUrl ? (
+                        <img
+                            src={imageUrl}
+                            alt={campaign.name}
+                            className="h-full w-full object-cover object-center"
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                            }}
+                        />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 px-3">
+                            <div className="text-center">
+                                <h3 className="mb-1 text-sm font-bold text-gray-800 md:text-base">
+                                    {campaign.name}
+                                </h3>
+                                {campaign.description && (
+                                    <p className="line-clamp-2 text-xs text-gray-600">{campaign.description}</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        )
+    }
+
     if (loading) {
         return (
-            <section className="w-full py-6 md:py-8 bg-white">
-                <div className="w-[90%] mx-auto max-w-7xl">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <section className="w-full bg-white py-5 md:py-8">
+                <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:w-[90%] lg:px-0">
+                    <div className="flex gap-3 overflow-hidden">
                         {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-32 bg-gray-200 animate-pulse rounded-lg"></div>
+                            <div
+                                key={i}
+                                className="h-28 w-[min(280px,78vw)] shrink-0 animate-pulse rounded-lg bg-gray-200 sm:h-32"
+                            />
                         ))}
                     </div>
                 </div>
@@ -148,59 +190,19 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
     const track = [...campaigns, ...campaigns]
 
     return (
-        <section 
-            className="w-full py-6 md:py-8 bg-white"
-        >
-            <div className="w-[90%] mx-auto max-w-7xl">
-                {/* Auto-moving banners carousel - continuous scroll like brands */}
-                <div className="overflow-x-hidden overflow-y-visible py-2">
-                    <div className="flex gap-4 items-center marquee-track">
-                        {track.map((campaign, index) => {
-                            const imageUrl = getImageUrl(campaign.image_url)
-                            return (
-                                <div
-                                    key={`${campaign.id}-${index}`}
-                                    className="flex-shrink-0 w-72 md:w-80"
-                                >
-                                    <div
-                                        className={`relative rounded-lg overflow-hidden transition-all duration-300 h-32 md:h-40 shadow-md ${
-                                            campaign.link_url ? 'cursor-pointer hover:scale-[1.02] hover:shadow-xl' : ''
-                                        }`}
-                                        onClick={() => handleBannerClick(campaign)}
-                                    >
-                                        {imageUrl ? (
-                                            <>
-                                                <img
-                                                    src={imageUrl}
-                                                    alt={campaign.name}
-                                                    className="w-full h-full object-cover object-center"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement
-                                                        target.style.display = 'none'
-                                                    }}
-                                                />
-                                                {/* Removed gradient overlay for clean image display */}
-                                            </>
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                                                <div className="text-center px-4">
-                                                    <h3 className="text-gray-800 font-bold text-sm md:text-base mb-1">
-                                                        {campaign.name}
-                                                    </h3>
-                                                    {campaign.description && (
-                                                        <p className="text-gray-600 text-xs line-clamp-2">
-                                                            {campaign.description}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Content Overlay - Removed for clean image display */}
-                                    </div>
-                                </div>
-                            )
-                        })}
+        <section className="w-full max-w-[100vw] overflow-hidden bg-white py-5 md:py-8">
+            <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:w-[90%] lg:px-0">
+                {/* Mobile / tablet: horizontal swipe (reliable on small screens) */}
+                <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide md:hidden">
+                    {campaigns.map((campaign) => renderBannerCard(campaign, `mobile-${campaign.id}`))}
+                </div>
+
+                {/* Desktop: continuous marquee */}
+                <div className="hidden overflow-x-hidden py-2 md:block">
+                    <div className="marquee-track flex items-center gap-4">
+                        {track.map((campaign, index) =>
+                            renderBannerCard(campaign, `desk-${campaign.id}-${index}`)
+                        )}
                     </div>
                 </div>
             </div>

@@ -60,10 +60,12 @@ const LatestArrivals: React.FC = () => {
     }
 
     return (
-        <section className="bg-gray-50 py-12 md:py-16 px-4 sm:px-6">
-            <div className="w-[90%] mx-auto max-w-screen-2xl">
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-8">{t('home.latestArrivals.title')}</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5 xl:gap-4">
+        <section className="bg-gray-50 px-4 py-10 sm:px-6 md:py-16">
+            <div className="mx-auto w-full max-w-screen-2xl lg:w-[90%]">
+                <h2 className="mb-6 text-xl font-bold text-gray-900 sm:mb-8 sm:text-2xl md:text-3xl">
+                    {t('home.latestArrivals.title')}
+                </h2>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:gap-5 xl:grid-cols-5">
                     {products.map((product) => (
                         <ProductCard key={product.id} product={product} />
                     ))}

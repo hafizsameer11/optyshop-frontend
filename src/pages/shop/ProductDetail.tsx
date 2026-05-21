@@ -607,6 +607,11 @@ const ProductDetail = () => {
     
     // Quantity state for variant-based products
     const [variantQuantity, setVariantQuantity] = useState(1)
+    /** Always-current qty for add-to-cart (avoids stale closure if user changes qty then clicks quickly). */
+    const variantQuantityRef = useRef(1)
+    useEffect(() => {
+        variantQuantityRef.current = variantQuantity
+    }, [variantQuantity])
 
     // MM Caliber State (for frames/glasses) - using fetched calibers as fallback
 
@@ -3475,12 +3480,6 @@ const ProductDetail = () => {
             }
 
             const needFetchPrice = priceFromConfig == null
-            const needFetchImages = imagesFromConfig.length === 0
-
-            if (!needFetchPrice && !needFetchImages) {
-                if (!cancelled) setLoadingUnitData(false)
-                return
-            }
 
             if (!cancelled) setLoadingUnitData(true)
             try {
@@ -3489,8 +3488,10 @@ const ProductDetail = () => {
                 if (unitData?.data) {
                     if (needFetchPrice && unitData.data.price != null) {
                         setUnitPrice(Number(unitData.data.price))
+                    } else if (unitData.data.price != null) {
+                        setUnitPrice(Number(unitData.data.price))
                     }
-                    if (needFetchImages && unitData.data.images?.length) {
+                    if (unitData.data.images?.length) {
                         setUnitImages(unitData.data.images)
                     }
                 } else {
@@ -3656,9 +3657,9 @@ const ProductDetail = () => {
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
-        // Size/volume dropdown (90ml, etc.) takes priority over named eye-hygiene variant cards
+        // Size/volume dropdown (90ml, 300ml, etc.) takes priority over named eye-hygiene variant cards
         const useSizeVolumeForCart = Boolean(
-            isEyeHygiene && selectedSizeVolumeVariant?.size_volume && hasVariants
+            isEyeHygiene && selectedSizeVolumeVariant?.id != null && hasVariants
         )
         const useNamedEyeHygieneVariant = Boolean(
             isEyeHygiene &&
@@ -3683,12 +3684,13 @@ const ProductDetail = () => {
                     alert('Selected variant is out of stock')
                     return
                 }
-                if (variantQuantity < 1) {
+                const qtyToAdd = Math.max(1, Math.floor(Number(variantQuantityRef.current) || 1))
+                if (qtyToAdd < 1) {
                     alert('Please enter a valid quantity')
                     return
                 }
                 const variantStock = selectedSizeVolumeVariant.stock_quantity
-                if (variantStock > 0 && variantQuantity > variantStock) {
+                if (variantStock > 0 && qtyToAdd > variantStock) {
                     alert(`Only ${variantStock} available in stock for this size`)
                     return
                 }
@@ -3711,14 +3713,19 @@ const ProductDetail = () => {
 
         standardAddToCartLockRef.current = true
         try {
-            // Convert API product to cart-compatible format
-            // Size/volume UI uses variantQuantity; legacy eye hygiene uses eyeHygieneFormData.quantity
-            const productQuantity =
-                hasVariants && selectedSizeVolumeVariant
-                    ? variantQuantity
-                    : isEyeHygiene
-                      ? eyeHygieneFormData.quantity
-                      : quantity
+            // Size/volume UI uses variantQuantityRef; legacy eye hygiene uses eyeHygieneFormData.quantity
+            const productQuantity = (() => {
+                if (isEyeHygiene && selectedSizeVolumeVariant) {
+                    return Math.max(1, Math.floor(Number(variantQuantityRef.current) || 1))
+                }
+                if (isEyeHygiene) {
+                    return Math.max(1, Math.floor(Number(eyeHygieneFormData.quantity) || 1))
+                }
+                if (hasVariants && selectedSizeVolumeVariant) {
+                    return Math.max(1, Math.floor(Number(variantQuantityRef.current) || 1))
+                }
+                return Math.max(1, Math.floor(Number(quantity) || 1))
+            })()
             const productInStock = hasVariants && selectedSizeVolumeVariant
                 ? (selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0)
                 : (product.in_stock || false)
@@ -3771,10 +3778,10 @@ const ProductDetail = () => {
                     variant_type: 'eye_hygiene' as const,
                     eye_hygiene_variant_id: selectedEyeHygieneVariant!.id,
                 }),
-                ...(useSizeVolumeForCart && {
-                    selected_variant_id: `size_volume_${selectedSizeVolumeVariant!.id}`,
+                ...(selectedSizeVolumeVariant?.id != null && {
+                    selected_variant_id: `size_volume_${selectedSizeVolumeVariant.id}`,
                     variant_type: 'size_volume' as const,
-                    size_volume_variant_id: selectedSizeVolumeVariant!.id,
+                    size_volume_variant_id: selectedSizeVolumeVariant.id,
                 }),
                 customization: {
                     frame_material: cartProduct.frame_material,
@@ -3800,7 +3807,7 @@ const ProductDetail = () => {
                         size_volume: eyeHygieneFormData.size_volume || undefined,
                         pack_type: eyeHygieneFormData.pack_type || undefined
                     }),
-                    ...(useSizeVolumeForCart && selectedSizeVolumeVariant && {
+                    ...(selectedSizeVolumeVariant?.id != null && {
                         size_volume: selectedSizeVolumeVariant.size_volume,
                         pack_type: selectedSizeVolumeVariant.pack_type || undefined,
                         size_volume_variant_id: selectedSizeVolumeVariant.id,
@@ -4695,12 +4702,18 @@ const ProductDetail = () => {
                                                                         setSelectedUnit(null)
                                                                         setUnitImages([])
                                                                     } else {
+                                                                        const unitKey = String(unit)
                                                                         const packImgs =
-                                                                            contactLensPackResolution.allUnitImages[
-                                                                                String(unit)
-                                                                            ] || []
+                                                                            contactLensPackResolution.allUnitImages[unitKey] ||
+                                                                            getUnitImagesFromConfig(
+                                                                                selectedConfig || selectedAstigmatismConfig,
+                                                                                unit
+                                                                            )
+                                                                        setUnitImages([])
                                                                         setSelectedUnit(unit)
-                                                                        setUnitImages(packImgs)
+                                                                        if (packImgs.length > 0) {
+                                                                            setUnitImages(packImgs)
+                                                                        }
                                                                         setSelectedImageIndex(0)
                                                                         setIsManuallySelectingImage(false)
                                                                     }
@@ -5712,6 +5725,7 @@ const ProductDetail = () => {
                                             const handleSizeVolumeChange = (sizeVol: string) => {
                                                 if (!sizeVol) {
                                                     setSelectedSizeVolumeVariant(null)
+                                                    variantQuantityRef.current = 1
                                                     setVariantQuantity(1)
                                                     setSelectedImageIndex(0) // Reset image index
                                                     return
@@ -5736,10 +5750,12 @@ const ProductDetail = () => {
                                                         sort_order: variant.sort_order || 0
                                                     })
                                                     // Reset quantity to 1 when variant changes
+                                                    variantQuantityRef.current = 1
                                                     setVariantQuantity(1)
                                                     setSelectedImageIndex(0) // Reset image index to show variant's first image
                                                 } else {
                                                     setSelectedSizeVolumeVariant(null)
+                                                    variantQuantityRef.current = 1
                                                     setVariantQuantity(1)
                                                     setSelectedImageIndex(0) // Reset image index
                                                 }
@@ -5821,7 +5837,11 @@ const ProductDetail = () => {
                                                             </label>
                                                             <select
                                                                 value={variantQuantity}
-                                                                onChange={(e) => setVariantQuantity(parseInt(e.target.value) || 1)}
+                                                                onChange={(e) => {
+                                                                    const q = Math.max(1, parseInt(e.target.value, 10) || 1)
+                                                                    variantQuantityRef.current = q
+                                                                    setVariantQuantity(q)
+                                                                }}
                                                                 disabled={!selectedSizeVolume}
                                                                 className={`w-full px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all bg-white text-gray-900 font-medium ${!selectedSizeVolume ? 'bg-gray-100 cursor-not-allowed opacity-60' : ''}`}
                                                                 required

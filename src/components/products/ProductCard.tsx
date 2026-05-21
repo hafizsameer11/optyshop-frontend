@@ -303,7 +303,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
 
             </div>
 
-            <div className="flex flex-1 flex-col px-3 pb-3 pt-2 sm:px-3.5 sm:pb-3 sm:pt-2.5">
+            <div className="flex min-w-0 flex-1 flex-col px-2.5 pb-2.5 pt-2 sm:px-3.5 sm:pb-3 sm:pt-2.5">
                 {breadcrumb ? (
                     <p className="mb-0.5 line-clamp-1 text-[10px] leading-tight text-slate-400">{breadcrumb}</p>
                 ) : null}
@@ -311,16 +311,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                     to={`/shop/product/${product.slug || product.id}`}
                     className="mb-1.5"
                 >
-                    <h3 className="line-clamp-1 text-[13px] font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-600">
+                    <h3 className="line-clamp-2 text-xs font-semibold leading-snug text-slate-900 transition-colors group-hover:text-blue-600 sm:line-clamp-1 sm:text-[13px]">
                         {product.name}
                     </h3>
                 </Link>
 
-                <div className="mb-2 flex items-center justify-between gap-2"
-                >
+                <div className="mb-1 flex flex-col gap-1.5 sm:mb-2 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
                     {swatches.length > 0 ? (
                         <div
-                            className="flex min-w-0 flex-1 items-center gap-1"
+                            className="flex min-w-0 flex-1 flex-wrap items-center gap-1"
                             role="list"
                             aria-label={t('shop.availableColors', 'Available colors')}
                         >
@@ -369,10 +368,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
                         </div>
                     )}
 
-                    <div className="flex shrink-0 items-baseline gap-1.5">
-                        <span className="text-[15px] font-bold tabular-nums text-blue-600">€{displayPrice.toFixed(2)}</span>
+                    <div className="flex shrink-0 items-baseline gap-1 sm:ml-auto">
+                        <span className="text-sm font-bold tabular-nums text-blue-600 sm:text-[15px]">
+                            €{displayPrice.toFixed(2)}
+                        </span>
                         {comparePrice != null ? (
-                            <span className="text-[11px] tabular-nums text-slate-400 line-through">
+                            <span className="text-[10px] tabular-nums text-slate-400 line-through sm:text-[11px]">
                                 €{comparePrice.toFixed(2)}
                             </span>
                         ) : null}

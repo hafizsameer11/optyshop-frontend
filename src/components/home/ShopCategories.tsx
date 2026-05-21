@@ -109,8 +109,8 @@ const ShopCategories: React.FC = () => {
 
     if (loading) {
         return (
-            <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
-                <div className="w-[90%] mx-auto max-w-7xl">
+            <section className="bg-white px-4 py-10 sm:px-6 md:py-16">
+                <div className="mx-auto w-full max-w-7xl lg:w-[90%]">
                     <div className="text-center py-8">
                         <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-950"></div>
                         <p className="mt-4 text-lg text-gray-600">Loading categories...</p>
@@ -121,10 +121,10 @@ const ShopCategories: React.FC = () => {
     }
 
     return (
-        <section className="bg-white py-12 md:py-16 px-4 sm:px-6">
-            <div className="w-[90%] mx-auto max-w-7xl">
+        <section className="bg-white px-4 py-10 sm:px-6 md:py-16">
+            <div className="mx-auto w-full max-w-7xl lg:w-[90%]">
                 {categorySections.length > 0 ? (
-                    <div className="space-y-16">
+                    <div className="space-y-10 md:space-y-16">
                         {categorySections.map((section) => {
                             const category = section.category
                             const parent = section.parentCategory
@@ -164,7 +164,7 @@ const ShopCategories: React.FC = () => {
                                             No products available in this category
                                         </p>
                                     ) : (
-                                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-5 xl:grid-cols-5 xl:gap-4">
+                                        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5 xl:grid-cols-5">
                                             {productsToShow.map((product) => (
                                                 <ProductCard
                                                     key={product.id}

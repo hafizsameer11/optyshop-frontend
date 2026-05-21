@@ -19,8 +19,12 @@ interface BannerMeta {
     }
 }
 
-/** Home hero uses this; category banners use `min()` with a max so stacked sections stay usable */
+/** Legacy inline height (desktop); prefer `HOME_HERO_BANNER_HEIGHT_CLASS` for responsive layout */
 export const HOME_HERO_BANNER_HEIGHT = '70vh'
+
+/** Tailwind height: shorter on mobile so hero + navbar fit the viewport */
+export const HOME_HERO_BANNER_HEIGHT_CLASS =
+    'h-[min(52vh,22rem)] sm:h-[min(58vh,26rem)] md:h-[min(70vh,32rem)]'
 
 interface BannerComponentProps {
     pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
@@ -28,7 +32,8 @@ interface BannerComponentProps {
     subCategoryId?: number | null;
     showNavbar?: boolean; // Whether to show navbar (default: true for home page)
     autoSlideInterval?: number; // Auto-slide interval in milliseconds (default: 5000)
-    height?: string; // Banner height (default: '200px')
+    height?: string; // Optional fixed height override (prefer responsive default)
+    heightClassName?: string; // Tailwind height classes (default: HOME_HERO_BANNER_HEIGHT_CLASS)
 }
 
 const BannerComponent: React.FC<BannerComponentProps> = ({
@@ -37,8 +42,12 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     subCategoryId = null,
     showNavbar = false,
     autoSlideInterval = 5000,
-    height = '200px',
+    height,
+    heightClassName = HOME_HERO_BANNER_HEIGHT_CLASS,
 }) => {
+    const useInlineHeight = Boolean(height)
+    const slideHeightStyle = useInlineHeight ? { height } : undefined
+    const slideHeightClass = useInlineHeight ? '' : heightClassName
     const { t } = useTranslation()
     const navigate = useNavigate()
     const [banners, setBanners] = useState<Banner[]>([])
@@ -109,13 +118,19 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
     if (loading) {
         return (
-            <div className="relative text-slate-800" style={{ height }}>
+            <div
+                className={`relative w-full max-w-[100vw] overflow-hidden text-slate-800 ${slideHeightClass}`}
+                style={slideHeightStyle}
+            >
                 {showNavbar && (
                     <div className="absolute top-0 left-0 right-0 z-30">
                         <Navbar />
                     </div>
                 )}
-                <div className="w-full bg-gray-200 animate-pulse flex items-center justify-center" style={{ height }}>
+                <div
+                    className={`flex w-full items-center justify-center bg-gray-200 animate-pulse ${slideHeightClass}`}
+                    style={slideHeightStyle}
+                >
                     <div className="text-gray-400">{t('home.banner.loading')}</div>
                 </div>
             </div>
@@ -217,32 +232,31 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
 
     return (
-        <div className={`relative text-slate-800 w-full ${!showNavbar ? 'pt-16' : ''}`} style={{ height: showNavbar ? height : `calc(${height} + 4rem)` }}>
-            {/* Banner Slider Container - Full height */}
-            <div className="relative overflow-hidden w-full" style={{ height }}>
-                {/* Navbar - Absolute positioned to overlay banner (only if showNavbar is true) */}
+        <section
+            className={`relative w-full max-w-[100vw] overflow-hidden text-slate-800 ${!showNavbar ? 'pt-16' : ''}`}
+        >
+            <div
+                className={`relative w-full overflow-hidden ${slideHeightClass}`}
+                style={slideHeightStyle}
+            >
                 {showNavbar && (
                     <div className="absolute top-0 left-0 right-0 z-30">
                         <Navbar />
                     </div>
                 )}
 
-                {/* Slides Container */}
                 <div
-                    className="flex transition-transform duration-700 ease-in-out h-full"
-                    style={{
-                        transform: `translateX(-${currentIndex * 100}%)`,
-                        height: '100%',
-                    }}
+                    className="flex h-full w-full transition-transform duration-700 ease-in-out"
+                    style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                 >
                     {banners.map((banner, index) => {
                         const imageUrl = getImageUrl(banner.image_url)
                         return (
                             <div
                                 key={banner.id || index}
-                                className="min-w-full h-full relative cursor-pointer flex-shrink-0 w-full"
+                                className={`relative h-full w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer ${slideHeightClass}`}
+                                style={slideHeightStyle}
                                 onClick={() => {
-                                    // Only handle banner click if there's a link_url and no buttons
                                     const meta = parseMeta(banner.meta)
                                     if (banner.link_url && !meta?.button1 && !meta?.button2) {
                                         if (banner.link_url.startsWith('http')) {
@@ -252,52 +266,52 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                         }
                                     }
                                 }}
-                                style={{
-                                    height,
-                                    width: '100%',
-                                }}
                             >
-                                {/* Background Image - Primary method */}
                                 <div
-                                    className="absolute inset-0 w-full h-full bg-slate-900"
-                                    style={{
-                                        backgroundImage: `url(${imageUrl})`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        backgroundRepeat: 'no-repeat',
-                                    }}
+                                    className="absolute inset-0 bg-slate-900 bg-cover bg-center bg-no-repeat"
+                                    style={{ backgroundImage: `url(${imageUrl})` }}
                                 />
 
-                                {/* Fallback Image Tag - Ensures display even if background-image fails */}
                                 <img
                                     src={imageUrl}
                                     alt={banner.title || 'Banner'}
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                    style={{
-                                        objectFit: 'cover',
-                                        objectPosition: 'center',
-                                    }}
+                                    className="absolute inset-0 h-full w-full object-cover object-center"
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                    decoding="async"
                                     onError={(e) => {
-                                        // If image fails to load, hide the img tag and rely on background
                                         const target = e.target as HTMLImageElement
                                         target.style.display = 'none'
                                     }}
                                 />
 
-                                {/* Overlay for better text readability with attractive background */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
-
-                                {/* Banner Content - Empty for clean image display */}
-                                <main className="relative z-20 flex items-center justify-center h-full" style={{ height }}>
-                                </main>
+                                <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/25 via-black/10 to-black/25" />
                             </div>
                         )
                     })}
                 </div>
 
-
+                {banners.length > 1 && (
+                    <div className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 gap-1.5 rounded-full bg-black/25 px-2 py-1 backdrop-blur-sm">
+                        {banners.map((_, index) => (
+                            <button
+                                key={index}
+                                type="button"
+                                aria-label={`Go to slide ${index + 1}`}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setCurrentIndex(index)
+                                }}
+                                className={`rounded-full transition-all ${
+                                    index === currentIndex
+                                        ? 'h-2 w-5 bg-white'
+                                        : 'h-2 w-2 bg-white/60 hover:bg-white/90'
+                                }`}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
-        </div>
+        </section>
     )
 }
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
-import Banner, { HOME_HERO_BANNER_HEIGHT } from '../components/home/Banner'
+import Banner from '../components/home/Banner'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import FlashOffersProductHighlight from '../components/home/FlashOffersProductHighlight'
 import ShopCategories from '../components/home/ShopCategories'
@@ -11,19 +11,12 @@ import Footer from '../components/Footer'
 
 const Home: React.FC = () => {
     return (
-        <div className="bg-slate-950 text-white w-full min-h-screen">
-            {/* Navbar - Always shown (navbar itself is fixed positioned) */}
+        <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-slate-950 text-white">
             <Navbar />
-            
-            {/* Banner Section - Only shows if there are banners */}
-            <Banner 
-                pageType="home"
-                showNavbar={false}
-                autoSlideInterval={5000}
-                height={HOME_HERO_BANNER_HEIGHT}
-            />
-            
-            <div className="w-full">
+
+            <Banner pageType="home" showNavbar={false} autoSlideInterval={5000} />
+
+            <div className="w-full overflow-x-hidden">
                 <SmallSlidingBanners />
                 <FlashOffersProductHighlight />
                 <ShopCategories />

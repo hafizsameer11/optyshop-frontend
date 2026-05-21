@@ -176,11 +176,12 @@ export const addItemToCart = async (
   itemData: AddToCartRequest
 ): Promise<{ success: boolean; message?: string; cart?: Cart }> => {
   try {
+    const requestedQty = Math.max(1, Math.floor(Number(itemData.quantity) || 1))
     const response = await apiClient.post<CartResponse>(
       API_ROUTES.CART.ADD_ITEM,
       {
         ...itemData,
-        quantity: itemData.quantity || 1
+        quantity: requestedQty
       },
       true // Requires authentication
     );

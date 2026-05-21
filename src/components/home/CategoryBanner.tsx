@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { getBanners, type Banner } from '../../services/bannersService'
-import { HOME_HERO_BANNER_HEIGHT } from './Banner'
-
 // Simple request cache to prevent duplicate concurrent requests
 const bannerRequestCache = new Map<string, Promise<Banner[]>>()
 const REQUEST_THROTTLE_DELAY = 100 // 100ms between requests
 
-/** Same treatment as home hero; cap height so multiple category blocks do not each use full viewport */
-const CATEGORY_HERO_HEIGHT = `min(${HOME_HERO_BANNER_HEIGHT}, 36rem)`
+/** Compact on mobile — stacked category rows must not each consume full viewport */
+export const CATEGORY_BANNER_HEIGHT_CLASS =
+    'h-[min(36vw,10.5rem)] sm:h-[min(42vh,14rem)] md:h-[min(55vh,20rem)] lg:h-[min(70vh,36rem)]'
 
 interface CategoryBannerProps {
     categoryName: string
@@ -137,8 +136,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     if (loading) {
         return (
             <div
-                className="relative w-full mb-4 text-slate-800 overflow-hidden bg-gray-200 animate-pulse flex items-center justify-center"
-                style={{ height: CATEGORY_HERO_HEIGHT }}
+                className={`relative mb-4 flex w-full max-w-full items-center justify-center overflow-hidden bg-gray-200 text-slate-800 animate-pulse ${CATEGORY_BANNER_HEIGHT_CLASS}`}
             >
                 <span className="text-gray-400 text-sm">Loading banner...</span>
             </div>
@@ -234,9 +232,8 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
     }
 
     return (
-        <div className="relative w-full mb-4 text-slate-800 overflow-hidden">
-            {/* Match home `Banner.tsx`: same height rhythm as hero (70vh), cover + same gradient overlay */}
-            <div className="relative overflow-hidden w-full" style={{ height: CATEGORY_HERO_HEIGHT }}>
+        <div className="relative mb-4 w-full max-w-full overflow-hidden text-slate-800">
+            <div className={`relative w-full overflow-hidden ${CATEGORY_BANNER_HEIGHT_CLASS}`}>
                 {/* Slides Container */}
                 <div
                     className="flex transition-transform duration-700 ease-in-out h-full"
@@ -261,9 +258,8 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                         return (
                             <div
                                 key={banner.id || index}
-                                className="min-w-full h-full relative cursor-pointer flex-shrink-0 w-full"
+                                className={`relative h-full min-w-full w-full shrink-0 grow-0 basis-full cursor-pointer ${CATEGORY_BANNER_HEIGHT_CLASS}`}
                                 onClick={() => handleBannerClick(banner)}
-                                style={{ height: CATEGORY_HERO_HEIGHT, width: '100%' }}
                             >
                                 {/* Background Image — same as home Banner */}
                                 <div
@@ -304,8 +300,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 {/* Same overlay as home Banner */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/10 to-black/20 z-10" />
 
-                                <main className="relative z-20 flex items-center justify-center h-full" style={{ height: CATEGORY_HERO_HEIGHT }}>
-                                </main>
+                                <main className="relative z-20 flex h-full items-center justify-center" />
                             </div>
                         )
                     })}

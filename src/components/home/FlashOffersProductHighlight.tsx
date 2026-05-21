@@ -198,8 +198,8 @@ const FlashOffersProductHighlight: React.FC = () => {
     }
 
     return (
-        <section className="bg-[#f8f3ed] py-16 px-4 sm:px-6">
-            <div className="w-[90%] mx-auto max-w-7xl text-center space-y-4">
+        <section className="bg-[#f8f3ed] px-4 py-10 sm:px-6 md:py-16">
+            <div className="mx-auto w-full max-w-7xl space-y-4 text-center lg:w-[90%]">
                 <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t('home.flashOffers.eyebrow')}</p>
                 <h2 className="text-2xl md:text-3xl font-semibold text-slate-800 pb-4 md:pb-8">
                     {t('home.flashOffers.title')}{' '}
@@ -207,7 +207,7 @@ const FlashOffersProductHighlight: React.FC = () => {
                 </h2>
             </div>
 
-            <div className="mt-8 grid gap-8 md:grid-cols-3 w-[90%] mx-auto max-w-7xl">
+            <div className="mx-auto mt-6 grid max-w-7xl grid-cols-1 gap-6 sm:mt-8 sm:grid-cols-2 sm:gap-8 md:grid-cols-3 lg:w-[90%]">
                 {loading
                     ? Array.from({ length: MAX_OFFERS }).map((_, i) => (
                           <div

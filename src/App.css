@@ -21,3 +21,19 @@
 .marquee-track:hover {
     animation-play-state: paused;
 }
+
+@media (max-width: 767px) {
+    .marquee-track {
+        animation-duration: 22s;
+    }
+}
+
+/* Home small banners — touch scroll on mobile */
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
