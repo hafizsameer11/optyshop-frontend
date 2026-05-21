@@ -159,6 +159,27 @@ function mergeUnitImagesRecord(
     }
 }
 
+/** When API lists explicit pack sizes, hide orphan price/image keys (removed packs). */
+function prunePackMapsToAvailableUnits(
+    availableUnits: number[],
+    allUnitPrices: Record<string, number>,
+    allUnitImages: Record<string, string[]>
+): { allUnitPrices: Record<string, number>; allUnitImages: Record<string, string[]> } {
+    if (!availableUnits.length) {
+        return { allUnitPrices, allUnitImages }
+    }
+    const allowed = new Set(availableUnits.map(String))
+    const prices: Record<string, number> = {}
+    const images: Record<string, string[]> = {}
+    for (const [k, v] of Object.entries(allUnitPrices)) {
+        if (allowed.has(String(k))) prices[k] = v
+    }
+    for (const [k, v] of Object.entries(allUnitImages)) {
+        if (allowed.has(String(k))) images[k] = v
+    }
+    return { allUnitPrices: prices, allUnitImages: images }
+}
+
 function normalizePackUnitKey(value: unknown): string {
     return String(value ?? '')
         .trim()
@@ -266,7 +287,13 @@ function resolveContactLensPackUnits(
     }
 
     availableUnits = [...new Set(availableUnits)].sort((a, b) => a - b)
-    return { availableUnits, allUnitPrices, allUnitImages }
+
+    const pruned = prunePackMapsToAvailableUnits(availableUnits, allUnitPrices, allUnitImages)
+    return {
+        availableUnits,
+        allUnitPrices: pruned.allUnitPrices,
+        allUnitImages: pruned.allUnitImages,
+    }
 }
 
 const ProductDetail = () => {
