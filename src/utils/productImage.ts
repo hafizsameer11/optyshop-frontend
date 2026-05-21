@@ -152,6 +152,17 @@ export function getProductImageUrl(product: Product, imageIndex: number = 0): st
     return imgUrl || '/assets/images/frame1.png'
 }
 
+/**
+ * Resolve a URL from a pack/unit image list without letting `product.image` override the list.
+ */
+export function getGalleryImageUrlFromList(urls: string[], imageIndex: number = 0): string {
+    const list = urls.filter((u) => typeof u === 'string' && u.trim() !== '')
+    if (list.length === 0) return '/assets/images/frame1.png'
+    const idx = Math.max(0, Math.min(imageIndex, list.length - 1))
+    const p = { images: list } as Product
+    return getProductImageUrl(p, idx)
+}
+
 /** Parsed `product.images` only (no scalar `image` / `image_url` fields). */
 export function parseProductImagesArray(product: Product | null | undefined): string[] {
     if (!product?.images) return []

@@ -15,7 +15,7 @@ import {
     type EyeHygieneVariant
 } from '../../services/productsService'
 import { addItemToCart, updateCartItem, type AddToCartRequest } from '../../services/cartService'
-import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageUrl, getDefaultContactLensMainImageIndex } from '../../utils/productImage'
+import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageUrl, getDefaultContactLensMainImageIndex, getGalleryImageUrlFromList, parseProductImagesArray } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import ProductCheckout from '../../components/shop/ProductCheckout'
@@ -149,6 +149,10 @@ function mergeUnitImagesRecord(
 ) {
     if (!source || typeof source !== 'object') return
     for (const [k, v] of Object.entries(source)) {
+        if (typeof v === 'string' && v.trim()) {
+            target[k] = [v.trim()]
+            continue
+        }
         if (!Array.isArray(v)) continue
         const urls = v.filter((u): u is string => typeof u === 'string' && u.trim() !== '')
         if (urls.length > 0) target[k] = urls
@@ -173,6 +177,7 @@ function getUnitImagesFromConfig(
     if (!raw || typeof raw !== 'object') return []
 
     const pickUrls = (entry: unknown): string[] => {
+        if (typeof entry === 'string' && entry.trim()) return [entry.trim()]
         if (!Array.isArray(entry)) return []
         return entry.filter((u): u is string => typeof u === 'string' && u.trim() !== '')
     }
@@ -545,6 +550,7 @@ const ProductDetail = () => {
     const [contactLensLoading, setContactLensLoading] = useState(false)
     /** Prevents double-submit before React state updates (duplicate checkout → wrong quantity). */
     const contactLensCheckoutLockRef = useRef(false)
+    const standardAddToCartLockRef = useRef(false)
     const [selectedConfig, setSelectedConfig] = useState<SphericalConfig | null>(null)
     const [sphericalConfigs, setSphericalConfigs] = useState<SphericalConfig[]>([])
     const [astigmatismConfigs, setAstigmatismConfigs] = useState<AstigmatismConfig[]>([])
@@ -3163,11 +3169,9 @@ const ProductDetail = () => {
         }
     }, [selectedEyeHygieneVariant])
 
-    /** Resolve a gallery URL from a string list (pack unit_images, etc.) with proxy/fallback handling. */
+    /** Resolve a gallery URL from pack unit_images (must not use product.image — that hid pack photos). */
     const imageUrlFromStringList = (urls: string[], index: number): string => {
-        if (!product || !urls.length) return '/assets/images/frame1.png'
-        const idx = Math.max(0, Math.min(index, urls.length - 1))
-        return getProductImageUrl({ ...product, images: urls } as Product, idx)
+        return getGalleryImageUrlFromList(urls, index)
     }
 
     // Helper function to get the variant-specific image URL (supports color, unit, ML variants, caliber, and eye hygiene variants)
@@ -3183,6 +3187,12 @@ const ProductDetail = () => {
         for (const cfg of allConfigs) {
             const imgs = getUnitImagesFromConfig(cfg, selectedUnit)
             if (imgs.length > 0) return imgs
+        }
+        if (currentConfig) {
+            const configGallery = parseProductImagesArray({
+                images: (currentConfig as Record<string, unknown>).images,
+            } as Product)
+            if (configGallery.length > 0) return configGallery
         }
         return []
     }
@@ -3637,6 +3647,7 @@ const ProductDetail = () => {
 
     const handleAddToCart = async () => {
         if (!product) return
+        if (standardAddToCartLockRef.current) return
 
         // Check if product has variants (new approach) - prioritize fetched variants, then check product object
         const p = product as any
@@ -3672,6 +3683,15 @@ const ProductDetail = () => {
                     alert('Selected variant is out of stock')
                     return
                 }
+                if (variantQuantity < 1) {
+                    alert('Please enter a valid quantity')
+                    return
+                }
+                const variantStock = selectedSizeVolumeVariant.stock_quantity
+                if (variantStock > 0 && variantQuantity > variantStock) {
+                    alert(`Only ${variantStock} available in stock for this size`)
+                    return
+                }
             } else {
                 // Legacy form-based validation (for products without variants)
                 if (eyeHygieneOptions.size_volume.length > 0 && !eyeHygieneFormData.size_volume) {
@@ -3689,10 +3709,16 @@ const ProductDetail = () => {
             }
         }
 
+        standardAddToCartLockRef.current = true
         try {
             // Convert API product to cart-compatible format
-            // Determine quantity and stock based on variant or legacy form
-            const productQuantity = hasVariants && selectedSizeVolumeVariant ? quantity : (isEyeHygiene ? eyeHygieneFormData.quantity : quantity)
+            // Size/volume UI uses variantQuantity; legacy eye hygiene uses eyeHygieneFormData.quantity
+            const productQuantity =
+                hasVariants && selectedSizeVolumeVariant
+                    ? variantQuantity
+                    : isEyeHygiene
+                      ? eyeHygieneFormData.quantity
+                      : quantity
             const productInStock = hasVariants && selectedSizeVolumeVariant
                 ? (selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0)
                 : (product.in_stock || false)
@@ -3797,21 +3823,18 @@ const ProductDetail = () => {
                 return
             }
 
-            try {
-                const result = await addItemToCart(cartRequest)
-                if (result.success) {
-                    await syncCart()
-                    navigate('/cart')
-                } else {
-                    alert(result.message || 'Failed to add product to cart. Please try again.')
-                }
-            } catch (err) {
-                console.error('API cart error:', err)
-                alert('Failed to add product to cart. Please try again.')
+            const result = await addItemToCart(cartRequest)
+            if (result.success) {
+                await syncCart()
+                navigate('/cart')
+            } else {
+                alert(result.message || 'Failed to add product to cart. Please try again.')
             }
         } catch (error) {
             console.error('Error adding to cart:', error)
             alert('Failed to add product to cart. Please try again.')
+        } finally {
+            standardAddToCartLockRef.current = false
         }
     }
 
@@ -6149,7 +6172,12 @@ const ProductDetail = () => {
 
                                             // Validation for variant-based or legacy form-based
                                             const isFormValid = hasVariants
-                                                ? !!selectedSizeVolumeVariant && selectedSizeVolumeVariant.stock_status === 'in_stock' && selectedSizeVolumeVariant.stock_quantity > 0
+                                                ? !!selectedSizeVolumeVariant &&
+                                                  selectedSizeVolumeVariant.stock_status === 'in_stock' &&
+                                                  selectedSizeVolumeVariant.stock_quantity > 0 &&
+                                                  variantQuantity >= 1 &&
+                                                  (selectedSizeVolumeVariant.stock_quantity <= 0 ||
+                                                      variantQuantity <= selectedSizeVolumeVariant.stock_quantity)
                                                 : (
                                                     (eyeHygieneOptions.size_volume.length === 0 || eyeHygieneFormData.size_volume) &&
                                                     (eyeHygieneOptions.pack_type.length === 0 || eyeHygieneFormData.pack_type) &&
