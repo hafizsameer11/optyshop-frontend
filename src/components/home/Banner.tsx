@@ -22,9 +22,16 @@ interface BannerMeta {
 /** Legacy inline height (desktop); prefer `HOME_HERO_BANNER_HEIGHT_CLASS` for responsive layout */
 export const HOME_HERO_BANNER_HEIGHT = '70vh'
 
-/** Tailwind height: shorter on mobile so hero + navbar fit the viewport */
+/**
+ * Mobile: aspect-ratio box + object-contain shows the full banner (no crop).
+ * Desktop: fixed viewport height + object-cover fills the hero.
+ */
 export const HOME_HERO_BANNER_HEIGHT_CLASS =
-    'h-[min(52vh,22rem)] sm:h-[min(58vh,26rem)] md:h-[min(70vh,32rem)]'
+    'h-auto w-full aspect-[5/4] min-h-[13rem] sm:aspect-[2/1] sm:min-h-[15rem] md:aspect-auto md:min-h-0 md:h-[min(70vh,32rem)]'
+
+/** Hero image fit per breakpoint */
+const HERO_IMAGE_FIT_CLASS =
+    'object-contain object-center md:object-cover md:object-center'
 
 interface BannerComponentProps {
     pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
@@ -254,8 +261,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                         return (
                             <div
                                 key={banner.id || index}
-                                className={`relative h-full w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer ${slideHeightClass}`}
-                                style={slideHeightStyle}
+                                className="relative h-full min-h-0 w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer bg-slate-950"
                                 onClick={() => {
                                     const meta = parseMeta(banner.meta)
                                     if (banner.link_url && !meta?.button1 && !meta?.button2) {
@@ -267,15 +273,10 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }
                                 }}
                             >
-                                <div
-                                    className="absolute inset-0 bg-slate-900 bg-cover bg-center bg-no-repeat"
-                                    style={{ backgroundImage: `url(${imageUrl})` }}
-                                />
-
                                 <img
                                     src={imageUrl}
                                     alt={banner.title || 'Banner'}
-                                    className="absolute inset-0 h-full w-full object-cover object-center"
+                                    className={`absolute inset-0 z-[1] h-full w-full ${HERO_IMAGE_FIT_CLASS}`}
                                     loading={index === 0 ? 'eager' : 'lazy'}
                                     decoding="async"
                                     onError={(e) => {
@@ -284,7 +285,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }}
                                 />
 
-                                <div className="absolute inset-0 z-10 bg-gradient-to-b from-black/25 via-black/10 to-black/25" />
+                                <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/15 via-transparent to-black/15 md:from-black/25 md:to-black/25" />
                             </div>
                         )
                     })}
