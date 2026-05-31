@@ -26,6 +26,7 @@ export interface Banner {
   id: number;
   title: string;
   image_url: string | null;
+  mobile_image_url?: string | null;
   link_url: string | null;
   position: string | null;
   page_type?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;

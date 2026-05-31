@@ -257,7 +257,10 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                     style={{ transform: `translateX(-${currentIndex * 100}%)` }}
                 >
                     {banners.map((banner, index) => {
-                        const imageUrl = getImageUrl(banner.image_url)
+                        const desktopImageUrl = getImageUrl(banner.image_url)
+                        const mobileImageUrl = getImageUrl(
+                            banner.mobile_image_url?.trim() ? banner.mobile_image_url : banner.image_url
+                        )
                         return (
                             <div
                                 key={banner.id || index}
@@ -274,9 +277,25 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                 }}
                             >
                                 <img
-                                    src={imageUrl}
+                                    src={mobileImageUrl}
                                     alt={banner.title || 'Banner'}
-                                    className={`absolute inset-0 z-[1] h-full w-full ${HERO_IMAGE_FIT_CLASS}`}
+                                    className={`absolute inset-0 z-[1] h-full w-full md:hidden ${HERO_IMAGE_FIT_CLASS}`}
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                    decoding="async"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement
+                                        if (!target.dataset.fallbackTried) {
+                                            target.dataset.fallbackTried = '1'
+                                            target.src = desktopImageUrl
+                                        } else {
+                                            target.style.display = 'none'
+                                        }
+                                    }}
+                                />
+                                <img
+                                    src={desktopImageUrl}
+                                    alt={banner.title || 'Banner'}
+                                    className={`absolute inset-0 z-[1] hidden h-full w-full md:block ${HERO_IMAGE_FIT_CLASS}`}
                                     loading={index === 0 ? 'eager' : 'lazy'}
                                     decoding="async"
                                     onError={(e) => {

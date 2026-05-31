@@ -243,13 +243,17 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                     }}
                 >
                     {banners.map((banner, index) => {
-                        const imageUrl = getImageUrl(banner.image_url)
+                        const desktopImageUrl = getImageUrl(banner.image_url)
+                        const mobileImageUrl = getImageUrl(
+                            banner.mobile_image_url?.trim() ? banner.mobile_image_url : banner.image_url
+                        )
                         
                         // Debug: Log image URL information
                         if (import.meta.env.DEV) {
                             console.log(`🖼️ Banner ${index + 1} image info:`, {
                                 originalUrl: banner.image_url,
-                                processedUrl: imageUrl,
+                                processedUrl: desktopImageUrl,
+                                mobileUrl: mobileImageUrl,
                                 bannerId: banner.id,
                                 bannerTitle: banner.title
                             })
@@ -263,9 +267,18 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                             >
                                 {/* Background Image — same as home Banner */}
                                 <div
-                                    className="absolute inset-0 w-full h-full bg-slate-900"
+                                    className="absolute inset-0 hidden w-full h-full bg-slate-900 md:block"
                                     style={{
-                                        backgroundImage: `url(${imageUrl})`,
+                                        backgroundImage: `url(${desktopImageUrl})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center',
+                                        backgroundRepeat: 'no-repeat',
+                                    }}
+                                />
+                                <div
+                                    className="absolute inset-0 w-full h-full bg-slate-900 md:hidden"
+                                    style={{
+                                        backgroundImage: `url(${mobileImageUrl})`,
                                         backgroundSize: 'cover',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
@@ -273,9 +286,30 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 />
 
                                 <img
-                                    src={imageUrl}
+                                    src={mobileImageUrl}
                                     alt={banner.title || 'Category Banner'}
-                                    className="absolute inset-0 w-full h-full object-cover"
+                                    className="absolute inset-0 w-full h-full object-cover md:hidden"
+                                    style={{
+                                        objectFit: 'cover',
+                                        objectPosition: 'center',
+                                    }}
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement
+                                        if (!target.dataset.fallbackTried) {
+                                            target.dataset.fallbackTried = '1'
+                                            target.src = desktopImageUrl
+                                        } else if (!target.dataset.secondFallback) {
+                                            target.dataset.secondFallback = '1'
+                                            target.src = '/assets/images/banner-mobile-footwear-blog.webp'
+                                        } else {
+                                            target.style.display = 'none'
+                                        }
+                                    }}
+                                />
+                                <img
+                                    src={desktopImageUrl}
+                                    alt={banner.title || 'Category Banner'}
+                                    className="absolute inset-0 hidden w-full h-full object-cover md:block"
                                     style={{
                                         objectFit: 'cover',
                                         objectPosition: 'center',
@@ -285,12 +319,6 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                         if (!target.dataset.fallbackTried) {
                                             target.dataset.fallbackTried = '1'
                                             target.src = '/assets/images/Banner-join-us-tewt-2.webp'
-                                        } else if (!target.dataset.secondFallback) {
-                                            target.dataset.secondFallback = '1'
-                                            target.src = '/assets/images/banner-mobile-footwear-blog.webp'
-                                        } else if (!target.dataset.thirdFallback) {
-                                            target.dataset.thirdFallback = '1'
-                                            target.src = '/assets/images/hero3.avif'
                                         } else {
                                             target.style.display = 'none'
                                         }
