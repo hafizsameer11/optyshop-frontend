@@ -201,13 +201,13 @@ const Navbar: React.FC = () => {
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex w-full max-w-[1920px] items-center justify-between gap-2 px-3 py-1.5 mx-auto sm:gap-3 sm:px-4 md:py-1.5 md:px-3">
+            <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-4 md:gap-4 md:px-6 md:py-3">
                 {/* Logo */}
-                <Link to="/" className="flex shrink-0 items-center space-x-1 group">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-400 shadow-sm transition-all duration-300 group-hover:bg-cyan-300 md:h-7 md:w-7">
-                        <span className="text-[10px] font-bold text-white md:text-xs">OS</span>
+                <Link to="/" className="group flex shrink-0 items-center space-x-1.5 md:space-x-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-400 shadow-sm transition-all duration-300 group-hover:bg-cyan-300 md:h-9 md:w-9 md:rounded-lg">
+                        <span className="text-[10px] font-bold text-white md:text-sm">OS</span>
                     </div>
-                    <span className="hidden text-xs font-bold uppercase tracking-wide text-white transition-colors group-hover:text-cyan-200 sm:inline md:text-sm">
+                    <span className="hidden text-xs font-bold uppercase tracking-wide text-white transition-colors group-hover:text-cyan-200 sm:inline md:text-base">
                         OPTISHOP
                     </span>
                 </Link>
@@ -282,7 +282,7 @@ const Navbar: React.FC = () => {
                                     setIsSearchOpen(false)
                                 }
                             }}
-                            className="w-full h-8 md:h-9 px-3 sm:px-4 py-2 pr-8 sm:pr-10 text-xs sm:text-sm bg-blue-950/70 border border-cyan-400/40 rounded-lg text-white placeholder-cyan-400/60 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400 transition-colors"
+                            className="h-8 w-full rounded-lg border border-cyan-400/40 bg-blue-950/70 px-3 py-2 pr-8 text-xs text-white placeholder-cyan-400/60 transition-colors focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 sm:px-4 sm:pr-10 sm:text-sm md:h-10"
                             style={{
                                 width: '100%',
                                 maxWidth: '100%',
@@ -416,11 +416,11 @@ const Navbar: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Desktop navigation - Compact */}
-                <nav className="hidden lg:flex items-center space-x-1 flex-shrink-0" ref={dropdownRef}>
+                {/* Desktop navigation */}
+                <nav className="hidden flex-shrink-0 items-center space-x-1.5 lg:flex" ref={dropdownRef}>
                     <Link
                         to="/"
-                        className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
+                        className={`flex h-8 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-white transition-all duration-200 md:h-9 ${
                             isActive('/') 
                                 ? 'bg-blue-800/50 text-blue-100' 
                                 : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -459,7 +459,7 @@ const Navbar: React.FC = () => {
                                         setCollectionsMenuClicked(true)
                                     }
                                 }}
-                                className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center gap-1 whitespace-nowrap ${
+                                className={`flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-white transition-all duration-200 md:h-9 ${
                                     isCollectionsNavActive
                                         ? 'bg-blue-800/50 text-blue-100'
                                         : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
@@ -578,17 +578,17 @@ const Navbar: React.FC = () => {
 
                 </nav>
                 
-                {/* Right side actions - Compact */}
-                <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
+                {/* Right side actions */}
+                <div className="flex shrink-0 items-center gap-1.5 md:gap-2.5">
                     <div
-                        className="hidden rounded-md border border-cyan-400/45 overflow-hidden sm:flex"
+                        className="hidden overflow-hidden rounded-md border border-cyan-400/45 sm:flex"
                         role="group"
                         aria-label={t('navbar.menuLanguage', 'Shop menu language')}
                     >
                         <button
                             type="button"
                             onClick={() => i18n.changeLanguage('en')}
-                            className={`px-2 py-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition-colors md:text-xs ${
                                 (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'en'
                                     ? 'bg-cyan-400 text-blue-950'
                                     : 'text-white/85 hover:bg-blue-900/50'
@@ -599,7 +599,7 @@ const Navbar: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => i18n.changeLanguage('it')}
-                            className={`px-2 py-1 text-[10px] md:text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                            className={`px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide transition-colors md:text-xs ${
                                 (i18n.resolvedLanguage || i18n.language || '').split('-')[0] === 'it'
                                     ? 'bg-cyan-400 text-blue-950'
                                     : 'text-white/85 hover:bg-blue-900/50'
@@ -647,14 +647,14 @@ const Navbar: React.FC = () => {
                     {user?.role === 'customer' ? (
                         <Link
                             to="/account"
-                            className="hidden md:inline-flex items-center justify-center h-7 min-w-[72px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                            className="hidden h-8 min-w-[72px] flex-shrink-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-cyan-400/50 bg-blue-950/60 px-3 py-1.5 text-xs font-semibold text-white transition-all duration-200 hover:bg-blue-900/70 md:inline-flex md:h-9 md:text-sm"
                         >
                             {t('nav.account', 'Account')}
                         </Link>
                     ) : (
                         <Link
                             to="/login"
-                            className="hidden md:inline-flex items-center justify-center h-7 min-w-[60px] rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 px-2.5 py-1 text-xs font-semibold text-white transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0"
+                            className="hidden h-8 min-w-[60px] flex-shrink-0 cursor-pointer items-center justify-center whitespace-nowrap rounded-md border border-cyan-400/50 bg-blue-950/60 px-3 py-1.5 text-xs font-semibold text-white transition-all duration-200 hover:bg-blue-900/70 md:inline-flex md:h-9 md:text-sm"
                         >
                             {t('navbar.login')}
                         </Link>

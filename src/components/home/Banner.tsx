@@ -24,10 +24,10 @@ export const HOME_HERO_BANNER_HEIGHT = '70vh'
 
 /**
  * Mobile/tablet: landscape frame that fills the viewport width (no tall letterbox bars).
- * Desktop: fixed viewport height + object-cover fills the hero.
+ * Desktop: solid viewport height (avoid Tailwind `min()` arbitrary values — they often fail to compile and collapse the hero).
  */
 export const HOME_HERO_BANNER_HEIGHT_CLASS =
-    'h-auto w-full aspect-[16/9] min-h-[11rem] max-h-[55vh] sm:aspect-[2/1] sm:min-h-[14rem] sm:max-h-[50vh] md:aspect-auto md:min-h-0 md:max-h-none md:h-[min(70vh,32rem)]'
+    'h-auto w-full aspect-[16/9] min-h-[11rem] max-h-[55vh] sm:aspect-[2/1] sm:min-h-[14rem] sm:max-h-[50vh] md:aspect-auto md:max-h-none md:min-h-[28rem] md:h-[70vh]'
 
 /** Fill the frame on all breakpoints — avoid empty dark bars around wide desktop art */
 const HERO_IMAGE_FIT_CLASS = 'object-cover object-center'

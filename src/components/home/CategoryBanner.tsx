@@ -6,7 +6,7 @@ const REQUEST_THROTTLE_DELAY = 100 // 100ms between requests
 
 /** Landscape frame on mobile; taller on desktop without dominating stacked category rows */
 export const CATEGORY_BANNER_HEIGHT_CLASS =
-    'aspect-[16/9] h-auto min-h-[8.5rem] max-h-[40vh] w-full sm:aspect-[2/1] sm:min-h-[11rem] sm:max-h-[42vh] md:aspect-auto md:h-[min(50vh,18rem)] md:max-h-none lg:h-[min(60vh,28rem)]'
+    'aspect-[16/9] h-auto min-h-[8.5rem] max-h-[40vh] w-full sm:aspect-[2/1] sm:min-h-[11rem] sm:max-h-[42vh] md:aspect-auto md:max-h-none md:min-h-[14rem] md:h-[18rem] lg:min-h-[18rem] lg:h-[28rem]'
 
 interface CategoryBannerProps {
     categoryName: string
