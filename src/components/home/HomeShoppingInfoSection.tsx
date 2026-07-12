@@ -67,12 +67,12 @@ const HomeShoppingInfoSection: React.FC = () => {
     ]
 
     return (
-        <section className="border-t border-slate-200 bg-white py-14 md:py-16 px-4 sm:px-6 text-slate-900">
-            <div className="w-[90%] mx-auto max-w-6xl">
-                <h2 className="text-center text-2xl sm:text-3xl font-semibold text-blue-900 mb-10 md:mb-12">
+        <section className="border-t border-slate-200 bg-white px-4 py-10 text-slate-900 sm:px-6 md:py-16">
+            <div className="mx-auto w-[90%] max-w-6xl">
+                <h2 className="mb-6 text-center text-xl font-semibold text-blue-900 sm:mb-10 sm:text-2xl md:mb-12 md:text-3xl">
                     {t('home.shoppingInfo.title')}
                 </h2>
-                <div className="grid gap-8 md:grid-cols-3 md:gap-10">
+                <div className="grid gap-5 md:grid-cols-3 md:gap-10">
                     {items.map((item) => (
                         <div
                             key={item.title}

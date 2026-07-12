@@ -6,6 +6,7 @@ import type { Product } from '../../services/productsService'
 import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import CategoryBanner from './CategoryBanner'
 import ProductCard from '../products/ProductCard'
+import { collectionCategoryPath } from '../../utils/collectionPaths'
 
 interface CategoryWithProducts extends Category {
     fetchedProducts?: CategoryProduct[]
@@ -121,39 +122,41 @@ const ShopCategories: React.FC = () => {
     }
 
     return (
-        <section className="bg-white px-4 py-10 sm:px-6 md:py-16">
+        <section className="bg-white px-4 py-8 sm:px-6 md:py-16">
             <div className="mx-auto w-full max-w-7xl lg:w-[90%]">
                 {categorySections.length > 0 ? (
-                    <div className="space-y-10 md:space-y-16">
+                    <div className="space-y-8 md:space-y-16">
                         {categorySections.map((section) => {
                             const category = section.category
                             const parent = section.parentCategory
                             const categoryPath = parent
-                                ? `/category/${parent.slug}/${category.slug}`
-                                : `/category/${category.slug}`
+                                ? collectionCategoryPath(parent.slug, category.slug)
+                                : collectionCategoryPath(category.slug)
                             const productsToShow =
                                 category.products && category.products.length > 0
                                     ? category.products
                                     : category.fetchedProducts || []
 
                             return (
-                                <div key={section.rowKey} className="category-section">
-                                    <CategoryBanner
-                                        categoryName={menuCategoryLabel(category)}
-                                        categoryId={parent ? parent.id : category.id}
-                                        subcategoryId={parent ? category.id : undefined}
-                                        position={parent ? 'subcategory_page' : 'category_section'}
-                                    />
-                                    <div className="mb-6 mt-2 flex flex-wrap items-center justify-between gap-3">
-                                        <h2 className="min-w-0 text-lg font-semibold tracking-tight text-gray-900 md:text-xl">
+                                <div key={section.rowKey} className="category-section overflow-hidden">
+                                    <div className="overflow-hidden rounded-xl md:rounded-2xl">
+                                        <CategoryBanner
+                                            categoryName={menuCategoryLabel(category)}
+                                            categoryId={parent ? parent.id : category.id}
+                                            subcategoryId={parent ? category.id : undefined}
+                                            position={parent ? 'subcategory_page' : 'category_section'}
+                                        />
+                                    </div>
+                                    <div className="mb-4 mt-3 flex flex-wrap items-center justify-between gap-2 sm:mb-6 sm:mt-4 sm:gap-3">
+                                        <h2 className="min-w-0 text-base font-semibold tracking-tight text-gray-900 sm:text-lg md:text-xl">
                                             {menuCategoryLabel(category)}
                                         </h2>
                                         <Link
                                             to={categoryPath}
-                                            className="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-blue-600 transition-colors hover:text-blue-800 md:text-base"
+                                            className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-800 md:gap-1.5 md:text-base"
                                         >
                                             {t('navbar.viewAll')}
-                                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="h-4 w-4 md:h-5 md:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                             </svg>
                                         </Link>

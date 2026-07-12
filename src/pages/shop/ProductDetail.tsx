@@ -3627,6 +3627,14 @@ const ProductDetail = () => {
             newErrors.right_power = t('shop.contactLensSelectOneEye', 'Select at least one eye (right and/or left).')
         }
 
+        // Pack size required when product has multiple pack options (price depends on selection)
+        if (contactLensPackResolution.availableUnits.length > 0 && selectedUnit == null) {
+            newErrors.selected_unit = t(
+                'shop.contactLensSelectPack',
+                'Please select a pack size before adding to cart.'
+            )
+        }
+
         // Power required only for enabled eyes
         if (rightEyeEnabled && !contactLensFormData.right_power) {
             newErrors.right_power = 'Power is required for right eye'
@@ -3895,10 +3903,22 @@ const ProductDetail = () => {
 
         const effRightQty = rightEyeEnabled ? contactLensFormData.right_qty : 0
         const effLeftQty = leftEyeEnabled ? contactLensFormData.left_qty : 0
+        const currentConfig = selectedConfig || selectedAstigmatismConfig
+        const productAny = product as any
+        const subCategoryId =
+            contactLensFormConfig?.subCategory?.id ??
+            productAny?.sub_category_id ??
+            productAny?.subCategory?.id ??
+            productAny?.sub_category?.id ??
+            undefined
 
         const checkoutRequest: ContactLensCheckoutRequest = {
                 product_id: product!.id,
                 form_type: formType,
+                ...(subCategoryId != null && !Number.isNaN(Number(subCategoryId))
+                    ? { sub_category_id: Number(subCategoryId) }
+                    : {}),
+                ...(currentConfig?.id != null ? { config_id: Number(currentConfig.id) } : {}),
                 right_qty: effRightQty,
                 right_base_curve: rightEyeEnabled ? contactLensFormData.right_base_curve : '0',
                 right_diameter: rightEyeEnabled ? contactLensFormData.right_diameter : '0',
@@ -3917,7 +3937,7 @@ const ProductDetail = () => {
                         left_axis: contactLensFormData.left_axis || undefined,
                     }),
                 }),
-                selected_unit: selectedUnit || undefined,
+                ...(selectedUnit != null ? { selected_unit: selectedUnit } : {}),
                 ...(selectedColor && {
                     selected_color: selectedColor,
                     color_display_name: selectedProductColorLabel || undefined
@@ -4723,6 +4743,9 @@ const ProductDetail = () => {
                                                 <label className="block text-sm font-semibold text-gray-700 mb-4">
                                                     Choose Pack Size
                                                 </label>
+                                                {contactLensErrors.selected_unit && (
+                                                    <p className="mb-2 text-sm text-red-600">{contactLensErrors.selected_unit}</p>
+                                                )}
                                                 <div className="flex flex-wrap gap-2">
                                                     {contactLensPackResolution.availableUnits.map((unit: number) => {
                                                         const isSelected = selectedUnit === unit
@@ -4747,6 +4770,12 @@ const ProductDetail = () => {
                                                                             )
                                                                         setUnitImages([])
                                                                         setSelectedUnit(unit)
+                                                                        setContactLensErrors((prev) => {
+                                                                            if (!prev.selected_unit) return prev
+                                                                            const next = { ...prev }
+                                                                            delete next.selected_unit
+                                                                            return next
+                                                                        })
                                                                         if (packImgs.length > 0) {
                                                                             setUnitImages(packImgs)
                                                                         }

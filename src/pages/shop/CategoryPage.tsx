@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
+import { COLLECTIONS_ALL_PATH } from '../../utils/collectionPaths'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
@@ -1038,6 +1039,11 @@ const CategoryPage: React.FC = () => {
         bridge,
         temples,
     ])
+
+    // Reserved path: `/collections/all` is all products, not a category named "all"
+    if (categorySlug?.toLowerCase() === 'all') {
+        return <Navigate to={COLLECTIONS_ALL_PATH} replace />
+    }
 
     if (!isBootstrappingCategory && !categoryInfo.category && categorySlug) {
         return (

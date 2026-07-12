@@ -527,7 +527,15 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                             <p className="text-base text-gray-500">
                                 You will receive an email confirmation shortly.
                             </p>
-                            <div className="flex gap-4 justify-center">
+                            <div className="flex flex-wrap gap-4 justify-center">
+                                {orderNumber && (
+                                    <Link
+                                        to={`/track-order?order=${encodeURIComponent(orderNumber)}`}
+                                        className="inline-block px-8 py-3 rounded-lg border-2 border-blue-950 text-blue-950 font-semibold hover:bg-blue-50 transition-colors duration-300"
+                                    >
+                                        Track this order
+                                    </Link>
+                                )}
                                 {isAuthenticated && (
                                     <Link
                                         to="/account/orders"

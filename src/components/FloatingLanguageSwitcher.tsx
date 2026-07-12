@@ -33,18 +33,18 @@ const FloatingLanguageSwitcher: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[100]">
+    <div className="fixed bottom-4 right-4 z-[100] sm:bottom-6 sm:right-6">
       <div className="relative">
         {/* Main button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center justify-center gap-2 h-14 w-14 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-2xl hover:shadow-cyan-500/50 hover:scale-110 transition-all duration-300 border-2 border-white/20 backdrop-blur-sm"
+          className="flex h-11 w-11 items-center justify-center gap-1 rounded-full border-2 border-white/20 bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:shadow-cyan-500/40 sm:h-14 sm:w-14 sm:gap-2 sm:shadow-2xl sm:hover:scale-110"
           aria-label="Change language"
           title={`Current: ${currentLanguage.name} - Click to change language`}
         >
-          <span className="text-2xl">{currentLanguage.flag}</span>
+          <span className="text-lg sm:text-2xl">{currentLanguage.flag}</span>
           <svg
-            className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+            className={`hidden w-4 h-4 transition-transform duration-300 sm:block ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

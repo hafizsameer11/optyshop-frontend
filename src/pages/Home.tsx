@@ -11,12 +11,12 @@ import Footer from '../components/Footer'
 
 const Home: React.FC = () => {
     return (
-        <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-slate-950 text-white">
+        <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-white text-slate-900">
             <Navbar />
 
             <Banner pageType="home" showNavbar={false} autoSlideInterval={5000} />
 
-            <div className="w-full overflow-x-hidden">
+            <div className="w-full max-w-[100vw] overflow-x-hidden bg-white">
                 <SmallSlidingBanners />
                 <FlashOffersProductHighlight />
                 <ShopCategories />

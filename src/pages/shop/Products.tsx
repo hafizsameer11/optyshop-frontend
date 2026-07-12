@@ -664,7 +664,7 @@ const Products: React.FC = () => {
                 <div className="w-[90%] mx-auto max-w-7xl px-4 sm:px-6">
                     <div className="flex items-center justify-center gap-2 sm:gap-4 overflow-x-auto py-4">
                         <Link
-                            to="/shop"
+                            to="/collections/all"
                             className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${!currentSection
                                 ? 'bg-blue-950 text-white'
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'

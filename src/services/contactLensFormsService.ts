@@ -314,6 +314,10 @@ export function resolveContactLensSubSubCategoryId(product: unknown): {
 export interface ContactLensCheckoutRequest {
   product_id: number
   form_type: 'spherical' | 'astigmatism'
+  /** Optional: helps resolve pack unit_prices on the server */
+  sub_category_id?: number
+  /** Optional: selected spherical/astigmatism configuration id (preferred pack price source) */
+  config_id?: number
   right_qty: string | number  // API expects string, but we accept both for flexibility
   right_base_curve: string | number  // API expects string
   right_diameter: string | number  // API expects string
@@ -817,6 +821,13 @@ export const addContactLensToCart = async (
       left_base_curve: String(request.left_base_curve),
       left_diameter: String(request.left_diameter),
       left_power: request.left_power // Already a string
+    }
+
+    if (request.sub_category_id != null && !Number.isNaN(Number(request.sub_category_id))) {
+      apiRequest.sub_category_id = Number(request.sub_category_id)
+    }
+    if (request.config_id != null && !Number.isNaN(Number(request.config_id))) {
+      apiRequest.config_id = Number(request.config_id)
     }
 
     // Add astigmatism fields if provided (all as strings per Postman collection)

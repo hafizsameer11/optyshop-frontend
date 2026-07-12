@@ -9,6 +9,12 @@ import type { Category } from '../services/categoriesService'
 import { useCategoryTranslation } from '../utils/categoryTranslations'
 import { searchAll, type SearchResult } from '../services/searchService'
 import { useAuth } from '../context/AuthContext'
+import {
+    COLLECTIONS_ALL_PATH,
+    collectionCategoryPath,
+    isCollectionListingPath,
+    isCollectionsAllPath,
+} from '../utils/collectionPaths'
 
 const Navbar: React.FC = () => {
     const { t, i18n } = useTranslation()
@@ -24,6 +30,8 @@ const Navbar: React.FC = () => {
     const [mobileOpenSubcategory, setMobileOpenSubcategory] = useState<number | null>(null)
     const [clickedDropdown, setClickedDropdown] = useState<number | null>(null) // Track which dropdown was opened by click
     const [clickedSubDropdown, setClickedSubDropdown] = useState<number | null>(null) // Track which sub-dropdown was opened by click
+    const [collectionsMenuOpen, setCollectionsMenuOpen] = useState(false)
+    const [collectionsMenuClicked, setCollectionsMenuClicked] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
     const dropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const subDropdownTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -123,6 +131,8 @@ const Navbar: React.FC = () => {
                 setOpenSubDropdown(null)
                 setClickedDropdown(null) // Reset click state
                 setClickedSubDropdown(null) // Reset sub-dropdown click state
+                setCollectionsMenuOpen(false)
+                setCollectionsMenuClicked(false)
             }
         }
 
@@ -148,23 +158,27 @@ const Navbar: React.FC = () => {
     }, [])
 
     // Helper function to check if path matches category/subcategory
+    const pathMatches = (path: string) =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+
     const isCategoryActive = (category: Category) => {
-        const categoryPath = `/category/${category.slug}`
-        if (location.pathname === categoryPath || location.pathname.startsWith(categoryPath + '/')) {
+        const categoryPath = collectionCategoryPath(category.slug)
+        const legacyPath = `/category/${category.slug}`
+        if (pathMatches(categoryPath) || pathMatches(legacyPath)) {
             return true
         }
-        // Check if any subcategory is active
         if (category.subcategories) {
-            return category.subcategories.some(sub => {
-                const subPath = `/category/${category.slug}/${sub.slug}`
-                if (location.pathname === subPath || location.pathname.startsWith(subPath + '/')) {
+            return category.subcategories.some((sub) => {
+                const subPath = collectionCategoryPath(category.slug, sub.slug)
+                const legacySubPath = `/category/${category.slug}/${sub.slug}`
+                if (pathMatches(subPath) || pathMatches(legacySubPath)) {
                     return true
                 }
-                // Check sub-subcategories
                 if (sub.children) {
-                    return sub.children.some(child => {
-                        const childPath = `/category/${category.slug}/${sub.slug}/${child.slug}`
-                        return location.pathname === childPath || location.pathname.startsWith(childPath + '/')
+                    return sub.children.some((child) => {
+                        const childPath = collectionCategoryPath(category.slug, sub.slug, child.slug)
+                        const legacyChildPath = `/category/${category.slug}/${sub.slug}/${child.slug}`
+                        return pathMatches(childPath) || pathMatches(legacyChildPath)
                     })
                 }
                 return false
@@ -172,6 +186,9 @@ const Navbar: React.FC = () => {
         }
         return false
     }
+
+    const isCollectionsNavActive =
+        isCollectionsAllPath(location.pathname) || isCollectionListingPath(location.pathname)
 
     return (
         <header
@@ -184,13 +201,13 @@ const Navbar: React.FC = () => {
                 backgroundColor: isScrolled ? 'rgba(7, 29, 73, 0.98)' : 'rgba(7, 29, 73, 0.95)',
             }}
         >
-            <div className="flex items-center justify-between w-full max-w-[1920px] mx-auto py-1 md:py-1.5 px-2 md:px-3 gap-2 md:gap-3">
+            <div className="flex w-full max-w-[1920px] items-center justify-between gap-2 px-3 py-1.5 mx-auto sm:gap-3 sm:px-4 md:py-1.5 md:px-3">
                 {/* Logo */}
-                <Link to="/" className="flex items-center space-x-1 flex-shrink-0 group">
-                    <div className="h-6 w-6 md:h-7 md:w-7 rounded-md flex items-center justify-center bg-cyan-400 group-hover:bg-cyan-300 transition-all duration-300 shadow-sm">
-                        <span className="text-white font-bold text-[10px] md:text-xs">OS</span>
+                <Link to="/" className="flex shrink-0 items-center space-x-1 group">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-cyan-400 shadow-sm transition-all duration-300 group-hover:bg-cyan-300 md:h-7 md:w-7">
+                        <span className="text-[10px] font-bold text-white md:text-xs">OS</span>
                     </div>
-                    <span className="text-xs md:text-sm font-bold tracking-wide uppercase text-white group-hover:text-cyan-200 transition-colors hidden sm:inline">
+                    <span className="hidden text-xs font-bold uppercase tracking-wide text-white transition-colors group-hover:text-cyan-200 sm:inline md:text-sm">
                         OPTISHOP
                     </span>
                 </Link>
@@ -412,264 +429,159 @@ const Navbar: React.FC = () => {
                         {t('navbar.home')}
                     </Link>
                     
-                    {/* Categories with dropdowns */}
-                    {!loading && categories.map((category) => (
+                    {/* Collections — all categories and subcategories in one menu */}
+                    {!loading && categories.length > 0 && (
                         <div
-                            key={category.id}
-                            className="relative group"
+                            className="relative"
                             onMouseEnter={() => {
-                                // Clear any pending close timeout
                                 if (dropdownTimeoutRef.current) {
                                     clearTimeout(dropdownTimeoutRef.current)
                                     dropdownTimeoutRef.current = null
                                 }
-                                if (category.subcategories && category.subcategories.length > 0) {
-                                    setOpenDropdown(category.id)
-                                }
+                                setCollectionsMenuOpen(true)
                             }}
                             onMouseLeave={() => {
-                                // Only close on mouse leave if not opened by click
-                                if (clickedDropdown !== category.id) {
-                                    // Add delay before closing to allow smooth transition
+                                if (!collectionsMenuClicked) {
                                     dropdownTimeoutRef.current = setTimeout(() => {
-                                        setOpenDropdown(null)
-                                        setOpenSubDropdown(null)
-                                    }, 200) // 200ms delay
+                                        setCollectionsMenuOpen(false)
+                                    }, 200)
                                 }
                             }}
                         >
-                            <div className="flex items-center">
-                                <Link
-                                    to={`/category/${category.slug}`}
-                                    className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center whitespace-nowrap ${
-                                        isCategoryActive(category)
-                                            ? 'bg-blue-800/50 text-blue-100' 
-                                            : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
-                                    }`}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (collectionsMenuOpen && collectionsMenuClicked) {
+                                        setCollectionsMenuOpen(false)
+                                        setCollectionsMenuClicked(false)
+                                    } else {
+                                        setCollectionsMenuOpen(true)
+                                        setCollectionsMenuClicked(true)
+                                    }
+                                }}
+                                className={`h-7 px-2 py-1 rounded-md text-xs font-medium text-white transition-all duration-200 flex items-center justify-center gap-1 whitespace-nowrap ${
+                                    isCollectionsNavActive
+                                        ? 'bg-blue-800/50 text-blue-100'
+                                        : 'bg-blue-950/60 hover:bg-blue-900/70 hover:text-cyan-200'
+                                }`}
+                                aria-expanded={collectionsMenuOpen}
+                                aria-haspopup="true"
+                            >
+                                <span>{t('navbar.collections', 'Collections')}</span>
+                                <svg
+                                    className={`w-3 h-3 transition-transform ${collectionsMenuOpen ? 'rotate-180' : ''}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
                                 >
-                                    <span>{menuCategoryLabel(category)}</span>
-                                </Link>
-                                {category.subcategories && category.subcategories.length > 0 && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.preventDefault()
-                                            e.stopPropagation()
-                                            // Toggle dropdown on click
-                                            if (openDropdown === category.id && clickedDropdown === category.id) {
-                                                // Close if already open and was opened by click
-                                                setOpenDropdown(null)
-                                                setOpenSubDropdown(null)
-                                                setClickedDropdown(null)
-                                            } else {
-                                                // Open dropdown
-                                                setOpenDropdown(category.id)
-                                                setClickedDropdown(category.id)
-                                                setOpenSubDropdown(null)
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+
+                            {collectionsMenuOpen && (
+                                <>
+                                    <div className="absolute top-full left-0 right-0 h-2 z-40" style={{ pointerEvents: 'none' }} />
+                                    <div
+                                        className="absolute top-full left-0 z-50 mt-0.5 w-72 max-h-[min(70vh,28rem)] overflow-y-auto rounded-xl border border-cyan-400/40 bg-blue-950/98 py-2 shadow-2xl backdrop-blur-xl"
+                                        onMouseEnter={() => {
+                                            if (dropdownTimeoutRef.current) {
+                                                clearTimeout(dropdownTimeoutRef.current)
+                                                dropdownTimeoutRef.current = null
+                                            }
+                                            setCollectionsMenuOpen(true)
+                                        }}
+                                        onMouseLeave={() => {
+                                            if (!collectionsMenuClicked) {
+                                                dropdownTimeoutRef.current = setTimeout(() => {
+                                                    setCollectionsMenuOpen(false)
+                                                }, 200)
                                             }
                                         }}
-                                        className={`h-7 px-1 flex items-center justify-center text-white transition-all duration-200 ${
-                                            openDropdown === category.id
-                                                ? 'text-cyan-200' 
-                                                : 'hover:text-cyan-200'
-                                        }`}
-                                        aria-label="Toggle subcategories"
                                     >
-                                        <svg className={`w-3 h-3 transition-transform duration-200 ${openDropdown === category.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                        </svg>
-                                    </button>
-                                )}
-                            </div>
-                            
-                            {/* Visual bridge to prevent gap issues */}
-                            {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
-                                <div 
-                                    className="absolute top-full left-0 right-0 h-2 z-40"
-                                    style={{ pointerEvents: 'none' }}
-                                />
-                            )}
-                            
-                            {/* Subcategories dropdown */}
-                            {openDropdown === category.id && category.subcategories && category.subcategories.length > 0 && (
-                                <div 
-                                    className="absolute top-full left-0 w-64 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-50 transform transition-all duration-200 ease-out"
-                                    style={{ marginTop: '2px', paddingTop: '8px' }}
-                                    onMouseEnter={() => {
-                                        // Clear any pending close timeout
-                                        if (dropdownTimeoutRef.current) {
-                                            clearTimeout(dropdownTimeoutRef.current)
-                                            dropdownTimeoutRef.current = null
-                                        }
-                                        setOpenDropdown(category.id)
-                                    }}
-                                    onMouseLeave={() => {
-                                        // Only close on mouse leave if not opened by click
-                                        if (clickedDropdown !== category.id) {
-                                            // Add delay before closing
-                                            dropdownTimeoutRef.current = setTimeout(() => {
-                                                setOpenDropdown(null)
-                                                setOpenSubDropdown(null)
-                                            }, 200)
-                                        }
-                                    }}
-                                >
-                                    <div className="px-2">
-                                        {category.subcategories.map((subcategory, index) => (
-                                            <div
-                                                key={subcategory.id}
-                                                className="relative group/subcat"
-                                                onMouseEnter={() => {
-                                                    // Clear any pending close timeout
-                                                    if (subDropdownTimeoutRef.current) {
-                                                        clearTimeout(subDropdownTimeoutRef.current)
-                                                        subDropdownTimeoutRef.current = null
-                                                    }
-                                                    if (subcategory.children && subcategory.children.length > 0) {
-                                                        setOpenSubDropdown(subcategory.id)
-                                                    }
-                                                }}
-                                                onMouseLeave={() => {
-                                                    // Only close on mouse leave if not opened by click
-                                                    if (clickedSubDropdown !== subcategory.id) {
-                                                        // Add delay before closing sub-dropdown
-                                                        subDropdownTimeoutRef.current = setTimeout(() => {
-                                                            setOpenSubDropdown(null)
-                                                        }, 150)
-                                                    }
-                                                }}
-                                            >
-                                                {index > 0 && (
-                                                    <div className="mx-2 my-1 h-px bg-cyan-400/20"></div>
-                                                )}
-                                                <div className="flex items-center justify-between w-full">
-                                                    <Link
-                                                        to={`/category/${category.slug}/${subcategory.slug}`}
-                                                        className="flex-1 px-4 py-2.5 text-sm font-medium text-white hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 rounded-lg transition-all duration-200 flex items-center gap-2 group/item"
-                                                        onClick={() => {
-                                                            // Only close if not opened by click, or close on link click
-                                                            if (clickedDropdown !== category.id) {
-                                                                setOpenDropdown(null)
-                                                            }
-                                                        }}
-                                                        onMouseEnter={() => {
-                                                            // Clear any pending close timeout
-                                                            if (subDropdownTimeoutRef.current) {
-                                                                clearTimeout(subDropdownTimeoutRef.current)
-                                                                subDropdownTimeoutRef.current = null
-                                                            }
-                                                            if (subcategory.children && subcategory.children.length > 0) {
-                                                                setOpenSubDropdown(subcategory.id)
-                                                            }
-                                                        }}
-                                                    >
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400/60 group-hover/item:bg-cyan-400 transition-colors"></span>
-                                                        <span>{menuCategoryLabel(subcategory)}</span>
-                                                    </Link>
-                                                    {subcategory.children && subcategory.children.length > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="px-2 cursor-pointer focus:outline-none"
-                                                            onClick={(e) => {
-                                                                e.preventDefault()
-                                                                e.stopPropagation()
-                                                                // Toggle sub-dropdown on click
-                                                                if (openSubDropdown === subcategory.id && clickedSubDropdown === subcategory.id) {
-                                                                    setOpenSubDropdown(null)
-                                                                    setClickedSubDropdown(null)
-                                                                } else {
-                                                                    setOpenSubDropdown(subcategory.id)
-                                                                    setClickedSubDropdown(subcategory.id)
-                                                                }
-                                                            }}
-                                                            onMouseEnter={() => {
-                                                                // Clear any pending close timeout
-                                                                if (subDropdownTimeoutRef.current) {
-                                                                    clearTimeout(subDropdownTimeoutRef.current)
-                                                                    subDropdownTimeoutRef.current = null
-                                                                }
-                                                                setOpenSubDropdown(subcategory.id)
-                                                            }}
-                                                            aria-label="Toggle sub-subcategories"
-                                                        >
-                                                            <svg className={`w-4 h-4 text-cyan-400/70 group-hover/subcat:text-cyan-300 transition-colors ${openSubDropdown === subcategory.id ? 'text-cyan-300' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                            </svg>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                
-                                                {/* Visual bridge for sub-subcategories */}
-                                                {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
-                                                    <div 
-                                                        className="absolute left-full top-0 bottom-0 w-2 z-[55]"
-                                                        style={{ pointerEvents: 'none' }}
-                                                    />
-                                                )}
-                                                
-                                                {/* Sub-subcategories nested dropdown */}
-                                                {openSubDropdown === subcategory.id && subcategory.children && subcategory.children.length > 0 && (
-                                                    <div 
-                                                        className="absolute left-full top-0 w-60 bg-blue-950/98 backdrop-blur-xl border border-cyan-400/40 rounded-xl shadow-2xl py-3 z-[60] transform transition-all duration-200 ease-out"
-                                                        style={{ marginLeft: '4px' }}
-                                                        onMouseEnter={() => {
-                                                            // Clear any pending close timeout
-                                                            if (subDropdownTimeoutRef.current) {
-                                                                clearTimeout(subDropdownTimeoutRef.current)
-                                                                subDropdownTimeoutRef.current = null
-                                                            }
-                                                            setOpenSubDropdown(subcategory.id)
-                                                        }}
-                                                        onMouseLeave={() => {
-                                                            // Only close on mouse leave if not opened by click
-                                                            if (clickedSubDropdown !== subcategory.id) {
-                                                                // Add delay before closing
-                                                                subDropdownTimeoutRef.current = setTimeout(() => {
-                                                                    setOpenSubDropdown(null)
-                                                                }, 150)
-                                                            }
-                                                        }}
-                                                    >
-                                                        <div className="px-2">
-                                                            <div className="px-3 py-1.5 mb-1">
-                                                                <p className="text-xs font-semibold text-cyan-400/80 uppercase tracking-wider">{menuCategoryLabel(subcategory)}</p>
+                                        <Link
+                                            to={COLLECTIONS_ALL_PATH}
+                                            onClick={() => {
+                                                setCollectionsMenuOpen(false)
+                                                setCollectionsMenuClicked(false)
+                                            }}
+                                            className={`mx-2 block rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                                                isCollectionsAllPath(location.pathname)
+                                                    ? 'bg-cyan-500/20 text-cyan-200'
+                                                    : 'text-white hover:bg-cyan-500/15 hover:text-cyan-100'
+                                            }`}
+                                        >
+                                            {t('navbar.allProducts', 'All products')}
+                                        </Link>
+                                        <div className="mx-3 my-2 h-px bg-cyan-400/25" />
+                                        {categories.map((category) => (
+                                            <div key={category.id} className="px-2 py-1">
+                                                <Link
+                                                    to={collectionCategoryPath(category.slug)}
+                                                    onClick={() => {
+                                                        setCollectionsMenuOpen(false)
+                                                        setCollectionsMenuClicked(false)
+                                                    }}
+                                                    className={`block rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+                                                        isCategoryActive(category)
+                                                            ? 'bg-cyan-500/15 text-cyan-200'
+                                                            : 'text-white hover:bg-cyan-500/10 hover:text-cyan-100'
+                                                    }`}
+                                                >
+                                                    {menuCategoryLabel(category)}
+                                                </Link>
+                                                {category.subcategories && category.subcategories.length > 0 && (
+                                                    <div className="ml-2 border-l border-cyan-400/20 pl-2">
+                                                        {category.subcategories.map((subcategory) => (
+                                                            <div key={subcategory.id} className="py-0.5">
+                                                                <Link
+                                                                    to={collectionCategoryPath(category.slug, subcategory.slug)}
+                                                                    onClick={() => {
+                                                                        setCollectionsMenuOpen(false)
+                                                                        setCollectionsMenuClicked(false)
+                                                                    }}
+                                                                    className="block rounded-md px-2 py-1.5 text-xs font-medium text-white/90 hover:bg-cyan-500/10 hover:text-cyan-100"
+                                                                >
+                                                                    {menuCategoryLabel(subcategory)}
+                                                                </Link>
+                                                                {subcategory.children && subcategory.children.length > 0 && (
+                                                                    <div className="ml-2 border-l border-cyan-400/15 pl-2">
+                                                                        {subcategory.children.map((child) => (
+                                                                            <Link
+                                                                                key={child.id}
+                                                                                to={collectionCategoryPath(
+                                                                                    category.slug,
+                                                                                    subcategory.slug,
+                                                                                    child.slug
+                                                                                )}
+                                                                                onClick={() => {
+                                                                                    setCollectionsMenuOpen(false)
+                                                                                    setCollectionsMenuClicked(false)
+                                                                                }}
+                                                                                className="block rounded-md px-2 py-1 text-xs text-white/75 hover:bg-cyan-500/10 hover:text-cyan-100"
+                                                                            >
+                                                                                {menuCategoryLabel(child)}
+                                                                            </Link>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            {subcategory.children.map((child, childIndex) => (
-                                                                <React.Fragment key={child.id}>
-                                                                    {childIndex > 0 && (
-                                                                        <div className="mx-2 my-1 h-px bg-cyan-400/15"></div>
-                                                                    )}
-                                                                    <Link
-                                                                        to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
-                                                                        className="block px-4 py-2 text-sm text-white/90 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 rounded-lg transition-all duration-200 flex items-center gap-2"
-                                                                        onClick={() => {
-                                                                            setOpenDropdown(null)
-                                                                            setOpenSubDropdown(null)
-                                                                            setClickedDropdown(null)
-                                                                            setClickedSubDropdown(null)
-                                                                        }}
-                                                                    >
-                                                                        <span className="w-1 h-1 rounded-full bg-cyan-400/50"></span>
-                                                                        <span>{menuCategoryLabel(child)}</span>
-                                                                    </Link>
-                                                                </React.Fragment>
-                                                            ))}
-                                                        </div>
+                                                        ))}
                                                     </div>
                                                 )}
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </>
                             )}
                         </div>
-                    ))}
-                    
+                    )}
+
                 </nav>
                 
                 {/* Right side actions - Compact */}
-                <div className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                     <div
-                        className="flex rounded-md border border-cyan-400/45 overflow-hidden flex-shrink-0"
+                        className="hidden rounded-md border border-cyan-400/45 overflow-hidden sm:flex"
                         role="group"
                         aria-label={t('navbar.menuLanguage', 'Shop menu language')}
                     >
@@ -696,8 +608,8 @@ const Navbar: React.FC = () => {
                             IT
                         </button>
                     </div>
-                    {/* Language Switcher - Always visible */}
-                    <div className="flex-shrink-0">
+                    {/* Full language switcher — desktop only (mobile uses menu + floating control) */}
+                    <div className="hidden shrink-0 md:block">
                         <LanguageSwitcher variant="navbar" />
                     </div>
                     
@@ -706,14 +618,14 @@ const Navbar: React.FC = () => {
                         <WishlistIcon />
                     </div>
                     
-                    {/* Cart Icon */}
-                    <div className="hidden md:flex items-center justify-center flex-shrink-0">
+                    {/* Cart Icon — show on mobile too */}
+                    <div className="flex items-center justify-center flex-shrink-0">
                         <CartIcon />
                     </div>
                     
                     {/* Mobile menu toggle */}
                     <button
-                        className="relative inline-flex flex-col items-center justify-center md:hidden h-7 w-7 rounded-md border border-cyan-400/50 bg-blue-950/60 hover:bg-blue-900/70 transition-all duration-200 cursor-pointer flex-shrink-0"
+                        className="relative inline-flex h-8 w-8 flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-md border border-cyan-400/50 bg-blue-950/60 transition-all duration-200 hover:bg-blue-900/70 md:hidden"
                         aria-label="Toggle navigation"
                         onClick={() => setIsMobileOpen((prev) => !prev)}
                     >
@@ -880,12 +792,26 @@ const Navbar: React.FC = () => {
                             {t('navbar.home')}
                         </Link>
                         
-                        {/* Categories in mobile menu */}
+                        {/* Collections in mobile menu */}
+                        <p className="px-4 pt-2 text-xs font-semibold uppercase tracking-wider text-cyan-400/80">
+                            {t('navbar.collections', 'Collections')}
+                        </p>
+                        <Link
+                            to={COLLECTIONS_ALL_PATH}
+                            onClick={() => setIsMobileOpen(false)}
+                            className={`block px-4 py-2.5 rounded-lg font-medium transition-all ${
+                                isCollectionsAllPath(location.pathname)
+                                    ? 'bg-blue-800/50 text-blue-100'
+                                    : 'bg-blue-950/60 hover:bg-blue-900/70'
+                            }`}
+                        >
+                            {t('navbar.allProducts', 'All products')}
+                        </Link>
                         {!loading && categories.map((category) => (
                             <div key={category.id} className="space-y-1">
                                 <div className="flex items-center justify-between gap-2">
                                     <Link
-                                        to={`/category/${category.slug}`}
+                                        to={collectionCategoryPath(category.slug)}
                                         onClick={() => setIsMobileOpen(false)}
                                         className={`flex-1 px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 ${
                                             isCategoryActive(category) 
@@ -924,7 +850,7 @@ const Navbar: React.FC = () => {
                                                 )}
                                                 <div className="flex items-center justify-between">
                                                     <Link
-                                                        to={`/category/${category.slug}/${subcategory.slug}`}
+                                                        to={collectionCategoryPath(category.slug, subcategory.slug)}
                                                         onClick={() => setIsMobileOpen(false)}
                                                         className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium bg-blue-950/80 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-blue-900/50 hover:text-cyan-200 transition-all duration-200 flex items-center gap-2"
                                                     >
@@ -961,7 +887,11 @@ const Navbar: React.FC = () => {
                                                                     <div className="h-px bg-cyan-400/15 -ml-3"></div>
                                                                 )}
                                                                 <Link
-                                                                    to={`/category/${category.slug}/${subcategory.slug}/${child.slug}`}
+                                                                    to={collectionCategoryPath(
+                                                                        category.slug,
+                                                                        subcategory.slug,
+                                                                        child.slug
+                                                                    )}
                                                                     onClick={() => setIsMobileOpen(false)}
                                                                     className="block px-4 py-2 rounded-lg text-sm bg-blue-950/70 hover:bg-gradient-to-r hover:from-cyan-500/15 hover:to-blue-900/40 hover:text-cyan-100 transition-all duration-200 flex items-center gap-2"
                                                                 >

@@ -23,15 +23,14 @@ interface BannerMeta {
 export const HOME_HERO_BANNER_HEIGHT = '70vh'
 
 /**
- * Mobile: aspect-ratio box + object-contain shows the full banner (no crop).
+ * Mobile/tablet: landscape frame that fills the viewport width (no tall letterbox bars).
  * Desktop: fixed viewport height + object-cover fills the hero.
  */
 export const HOME_HERO_BANNER_HEIGHT_CLASS =
-    'h-auto w-full aspect-[5/4] min-h-[13rem] sm:aspect-[2/1] sm:min-h-[15rem] md:aspect-auto md:min-h-0 md:h-[min(70vh,32rem)]'
+    'h-auto w-full aspect-[16/9] min-h-[11rem] max-h-[55vh] sm:aspect-[2/1] sm:min-h-[14rem] sm:max-h-[50vh] md:aspect-auto md:min-h-0 md:max-h-none md:h-[min(70vh,32rem)]'
 
-/** Hero image fit per breakpoint */
-const HERO_IMAGE_FIT_CLASS =
-    'object-contain object-center md:object-cover md:object-center'
+/** Fill the frame on all breakpoints — avoid empty dark bars around wide desktop art */
+const HERO_IMAGE_FIT_CLASS = 'object-cover object-center'
 
 interface BannerComponentProps {
     pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
@@ -126,16 +125,10 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
     if (loading) {
         return (
             <div
-                className={`relative w-full max-w-[100vw] overflow-hidden text-slate-800 ${slideHeightClass}`}
-                style={slideHeightStyle}
+                className={`relative w-full max-w-[100vw] overflow-hidden bg-white pt-12 text-slate-800 sm:pt-14 md:pt-16`}
             >
-                {showNavbar && (
-                    <div className="absolute top-0 left-0 right-0 z-30">
-                        <Navbar />
-                    </div>
-                )}
                 <div
-                    className={`flex w-full items-center justify-center bg-gray-200 animate-pulse ${slideHeightClass}`}
+                    className={`flex w-full items-center justify-center bg-slate-100 animate-pulse ${slideHeightClass}`}
                     style={slideHeightStyle}
                 >
                     <div className="text-gray-400">{t('home.banner.loading')}</div>
@@ -240,10 +233,10 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
     return (
         <section
-            className={`relative w-full max-w-[100vw] overflow-hidden text-slate-800 ${!showNavbar ? 'pt-16' : ''}`}
+            className={`relative w-full max-w-[100vw] overflow-hidden bg-white text-slate-800 ${!showNavbar ? 'pt-12 sm:pt-14 md:pt-16' : ''}`}
         >
             <div
-                className={`relative w-full overflow-hidden ${slideHeightClass}`}
+                className={`relative w-full overflow-hidden bg-slate-100 ${slideHeightClass}`}
                 style={slideHeightStyle}
             >
                 {showNavbar && (
@@ -264,7 +257,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                         return (
                             <div
                                 key={banner.id || index}
-                                className="relative h-full min-h-0 w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer bg-slate-950"
+                                className="relative h-full min-h-0 w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer bg-slate-100"
                                 onClick={() => {
                                     const meta = parseMeta(banner.meta)
                                     if (banner.link_url && !meta?.button1 && !meta?.button2) {
@@ -304,7 +297,7 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
                                     }}
                                 />
 
-                                <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/15 via-transparent to-black/15 md:from-black/25 md:to-black/25" />
+                                <div className="pointer-events-none absolute inset-0 z-10 bg-gradient-to-b from-black/10 via-transparent to-black/10 md:from-black/25 md:to-black/25" />
                             </div>
                         )
                     })}

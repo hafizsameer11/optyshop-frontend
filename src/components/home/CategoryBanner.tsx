@@ -4,9 +4,9 @@ import { getBanners, type Banner } from '../../services/bannersService'
 const bannerRequestCache = new Map<string, Promise<Banner[]>>()
 const REQUEST_THROTTLE_DELAY = 100 // 100ms between requests
 
-/** Compact on mobile — stacked category rows must not each consume full viewport */
+/** Landscape frame on mobile; taller on desktop without dominating stacked category rows */
 export const CATEGORY_BANNER_HEIGHT_CLASS =
-    'h-[min(36vw,10.5rem)] sm:h-[min(42vh,14rem)] md:h-[min(55vh,20rem)] lg:h-[min(70vh,36rem)]'
+    'aspect-[16/9] h-auto min-h-[8.5rem] max-h-[40vh] w-full sm:aspect-[2/1] sm:min-h-[11rem] sm:max-h-[42vh] md:aspect-auto md:h-[min(50vh,18rem)] md:max-h-none lg:h-[min(60vh,28rem)]'
 
 interface CategoryBannerProps {
     categoryName: string
@@ -262,12 +262,12 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                         return (
                             <div
                                 key={banner.id || index}
-                                className={`relative h-full min-w-full w-full shrink-0 grow-0 basis-full cursor-pointer ${CATEGORY_BANNER_HEIGHT_CLASS}`}
+                                className="relative h-full min-h-0 w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer bg-slate-100"
                                 onClick={() => handleBannerClick(banner)}
                             >
                                 {/* Background Image — same as home Banner */}
                                 <div
-                                    className="absolute inset-0 hidden w-full h-full bg-slate-900 md:block"
+                                    className="absolute inset-0 hidden h-full w-full bg-slate-100 md:block"
                                     style={{
                                         backgroundImage: `url(${desktopImageUrl})`,
                                         backgroundSize: 'cover',
@@ -276,7 +276,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                     }}
                                 />
                                 <div
-                                    className="absolute inset-0 w-full h-full bg-slate-900 md:hidden"
+                                    className="absolute inset-0 h-full w-full bg-slate-100 md:hidden"
                                     style={{
                                         backgroundImage: `url(${mobileImageUrl})`,
                                         backgroundSize: 'cover',

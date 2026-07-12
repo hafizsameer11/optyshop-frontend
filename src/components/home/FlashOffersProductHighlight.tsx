@@ -198,10 +198,10 @@ const FlashOffersProductHighlight: React.FC = () => {
     }
 
     return (
-        <section className="bg-[#f8f3ed] px-4 py-10 sm:px-6 md:py-16">
-            <div className="mx-auto w-full max-w-7xl space-y-4 text-center lg:w-[90%]">
-                <p className="text-sm uppercase tracking-[0.4em] text-slate-500">{t('home.flashOffers.eyebrow')}</p>
-                <h2 className="text-2xl md:text-3xl font-semibold text-slate-800 pb-4 md:pb-8">
+        <section className="bg-[#f8f3ed] px-4 py-8 sm:px-6 md:py-16">
+            <div className="mx-auto w-full max-w-7xl space-y-3 text-center sm:space-y-4 lg:w-[90%]">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500 sm:text-sm sm:tracking-[0.4em]">{t('home.flashOffers.eyebrow')}</p>
+                <h2 className="pb-2 text-xl font-semibold text-slate-800 sm:pb-4 sm:text-2xl md:pb-8 md:text-3xl">
                     {t('home.flashOffers.title')}{' '}
                     <span className="text-blue-700">{t('home.flashOffers.titleHighlight')}</span>
                 </h2>

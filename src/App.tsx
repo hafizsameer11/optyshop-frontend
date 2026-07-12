@@ -45,6 +45,7 @@ const FlashOfferLanding = lazy(() => import('./pages/shop/FlashOfferLanding'))
 const CategoryPage = lazy(() => import('./pages/shop/CategoryPage'))
 const Cart = lazy(() => import('./pages/shop/Cart'))
 const Checkout = lazy(() => import('./pages/shop/Checkout'))
+const TrackOrder = lazy(() => import('./pages/shop/TrackOrder'))
 const Payment = lazy(() => import('./pages/shop/Payment'))
 const Wishlist = lazy(() => import('./pages/shop/Wishlist'))
 const Login = lazy(() => import('./pages/auth/Login'))
@@ -124,6 +125,17 @@ function App() {
                         <Route path="/shop/eyeglasses" element={<Products />} />
                         <Route path="/shop/contact-lenses" element={<Products />} />
                         <Route path="/shop/eye-hygiene" element={<Products />} />
+                        {/* Collections: nested routes so `/collections/all` is not captured as categorySlug=all */}
+                        <Route path="/collections">
+                            <Route index element={<Navigate to="all" replace />} />
+                            <Route path="all" element={<Products />} />
+                            <Route path=":categorySlug" element={<CategoryPage />} />
+                            <Route path=":categorySlug/:subcategorySlug" element={<CategoryPage />} />
+                            <Route
+                                path=":categorySlug/:subcategorySlug/:subSubcategorySlug"
+                                element={<CategoryPage />}
+                            />
+                        </Route>
                         <Route path="/category/:categorySlug" element={<CategoryPage />} />
                         <Route path="/category/:categorySlug/:subcategorySlug" element={<CategoryPage />} />
                         <Route path="/category/:categorySlug/:subcategorySlug/:subSubcategorySlug" element={<CategoryPage />} />
@@ -131,6 +143,7 @@ function App() {
                         <Route path="/shop/product/:slug" element={<ProductDetail />} />
                         <Route path="/cart" element={<Cart />} />
                         <Route path="/checkout" element={<Checkout />} />
+                        <Route path="/track-order" element={<TrackOrder />} />
                         <Route path="/payment" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
                         <Route path="/wishlist" element={<Wishlist />} />
                         <Route path="/login" element={<Login />} />

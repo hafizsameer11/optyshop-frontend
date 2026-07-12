@@ -324,7 +324,22 @@
     "cancelConfirm": "Are you sure you want to cancel this order? This action cannot be undone.",
     "cancelling": "Cancelling...",
     "notFound": "Order not found",
-    "noItems": "No items found for this order."
+    "noItems": "No items found for this order.",
+    "confirmed": "Confirmed"
+  },
+  "trackOrder": {
+    "title": "Track your order",
+    "subtitle": "Enter the order number from your confirmation email and the email you used at checkout.",
+    "checkoutEmail": "Email used at checkout",
+    "trackButton": "Track order",
+    "searching": "Looking up your order…",
+    "orderNumberRequired": "Please enter your order number.",
+    "emailRequired": "Please enter the email used at checkout.",
+    "notFound": "Order not found. Please check your order number and email.",
+    "progress": "Order progress",
+    "shippedOn": "Shipped on",
+    "deliveredOn": "Delivered on",
+    "needHelp": "Need help?"
   },
   "prescriptions": {
     "title": "Prescriptions",
@@ -442,6 +457,8 @@
     "login": "Login",
     "getDemo": "Get a demo",
     "viewAll": "View All",
+    "collections": "Collections",
+    "allProducts": "All products",
     "loading": "Loading...",
     "noSubcategories": "No subcategories available",
     "noNestedSubcategories": "No nested subcategories"
@@ -533,7 +550,8 @@
     "cart": "Cart",
     "contact": "Contact",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "trackOrder": "Track order"
   },
   "pages": {
     "virtualTest": {

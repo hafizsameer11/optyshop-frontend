@@ -409,6 +409,80 @@ export const getOrderById = async (orderId: number | string): Promise<Order & { 
  * Cancel an order
  * @param orderId - Order ID
  */
+export interface TrackedOrderItem {
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_sku: string;
+  quantity: number;
+  unit_price: number | string;
+  total_price: number | string;
+  product?: {
+    id: number;
+    name: string;
+    slug: string;
+    images?: string | string[] | null;
+  } | null;
+  contact_lens_details?: ContactLensDetails | null;
+}
+
+export interface TrackedOrder {
+  order_number: string;
+  status: string;
+  payment_status: string;
+  payment_method?: string | null;
+  subtotal: number | string;
+  tax?: number | string;
+  shipping: number | string;
+  discount?: number | string;
+  total: number | string;
+  created_at: string;
+  updated_at: string;
+  shipped_at?: string | null;
+  delivered_at?: string | null;
+  shipping_address?: Partial<Address> | null;
+  billing_address?: Partial<Address> | null;
+  items: TrackedOrderItem[];
+}
+
+/**
+ * Track an order by order number and checkout email (public, no login required).
+ */
+export const trackOrderByNumber = async (
+  orderNumber: string,
+  email: string
+): Promise<{ order: TrackedOrder } | null> => {
+  try {
+    const response = await apiClient.post<{
+      order: TrackedOrder;
+    }>(
+      API_ROUTES.ORDERS.TRACK,
+      {
+        order_number: orderNumber.trim(),
+        email: email.trim(),
+      },
+      false
+    );
+
+    if (!response.success) {
+      throw new Error(response.message || 'Order not found');
+    }
+
+    if (response.data) {
+      const payload = response.data as { order?: TrackedOrder };
+      const order = payload.order;
+      if (order?.order_number) {
+        return { order };
+      }
+    }
+
+    return null;
+  } catch (error: unknown) {
+    console.error('Error tracking order:', error);
+    throw error;
+  }
+};
+
 export const cancelOrder = async (orderId: number | string): Promise<{ success: boolean; message?: string; data?: any }> => {
   try {
     const response = await apiClient.post<{ 

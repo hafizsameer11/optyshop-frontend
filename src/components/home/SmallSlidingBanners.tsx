@@ -129,9 +129,12 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
     const renderBannerCard = (campaign: Campaign, key: string) => {
         const imageUrl = getImageUrl(campaign.image_url)
         return (
-            <div key={key} className="w-[min(280px,78vw)] shrink-0 snap-center sm:w-64 md:w-72 lg:w-80">
+            <div
+                key={key}
+                className="w-[min(100%,calc(100vw-2.5rem))] shrink-0 snap-center sm:w-64 md:w-72 lg:w-80"
+            >
                 <div
-                    className={`relative h-28 overflow-hidden rounded-lg shadow-md transition-all duration-300 sm:h-32 md:h-36 ${
+                    className={`relative aspect-[2/1] overflow-hidden rounded-xl shadow-md transition-all duration-300 sm:aspect-auto sm:h-32 md:h-36 ${
                         campaign.link_url ? 'cursor-pointer hover:shadow-lg active:scale-[0.99]' : ''
                     }`}
                     onClick={() => handleBannerClick(campaign)}
@@ -149,7 +152,7 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
                             }}
                         />
                     ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 px-3">
+                        <div className="flex h-full min-h-[7rem] w-full items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 px-3 sm:min-h-0">
                             <div className="text-center">
                                 <h3 className="mb-1 text-sm font-bold text-gray-800 md:text-base">
                                     {campaign.name}
@@ -167,13 +170,13 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
 
     if (loading) {
         return (
-            <section className="w-full bg-white py-5 md:py-8">
+            <section className="w-full max-w-[100vw] overflow-hidden bg-white py-4 md:py-8">
                 <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:w-[90%] lg:px-0">
                     <div className="flex gap-3 overflow-hidden">
-                        {[1, 2, 3].map((i) => (
+                        {[1, 2].map((i) => (
                             <div
                                 key={i}
-                                className="h-28 w-[min(280px,78vw)] shrink-0 animate-pulse rounded-lg bg-gray-200 sm:h-32"
+                                className="aspect-[2/1] w-[min(100%,calc(100vw-2.5rem))] shrink-0 animate-pulse rounded-xl bg-gray-200 sm:h-32 sm:w-64 sm:aspect-auto"
                             />
                         ))}
                     </div>
@@ -190,10 +193,10 @@ const SmallSlidingBanners: React.FC<SmallSlidingBannersProps> = ({
     const track = [...campaigns, ...campaigns]
 
     return (
-        <section className="w-full max-w-[100vw] overflow-hidden bg-white py-5 md:py-8">
+        <section className="w-full max-w-[100vw] overflow-hidden bg-white py-4 md:py-8">
             <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:w-[90%] lg:px-0">
-                {/* Mobile / tablet: horizontal swipe (reliable on small screens) */}
-                <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide md:hidden">
+                {/* Mobile / tablet: one-card-at-a-time swipe */}
+                <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden pb-2 scrollbar-hide md:hidden">
                     {campaigns.map((campaign) => renderBannerCard(campaign, `mobile-${campaign.id}`))}
                 </div>
 

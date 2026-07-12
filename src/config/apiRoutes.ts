@@ -133,6 +133,7 @@ export const API_ROUTES = {
     LIST: `/orders`,                             // USER
     BY_ID: (id: number | string) => `/orders/${id}`,             // USER
     CANCEL: (id: number | string) => `/orders/${id}/cancel`,      // USER
+    TRACK: `/orders/track`,                     // PUBLIC
   },
 
   // ============================================
