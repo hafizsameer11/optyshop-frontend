@@ -41,7 +41,8 @@ export interface SearchResponse {
 }
 
 /**
- * Unified search across products, categories, subcategories, and sub-subcategories
+ * Unified search across the full product catalogue plus categories / subcategories.
+ * Intentionally does NOT accept or apply category/page filters — results are always global.
  * @param query - Search query string
  * @param limit - Maximum number of results per type (default: 10)
  */
@@ -64,12 +65,13 @@ export const searchAll = async (
     const searchQuery = query.trim()
     const results: SearchResult[] = []
 
-    // Search products
+    // Search products across the entire catalogue (no category / subcategory / gender scope)
     try {
       const productsResponse = await getProducts({
         search: searchQuery,
         limit: limit,
         page: 1
+        // Do not pass category, subcategory, gender, or section — keep results global
       })
 
       if (productsResponse && productsResponse.products) {

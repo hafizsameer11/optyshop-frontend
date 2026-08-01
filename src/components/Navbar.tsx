@@ -156,6 +156,19 @@ const Navbar: React.FC = () => {
     const pathMatches = (path: string) =>
         location.pathname === path || location.pathname.startsWith(`${path}/`)
 
+    /** Always open the global catalogue search page — never stay on the current category/shop listing. */
+    const goToGlobalSearch = (rawQuery: string, options?: { closeMobile?: boolean }) => {
+        const query = rawQuery.trim()
+        if (query.length < 2) return
+        setSearchQuery('')
+        setIsSearchOpen(false)
+        setSearchResults([])
+        if (options?.closeMobile) {
+            setIsMobileOpen(false)
+        }
+        navigate(`/search?q=${encodeURIComponent(query)}`)
+    }
+
     const isCategoryActive = (category: Category) => {
         const categoryPath = collectionCategoryPath(category.slug)
         const legacyPath = `/category/${category.slug}`
@@ -254,22 +267,7 @@ const Navbar: React.FC = () => {
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
                                     e.preventDefault()
-                                    const query = searchQuery.trim()
-                                    
-                                    // Check if we're on a shop page - if so, update URL params instead of navigating
-                                    if (location.pathname.startsWith('/shop')) {
-                                        // Update the shop page with search parameter
-                                        const currentUrl = new URL(window.location.href)
-                                        currentUrl.searchParams.set('search', query)
-                                        window.location.href = currentUrl.toString()
-                                    } else {
-                                        // Navigate to search results page
-                                        navigate(`/search?q=${encodeURIComponent(query)}`)
-                                    }
-                                    
-                                    setSearchQuery('')
-                                    setIsSearchOpen(false)
-                                    setSearchResults([])
+                                    goToGlobalSearch(searchQuery)
                                 } else if (e.key === 'Escape') {
                                     setIsSearchOpen(false)
                                 }
@@ -285,7 +283,7 @@ const Navbar: React.FC = () => {
                         />
                         <button
                             type="button"
-                            onClick={async () => {
+                            onClick={() => {
                                 if (searchQuery.trim().length < 2) {
                                     setSearchResults([{
                                         id: 0,
@@ -301,23 +299,7 @@ const Navbar: React.FC = () => {
                                     }, 2000)
                                     return
                                 }
-                                
-                                const query = searchQuery.trim()
-                                
-                                // Check if we're on a shop page - if so, update URL params instead of navigating
-                                if (location.pathname.startsWith('/shop')) {
-                                    // Update the shop page with search parameter
-                                    const currentUrl = new URL(window.location.href)
-                                    currentUrl.searchParams.set('search', query)
-                                    window.location.href = currentUrl.toString()
-                                } else {
-                                    // Navigate to search results page
-                                    navigate(`/search?q=${encodeURIComponent(query)}`)
-                                }
-                                
-                                setSearchQuery('')
-                                setIsSearchOpen(false)
-                                setSearchResults([])
+                                goToGlobalSearch(searchQuery)
                             }}
                             className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-cyan-400/20 rounded-full transition-colors cursor-pointer"
                             disabled={isSearching}
@@ -400,6 +382,15 @@ const Navbar: React.FC = () => {
                                                     </div>
                                                 </Link>
                                             ))}
+                                            {searchQuery.trim().length >= 2 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => goToGlobalSearch(searchQuery)}
+                                                    className="mt-2 block w-full rounded-lg bg-cyan-500/10 px-3 py-2 text-center text-sm font-medium text-cyan-300 transition-all hover:bg-cyan-500/20 hover:text-cyan-200"
+                                                >
+                                                    View all results
+                                                </button>
+                                            )}
                                         </>
                                     )}
                                 </div>
@@ -792,21 +783,8 @@ const Navbar: React.FC = () => {
                             }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && searchQuery.trim().length >= 2) {
-                                    const query = searchQuery.trim()
-                                    
-                                    // Check if we're on a shop page - if so, update URL params instead of navigating
-                                    if (location.pathname.startsWith('/shop')) {
-                                        // Update the shop page with search parameter
-                                        const currentUrl = new URL(window.location.href)
-                                        currentUrl.searchParams.set('search', query)
-                                        window.location.href = currentUrl.toString()
-                                    } else {
-                                        // Navigate to search results page
-                                        navigate(`/search?q=${encodeURIComponent(query)}`)
-                                    }
-                                    
-                                    setSearchQuery('')
-                                    setIsMobileOpen(false)
+                                    e.preventDefault()
+                                    goToGlobalSearch(searchQuery, { closeMobile: true })
                                 }
                             }}
                             className="w-full h-10 px-4 py-2 text-sm bg-blue-950/60 border border-cyan-400/30 rounded-lg text-white placeholder-cyan-400/50 focus:outline-none focus:ring-2 focus:ring-cyan-400/50 focus:border-cyan-400"
