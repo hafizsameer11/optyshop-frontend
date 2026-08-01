@@ -5,6 +5,7 @@ import { useWishlist } from '../../context/WishlistContext'
 import { getProductImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import type { Product } from '../../services/productsService'
+import { isOutOfStock as checkOutOfStock } from '../../utils/stock'
 
 interface EyeHygieneProductCardProps {
     product: Product
@@ -26,7 +27,7 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
         toggleWishlist(product)
     }
 
-    const isOutOfStock = product.in_stock === false
+    const isOutOfStock = checkOutOfStock(product as any)
 
     const getVariants = () => {
         const p = product as any

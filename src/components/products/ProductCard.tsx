@@ -6,6 +6,7 @@ import { getProductImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel, isShopContactLensProduct } from '../../utils/productDisplayName'
 import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import { normalizeProductSubcategory, type Product } from '../../services/productsService'
+import { isOutOfStock as checkOutOfStock } from '../../utils/stock'
 
 interface ProductCardProps {
     product: Product
@@ -245,7 +246,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
         toggleWishlist(product)
     }
 
-    const isOutOfStock = product.in_stock === false
+    const isOutOfStock = checkOutOfStock(product as any)
     const { current: displayPrice, compare: comparePrice } = resolveListAndCurrentPrice(product)
 
     const brandLabel = getShopProductBrandLabel(product)

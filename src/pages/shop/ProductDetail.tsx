@@ -18,6 +18,7 @@ import { addItemToCart, updateCartItem, type AddToCartRequest } from '../../serv
 import { getProductImageUrl, getVariantImageUrl, getContactLensMainGalleryImageUrl, getDefaultContactLensMainImageIndex, getGalleryImageUrlFromList, parseProductImagesArray } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
+import { isOutOfStock } from '../../utils/stock'
 import ProductCheckout from '../../components/shop/ProductCheckout'
 import ProductCard from '../../components/products/ProductCard'
 import VirtualTryOnModal from '../../components/home/VirtualTryOnModal'
@@ -367,61 +368,13 @@ const ProductDetail = () => {
                 }
                 
                 if (calibersData.length > 0) {
-                    const sharedCaliberImage = calibersData.find(
-                        (c: { image_url?: string }) =>
-                            c.image_url?.trim() &&
-                            !c.image_url.startsWith('blob:') &&
-                            !c.image_url.includes('3d-glasses.png')
-                    )?.image_url?.trim()
-
-                    const calibers = calibersData.map((caliber: any, index: number) => {
-                        console.log(`[ProductDetail] Processing caliber ${index}:`, {
-                            mm: caliber.mm,
-                            original_image_url: caliber.image_url,
-                            is_blob: caliber.image_url?.startsWith('blob:'),
-                            is_3d_glasses: caliber.image_url?.includes('3d-glasses.png')
-                        });
-                        
-                        // Use actual product images instead of blob URLs
-                        let caliberImage = '';
-                        
-                        // Handle blob URLs by using different product images as fallbacks since blob URLs won't work cross-origin
-                        if (caliber.image_url?.startsWith('blob:')) {
-                            // Blob URLs won't work across origins, so use different product images for different calibers
-                            if (product.images && product.images.length > 0) {
-                                // Use different images based on caliber index to enable image switching
-                                const imageIndex = index % product.images.length;
-                                caliberImage = product.images[imageIndex];
-                                console.log(`[ProductDetail] Blob URL detected, using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
-                            } else {
-                                caliberImage = `/assets/images/frame${(index % 5) + 1}.png`;
-                                console.log(`[ProductDetail] Blob URL detected, using fallback frame image for caliber ${caliber.mm}:`, caliberImage);
-                            }
-                        } else if (caliber.image_url && !caliber.image_url.includes('3d-glasses.png')) {
-                            // Use the caliber image if it's valid
-                            caliberImage = caliber.image_url;
-                        } else if (sharedCaliberImage) {
-                            caliberImage = sharedCaliberImage;
-                        } else {
-                            // Fallback to different product images for different calibers
-                            if (product.images && product.images.length > 0) {
-                                // Use different images based on caliber index to enable image switching
-                                const imageIndex = index % product.images.length;
-                                caliberImage = product.images[imageIndex];
-                                console.log(`[ProductDetail] Using product image ${imageIndex} for caliber ${caliber.mm}:`, caliberImage);
-                            } else {
-                                caliberImage = `/assets/images/frame${(index % 5) + 1}.png`;
-                            }
-                        }
-                        
-                        return {
-                            mm: caliber.mm,
-                            image_url: caliberImage,
-                            price: caliber.price,
-                            stock_quantity: caliber.stock_quantity,
-                            is_active: caliber.is_active !== false
-                        };
-                    });
+                    // Calibers are size options only — they never carry their own image.
+                    const calibers = calibersData.map((caliber: any) => ({
+                        mm: caliber.mm,
+                        price: caliber.price,
+                        stock_quantity: caliber.stock_quantity,
+                        is_active: caliber.is_active !== false
+                    }));
                 
                 console.log('[ProductDetail] Product calibers loaded from product data:', calibers.length, calibers)
                 
@@ -3052,94 +3005,43 @@ const ProductDetail = () => {
         // 2. Qty changes (right_qty/left_qty changes) → total = unit_price * qty changes
     ])
 
-    // Helper function to check if product is out of stock (MUST be before conditional returns)
+    // Helper function to check if product (or selected size/variant) is out of stock
+    // Products with stock 0 stay visible; Add to Cart is disabled instead.
     const isProductOutOfStock = useMemo(() => {
         if (!product) return false
 
-        // Contact lenses are configuration-based, not inventory-based
-        // They should check if configurations are available AND if stock is available
+        // Selected MM caliber with its own stock_quantity takes priority for frames
+        if (selectedCaliber && selectedCaliber.stock_quantity != null && selectedCaliber.stock_quantity !== undefined) {
+            if (isOutOfStock(selectedCaliber)) return true
+        }
+
+        // Contact lenses: product-level stock only (configs are prescriptions, not inventory rows)
         if (isContactLens) {
-            // For contact lenses, don't show as out of stock just because configs are missing
-            // Allow users to see the form and enter values even without predefined configs
-            // Only show as out of stock if stock status is explicitly 'out_of_stock' or stock quantity is 0
-            
-            const stockQty = product.stock_quantity
-            const stockStatus = (product as any).stock_status
-            
-            // If stock status is explicitly 'out_of_stock', show as out of stock
-            if (stockStatus === 'out_of_stock') {
-                return true
-            }
-            
-            // If stock quantity is explicitly 0 (not undefined), show as out of stock
-            // But if stock_quantity is undefined/null, assume it's available (made-to-order)
-            if (stockQty !== undefined && stockQty !== null && stockQty <= 0) {
-                return true
-            }
-            
-            // Otherwise, consider it in stock (contact lenses are typically made-to-order)
-            return false
+            return isOutOfStock(product as any)
         }
 
-        // For non-contact-lens products, check stock quantity and status
-        const stockQty = product.stock_quantity
-        const stockStatus = (product as any).stock_status
-        
-        // If product has explicit stock quantity > 0, consider it in stock
-        if (stockQty !== undefined && stockQty > 0) {
-            return false
-        }
-        
-        // If stock_status is explicitly 'in_stock', consider it in stock
-        if (stockStatus === 'in_stock') {
-            return false
-        }
-
-        // Check if product has variants (for Eye Hygiene products with sizeVolumeVariants)
+        // Eye hygiene / size-volume variants
         const p = product as any
         const variantsArray = fetchedVariants.length > 0
             ? fetchedVariants
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
         const hasVariants = variantsArray && Array.isArray(variantsArray) && variantsArray.length > 0
 
-        // If product has variants, check the selected variant's stock
         if (hasVariants && selectedSizeVolumeVariant) {
-            const variantStockStatus = selectedSizeVolumeVariant.stock_status
-            const variantStockQty = selectedSizeVolumeVariant.stock_quantity
-            
-            return variantStockStatus === 'out_of_stock' ||
-                (variantStockStatus !== 'in_stock' && variantStockQty !== undefined && variantStockQty <= 0) ||
-                (variantStockStatus === undefined && variantStockQty !== undefined && variantStockQty <= 0)
+            return isOutOfStock(selectedSizeVolumeVariant)
         }
 
-        // If product has variants but no variant is selected yet, check if any variant is in stock
         if (hasVariants && !selectedSizeVolumeVariant) {
-            // Check if at least one variant is in stock
-            const hasInStockVariant = variantsArray.some((variant: any) => {
-                const variantStockStatus = variant.stock_status
-                const variantStockQty = variant.stock_quantity
-                return variantStockStatus === 'in_stock' && variantStockQty > 0
-            })
-            // If no variant is in stock, show as out of stock
+            const hasInStockVariant = variantsArray.some((variant: any) => !isOutOfStock(variant))
             return !hasInStockVariant
         }
 
-        // Original logic for non-contact-lens products without variants (glasses, etc.)
-
-        // Fix for Eye Hygiene products showing "Out of Stock" incorrectly
-        if (isEyeHygiene && !hasVariants) {
-            // If it's eye hygiene without variants, only show out of stock if stock_status is explicitly 'out_of_stock'
-            // or if stock_quantity is explicitly 0
-            if (stockStatus === 'out_of_stock') return true
-            if (stockQty !== undefined && stockQty <= 0) return true
-            return false
+        if (selectedEyeHygieneVariant && (selectedEyeHygieneVariant as any).stock_quantity != null) {
+            return isOutOfStock(selectedEyeHygieneVariant as any)
         }
 
-        return stockStatus === 'out_of_stock' ||
-            (stockStatus !== 'in_stock' && stockQty !== undefined && stockQty <= 0) ||
-            (stockStatus === undefined && product.in_stock === false) ||
-            (stockStatus === undefined && stockQty !== undefined && stockQty <= 0)
-    }, [product, isContactLens, contactLensFormConfig, sphericalConfigs, astigmatismConfigs, fetchedVariants, selectedSizeVolumeVariant, isEyeHygiene])
+        return isOutOfStock(product as any)
+    }, [product, isContactLens, fetchedVariants, selectedSizeVolumeVariant, selectedEyeHygieneVariant, selectedCaliber, isEyeHygiene])
 
     // Debug: Log when selected variant changes (for development)
     useEffect(() => {
@@ -3170,20 +3072,10 @@ const ProductDetail = () => {
 
     // Handler for caliber change
     const handleCaliberChange = (mm: number | string) => {
+        // Size selection only: never touches the gallery or the image the user is viewing.
         const mmStr = mm.toString();
         const matchingCaliber = productCalibers.find(c => c.mm.toString() === mmStr)
-        if (matchingCaliber) {
-            setSelectedCaliber(matchingCaliber)
-            // Don't reset image index - let user continue viewing their selected image
-            // Only show caliber image when user explicitly wants to see it
-            setIsManuallySelectingImage(false) // Reset manual selection flag
-            console.log('[ProductDetail] Caliber changed to:', matchingCaliber);
-        } else {
-            setSelectedCaliber(null)
-            // Don't reset image index when clearing caliber selection
-            setIsManuallySelectingImage(false) // Reset manual selection flag
-            console.log('[ProductDetail] No matching caliber found for:', mm);
-        }
+        setSelectedCaliber(matchingCaliber || null)
     }
 
     // Handler for eye hygiene variant change
@@ -3250,28 +3142,14 @@ const ProductDetail = () => {
 
         // Priority 2: Default gallery — skip when a contact-lens pack is selected (avoid color gallery overriding pack)
         const contactLensPackSelected = isContactLens && selectedUnit != null
+        // Caliber is a size option only, so it never affects which image is shown here.
         if (
             !contactLensPackSelected &&
             !isManuallySelectingImage &&
-            !selectedCaliber &&
             !selectedEyeHygieneVariant &&
             !selectedColor
         ) {
             return getProductImageUrl(product, imageIndex)
-        }
-
-        // Priority 3: Use caliber-specific images if caliber is selected (either from dropdown or button click) AND current product has calibers
-        if (selectedCaliber && selectedCaliber.image_url && productCalibers.length > 0) {
-            console.log('[ProductDetail] Using caliber image:', {
-                caliber_mm: selectedCaliber.mm,
-                image_url: selectedCaliber.image_url,
-                is_product_image: selectedCaliber.image_url.includes('uploads/products'),
-                is_fallback: selectedCaliber.image_url.includes('frame') || selectedCaliber.image_url.includes('rayban-4926'),
-                main_images: product.images,
-                triggered_by: isManuallySelectingImage ? 'thumbnail click' : 'dropdown selection or button click'
-            });
-            
-            return selectedCaliber.image_url;
         }
 
         // Priority 3: Use eye hygiene variant-specific images if variant is selected
@@ -3694,6 +3572,11 @@ const ProductDetail = () => {
         if (!product) return
         if (standardAddToCartLockRef.current) return
 
+        if (isProductOutOfStock) {
+            alert(t('shop.outOfStockAlert', 'This item is out of stock and cannot be ordered.'))
+            return
+        }
+
         // Check if product has variants (new approach) - prioritize fetched variants, then check product object
         const p = product as any
         const variantsArray = fetchedVariants.length > 0
@@ -3724,7 +3607,7 @@ const ProductDetail = () => {
                     alert('Please select a Capacity option')
                     return
                 }
-                if (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0) {
+                if (isOutOfStock(selectedSizeVolumeVariant)) {
                     alert('Selected variant is out of stock')
                     return
                 }
@@ -3832,8 +3715,7 @@ const ProductDetail = () => {
                     color: colorValue || undefined,
                     lens_color: selectedLensColor || undefined,
                     ...(selectedCaliber && {
-                        selected_mm_caliber: selectedCaliber.toString(),
-                        caliber_image_url: productCalibers.find(c => c.mm.toString() === selectedCaliber.toString())?.image_url
+                        selected_mm_caliber: selectedCaliber.toString()
                     }),
                     ...(selectedColorVariant ? {
                         color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
@@ -4379,11 +4261,6 @@ const ProductDetail = () => {
                                                         </svg>
                                                     </div>
                                                 </div>
-                                                {selectedCaliber && (
-                                                    <div className="mt-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg">
-                                                        Selected: {selectedCaliber.mm}mm frame size
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
 
@@ -5380,6 +5257,10 @@ const ProductDetail = () => {
                                                     </svg>
                                                     Adding to Cart...
                                                 </span>
+                                            ) : isProductOutOfStock ? (
+                                                <span className="flex items-center justify-center gap-2">
+                                                    {t('shop.outOfStock', 'Out of Stock')}
+                                                </span>
                                             ) : (
                                                 <span className="flex items-center justify-center gap-2">
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -5486,8 +5367,7 @@ const ProductDetail = () => {
                                     
                                     // Use regular product images by default
                                     // Only use variant-specific images if user has explicitly selected a variant AND hasn't manually clicked a thumbnail
-                                    // For calibers, show caliber image when user selects from dropdown or clicks "View Xmm Frame Image" button
-                                    const selectedImage = !isManuallySelectingImage && (selectedCaliber || selectedEyeHygieneVariant)
+                                    const selectedImage = !isManuallySelectingImage && selectedEyeHygieneVariant
                                         ? getVariantSpecificImageUrl(product, selectedImageIndex)
                                         : imagesArray[safeSelectedIndex]
 
@@ -5497,7 +5377,7 @@ const ProductDetail = () => {
                                             <div className="flex flex-col gap-3">
                                                 {imagesArray.map((image, index) => (
                                                     <button
-                                                        key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
+                                                        key={`${index}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         onClick={() => {
                                                             setSelectedImageIndex(index)
                                                             setIsManuallySelectingImage(true) // User is manually selecting
@@ -5524,7 +5404,7 @@ const ProductDetail = () => {
                                             <div className="flex-1">
                                                 <div className="relative aspect-square bg-white rounded-2xl overflow-hidden shadow-inner border border-slate-200/80 flex items-center justify-center">
                                                     <img
-                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedCaliber?.mm || 'no-caliber'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
+                                                        key={`product-${product.id}-img-${safeSelectedIndex}-${selectedColor || 'default'}-${selectedSizeVolumeVariant?.id || 'no-variant'}-${selectedEyeHygieneVariant?.id || 'no-eye-variant'}`}
                                                         src={selectedImage}
                                                         alt={product.name}
                                                         className="w-full h-full object-contain p-4 sm:p-6 transform transition-transform duration-500 hover:scale-105"
@@ -5536,22 +5416,11 @@ const ProductDetail = () => {
                                                                 console.warn('[ProductDetail] Main image failed to load:', {
                                                                     product: product.name,
                                                                     attemptedUrl,
-                                                                    isBlob: attemptedUrl.includes('blob:'),
-                                                                    selectedCaliber: selectedCaliber?.mm,
                                                                     selectedVariant: selectedSizeVolumeVariant?.id
                                                                 })
                                                             }
-                                                            
-                                                            // If blob URL failed, try to use a different product image for this caliber
-                                                            if (attemptedUrl.includes('blob:') && selectedCaliber && product.images && product.images.length > 1) {
-                                                                const caliberIndex = productCalibers.findIndex(c => c.mm === selectedCaliber.mm)
-                                                                const fallbackIndex = (caliberIndex + 1) % product.images.length
-                                                                target.src = product.images[fallbackIndex]
-                                                                console.log('[ProductDetail] Blob URL failed, using fallback image for caliber:', selectedCaliber.mm, product.images[fallbackIndex])
-                                                            } else {
-                                                                // Final fallback
-                                                                target.src = '/assets/images/frame1.png'
-                                                            }
+
+                                                            target.src = '/assets/images/frame1.png'
                                                         }}
                                                     />
                                                     {hasValidSale && (
@@ -5688,9 +5557,17 @@ const ProductDetail = () => {
                                                             <option
                                                                 key={caliber.mm}
                                                                 value={caliber.mm.toString()}
+                                                                disabled={
+                                                                    caliber.stock_quantity != null &&
+                                                                    Number(caliber.stock_quantity) <= 0
+                                                                }
                                                             >
                                                                 {caliber.mm}mm
                                                                 {caliber.price ? ` (+€${caliber.price})` : ''}
+                                                                {caliber.stock_quantity != null &&
+                                                                Number(caliber.stock_quantity) <= 0
+                                                                    ? ` — ${t('shop.outOfStock', 'Out of Stock')}`
+                                                                    : ''}
                                                             </option>
                                                         ))}
                                                 </select>
@@ -5710,11 +5587,6 @@ const ProductDetail = () => {
                                                     </svg>
                                                 </div>
                                             </div>
-                                            {selectedCaliber && (
-                                                <p className="mt-1 text-xs text-gray-500">
-                                                    {selectedCaliber.mm}mm {t('shop.selected', 'selected')}
-                                                </p>
-                                            )}
                                         </div>
                                     )}
 
@@ -5934,21 +5806,6 @@ const ProductDetail = () => {
                                                                             </option>
                                                                         ))}
                                                                 </select>
-                                                                
-                                                                {/* Button to view caliber-specific image */}
-                                                                {selectedCaliber && selectedCaliber.image_url && (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => {
-                                                                            setSelectedImageIndex(0)
-                                                                            setIsManuallySelectingImage(false)
-                                                                            console.log('[ProductDetail] User requested to view caliber image for:', selectedCaliber.mm)
-                                                                        }}
-                                                                        className="mt-2 w-full px-3 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-lg border border-blue-200 hover:bg-blue-100 transition-colors"
-                                                                    >
-                                                                        View {selectedCaliber.mm}mm Frame Image
-                                                                    </button>
-                                                                )}
                                                             </div>
                                                         )}
 
@@ -6247,8 +6104,7 @@ const ProductDetail = () => {
                                             // Validation for variant-based or legacy form-based
                                             const isFormValid = hasVariants
                                                 ? !!selectedSizeVolumeVariant &&
-                                                  selectedSizeVolumeVariant.stock_status === 'in_stock' &&
-                                                  selectedSizeVolumeVariant.stock_quantity > 0 &&
+                                                  !isOutOfStock(selectedSizeVolumeVariant) &&
                                                   variantQuantity >= 1 &&
                                                   (selectedSizeVolumeVariant.stock_quantity <= 0 ||
                                                       variantQuantity <= selectedSizeVolumeVariant.stock_quantity)
@@ -6260,7 +6116,7 @@ const ProductDetail = () => {
 
                                             // Stock check for variant or product
                                             const variantOutOfStock = hasVariants && selectedSizeVolumeVariant
-                                                ? (selectedSizeVolumeVariant.stock_status !== 'in_stock' || selectedSizeVolumeVariant.stock_quantity <= 0)
+                                                ? isOutOfStock(selectedSizeVolumeVariant)
                                                 : false
 
                                             const isDisabled = variantOutOfStock || isProductOutOfStock || !isFormValid
@@ -6289,6 +6145,11 @@ const ProductDetail = () => {
                                         })() : (
                                             <>
                                                 <div className="flex flex-col gap-3 sm:gap-4">
+                                                    {isProductOutOfStock && (
+                                                        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+                                                            {t('shop.outOfStock', 'Out of Stock')} — {t('shop.notAvailableToOrder', 'This item is not available to order until stock is updated.')}
+                                                        </div>
+                                                    )}
                                                     <button
                                                         type="button"
                                                         onClick={(e) => {
@@ -6309,7 +6170,7 @@ const ProductDetail = () => {
                                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                                                 </svg>
                                                             )}
-                                                            {isProductOutOfStock ? 'Out of Stock' : 'Add to cart'}
+                                                            {isProductOutOfStock ? t('shop.outOfStock', 'Out of Stock') : 'Add to cart'}
                                                         </span>
                                                     </button>
 

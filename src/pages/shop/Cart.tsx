@@ -217,16 +217,14 @@ const Cart: React.FC = () => {
                                     {/* Product Image */}
                                     {/* 
                                         Image Priority (per API documentation):
-                                        1. caliber_image_url - From customization, shows selected caliber image if caliber was selected
-                                        2. display_image - From API, shows selected color variant image if color was selected, otherwise product image
-                                        3. customization.variant_images[0] - Fallback for local cart items
-                                        4. item.image - Final fallback
+                                        1. display_image - From API, shows selected color variant image if color was selected, otherwise product image
+                                        2. customization.variant_images[0] - Fallback for local cart items
+                                        3. item.image - Final fallback
+                                        Frame size (caliber) is never used to pick an image.
                                     */}
                                     <div className="w-full sm:w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                         <img
                                             src={
-                                                // Priority: caliber_image_url > display_image (from API) > variant_images > item.image
-                                                (item.customization as any)?.caliber_image_url ||
                                                 (item as any).display_image ||
                                                 (item.customization as any)?.variant_images?.[0] || 
                                                 item.image

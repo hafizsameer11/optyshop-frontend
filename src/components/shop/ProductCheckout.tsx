@@ -2431,10 +2431,9 @@ const ProductCheckout: React.FC<ProductCheckoutProps> = ({ product, onClose, ini
         prescription_id: finalPrescriptionId,
         // Store in a way that can be accessed later
         customization: {
-          // Store caliber information if available
+          // Store caliber information if available (size only — no image)
           ...(selectedCaliber ? {
-            selected_mm_caliber: selectedCaliber.mm,
-            caliber_image_url: selectedCaliber.image_url
+            selected_mm_caliber: selectedCaliber.mm
           } : {}),
           lensType: lensSelection.type,
           lensIndex: lensSelection.lensIndex,
