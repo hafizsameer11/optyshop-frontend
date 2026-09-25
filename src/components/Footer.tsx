@@ -1,11 +1,28 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import LanguageSwitcher from './LanguageSwitcher'
+import { getBanners, type Banner } from '../services/bannersService'
 
 const Footer: React.FC = () => {
     const { t } = useTranslation()
     const navigate = useNavigate()
+    const [footerBanners, setFooterBanners] = useState<Banner[]>([])
+
+    useEffect(() => {
+        let cancelled = false
+        ;(async () => {
+            try {
+                const data = await getBanners({ page_type: 'home', position: 'footer' })
+                if (!cancelled) setFooterBanners(data || [])
+            } catch {
+                if (!cancelled) setFooterBanners([])
+            }
+        })()
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     const handleContactClick = () => {
         navigate('/contact')
@@ -13,6 +30,38 @@ const Footer: React.FC = () => {
 
     return (
         <footer className="bg-[#212B47] text-white relative">
+            {footerBanners.length > 0 && (
+                <div className="w-full bg-white">
+                    {footerBanners.map((banner) => {
+                        const src = banner.mobile_image_url || banner.image_url
+                        const image = (
+                            <img
+                                src={src}
+                                alt={banner.title || 'Footer banner'}
+                                className="w-full h-auto max-h-48 object-cover object-center"
+                                loading="lazy"
+                            />
+                        )
+                        if (banner.link_url) {
+                            const isExternal = /^https?:\/\//i.test(banner.link_url)
+                            if (isExternal) {
+                                return (
+                                    <a key={banner.id} href={banner.link_url} target="_blank" rel="noopener noreferrer">
+                                        {image}
+                                    </a>
+                                )
+                            }
+                            return (
+                                <Link key={banner.id} to={banner.link_url}>
+                                    {image}
+                                </Link>
+                            )
+                        }
+                        return <div key={banner.id}>{image}</div>
+                    })}
+                </div>
+            )}
+
             {/* Top gradient bar */}
             <div className="h-1 bg-gradient-to-r from-orange-500 via-red-500 to-cyan-400"></div>
 

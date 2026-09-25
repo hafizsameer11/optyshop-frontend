@@ -91,6 +91,9 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
     if (filters.page_type) {
       params.append('page_type', filters.page_type);
     }
+    if (filters.position) {
+      params.append('position', String(filters.position).trim());
+    }
     if (filters.category_id !== undefined && filters.category_id !== null) {
       params.append('category_id', String(filters.category_id));
     }
@@ -246,11 +249,19 @@ export const getBanners = async (options?: GetBannersOptions | string | null, _i
         );
       }
 
-      // Filter by position if specified (legacy support)
+      // Filter by position when requested (exact match; also allow empty position for category slots)
       if (filters.position) {
-        filteredBanners = filteredBanners.filter(
-          (banner) => banner.position === filters.position || banner.position === null
-        );
+        const wanted = String(filters.position).toLowerCase().trim();
+        const categorySlots = new Set(['category_section', 'subcategory_page', 'sub_subcategory_page']);
+        filteredBanners = filteredBanners.filter((banner) => {
+          const pos = banner.position == null || String(banner.position).trim() === ''
+            ? null
+            : String(banner.position).toLowerCase().trim();
+          if (pos === wanted) return true;
+          // Older category banners often have null position — still show above category rows
+          if (pos === null && categorySlots.has(wanted)) return true;
+          return false;
+        });
       }
 
       // Sort by sort_order

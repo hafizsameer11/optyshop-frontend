@@ -79,14 +79,21 @@ const BannerComponent: React.FC<BannerComponentProps> = ({
 
                 if (isCancelled) return
 
-                setBanners(data)
+                // Home hero should not include placement-specific slots (footer/header/sidebar)
+                const placementExcluded = new Set(['footer', 'header', 'sidebar'])
+                const heroBanners = (data || []).filter((b) => {
+                    const pos = b.position == null ? '' : String(b.position).toLowerCase().trim()
+                    return !placementExcluded.has(pos)
+                })
+
+                setBanners(heroBanners)
 
                 // Reset to first banner when banners change
                 setCurrentIndex(0)
 
                 // Log for debugging
-                if (data.length > 0) {
-                    console.log(`Loaded ${data.length} banner(s) for page_type=${pageType}, category_id=${categoryId}, sub_category_id=${subCategoryId}`)
+                if (heroBanners.length > 0) {
+                    console.log(`Loaded ${heroBanners.length} banner(s) for page_type=${pageType}, category_id=${categoryId}, sub_category_id=${subCategoryId}`)
                 } else {
                     if (import.meta.env.DEV) {
                         console.warn(`No active banners found for page_type=${pageType}, category_id=${categoryId}, sub_category_id=${subCategoryId}`)
