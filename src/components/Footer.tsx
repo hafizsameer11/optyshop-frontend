@@ -38,7 +38,7 @@ const Footer: React.FC = () => {
                             <img
                                 src={src}
                                 alt={banner.title || 'Footer banner'}
-                                className="w-full h-auto max-h-48 object-cover object-center"
+                                className="w-full h-auto max-h-48 object-contain object-center"
                                 loading="lazy"
                             />
                         )

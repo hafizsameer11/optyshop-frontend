@@ -265,12 +265,12 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 className="relative h-full min-h-0 w-full min-w-full shrink-0 grow-0 basis-full cursor-pointer bg-slate-100"
                                 onClick={() => handleBannerClick(banner)}
                             >
-                                {/* Background Image — same as home Banner */}
+                                {/* Full image in the slot — no side cropping */}
                                 <div
                                     className="absolute inset-0 hidden h-full w-full bg-slate-100 md:block"
                                     style={{
                                         backgroundImage: `url(${desktopImageUrl})`,
-                                        backgroundSize: 'cover',
+                                        backgroundSize: 'contain',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
                                     }}
@@ -279,7 +279,7 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                     className="absolute inset-0 h-full w-full bg-slate-100 md:hidden"
                                     style={{
                                         backgroundImage: `url(${mobileImageUrl})`,
-                                        backgroundSize: 'cover',
+                                        backgroundSize: 'contain',
                                         backgroundPosition: 'center',
                                         backgroundRepeat: 'no-repeat',
                                     }}
@@ -288,9 +288,9 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 <img
                                     src={mobileImageUrl}
                                     alt={banner.title || 'Category Banner'}
-                                    className="absolute inset-0 w-full h-full object-cover md:hidden"
+                                    className="absolute inset-0 w-full h-full object-contain md:hidden"
                                     style={{
-                                        objectFit: 'cover',
+                                        objectFit: 'contain',
                                         objectPosition: 'center',
                                     }}
                                     onError={(e) => {
@@ -309,9 +309,9 @@ const CategoryBanner: React.FC<CategoryBannerProps> = ({
                                 <img
                                     src={desktopImageUrl}
                                     alt={banner.title || 'Category Banner'}
-                                    className="absolute inset-0 hidden w-full h-full object-cover md:block"
+                                    className="absolute inset-0 hidden w-full h-full object-contain md:block"
                                     style={{
-                                        objectFit: 'cover',
+                                        objectFit: 'contain',
                                         objectPosition: 'center',
                                     }}
                                     onError={(e) => {

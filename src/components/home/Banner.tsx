@@ -29,8 +29,8 @@ export const HOME_HERO_BANNER_HEIGHT = '70vh'
 export const HOME_HERO_BANNER_HEIGHT_CLASS =
     'h-auto w-full aspect-[16/9] min-h-[11rem] max-h-[55vh] sm:aspect-[2/1] sm:min-h-[14rem] sm:max-h-[50vh] md:aspect-auto md:max-h-none md:min-h-[28rem] md:h-[70vh]'
 
-/** Fill the frame on all breakpoints — avoid empty dark bars around wide desktop art */
-const HERO_IMAGE_FIT_CLASS = 'object-cover object-center'
+/** Fit full artwork in the slot without cropping left/right edges */
+const HERO_IMAGE_FIT_CLASS = 'object-contain object-center'
 
 interface BannerComponentProps {
     pageType?: 'home' | 'category' | 'subcategory' | 'sub_subcategory' | null;
