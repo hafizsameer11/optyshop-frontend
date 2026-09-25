@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext'
 // Cart-compatible product interface (works with both old and new product formats)
 export interface CartProduct {
     id: number
+    product_id?: number
     name: string
     brand: string
     category: string
@@ -153,7 +154,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     gift_product: item.gift_product,
                     customization,
                     // Store additional data for API operations
-                    ...(item as any)
+                    ...(item as any),
+                    // Prefer real product id after spread (cart line id must stay on `id` for update/remove)
+                    product_id: item.product_id || item.product?.id || item.id,
                 }
                 })
                 setCartItems(transformedItems)

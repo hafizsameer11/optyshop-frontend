@@ -52,13 +52,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       try {
         setLoading(true);
         const response = await apiClient.get(API_ROUTES.SHIPPING_METHODS.LIST);
-        setShippingMethods(response.data);
+        const raw: any = response.data;
+        const methods: ShippingMethod[] = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.methods)
+            ? raw.methods
+            : [];
+        setShippingMethods(methods);
         
         // Select default shipping method (usually the first one)
-        if (response.data.length > 0) {
-          const defaultShipping = response.data.find((method: ShippingMethod) => 
+        if (methods.length > 0) {
+          const defaultShipping = methods.find((method: ShippingMethod) => 
             method.name.toLowerCase().includes('standard') || method.name.toLowerCase().includes('gls')
-          ) || response.data[0];
+          ) || methods[0];
           setSelectedShipping(defaultShipping);
           onShippingChange?.(defaultShipping);
         }
@@ -120,10 +126,26 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       const response = await apiClient.post(API_ROUTES.COUPONS.APPLY, {
         code: couponCode.trim(),
-        order_amount: calculateSubtotal()
+        subtotal: calculateSubtotal(),
+        cartItems: items
+          .filter((item) => item.type === 'product' || item.type === 'lens')
+          .map((item) => ({
+            product_id: Number(item.id) || 0,
+            quantity: item.quantity,
+            unit_price: item.price,
+          })),
       });
       
-      const coupon = response.data;
+      const raw: any = response.data;
+      const nested = raw?.coupon;
+      const coupon: Coupon = {
+        code: raw?.code || nested?.code || couponCode.trim(),
+        discount_type:
+          (raw?.discount_type || nested?.discount_type) === 'fixed_amount'
+            ? 'fixed'
+            : (raw?.discount_type || nested?.discount_type || 'percentage'),
+        discount_value: Number(raw?.discount_value ?? nested?.discount_value ?? 0),
+      };
       setAppliedCoupon(coupon);
       onCouponApply?.(coupon);
       setCouponCode('');

@@ -161,9 +161,9 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         try {
             // Convert cart items to API format
             const cartItemsForCoupon: CartItemForCoupon[] = cartItems.map(item => ({
-                product_id: item.id,
+                product_id: (item as any).product_id ?? item.id,
                 quantity: item.quantity,
-                unit_price: item.price
+                unit_price: Number(item.price || 0)
             }))
 
             const subtotal = getTotalPrice()
@@ -266,8 +266,9 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         try {
             // Map cart items to order format - backend requires items
             const orderItems = cartItems.map(item => ({
-                product_id: item.id,
+                product_id: (item as any).product_id ?? item.id,
                 quantity: item.quantity,
+                unit_price: Number(item.price || 0),
                 // Include any additional product customization if available
                 lens_index: (item as any).lens_index,
                 lens_coating: (item as any).lens_coating,

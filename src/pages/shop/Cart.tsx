@@ -33,7 +33,7 @@ const Cart: React.FC = () => {
         try {
             // Convert cart items to API format
             const cartItemsForCoupon: CartItemForCoupon[] = cartItems.map(item => ({
-                product_id: item.id,
+                product_id: (item as any).product_id ?? item.id,
                 quantity: item.quantity,
                 unit_price: Number(item.price || 0)
             }))

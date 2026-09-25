@@ -258,7 +258,7 @@ export const shippingOptions = [
   }
 ]
 
-// Payment Options
+// Payment Options — Stripe only
 export const paymentOptions = [
   {
     id: 'stripe',
@@ -267,26 +267,6 @@ export const paymentOptions = [
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-    )
-  },
-  {
-    id: 'paypal',
-    name: 'PayPal',
-    description: 'Pay with your PayPal account',
-    icon: (
-      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.105zm14.146-14.42a.915.915 0 0 0-.272-.725c-.266-.304-.66-.44-1.193-.44h-3.015c-.525 0-.968.382-1.05.9l-1.12 7.105h2.19c.524 0 .968-.382 1.05-.9l1.12-7.105c.082-.518.526-.9 1.05-.9h3.015c.525 0 .968.382 1.05.9l1.12 7.105h2.19c.524 0 .968-.382 1.05-.9l1.12-7.105z"/>
-      </svg>
-    )
-  },
-  {
-    id: 'cod',
-    name: 'Cash on Delivery',
-    description: 'Pay when you receive',
-    icon: (
-      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
     )
   }

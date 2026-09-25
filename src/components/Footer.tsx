@@ -131,18 +131,8 @@ const Footer: React.FC = () => {
                         </div>
                         <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2.5 text-sm text-slate-400 mb-6">
                             <li>
-                                <Link to="/our-history" className="hover:text-white transition-colors">
-                                    {t('whoWeAre.ourHistory')}
-                                </Link>
-                            </li>
-                            <li>
                                 <Link to="/our-technology" className="hover:text-white transition-colors">
                                     {t('whoWeAre.ourTechnology')}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link to="/join-us" className="hover:text-white transition-colors">
-                                    {t('whoWeAre.joinUs')}
                                 </Link>
                             </li>
                             <li>

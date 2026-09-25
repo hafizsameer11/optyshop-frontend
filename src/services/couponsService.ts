@@ -107,11 +107,36 @@ export const applyCoupon = async (
   );
 
   if (response.success && response.data) {
-    // The apiClient already extracts data.data || data, so response.data should be the CouponDiscount object
+    const raw: any = response.data;
+    // Backend returns { coupon: {...}, discount_amount, final_total, ... }
+    const nested = raw.coupon && typeof raw.coupon === 'object' ? raw.coupon : null;
+    const discountAmount = Number(
+      raw.discount_amount ?? nested?.discount_amount ?? 0
+    );
+    const originalTotal = Number(
+      raw.original_total ?? nested?.original_total ?? subtotal
+    );
+    const finalTotal = Number(
+      raw.final_total ??
+        nested?.final_total ??
+        Math.max(0, originalTotal - discountAmount)
+    );
+
+    const normalized: CouponDiscount = {
+      discount_amount: discountAmount,
+      discount_type:
+        raw.discount_type === 'fixed_amount'
+          ? 'fixed'
+          : raw.discount_type || nested?.discount_type,
+      discount_value: Number(raw.discount_value ?? nested?.discount_value ?? 0),
+      final_total: finalTotal,
+      original_total: originalTotal,
+    };
+
     if (import.meta.env.DEV) {
-      console.log('[Coupon Service] Coupon applied successfully:', response.data);
+      console.log('[Coupon Service] Coupon applied successfully:', normalized);
     }
-    return response.data;
+    return normalized;
   }
 
   // Log detailed error for debugging

@@ -156,8 +156,8 @@ export const createOrder = async (
   try {
     // Ensure cart_items are included - backend requires this
     // If cart_items not provided, try to use items from the request
-    // Payment method should be lowercase (stripe, paypal, cod) per Postman collection
-    const validPaymentMethods = ['stripe', 'paypal', 'cod'];
+    // Payment method: Stripe only
+    const validPaymentMethods = ['stripe'];
     let normalizedPaymentMethod = orderData.payment_method 
       ? orderData.payment_method.toLowerCase() 
       : 'stripe';
@@ -174,10 +174,10 @@ export const createOrder = async (
       ...orderData,
       // Use 'items' from orderData if provided, otherwise use 'cart_items'
       items: orderData.items || orderData.cart_items || [],
-      // Payment method should be lowercase (stripe, paypal, cod)
-      payment_method: normalizedPaymentMethod,
+      payment_method: 'stripe',
       // Include shipping_method_id if provided
       shipping_method_id: orderData.shipping_method_id,
+      coupon_code: orderData.coupon_code,
       // Addresses can be sent as objects (backend will handle JSON stringification)
       // Remove cart_items if items is provided to avoid confusion
       ...(orderData.items ? {} : { cart_items: orderData.cart_items || [] }),
@@ -190,6 +190,19 @@ export const createOrder = async (
       return null;
     }
 
+    // Ensure each item uses product_id (not cart line id)
+    const normalizeItems = (list: any[]) =>
+      (list || []).map((item) => ({
+        ...item,
+        product_id: item.product_id ?? item.productId ?? item.id,
+      }));
+    if (orderPayload.items?.length) {
+      orderPayload.items = normalizeItems(orderPayload.items);
+    }
+    if (orderPayload.cart_items?.length) {
+      orderPayload.cart_items = normalizeItems(orderPayload.cart_items);
+    }
+
     const response = await apiClient.post<Order>(
       API_ROUTES.ORDERS.CREATE,
       orderPayload,
@@ -197,7 +210,8 @@ export const createOrder = async (
     );
 
     if (response.success && response.data) {
-      return response.data;
+      const data: any = response.data;
+      return (data.order ?? data) as Order;
     }
 
     // Log error for debugging
@@ -237,8 +251,8 @@ export const createGuestOrder = async (
       return null;
     }
 
-    // Validate and normalize payment method
-    const validPaymentMethods = ['stripe', 'paypal', 'cod'];
+    // Validate and normalize payment method — Stripe only
+    const validPaymentMethods = ['stripe'];
     let guestPaymentMethod = (orderData.payment_info?.payment_method || orderData.payment_method || 'stripe').toLowerCase();
     if (!validPaymentMethods.includes(guestPaymentMethod)) {
       console.warn(`Invalid payment method: ${guestPaymentMethod}. Defaulting to 'stripe'.`);
@@ -485,7 +499,7 @@ export const trackOrderByNumber = async (
 
 export const cancelOrder = async (orderId: number | string): Promise<{ success: boolean; message?: string; data?: any }> => {
   try {
-    const response = await apiClient.post<{ 
+    const response = await apiClient.put<{ 
       success: boolean; 
       message: string; 
       data: { order: any } 
