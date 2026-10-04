@@ -7,18 +7,6 @@ import CartHeroSection from '../../components/shop/CartHeroSection'
 import { useCart } from '../../context/CartContext'
 import { applyCoupon, getAvailableCoupons, type CouponDiscount, type CartItemForCoupon, type Coupon } from '../../services/couponsService'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
-import type { CartItem } from '../../context/CartContext'
-
-const isAccessoryCartItem = (item: CartItem) => {
-    const type = String((item as any).product_type || (item as any).product?.product_type || '').toLowerCase()
-    const cat = String(item.category || '').toLowerCase()
-    return (
-        type === 'accessory' ||
-        cat === 'accessori' ||
-        cat.includes('accessori') ||
-        cat.includes('accessor')
-    )
-}
 
 const Cart: React.FC = () => {
     const { t } = useTranslation()
@@ -467,7 +455,7 @@ const Cart: React.FC = () => {
 
                                         {/* Quantity Controls */}
                                         <div className="flex items-center gap-4">
-                                            {!item.isGift && !isAccessoryCartItem(item) ? (
+                                            {!item.isGift ? (
                                                 <div className="flex items-center border border-gray-300 rounded-lg">
                                                     <button
                                                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -485,11 +473,11 @@ const Cart: React.FC = () => {
                                                         +
                                                     </button>
                                                 </div>
-                                            ) : item.isGift ? (
+                                            ) : (
                                                 <div className="flex items-center px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 text-sm font-medium">
                                                     Qty: {item.quantity}
                                                 </div>
-                                            ) : null}
+                                            )}
                                             <button
                                                 onClick={() => removeFromCart(item.id)}
                                                 className="text-red-600 hover:text-red-700 p-2"

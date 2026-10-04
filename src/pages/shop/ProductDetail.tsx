@@ -310,6 +310,7 @@ const ProductDetail = () => {
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const [selectedColor, setSelectedColor] = useState<string | null>(null) // For color_images support
     const [quantity] = useState(1)
+    const [accessoryQuantity, setAccessoryQuantity] = useState(1)
     const [showCheckout, setShowCheckout] = useState(false)
     const [isManuallySelectingImage, setIsManuallySelectingImage] = useState(false) // Track manual image selection
     const [showTryOn, setShowTryOn] = useState(false)
@@ -1175,6 +1176,7 @@ const ProductDetail = () => {
                     })
                 }
                 setProduct(productData)
+                setAccessoryQuantity(1)
                 setLoading(false)
 
                 // Related products load in background so the main product UI is not blocked
@@ -3658,7 +3660,12 @@ const ProductDetail = () => {
         try {
             // Size/volume UI uses variantQuantityRef; legacy eye hygiene uses eyeHygieneFormData.quantity
             const productQuantity = (() => {
-                if (isAccessory) return 1
+                if (isAccessory) {
+                    const stockCap = Number(product.stock_quantity)
+                    const qty = Math.max(1, Math.floor(Number(accessoryQuantity) || 1))
+                    if (Number.isFinite(stockCap) && stockCap > 0) return Math.min(qty, stockCap)
+                    return qty
+                }
                 if (isEyeHygiene && selectedSizeVolumeVariant) {
                     return Math.max(1, Math.floor(Number(variantQuantityRef.current) || 1))
                 }
@@ -6163,6 +6170,41 @@ const ProductDetail = () => {
                                         })() : (
                                             <>
                                                 <div className="flex flex-col gap-3 sm:gap-4">
+                                                    {isAccessory && !isProductOutOfStock && (
+                                                        <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                                                            <span className="text-sm font-semibold text-slate-700">
+                                                                {t('shop.quantity', 'Quantity')}
+                                                            </span>
+                                                            <div className="flex items-center border border-gray-300 rounded-lg">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setAccessoryQuantity((q) => Math.max(1, q - 1))}
+                                                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-lg leading-none"
+                                                                    aria-label="Decrease quantity"
+                                                                >
+                                                                    −
+                                                                </button>
+                                                                <span className="px-4 py-2 min-w-[3rem] text-center font-semibold tabular-nums">
+                                                                    {accessoryQuantity}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const stockCap = Number(product.stock_quantity)
+                                                                        setAccessoryQuantity((q) => {
+                                                                            const next = q + 1
+                                                                            if (Number.isFinite(stockCap) && stockCap > 0) return Math.min(next, stockCap)
+                                                                            return next
+                                                                        })
+                                                                    }}
+                                                                    className="px-3 py-2 hover:bg-gray-100 transition-colors text-lg leading-none"
+                                                                    aria-label="Increase quantity"
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     {isProductOutOfStock && (
                                                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
                                                             {t('shop.outOfStock', 'Out of Stock')} — {t('shop.notAvailableToOrder', 'This item is not available to order until stock is updated.')}
