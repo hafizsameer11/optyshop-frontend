@@ -19,7 +19,8 @@ export interface CartProduct {
     unit?: string // Unit for contact lenses (unit, box, pack)
     caliber?: string | number // Selected MM caliber for frames
     caliberImageUrl?: string // Image URL for selected caliber
-    type?: 'main_product' | 'eye_hygiene_variant' | 'contact_lens' // Product type for handling different displays
+    type?: 'main_product' | 'eye_hygiene_variant' | 'contact_lens' | 'accessory'
+    product_type?: string // Product type for handling different displays
     customization?: {
         contactLens?: {
             unit?: string
@@ -139,12 +140,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     const categorySlug = typeof productCategory === 'object'
                         ? (productCategory?.slug || productCategory?.name || 'eye-hygiene')
                         : (productCategory || (variantSubtitle ? 'eye-hygiene' : 'general'))
+                    const productType = String((item.product as any)?.product_type || '').toLowerCase()
 
                     return {
                     id: item.id,
                     name: item.is_gift ? `FREE GIFT: ${item.gift_product?.name || item.product?.name}` : (item.product?.name || 'Unknown Product'),
                     brand: variantSubtitle || (item.product as any)?.brand || '',
                     category: categorySlug,
+                    product_type: productType || undefined,
                     price: item.unit_price,
                     image: item.display_image || item.product?.image || '',
                     description: (item.product as any)?.description || '',

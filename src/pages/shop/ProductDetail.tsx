@@ -814,9 +814,24 @@ const ProductDetail = () => {
     const regularPriceNum = originalPrice || displayPrice
     const salePriceNum = hasValidSale ? displayPrice : null
 
+    const isAccessory = useMemo(() => {
+        if (!product) return false
+        const p = product as any
+        const type = String(p.product_type || '').toLowerCase()
+        const slug = String(product.category?.slug || '').toLowerCase()
+        const name = String(product.category?.name || '').toLowerCase()
+        return (
+            type === 'accessory' ||
+            slug === 'accessori' ||
+            slug.includes('accessori') ||
+            name.includes('accessori') ||
+            name.includes('accessor')
+        )
+    }, [product])
+
     // Check if product is eye hygiene (check category, subcategory, product_type, and variants)
     const isEyeHygiene = useMemo(() => {
-        if (!product) return false
+        if (!product || isAccessory) return false
         const p = product as any
         const categorySlug = product.category?.slug || ''
         const categoryName = product.category?.name || ''
@@ -860,7 +875,7 @@ const ProductDetail = () => {
         }
 
         return result
-    }, [product])
+    }, [product, isAccessory])
 
     const isContactLens = useMemo(() => {
         if (!product) return false
@@ -3643,6 +3658,7 @@ const ProductDetail = () => {
         try {
             // Size/volume UI uses variantQuantityRef; legacy eye hygiene uses eyeHygieneFormData.quantity
             const productQuantity = (() => {
+                if (isAccessory) return 1
                 if (isEyeHygiene && selectedSizeVolumeVariant) {
                     return Math.max(1, Math.floor(Number(variantQuantityRef.current) || 1))
                 }
@@ -3663,6 +3679,7 @@ const ProductDetail = () => {
                 name: product.name || '',
                 brand: getShopProductBrandLabel(product) || '',
                 category: product.category?.slug || 'eyeglasses',
+                product_type: (product as any).product_type,
                 price: displayPrice || 0,
                 image: getVariantSpecificImageUrl(product, selectedImageIndex), // Use variant-specific image (supports caliber images)
                 description: product.description || '',
@@ -5656,7 +5673,7 @@ const ProductDetail = () => {
                                     </div>
 
                                     {/* Eye Hygiene Fields Section - Variant Selector (New) or Legacy Form */}
-                                    {isEyeHygiene && (() => {
+                                    {isEyeHygiene && !isAccessory && (() => {
                                         const p = product as any
                                         // Check for variants - prioritize fetched variants, then check product object
                                         const variantsArray = fetchedVariants.length > 0
@@ -6093,7 +6110,7 @@ const ProductDetail = () => {
                                         )}
                                         {/* For Eye Hygiene: Only show Add to Cart button */}
                                         <>
-                                            {isEyeHygiene ? (() => {
+                                            {isEyeHygiene && !isAccessory ? (() => {
                                             const p = product as any
 
                                             // Check if product has variants - prioritize fetched variants, then check product object
