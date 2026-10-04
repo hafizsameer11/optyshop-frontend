@@ -44,7 +44,7 @@ export const API_ROUTES = {
     // MM Caliber endpoints
     CALIBERS: (id: number | string) => `/products/${id}/calibers`, // PUBLIC - Get product with caliber options
     // Section-specific endpoints (filters by product_type)
-    SECTION: (section: 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene') => `/products/section/${section}`, // PUBLIC - Get products by section
+    SECTION: (section: 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene' | 'accessories') => `/products/section/${section}`, // PUBLIC - Get products by section
   },
 
   // ============================================

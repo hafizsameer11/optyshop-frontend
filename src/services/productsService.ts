@@ -304,7 +304,7 @@ export interface ProductFilters {
 }
 
 // Product section types
-export type ProductSection = 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene';
+export type ProductSection = 'sunglasses' | 'eyeglasses' | 'contact-lenses' | 'eye-hygiene' | 'accessories';
 
 // ============================================
 // API Functions
@@ -615,6 +615,11 @@ export const getProductsBySection = async (
         break;
       case 'eye-hygiene':
         sectionFilters.category = 'eye-hygiene';
+        break;
+      case 'accessories':
+        // Live category slug is Italian "accessori" (e.g. /collections/accessori)
+        sectionFilters.category = 'accessori';
+        sectionFilters.product_type = 'accessory';
         break;
     }
     

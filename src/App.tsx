@@ -125,6 +125,8 @@ function App() {
                         <Route path="/shop/eyeglasses" element={<Products />} />
                         <Route path="/shop/contact-lenses" element={<Products />} />
                         <Route path="/shop/eye-hygiene" element={<Products />} />
+                        <Route path="/shop/accessories" element={<Products />} />
+                        <Route path="/shop/accessori" element={<Products />} />
                         {/* Collections: nested routes so `/collections/all` is not captured as categorySlug=all */}
                         <Route path="/collections">
                             <Route index element={<Navigate to="all" replace />} />

@@ -40,6 +40,7 @@ const Products: React.FC = () => {
         if (path.includes('/shop/eyeglasses')) return 'eyeglasses'
         if (path.includes('/shop/contact-lenses')) return 'contact-lenses'
         if (path.includes('/shop/eye-hygiene')) return 'eye-hygiene'
+        if (path.includes('/shop/accessories') || path.includes('/shop/accessori')) return 'accessories'
         return null
     }
 
@@ -113,6 +114,8 @@ const Products: React.FC = () => {
                 return t('shop.sectionContactLenses', 'Contact lenses')
             case 'eye-hygiene':
                 return t('shop.sectionEyeHygiene', 'Eye hygiene')
+            case 'accessories':
+                return t('shop.sectionAccessories', 'Accessories')
             default:
                 return t('shop.allProducts', 'All products')
         }
@@ -707,6 +710,15 @@ const Products: React.FC = () => {
                                 }`}
                         >
                             Eye Hygiene
+                        </Link>
+                        <Link
+                            to="/shop/accessories"
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200 ${currentSection === 'accessories'
+                                ? 'bg-blue-950 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                        >
+                            {t('navbar.accessories', 'Accessories')}
                         </Link>
                     </div>
                 </div>

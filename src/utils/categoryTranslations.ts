@@ -12,6 +12,9 @@ const categorySlugToTranslationKey: Record<string, string> = {
   'sunglasses': 'navbar.sunglasses',
   'contact-lenses': 'navbar.contactLenses',
   'eye-hygiene': 'navbar.eyeHygiene',
+  'accessories': 'navbar.accessories',
+  'accessory': 'navbar.accessories',
+  'accessori': 'navbar.accessories',
   }
 
 /**

@@ -932,13 +932,14 @@ const ProductDetail = () => {
         const productType = p.product_type || ''
         
         // Always show calibers for these product types
-        const frameProductTypes = ['sunglasses', 'eyeglasses', 'glasses', 'frames', 'eyewear']
+        const frameProductTypes = ['sunglasses', 'eyeglasses', 'glasses', 'frames', 'eyewear', 'frame']
         const isFrameProduct = frameProductTypes.includes(productType.toLowerCase())
+        const isAccessory = productType.toLowerCase() === 'accessory'
         
-        // Also show for any product that's not eye hygiene or contact lens
-        const shouldShow = !isEyeHygiene && !isContactLens
+        // Frames/sunglasses only — not eye hygiene, contact lens, or accessories
+        const shouldShow = !isEyeHygiene && !isContactLens && !isAccessory && isFrameProduct
         
-        const result = isFrameProduct || shouldShow
+        const result = shouldShow
         
         console.log('[ProductDetail] shouldShowCalibers calculation:', {
             productName: p.name,
@@ -6547,7 +6548,7 @@ const ProductDetail = () => {
             <Footer />
 
             {/* Checkout Modal - Only for non-contact lens and non-eye hygiene products */}
-            {showCheckout && product && !isContactLens && !isEyeHygiene && (
+            {showCheckout && product && !isContactLens && !isEyeHygiene && (product as any).product_type !== 'accessory' && (
                 <ProductCheckout
                     product={product}
                     onClose={() => {
