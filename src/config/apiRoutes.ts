@@ -261,6 +261,16 @@ export const API_ROUTES = {
     LIST: `/faqs`,                                       // PUBLIC
   },
 
+  // Contact Us locations (PUBLIC)
+  CONTACT_LOCATIONS: {
+    LIST: `/contact-locations`,                          // PUBLIC
+  },
+
+  // Footer social links (PUBLIC)
+  SOCIAL_LINKS: {
+    LIST: `/social-links`,                               // PUBLIC
+  },
+
   // ============================================
   // PAGES (PUBLIC)
   // ============================================

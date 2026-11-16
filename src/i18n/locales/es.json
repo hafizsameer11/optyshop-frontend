@@ -477,7 +477,8 @@
     "cart": "Carrito",
     "contact": "Contacto",
     "login": "Iniciar sesión",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "trackOrder": "Rastrear pedido"
   },
   "pages": {
     "virtualTest": {

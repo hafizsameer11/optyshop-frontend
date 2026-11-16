@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { submitContactForm } from '../../services/contactFormService'
+import { getContactLocations, type ContactLocation } from '../../services/contactLocationsService'
 
 const initialForm = {
     email: '',
@@ -29,6 +30,7 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string>('')
     const [submitSuccess, setSubmitSuccess] = useState(false)
+    const [locations, setLocations] = useState<ContactLocation[]>([])
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
     useEffect(() => {
@@ -36,6 +38,16 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
             formPanelRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
     }, [submitSuccess])
+
+    useEffect(() => {
+        if (isCompact) return
+        let cancelled = false
+        ;(async () => {
+            const data = await getContactLocations()
+            if (!cancelled) setLocations(data)
+        })()
+        return () => { cancelled = true }
+    }, [isCompact])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -303,120 +315,45 @@ const ContactFormSection: React.FC<ContactFormSectionProps> = ({ variant = 'defa
                         </h2>
 
                         <div className="space-y-8">
-                            {/* Europe */}
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">{t('contact.europe') || 'EUROPE'}</h3>
-                                <div className="space-y-3 text-gray-700">
-                                    <div>
-                                        <p className="font-semibold mb-1">{t('contact.headquarters') || 'Headquarters'}</p>
-                                        <p>209 Rue de l'Innovation</p>
-                                        <p>31670 Labège</p>
-                                        <p>France</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Phone</p>
-                                        <a href="tel:+33971007100" className="hover:text-blue-950">
-                                            +33 9 71 00 71 00
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Email</p>
-                                        <a href="mailto:contact@fittingbox.com" className="hover:text-blue-950">
-                                            contact@fittingbox.com
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-gray-300"></div>
-
-                            {/* North America */}
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">{t('contact.northAmerica') || 'NORTH AMERICA'}</h3>
-                                <div className="space-y-3 text-gray-700">
-                                    <div>
-                                        <p className="font-semibold mb-1">{t('contact.usSubsidiary') || 'US Subsidiary'}</p>
-                                        <p>19790 W Dixie Hwy, Suite 311</p>
-                                        <p>Aventura, FL 33180</p>
-                                        <p>USA</p>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Phone</p>
-                                        <a href="tel:+33971007100" className="hover:text-blue-950">
-                                            +33 9 71 00 71 00
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Email</p>
-                                        <a href="mailto:contactus@fittingbox.com" className="hover:text-blue-950">
-                                            contactus@fittingbox.com
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-gray-300"></div>
-
-                            {/* Customer Support */}
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">Customer Support</h3>
-                                <div className="space-y-3 text-gray-700">
-                                    <div>
-                                        <p className="font-semibold mb-1">Phone</p>
-                                        <a href="tel:+33971007140" className="hover:text-blue-950">
-                                            +33 9 71 00 71 40
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Email</p>
-                                        <a href="mailto:sales-cs@fittingbox.com" className="hover:text-blue-950">
-                                            sales-cs@fittingbox.com
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-gray-300"></div>
-
-                            {/* Billing */}
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">Billing</h3>
-                                <div className="space-y-3 text-gray-700">
-                                    <div>
-                                        <p className="font-semibold mb-1">Phone</p>
-                                        <a href="tel:+33971007100" className="hover:text-blue-950">
-                                            +33 9 71 00 71 00
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Email</p>
-                                        <a href="mailto:comptabilite@fittingbox.com" className="hover:text-blue-950">
-                                            comptabilite@fittingbox.com
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="h-px bg-gray-300"></div>
-
-                            {/* Marketing */}
-                            <div>
-                                <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">Marketing</h3>
-                                <div className="space-y-3 text-gray-700">
-                                    <div>
-                                        <p className="font-semibold mb-1">Phone</p>
-                                        <a href="tel:+33971007100" className="hover:text-blue-950">
-                                            +33 9 71 00 71 00
-                                        </a>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold mb-1">Email</p>
-                                        <a href="mailto:marketing@fittingbox.com" className="hover:text-blue-950">
-                                            marketing@fittingbox.com
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
+                            {locations.length === 0 ? (
+                                <p className="text-sm text-gray-500">Locations will appear here once added in the admin panel.</p>
+                            ) : (
+                                locations.map((loc, index) => {
+                                    const addressLines = (loc.address || "")
+                                        .split(/\r?\n/)
+                                        .map((line) => line.trim())
+                                        .filter(Boolean)
+                                    const phoneHref = loc.phone ? `tel:${loc.phone.replace(/\s+/g, "")}` : undefined
+                                    return (
+                                        <div key={loc.id}>
+                                            {index > 0 && <div className="h-px bg-gray-300 mb-8"></div>}
+                                            <h3 className="text-lg md:text-xl font-bold text-blue-950 mb-4">{loc.title}</h3>
+                                            <div className="space-y-3 text-gray-700">
+                                                {(loc.subtitle || addressLines.length > 0) && (
+                                                    <div>
+                                                        {loc.subtitle ? <p className="font-semibold mb-1">{loc.subtitle}</p> : null}
+                                                        {addressLines.map((line) => (
+                                                            <p key={line}>{line}</p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {loc.phone && (
+                                                    <div>
+                                                        <p className="font-semibold mb-1">Phone</p>
+                                                        <a href={phoneHref} className="hover:text-blue-950">{loc.phone}</a>
+                                                    </div>
+                                                )}
+                                                {loc.email && (
+                                                    <div>
+                                                        <p className="font-semibold mb-1">Email</p>
+                                                        <a href={`mailto:${loc.email}`} className="hover:text-blue-950">{loc.email}</a>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })
+                            )}
                         </div>
                     </div>
                     )}

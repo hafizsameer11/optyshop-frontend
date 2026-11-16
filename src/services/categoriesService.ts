@@ -8,12 +8,43 @@ import { API_ROUTES, buildQueryString } from '../config/apiRoutes';
 import type { Product } from './productsService';
 
 // Type definitions for category data
+/** Home/category embedded products — same shape ProductCard expects on shop listings */
 export interface CategoryProduct {
   id: number;
   name: string;
   slug: string;
-  price: string;
-  images: string; // JSON string array
+  sku?: string;
+  price: string | number;
+  compare_at_price?: string | number | null;
+  images?: string[] | string | null;
+  image?: string | null;
+  color_images?: any;
+  colors?: Array<{
+    name?: string;
+    display_name?: string;
+    value?: string;
+    hexCode?: string;
+    color?: string;
+    images?: string[];
+  }>;
+  frame_color?: string | null;
+  frame_shape?: string | null;
+  frame_material?: string | null;
+  gender?: string | null;
+  stock_status?: string;
+  stock_quantity?: number;
+  product_type?: string;
+  brand?: string | null;
+  contact_lens_brand?: string | null;
+  category?: { id?: number; name?: string; slug?: string } | null;
+  subCategory?: {
+    id?: number;
+    name?: string;
+    slug?: string;
+    parent_id?: number | null;
+    parent?: { id?: number; name?: string; slug?: string } | null;
+  } | null;
+  [key: string]: any;
 }
 
 export interface Category {

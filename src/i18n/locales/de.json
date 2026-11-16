@@ -542,6 +542,33 @@
     "sphere": "Sphäre",
     "cylinder": "Zyl.",
     "axis": "Achse"
+  },
+  "footer": {
+    "tagline": "The Digital Eyewear Company®",
+    "usefulLinks": "Nützliche Links",
+    "customerService": "Kundenservice",
+    "helpCenter": "Hilfezentrum",
+    "faq": "FAQ",
+    "siteMap": "Sitemap",
+    "generalTerms": "Allgemeine Bedingungen",
+    "corporate": "Unternehmen",
+    "whoWeAre": "Über uns",
+    "ourTechnology": "Unsere Technologie",
+    "joinUs": "Mitmachen",
+    "followUs": "Folge uns",
+    "contactUs": "Kontakt",
+    "copyright": "© OptiShop 2025",
+    "termsOfUse": "Nutzungsbedingungen",
+    "privacyLegal": "Datenschutz & Rechtliches",
+    "products": "Produkte",
+    "solutions": "Lösungen",
+    "resources": "Ressourcen",
+    "companyAndShop": "Unternehmen & Shop",
+    "shop": "Shop",
+    "cart": "Warenkorb",
+    "contact": "Kontakt",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "trackOrder": "Bestellung verfolgen"
   }
 }
-

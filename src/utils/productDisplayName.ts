@@ -22,18 +22,22 @@ export function isShopContactLensProduct(product: Product | null | undefined): b
 }
 
 /**
- * Eyebrow / card brand line: `brand`, then `contact_lens_brand`, then category name.
- * Returns null when nothing should be shown (avoids a fake "Brand" placeholder).
+ * Eyebrow / card brand line: `brand`, then `contact_lens_brand`.
+ * Never falls back to category — shop UI should show brand, not category.
  */
 export function getShopProductBrandLabel(product: Product | null | undefined): string | null {
     if (!product) return null
-    const p = product as Product & { contact_lens_brand?: string | null }
-    const b = typeof product.brand === 'string' ? product.brand.trim() : ''
-    if (b) return b
+    const p = product as Product & {
+        contact_lens_brand?: string | null
+        brand?: string | { name?: string | null } | null
+    }
+    if (typeof p.brand === 'string' && p.brand.trim()) return p.brand.trim()
+    if (p.brand && typeof p.brand === 'object' && typeof p.brand.name === 'string' && p.brand.name.trim()) {
+        return p.brand.name.trim()
+    }
     const cl = typeof p.contact_lens_brand === 'string' ? p.contact_lens_brand.trim() : ''
     if (cl) return cl
-    const cat = product.category?.name?.trim()
-    return cat || null
+    return null
 }
 
 /**

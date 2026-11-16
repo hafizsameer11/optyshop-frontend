@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useCart, type CartProduct } from '../../context/CartContext'
-import { useCategoryTranslation } from '../../utils/categoryTranslations'
 import {
     getProductBySlug,
     getRelatedProducts,
@@ -574,7 +573,6 @@ const ProductDetail = () => {
 
 
     // Check if product is a contact lens
-    const { menuCategoryLabel } = useCategoryTranslation()
 
     // Fetched variants from API
     const [fetchedVariants, setFetchedVariants] = useState<SizeVolumeVariant[]>([])
@@ -6019,10 +6017,10 @@ const ProductDetail = () => {
                                                     <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>
                                                 </div>
                                             )}
-                                            {product.category && (
+                                            {productBrandEyebrow && (
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Category</span>
-                                                    <span className="text-gray-700 font-semibold">{menuCategoryLabel(product.category)}</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">Brand</span>
+                                                    <span className="text-gray-700 font-semibold">{productBrandEyebrow}</span>
                                                 </div>
                                             )}
                                             {(() => {
@@ -6235,7 +6233,16 @@ const ProductDetail = () => {
                                                     </button>
 
                                                     <a
-                                                        href={`https://wa.me/3912345678?text=I'm interested in ${encodeURIComponent(product.name)}`}
+                                                        href={`https://wa.me/39096131376?text=${encodeURIComponent(
+                                                          [
+                                                            `Hi! I'm interested in this product:`,
+                                                            '',
+                                                            `*${product.name || ""}*`,
+                                                            `Price: € ${Number(displayPrice || product.price || 0).toFixed(2)}`,
+                                                            '',
+                                                            typeof window !== "undefined" ? window.location.href : "",
+                                                          ].join('\n')
+                                                        )}`}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/90 px-5 py-3.5 text-sm font-semibold text-emerald-900 transition-all duration-300 hover:border-emerald-300 hover:bg-emerald-100/90 sm:text-base"

@@ -1,7 +1,7 @@
 /**
  * Label for shop menu / category navigation.
- * Italian: optional admin `name_it`, else i18n slug map, else default `name`.
- * Other locales: primary `name` from admin (English catalog title).
+ * Italian prefers admin `name_it` when set; all locales then use i18n slug maps,
+ * then fall back to the catalog `name`.
  */
 export function getMenuCategoryLabel(
   category: { name: string; slug: string; name_it?: string | null },
@@ -12,8 +12,8 @@ export function getMenuCategoryLabel(
   if (code === 'it') {
     const it = category.name_it?.trim()
     if (it) return it
-    const t = translateBySlug(category)
-    if (t && t !== category.name) return t
   }
+  const translated = translateBySlug(category)
+  if (translated && translated.trim()) return translated
   return category.name || ''
 }
