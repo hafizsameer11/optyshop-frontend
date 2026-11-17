@@ -4448,29 +4448,32 @@ const ProductDetail = () => {
                                                 const p = product as any
 
                                                 if (selectedColor) {
-                                                    const selectedColorLower = (selectedColor || '').toLowerCase()
                                                     let colorOnly: string[] = []
                                                     // First try 'colors' array (preferred)
                                                     if (p.colors && Array.isArray(p.colors)) {
                                                         const colorData = p.colors.find((c: any) =>
-                                                            (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                            (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
-                                                            (c.name && c.name.toLowerCase() === selectedColorLower)
+                                                            contactLensColorEntryMatches(selectedColor, c as Record<string, unknown>)
                                                         )
-                                                        if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                            colorOnly = colorData.images.filter(Boolean)
+                                                        if (colorData) {
+                                                            if (Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                                colorOnly = colorData.images.filter(Boolean)
+                                                            } else if (typeof colorData.image === 'string' && colorData.image.trim()) {
+                                                                colorOnly = [colorData.image.trim()]
+                                                            }
                                                         }
                                                     }
 
                                                     // Fallback to 'color_images' array
                                                     if (colorOnly.length === 0 && product.color_images) {
                                                         const colorImage = product.color_images.find((ci: any) =>
-                                                            (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                            (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
-                                                            (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
-                                                        )
-                                                        if (colorImage && colorImage.images) {
-                                                            colorOnly = Array.isArray(colorImage.images) ? colorImage.images.filter(Boolean) : [colorImage.images]
+                                                            contactLensColorEntryMatches(selectedColor, ci as Record<string, unknown>)
+                                                        ) as any
+                                                        if (colorImage) {
+                                                            if (Array.isArray(colorImage.images) && colorImage.images.length > 0) {
+                                                                colorOnly = colorImage.images.filter(Boolean)
+                                                            } else if (typeof colorImage.image === 'string' && String(colorImage.image).trim()) {
+                                                                colorOnly = [String(colorImage.image).trim()]
+                                                            }
                                                         }
                                                     }
 
@@ -4487,8 +4490,8 @@ const ProductDetail = () => {
                                                             mainUrls = product.images.filter(Boolean)
                                                         }
                                                     }
-                                                    // Sidebar: normal product images only
-                                                    imagesArray = [...mainUrls]
+                                                    // Color selected → show all photos for that color in the sidebar
+                                                    imagesArray = colorOnly.length > 0 ? [...colorOnly] : [...mainUrls]
                                                 }
 
                                                 // Fallback to regular images if no color images or no color selected
@@ -5292,27 +5295,30 @@ const ProductDetail = () => {
                                                 imagesArray = [variantImageUrl]
                                             }
                                         } else if (selectedColor) {
-                                            const selectedColorLower = (selectedColor || '').toLowerCase()
                                             let colorOnly: string[] = []
                                             if (p.colors && Array.isArray(p.colors)) {
                                                 const colorData = p.colors.find((c: any) =>
-                                                    (c.value && c.value.toLowerCase() === selectedColorLower) ||
-                                                    (c.hexCode && String(c.hexCode).toLowerCase() === selectedColorLower) ||
-                                                    (c.name && c.name.toLowerCase() === selectedColorLower)
+                                                    contactLensColorEntryMatches(selectedColor, c as Record<string, unknown>)
                                                 )
-                                                if (colorData && colorData.images && Array.isArray(colorData.images) && colorData.images.length > 0) {
-                                                    colorOnly = colorData.images.filter(Boolean)
+                                                if (colorData) {
+                                                    if (Array.isArray(colorData.images) && colorData.images.length > 0) {
+                                                        colorOnly = colorData.images.filter(Boolean)
+                                                    } else if (typeof colorData.image === 'string' && colorData.image.trim()) {
+                                                        colorOnly = [colorData.image.trim()]
+                                                    }
                                                 }
                                             }
 
                                             if (colorOnly.length === 0 && product.color_images) {
                                                 const colorImage = product.color_images.find((ci: any) =>
-                                                    (ci.color && ci.color.toLowerCase() === selectedColorLower) ||
-                                                    (ci.name && ci.name.toLowerCase() === selectedColorLower) ||
-                                                    (ci.hexCode && String(ci.hexCode).toLowerCase() === selectedColorLower)
-                                                )
-                                                if (colorImage && colorImage.images) {
-                                                    colorOnly = Array.isArray(colorImage.images) ? colorImage.images.filter(Boolean) : [colorImage.images]
+                                                    contactLensColorEntryMatches(selectedColor, ci as Record<string, unknown>)
+                                                ) as any
+                                                if (colorImage) {
+                                                    if (Array.isArray(colorImage.images) && colorImage.images.length > 0) {
+                                                        colorOnly = colorImage.images.filter(Boolean)
+                                                    } else if (typeof colorImage.image === 'string' && String(colorImage.image).trim()) {
+                                                        colorOnly = [String(colorImage.image).trim()]
+                                                    }
                                                 }
                                             }
 
@@ -5329,8 +5335,8 @@ const ProductDetail = () => {
                                                     mainUrls = product.images.filter(Boolean)
                                                 }
                                             }
-                                            // Sidebar: normal product images only (never mix color photos here)
-                                            imagesArray = [...mainUrls]
+                                            // Color selected → sidebar shows ALL photos for that color
+                                            imagesArray = colorOnly.length > 0 ? [...colorOnly] : [...mainUrls]
                                         }
 
                                         // Fallback to regular images if no color images or no color selected
@@ -5355,13 +5361,11 @@ const ProductDetail = () => {
                                     // Ensure selectedImageIndex is within bounds
                                     const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
 
-                                    // Main viewer: color photo only after color click; otherwise normal gallery image
+                                    // Main viewer follows the sidebar gallery (all color images when a color is selected)
                                     const selectedImage =
                                         !isManuallySelectingImage && selectedEyeHygieneVariant
                                             ? getVariantSpecificImageUrl(product, selectedImageIndex)
-                                            : !isManuallySelectingImage && selectedColor
-                                              ? getVariantSpecificImageUrl(product, 0)
-                                              : imagesArray[safeSelectedIndex]
+                                            : imagesArray[safeSelectedIndex]
 
                                     return (
                                         <div className="flex gap-4 mb-6">
