@@ -1117,34 +1117,8 @@ const ProductDetail = () => {
                     if (import.meta.env.DEV) {
                         console.log('🎨 Color from URL parameter:', colorParam)
                     }
-                } else if (p.selectedColor) {
-                    // Use product's default selected color
-                    setSelectedColor(p.selectedColor)
-                    if (import.meta.env.DEV) {
-                        console.log('🎨 Using product default color:', p.selectedColor)
-                    }
-                } else if (!isContactLensProduct && p.colors && Array.isArray(p.colors) && p.colors.length > 0) {
-                    // Use first color from 'colors' array (preferred)
-                    const firstColor = p.colors[0]
-                    setSelectedColor(firstColor.value || firstColor.hexCode || firstColor.name)
-                    if (import.meta.env.DEV) {
-                        console.log('🎨 Auto-selected first color from colors array:', firstColor)
-                    }
-                } else if (!isContactLensProduct && productData.color_images && productData.color_images.length > 0) {
-                    // Fallback to first color from 'color_images' (API may use hexCode/name/color)
-                    const firstColor = productData.color_images[0] as any
-                    const firstVal =
-                        (typeof firstColor.value === 'string' && firstColor.value) ||
-                        (typeof firstColor.hexCode === 'string' && firstColor.hexCode) ||
-                        (typeof firstColor.hex_code === 'string' && firstColor.hex_code) ||
-                        (typeof firstColor.name === 'string' && firstColor.name) ||
-                        (typeof firstColor.color === 'string' && firstColor.color) ||
-                        null
-                    setSelectedColor(firstVal)
-                    if (import.meta.env.DEV) {
-                        console.log('🎨 Auto-selected first color from color_images:', firstVal, firstColor)
-                    }
                 } else {
+                    // Frames: normal gallery until user clicks a color
                     setSelectedColor(null)
                 }
 
@@ -3252,13 +3226,10 @@ const ProductDetail = () => {
                     }
                 }
             }
-            const combined =
-                colorUrls.length > 0 && isContactLens
-                    ? mergeUnique(colorUrls, mainUrls)
-                    : mergeUnique(mainUrls, colorUrls)
-            if (combined.length > 0) {
-                if (combined[imageIndex]) return combined[imageIndex]
-                return combined[0]
+            // Color click: show that color's picture(s). Sidebar keeps normal product images only.
+            if (colorUrls.length > 0) {
+                if (colorUrls[imageIndex]) return colorUrls[imageIndex]
+                return colorUrls[0]
             }
         }
 
@@ -4516,10 +4487,8 @@ const ProductDetail = () => {
                                                             mainUrls = product.images.filter(Boolean)
                                                         }
                                                     }
+                                                    // Sidebar: normal product images only
                                                     imagesArray = [...mainUrls]
-                                                    colorOnly.forEach((u) => {
-                                                        if (u && !imagesArray.includes(u)) imagesArray.push(u)
-                                                    })
                                                 }
 
                                                 // Fallback to regular images if no color images or no color selected
@@ -5360,10 +5329,8 @@ const ProductDetail = () => {
                                                     mainUrls = product.images.filter(Boolean)
                                                 }
                                             }
+                                            // Sidebar: normal product images only (never mix color photos here)
                                             imagesArray = [...mainUrls]
-                                            colorOnly.forEach((u) => {
-                                                if (u && !imagesArray.includes(u)) imagesArray.push(u)
-                                            })
                                         }
 
                                         // Fallback to regular images if no color images or no color selected
@@ -5381,18 +5348,20 @@ const ProductDetail = () => {
 
                                         // Ensure at least one image
                                         if (imagesArray.length === 0) {
-                                            imagesArray = [getColorSpecificImageUrl(product, 0)]
+                                            imagesArray = [getProductImageUrl(product, 0)]
                                         }
                                     }
 
                                     // Ensure selectedImageIndex is within bounds
                                     const safeSelectedIndex = imagesArray.length > 0 ? Math.min(selectedImageIndex, imagesArray.length - 1) : 0
-                                    
-                                    // Use regular product images by default
-                                    // Only use variant-specific images if user has explicitly selected a variant AND hasn't manually clicked a thumbnail
-                                    const selectedImage = !isManuallySelectingImage && selectedEyeHygieneVariant
-                                        ? getVariantSpecificImageUrl(product, selectedImageIndex)
-                                        : imagesArray[safeSelectedIndex]
+
+                                    // Main viewer: color photo only after color click; otherwise normal gallery image
+                                    const selectedImage =
+                                        !isManuallySelectingImage && selectedEyeHygieneVariant
+                                            ? getVariantSpecificImageUrl(product, selectedImageIndex)
+                                            : !isManuallySelectingImage && selectedColor
+                                              ? getVariantSpecificImageUrl(product, 0)
+                                              : imagesArray[safeSelectedIndex]
 
                                     return (
                                         <div className="flex gap-4 mb-6">
