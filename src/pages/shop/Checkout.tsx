@@ -43,11 +43,11 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([])
     const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
     const [shippingLoading, setShippingLoading] = useState(false)
-    const paymentMethod = 'stripe'
+    const paymentMethod = isStripeConfigured() ? 'stripe' : 'cod'
 
     useEffect(() => {
-        localStorage.setItem('selectedPaymentMethod', 'stripe')
-    }, [])
+        localStorage.setItem('selectedPaymentMethod', paymentMethod)
+    }, [paymentMethod])
     
     // Initialize form data from configuration
     const initializeFormData = () => {
@@ -232,16 +232,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         setIsProcessing(true)
         setError(null)
 
-        if (!isStripeConfigured()) {
-            setError(
-                t(
-                    'shop.stripeKeyMissingSubmit',
-                    'Add VITE_STRIPE_PUBLISHABLE_KEY to your environment to pay with Stripe.'
-                )
-            )
-            setIsProcessing(false)
-            return
-        }
+        // Stripe optional — COD / dummy checkout works without Stripe keys
 
         // Validate cart has items
         if (cartItems.length === 0) {
@@ -350,12 +341,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                     // No need to manually clear cart
                     
                     // If payment method is Stripe, redirect to payment page
-                    if (paymentMethod && paymentMethod.toLowerCase() === 'stripe') {
+                    if (paymentMethod && paymentMethod.toLowerCase() === 'stripe' && isStripeConfigured()) {
                         navigate(`/payment?orderId=${order.id}`)
                         return
                     }
                     
-                    // For other payment methods (PayPal, COD), show success
+                    // COD / dummy checkout
                     setOrderNumber(order.order_number)
                     setIsCompleted(true)
                 } else {
@@ -692,13 +683,11 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                     </Link>
                                     <button
                                         type="submit"
-                                        disabled={isProcessing || !isAuthenticated || !isStripeConfigured()}
+                                        disabled={isProcessing || !isAuthenticated}
                                         className="flex-1 rounded-xl bg-blue-950 px-6 py-3.5 font-semibold text-white shadow-md transition-all hover:bg-blue-900 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         {!isAuthenticated 
                                             ? 'Login to Place Order' 
-                                            : !isStripeConfigured()
-                                                ? t('shop.configureStripeFirst', 'Configure Stripe key first')
                                             : isProcessing 
                                                 ? 'Processing...' 
                                                 : `${t('shop.placeOrder', 'Place order')} (€${Number(getFinalTotal()).toFixed(2)})`}
@@ -901,12 +890,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                             {t('shop.paymentMethod', 'Payment Method')}
                                         </label>
                                         {!isStripeConfigured() && (
-                                            <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                                                <p className="font-medium">{t('shop.stripeKeyMissingTitle', 'Stripe is not configured')}</p>
-                                                <p className="mt-1 text-amber-800/90">
+                                            <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800">
+                                                <p className="font-medium">{t('shop.codPaymentTitle', 'Cash on delivery / test checkout')}</p>
+                                                <p className="mt-1 text-slate-600">
                                                     {t(
-                                                        'shop.stripeKeyMissingBody',
-                                                        'Add VITE_STRIPE_PUBLISHABLE_KEY (pk_test_… or pk_live_…) to your .env file and restart the dev server.'
+                                                        'shop.codPaymentHint',
+                                                        'Place your order now. Payment can be completed later or on delivery.'
                                                     )}
                                                 </p>
                                             </div>
