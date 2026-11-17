@@ -118,7 +118,7 @@ export const getShippingMethods = async (params?: {
         message: error?.message,
         response: error?.response,
         status: error?.response?.status,
-        url: error?.config?.url || url
+        url: error?.config?.url || API_ROUTES.SHIPPING_METHODS.LIST,
       });
     } else {
       console.error('Error fetching shipping methods:', error?.message || 'Unknown error');

@@ -78,12 +78,19 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                 const methods = await getShippingMethods()
                 if (methods && methods.length > 0) {
                     setShippingMethods(methods)
-                    // Auto-select free shipping if available, otherwise first method
-                    const freeShipping = methods.find(m => m.price === 0 || m.type === 'free')
-                    setSelectedShippingMethod(freeShipping || methods[0])
+                    // Prefer method chosen on cart, then free, then first active method
+                    const savedId = Number(localStorage.getItem('selectedShippingMethodId') || '')
+                    const fromCart =
+                        Number.isFinite(savedId) && savedId > 0
+                            ? methods.find((m) => m.id === savedId)
+                            : undefined
+                    const freeShipping = methods.find((m) => m.price === 0 || m.type === 'free')
+                    setSelectedShippingMethod(fromCart || freeShipping || methods[0])
                     console.log('✅ [API] Shipping methods loaded:', methods.length)
                 } else {
                     console.warn('⚠️ [API] No shipping methods available')
+                    setShippingMethods([])
+                    setSelectedShippingMethod(null)
                 }
             } catch (error) {
                 console.error('❌ [API] Error fetching shipping methods:', error)
@@ -188,6 +195,9 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
 
     // Calculate shipping price from selected shipping method
     const getShippingPrice = () => {
+        if (appliedCoupon?.discount_type === 'free_shipping') {
+            return 0
+        }
         if (selectedShippingMethod) {
             return Number(selectedShippingMethod.price || 0)
         }
@@ -236,6 +246,12 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
         // Validate cart has items
         if (cartItems.length === 0) {
             setError(t('checkout.emptyCartError'))
+            setIsProcessing(false)
+            return
+        }
+
+        if (shippingMethods.length > 0 && !selectedShippingMethod) {
+            setError(t('checkout.selectShipping', 'Please select a shipping method'))
             setIsProcessing(false)
             return
         }
@@ -323,7 +339,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                         country: getFieldValue('country'),
                     },
                     payment_method: (paymentMethod || 'stripe').toLowerCase(), // Backend expects lowercase (stripe, paypal, cod)
-                    shipping_method_id: selectedShippingMethod?.id,
+                    shipping_method_id: selectedShippingMethod?.id ?? undefined,
                     coupon_code: appliedCoupon ? couponCode : undefined,
                 }
 
@@ -836,7 +852,13 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                                             type="radio"
                                                             name="shipping-method"
                                                             checked={selectedShippingMethod?.id === method.id}
-                                                            onChange={() => setSelectedShippingMethod(method)}
+                                                            onChange={() => {
+                                                                setSelectedShippingMethod(method)
+                                                                localStorage.setItem(
+                                                                    'selectedShippingMethodId',
+                                                                    method.id.toString()
+                                                                )
+                                                            }}
                                                             className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                                                         />
                                                         <div className="flex-1 min-w-0">

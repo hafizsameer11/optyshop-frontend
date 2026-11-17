@@ -125,6 +125,9 @@ const Cart: React.FC = () => {
     }, [])
 
     const getShippingPrice = () => {
+        if (appliedCoupon?.discount_type === 'free_shipping') {
+            return 0
+        }
         if (selectedShippingMethod) {
             return Number(selectedShippingMethod.price || 0)
         }
@@ -141,8 +144,7 @@ const Cart: React.FC = () => {
 
     const getFinalTotal = () => {
         const subtotal = getSubtotal()
-        const shipping = selectedShippingMethod?.price || 0
-        return subtotal + shipping
+        return subtotal + getShippingPrice()
     }
 
     if (cartItems.length === 0) {

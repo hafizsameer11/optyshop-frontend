@@ -24,7 +24,7 @@ export interface ApplyCouponRequest {
 
 export interface CouponDiscount {
   discount_amount: number;
-  discount_type?: 'percentage' | 'fixed';
+  discount_type?: 'percentage' | 'fixed' | 'fixed_amount' | 'free_shipping';
   discount_value?: number;
   final_total: number;
   original_total: number;
