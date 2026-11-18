@@ -191,6 +191,30 @@ export function parseProductImagesArray(product: Product | null | undefined): st
  * Contact lens PDP: use admin "general images" (`product.images`) only, not legacy
  * `product.image` / `image_url` (often a wrong or variant pack shot). Falls back to {@link getProductImageUrl} if the gallery is empty.
  */
+/**
+ * Homepage / listing card image: always use general product gallery uploads.
+ * Never fall back to a color variant image (product.image may be polluted by legacy API).
+ */
+export function getListingProductImageUrl(product: Product, imageIndex: number = 0): string {
+    const urls = parseProductImagesArray(product)
+    if (urls.length > 0) {
+        const idx = Math.max(0, Math.min(imageIndex, urls.length - 1))
+        const p = { ...(product as unknown as Record<string, unknown>) }
+        p.images = urls
+        delete p.image
+        delete p.image_url
+        delete p.thumbnail
+        delete p.primary_image
+        delete p.main_image
+        delete p.product_image
+        delete p.photo
+        delete p.photo_url
+        delete p.image_path
+        return getProductImageUrl(p as unknown as Product, idx)
+    }
+    return getProductImageUrl(product, imageIndex)
+}
+
 export function getContactLensMainGalleryImageUrl(product: Product, imageIndex: number = 0): string {
     const urls = parseProductImagesArray(product)
     if (urls.length === 0) {

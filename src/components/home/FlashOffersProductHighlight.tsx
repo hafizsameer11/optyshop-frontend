@@ -5,7 +5,7 @@ import type { FlashOffer } from '../../services/flashOffersService'
 import { getFlashOffers } from '../../services/flashOffersService'
 import type { Product } from '../../services/productsService'
 import { getProductById } from '../../services/productsService'
-import { getProductImageUrl } from '../../utils/productImage'
+import { getListingProductImageUrl } from '../../utils/productImage'
 import { getProductDisplayName } from '../../utils/productDisplayName'
 import { flashDiscountBadgeLabel, resolveFlashOfferCtaPath } from '../../utils/flashOfferDisplay'
 import { prefetchFlashOfferShopIntent } from '../../utils/flashOfferShopIntentPrefetch'
@@ -136,7 +136,7 @@ const FlashOffersProductHighlight: React.FC = () => {
 
     const cardImage = (offer: FlashOffer, product: Product | null) => {
         if (product) {
-            return getProductImageUrl(product)
+            return getListingProductImageUrl(product)
         }
         if (offer.image_url?.trim()) {
             return offer.image_url.trim()

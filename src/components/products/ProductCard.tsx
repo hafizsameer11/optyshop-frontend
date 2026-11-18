@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
-import { getProductImageUrl } from '../../utils/productImage'
+import { getListingProductImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel, isShopContactLensProduct } from '../../utils/productDisplayName'
 import { contactLensColorDisplayLabel, normalizeHexKey } from '../../utils/contactLensColorDisplay'
 import { normalizeProductSubcategory, type Product } from '../../services/productsService'
@@ -233,12 +233,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     const isContactLensCard = isShopContactLensProduct(product)
 
     const baseListingImage = React.useMemo(() => {
-        let img = getProductImageUrl(product)
-        if (!isContactLensCard && firstCaliber && firstCaliber.image_url) {
-            img = firstCaliber.image_url
-        }
-        return img
-    }, [product, firstCaliber, isContactLensCard])
+        // Always the admin "top" general gallery image — never color or caliber variants
+        return getListingProductImageUrl(product)
+    }, [product])
 
     const handleWishlistToggle = (e: React.MouseEvent) => {
         e.preventDefault()

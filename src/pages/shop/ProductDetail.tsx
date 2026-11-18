@@ -3000,6 +3000,11 @@ const ProductDetail = () => {
     const isProductOutOfStock = useMemo(() => {
         if (!product) return false
 
+        // Selected color with its own stock takes priority (frames / sunglasses)
+        if (selectedColorVariant && (selectedColorVariant as any).stock_quantity != null) {
+            return isOutOfStock(selectedColorVariant as any)
+        }
+
         // Selected MM caliber with its own stock_quantity takes priority for frames
         if (selectedCaliber && selectedCaliber.stock_quantity != null && selectedCaliber.stock_quantity !== undefined) {
             if (isOutOfStock(selectedCaliber)) return true
@@ -3031,7 +3036,7 @@ const ProductDetail = () => {
         }
 
         return isOutOfStock(product as any)
-    }, [product, isContactLens, fetchedVariants, selectedSizeVolumeVariant, selectedEyeHygieneVariant, selectedCaliber, isEyeHygiene])
+    }, [product, isContactLens, fetchedVariants, selectedSizeVolumeVariant, selectedEyeHygieneVariant, selectedCaliber, selectedColorVariant, isEyeHygiene])
 
     // Debug: Log when selected variant changes (for development)
     useEffect(() => {
@@ -4155,6 +4160,8 @@ const ProductDetail = () => {
                                                         value: ci.value || ci.hexCode || ci.color,
                                                         hexCode: ci.hexCode || '#E5E5E5',
                                                         price: ci.price,
+                                                        stock_quantity: ci.stock_quantity,
+                                                        stock_status: ci.stock_status,
                                                         images: ci.images || []
                                                     }))
                                                     : [])
@@ -4165,6 +4172,13 @@ const ProductDetail = () => {
                                                 <div className="mb-4">
                                                     <label className="block text-sm font-semibold text-blue-950 mb-2">
                                                         {t('shop.selectColor', 'Select Color')}
+                                                        {selectedColorVariant && (selectedColorVariant as any).stock_quantity != null && (
+                                                            <span className={`ml-2 text-xs font-medium ${Number((selectedColorVariant as any).stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                {Number((selectedColorVariant as any).stock_quantity) > 0
+                                                                    ? t('shop.piecesAvailable', '{{count}} available', { count: Number((selectedColorVariant as any).stock_quantity) })
+                                                                    : t('shop.outOfStock', 'Out of stock')}
+                                                            </span>
+                                                        )}
                                                     </label>
                                                     <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
                                                         {colorsArray.map((color: any, index: number) => {

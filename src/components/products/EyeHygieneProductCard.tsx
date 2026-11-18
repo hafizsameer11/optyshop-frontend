@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useWishlist } from '../../context/WishlistContext'
-import { getProductImageUrl } from '../../utils/productImage'
+import { getListingProductImageUrl } from '../../utils/productImage'
 import { getShopProductBrandLabel } from '../../utils/productDisplayName'
 import type { Product } from '../../services/productsService'
 import { isOutOfStock as checkOutOfStock } from '../../utils/stock'
@@ -45,7 +45,7 @@ const EyeHygieneProductCard: React.FC<EyeHygieneProductCardProps> = ({
                 <Link to={`/shop/product/${product.slug || product.id}`} className="block h-full">
                     <div className="flex h-full w-full items-center justify-center bg-white p-3 sm:p-4">
                         <img
-                            src={getProductImageUrl(product)}
+                            src={getListingProductImageUrl(product)}
                             alt={product.name}
                             loading="lazy"
                             decoding="async"
