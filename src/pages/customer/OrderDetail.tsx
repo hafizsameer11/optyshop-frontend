@@ -396,10 +396,64 @@ const OrderDetail: React.FC = () => {
                               </div>
                             )}
 
-                            {/* Other customizations */}
-                            {item.customization && !item.customization.contactLens && !item.contact_lens_right_qty && (
-                              <p className="text-xs text-gray-500">Customization: {JSON.stringify(item.customization)}</p>
-                            )}
+                            {/* Frame / color / size customization */}
+                            {(() => {
+                              let custom: any = item.customization
+                              if (!custom) return null
+                              if (typeof custom === 'string') {
+                                try { custom = JSON.parse(custom) } catch { return null }
+                              }
+                              if (custom.contactLens || item.contact_lens_right_qty) return null
+
+                              const colorName =
+                                custom.color_display_name ||
+                                custom.color_name ||
+                                custom.selected_color ||
+                                custom.color ||
+                                null
+                              const hex =
+                                custom.hex_code ||
+                                (typeof custom.selected_color === 'string' && custom.selected_color.startsWith('#')
+                                  ? custom.selected_color
+                                  : null)
+                              const size =
+                                custom.selected_mm_caliber ||
+                                custom.size_volume ||
+                                custom.variant_display_name ||
+                                null
+                              const pack = custom.pack_type || null
+
+                              if (!colorName && !size && !pack && !hex) return null
+
+                              return (
+                                <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                  {colorName && (
+                                    <div className="flex items-center gap-2">
+                                      {hex && (
+                                        <span
+                                          className="inline-block w-3.5 h-3.5 rounded-full border border-gray-300"
+                                          style={{ backgroundColor: String(hex) }}
+                                          aria-hidden
+                                        />
+                                      )}
+                                      <span>
+                                        {t('orders.color', { defaultValue: 'Color' })}: <span className="font-medium text-gray-800 capitalize">{String(colorName)}</span>
+                                      </span>
+                                    </div>
+                                  )}
+                                  {size && (
+                                    <div>
+                                      {t('orders.size', { defaultValue: 'Size' })}: <span className="font-medium text-gray-800">{String(size)}{custom.selected_mm_caliber ? 'mm' : ''}</span>
+                                    </div>
+                                  )}
+                                  {pack && (
+                                    <div>
+                                      {t('orders.pack', { defaultValue: 'Pack' })}: <span className="font-medium text-gray-800">{String(pack)}</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })()}
                           </div>
                         </div>
                         <div className="text-right">

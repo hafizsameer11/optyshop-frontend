@@ -237,7 +237,16 @@ class ApiClient {
         cache: 'no-store', // Prevent browser caching
       });
 
-      return await this.handleResponse<T>(response);
+      const result = await this.handleResponse<T>(response);
+      if (result.error === 'TOKEN_REFRESHED') {
+        const retry = await fetch(url, {
+          method: 'GET',
+          headers: this.buildHeaders(requireAuth),
+          cache: 'no-store',
+        });
+        return await this.handleResponse<T>(retry); // TOKEN_REFRESHED_RETRY
+      }
+      return result;
     } catch (error: any) {
       if (import.meta.env.DEV) {
         console.error(`[API] GET Error:`, error);
@@ -278,7 +287,16 @@ class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      return await this.handleResponse<T>(response);
+      const result = await this.handleResponse<T>(response);
+      if (result.error === 'TOKEN_REFRESHED') {
+        const retry = await fetch(url, {
+          method: 'POST',
+          headers: this.buildHeaders(requireAuth),
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        return await this.handleResponse<T>(retry); // TOKEN_REFRESHED_RETRY
+      }
+      return result;
     } catch (error: any) {
       if (import.meta.env.DEV) {
         console.error(`[API] POST Error:`, error);

@@ -157,15 +157,15 @@ export const createOrder = async (
     // Ensure cart_items are included - backend requires this
     // If cart_items not provided, try to use items from the request
     // Payment method: Stripe only
-    const validPaymentMethods = ['stripe'];
+    const validPaymentMethods = ['stripe', 'cod', 'paypal', 'card', 'credit_card', 'dummy'];
     let normalizedPaymentMethod = orderData.payment_method 
-      ? orderData.payment_method.toLowerCase() 
-      : 'stripe';
+      ? String(orderData.payment_method).toLowerCase() 
+      : 'cod';
     
     // Validate payment method
     if (!validPaymentMethods.includes(normalizedPaymentMethod)) {
-      console.warn(`Invalid payment method: ${normalizedPaymentMethod}. Defaulting to 'stripe'.`);
-      normalizedPaymentMethod = 'stripe';
+      console.warn(`Invalid payment method: ${normalizedPaymentMethod}. Defaulting to 'cod'.`);
+      normalizedPaymentMethod = 'cod';
     }
 
     // Backend accepts addresses as objects (will be JSON stringified automatically)
@@ -174,7 +174,7 @@ export const createOrder = async (
       ...orderData,
       // Use 'items' from orderData if provided, otherwise use 'cart_items'
       items: orderData.items || orderData.cart_items || [],
-      payment_method: 'stripe',
+      payment_method: normalizedPaymentMethod,
       // Include shipping_method_id if provided
       shipping_method_id: orderData.shipping_method_id,
       coupon_code: orderData.coupon_code,

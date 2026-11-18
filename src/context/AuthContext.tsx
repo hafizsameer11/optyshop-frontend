@@ -51,6 +51,15 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+export function unwrapAuthUser(data: any): User | null {
+  if (!data || typeof data !== 'object') return null
+  if (data.user && typeof data.user === 'object' && (data.user.email || data.user.id)) {
+    return data.user as User
+  }
+  if (data.email || data.id) return data as User
+  return null
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,11 +97,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
 
       if (response.success && response.data) {
-        setUser(response.data);
+        const me = unwrapAuthUser(response.data);
+        if (me) {
+          setUser(me);
+        } else {
+          // Keep session tokens; malformed payload should not log the user out
+          console.warn('Unexpected /auth/me payload shape', response.data);
+        }
+      } else if (response.error === 'TOKEN_REFRESHED') {
+        // Retry once after refresh
+        const retry = await apiClient.get<User>(API_ROUTES.AUTH.ME, true);
+        const me = unwrapAuthUser(retry.data);
+        if (retry.success && me) setUser(me);
       } else {
-        // Token might be invalid, clear it
-        apiClient.clearTokens();
-        setUser(null);
+        // Only clear when we truly have no usable session
+        const stillHasToken = !!localStorage.getItem('access_token') || !!localStorage.getItem('refresh_token');
+        if (!stillHasToken) {
+          setUser(null);
+        } else if (!response.success) {
+          // Soft-fail: do not wipe tokens on transient ME failures while browsing
+          console.warn('Auth check failed without clearing session', response.message || response.error);
+        }
       }
     } catch (error: any) {
       // Check if it's a 401 (unauthorized) - token expired
@@ -284,7 +309,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await apiClient.put<User>(API_ROUTES.AUTH.PROFILE, data, true);
       if (response.success && response.data) {
-        setUser(response.data);
+        const me = unwrapAuthUser(response.data) || (response.data as User);
+        setUser(me);
         return { success: true };
       } else {
         return { success: false, message: response.message || 'Profile update failed' };
@@ -317,7 +343,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
-    isAuthenticated: !!user,
+    isAuthenticated: !!(user && (user.id || user.email)),
     isLoading,
     login,
     register,

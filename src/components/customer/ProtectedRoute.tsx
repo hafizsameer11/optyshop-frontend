@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 interface ProtectedRouteProps {
@@ -9,6 +9,8 @@ interface ProtectedRouteProps {
 /** Auth gate only. Use with AccountLayout for /account routes; pages like Payment use this without a shell layout. */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, isLoading } = useAuth()
+  const location = useLocation()
+  const returnTo = `${location.pathname}${location.search || ''}`
 
   if (isLoading) {
     return (
@@ -18,11 +20,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     )
   }
 
-  if (!user) {
-    return <Navigate to="/login" replace />
+  if (!user || !(user.id || user.email)) {
+    return <Navigate to={`/login?redirect=${encodeURIComponent(returnTo || '/account/orders')}`} replace />
   }
 
-  if (user.role !== 'customer') {
+  // Allow customers (and users without an explicit role) into account pages
+  if (user.role && user.role !== 'customer') {
     return <Navigate to="/" replace />
   }
 

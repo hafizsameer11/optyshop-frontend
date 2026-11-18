@@ -24,6 +24,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
     const [isProcessing, setIsProcessing] = useState(false)
     const [isCompleted, setIsCompleted] = useState(false)
     const [orderNumber, setOrderNumber] = useState<string | null>(null)
+    const [completedOrderId, setCompletedOrderId] = useState<number | null>(null)
     const [error, setError] = useState<string | null>(null)
     
     // Redirect to login if not authenticated
@@ -348,6 +349,7 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                     
                     // COD / dummy checkout
                     setOrderNumber(order.order_number)
+                    setCompletedOrderId(order.id ?? null)
                     setIsCompleted(true)
                 } else {
                     setError('Failed to create order. Please try again.')
@@ -546,10 +548,10 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                 )}
                                 {isAuthenticated && (
                                     <Link
-                                        to="/account/orders"
+                                        to={completedOrderId ? `/account/orders/${completedOrderId}` : '/account/orders'}
                                         className="inline-block px-8 py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors duration-300"
                                     >
-                                        View Orders
+                                        {completedOrderId ? 'View Order' : 'View Orders'}
                                     </Link>
                                 )}
                                 <Link
