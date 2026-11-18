@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import CartHeroSection from '../../components/shop/CartHeroSection'
-import { useCart } from '../../context/CartContext'
+import { useCart, getCartItemMaxQuantity } from '../../context/CartContext'
 import { applyCoupon, getAvailableCoupons, type CouponDiscount, type CartItemForCoupon, type Coupon } from '../../services/couponsService'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 
@@ -469,8 +469,20 @@ const Cart: React.FC = () => {
                                                         {item.quantity}
                                                     </span>
                                                     <button
-                                                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                        className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const max = getCartItemMaxQuantity(item)
+                                                            if (max != null && item.quantity >= max) {
+                                                                alert(`Disponibili solo ${max} pezzi.`)
+                                                                return
+                                                            }
+                                                            updateQuantity(item.id, item.quantity + 1)
+                                                        }}
+                                                        disabled={(() => {
+                                                            const max = getCartItemMaxQuantity(item)
+                                                            return max != null && item.quantity >= max
+                                                        })()}
+                                                        className="px-3 py-2 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                                     >
                                                         +
                                                     </button>

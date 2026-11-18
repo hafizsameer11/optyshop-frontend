@@ -62,6 +62,61 @@ export interface CartItem extends CartProduct {
     quantity: number
 }
 
+function normColorKey(v: unknown): string {
+    const s = String(v ?? '').trim().toLowerCase()
+    return s.startsWith('#') ? s.slice(1) : s
+}
+
+function resolveColorStockFromProduct(product: any, selectedColor: unknown): number | null {
+    if (!product || selectedColor == null || String(selectedColor).trim() === '') return null
+    let colorImages = product.color_images
+    if (typeof colorImages === 'string') {
+        try { colorImages = JSON.parse(colorImages) } catch { colorImages = [] }
+    }
+    if (!Array.isArray(colorImages)) colorImages = colorImages ? [colorImages] : []
+    const selectedKey = normColorKey(selectedColor)
+    const match = colorImages.find((c: any) => {
+        const hex = c.hexCode || c.hex_code || null
+        return (hex && normColorKey(hex) === selectedKey) ||
+            (c.color && normColorKey(c.color) === selectedKey) ||
+            (c.name && normColorKey(c.name) === selectedKey) ||
+            (c.value && normColorKey(c.value) === selectedKey) ||
+            (c.display_name && normColorKey(c.display_name) === selectedKey)
+    })
+    if (!match) return null
+    if (match.stock_status === 'out_of_stock') return 0
+    if (match.stock_quantity != null && match.stock_quantity !== '') {
+        const n = Number(match.stock_quantity)
+        if (!Number.isNaN(n)) return Math.max(0, Math.floor(n))
+    }
+    return null
+}
+
+/** Max qty allowed for a cart line (color stock wins over product stock). */
+function getCartItemMaxQuantity(item: CartItem | CartProduct | any): number | null {
+    const custom = item?.customization || null
+    if (custom?.color_stock_quantity != null && custom.color_stock_quantity !== '') {
+        const n = Number(custom.color_stock_quantity)
+        if (!Number.isNaN(n)) return Math.max(0, Math.floor(n))
+    }
+    const fromColor = resolveColorStockFromProduct(
+        (item as any)?.product,
+        custom?.selected_color || custom?.hex_code || custom?.color_name
+    )
+    if (fromColor != null) return fromColor
+    if (custom?.stock_quantity != null && custom.stock_quantity !== '') {
+        const n = Number(custom.stock_quantity)
+        if (!Number.isNaN(n)) return Math.max(0, Math.floor(n))
+    }
+    const productStock = (item as any)?.product?.stock_quantity ?? (item as any)?.stock_quantity
+    if (productStock != null && productStock !== '') {
+        const n = Number(productStock)
+        if (!Number.isNaN(n)) return Math.max(0, Math.floor(n))
+    }
+    return null
+}
+
+
 interface CartContextType {
     cartItems: CartItem[]
     addToCart: (product: CartProduct) => void
@@ -75,6 +130,8 @@ interface CartContextType {
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
+
+export { getCartItemMaxQuantity }
 
 export const useCart = () => {
     const context = useContext(CartContext)
@@ -142,6 +199,23 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                         : (productCategory || (variantSubtitle ? 'eye-hygiene' : 'general'))
                     const productType = String((item.product as any)?.product_type || '').toLowerCase()
 
+                    const enrichedCustomization = customization
+                        ? { ...customization }
+                        : null
+                    if (enrichedCustomization && enrichedCustomization.color_stock_quantity == null) {
+                        const resolved = resolveColorStockFromProduct(
+                            item.product,
+                            enrichedCustomization.selected_color || enrichedCustomization.hex_code || enrichedCustomization.color_name
+                        )
+                        if (resolved != null) enrichedCustomization.color_stock_quantity = resolved
+                    }
+                    const maxStock = getCartItemMaxQuantity({
+                        customization: enrichedCustomization,
+                        product: item.product,
+                        stock_quantity: (item.product as any)?.stock_quantity,
+                    } as any)
+                    const safeQty = maxStock != null ? Math.min(Number(item.quantity) || 1, maxStock) : item.quantity
+
                     return {
                     id: item.id,
                     name: item.is_gift ? `FREE GIFT: ${item.gift_product?.name || item.product?.name}` : (item.product?.name || 'Unknown Product'),
@@ -152,10 +226,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     image: item.display_image || item.product?.image || '',
                     description: (item.product as any)?.description || '',
                     inStock: true,
-                    quantity: item.quantity,
+                    quantity: safeQty,
                     isGift: item.is_gift,
                     gift_product: item.gift_product,
-                    customization,
+                    customization: enrichedCustomization,
                     // Store additional data for API operations
                     ...(item as any),
                     // Prefer real product id after spread (cart line id must stay on `id` for update/remove)
@@ -190,20 +264,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                 } else {
                     throw new Error(result.message || 'Failed to add item to cart')
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error adding item to backend cart:', error)
-                // Fallback to local storage
-                setCartItems(prevItems => {
-                    const existingItem = prevItems.find(item => item.id === product.id)
-                    if (existingItem) {
-                        return prevItems.map(item =>
-                            item.id === product.id
-                                ? { ...item, quantity: item.quantity + 1 }
-                                : item
-                        )
-                    }
-                    return [...prevItems, { ...product, quantity: 1 }]
-                })
+                const msg = error?.message || 'Impossibile aggiungere al carrello'
+                alert(msg)
+                // Do not locally bump qty on API stock/auth failures
             } finally {
                 setIsLoading(false)
             }
@@ -212,13 +277,21 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
             setCartItems(prevItems => {
                 const existingItem = prevItems.find(item => item.id === product.id)
                 if (existingItem) {
+                    const max = getCartItemMaxQuantity(existingItem)
+                    if (max != null && existingItem.quantity >= max) {
+                        alert(`Disponibili solo ${max} pezzi.`)
+                        return prevItems
+                    }
                     return prevItems.map(item =>
                         item.id === product.id
                             ? { ...item, quantity: item.quantity + 1 }
                             : item
                     )
                 }
-                return [...prevItems, { ...product, quantity: 1 }]
+                const max = getCartItemMaxQuantity(product)
+                const startQty = Math.max(1, Math.floor(Number(product.quantity) || 1))
+                const qty = max != null ? Math.min(startQty, max) : startQty
+                return [...prevItems, { ...product, quantity: qty }]
             })
         }
     }
@@ -258,8 +331,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         if (isAuthenticated) {
             try {
                 setIsLoading(true)
+                const current = cartItems.find(item => item.id === productId)
+                const max = current ? getCartItemMaxQuantity(current) : null
+                let nextQty = quantity
+                if (max != null && nextQty > max) {
+                    alert(`Disponibili solo ${max} pezzi.`)
+                    nextQty = max
+                }
                 // Update in backend cart
-                const result = await updateCartItem(productId, quantity)
+                const result = await updateCartItem(productId, nextQty)
                 
                 if (result.success) {
                     // Sync cart to get updated items
@@ -267,23 +347,26 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                 } else {
                     throw new Error(result.message || 'Failed to update cart item')
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error updating cart item in backend:', error)
-                // Fallback to local storage
-                setCartItems(prevItems =>
-                    prevItems.map(item =>
-                        item.id === productId ? { ...item, quantity } : item
-                    )
-                )
+                const msg = error?.message || 'Impossibile aggiornare la quantità'
+                alert(msg)
+                await syncCart()
             } finally {
                 setIsLoading(false)
             }
         } else {
             // Use local storage for non-authenticated users
             setCartItems(prevItems =>
-                prevItems.map(item =>
-                    item.id === productId ? { ...item, quantity } : item
-                )
+                prevItems.map(item => {
+                    if (item.id !== productId) return item
+                    const max = getCartItemMaxQuantity(item)
+                    const next = max != null ? Math.min(quantity, max) : quantity
+                    if (max != null && quantity > max) {
+                        alert(`Disponibili solo ${max} pezzi.`)
+                    }
+                    return { ...item, quantity: next }
+                })
             )
         }
     }
