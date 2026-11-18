@@ -179,16 +179,23 @@ export const getCampaigns = async (activeOnly: boolean = true, position?: string
       // This ensures campaigns with is_active=true are shown regardless of date ranges
       let filteredCampaigns = campaigns;
       if (activeOnly) {
+        const now = Date.now();
         filteredCampaigns = campaigns.filter((campaign) => {
-          const isActive = campaign.is_active === true;
-          if (import.meta.env.DEV && !isActive) {
-            console.log(`   ❌ Campaign "${campaign.name}" (id: ${campaign.id}) filtered out - is_active: ${campaign.is_active}`);
+          if (campaign.is_active !== true) {
+            if (import.meta.env.DEV) {
+              console.log(`   ❌ Campaign "${campaign.name}" (id: ${campaign.id}) filtered out - is_active: ${campaign.is_active}`);
+            }
+            return false;
           }
-          return isActive;
+          const start = (campaign as any).starts_at || (campaign as any).start_date || (campaign as any).valid_from;
+          const end = (campaign as any).ends_at || (campaign as any).end_date || (campaign as any).valid_until;
+          if (start && new Date(start).getTime() > now) return false;
+          if (end && new Date(end).getTime() < now) return false;
+          return true;
         });
         
         if (import.meta.env.DEV) {
-          console.log(`🔍 Active filter: ${campaigns.length} → ${filteredCampaigns.length} campaigns (filtered by is_active flag only)`);
+          console.log(`🔍 Active filter: ${campaigns.length} → ${filteredCampaigns.length} campaigns (is_active + date window)`);
         }
       }
       

@@ -227,7 +227,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
                     description: (item.product as any)?.description || '',
                     inStock: true,
                     quantity: safeQty,
-                    isGift: item.is_gift,
+                    isGift: !!(item.is_gift || (enrichedCustomization as any)?.is_gift),
                     gift_product: item.gift_product,
                     customization: enrichedCustomization,
                     // Store additional data for API operations
