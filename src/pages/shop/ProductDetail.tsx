@@ -4201,13 +4201,7 @@ const ProductDetail = () => {
                                                 <div className="mb-4">
                                                     <label className="block text-sm font-semibold text-blue-950 mb-2">
                                                         {t('shop.selectColor', 'Seleziona colore')}
-                                                        {selectedColorVariant && (selectedColorVariant as any).stock_quantity != null && (
-                                                            <span className={`ml-2 text-xs font-medium ${Number((selectedColorVariant as any).stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                {Number((selectedColorVariant as any).stock_quantity) > 0
-                                                                    ? `${Number((selectedColorVariant as any).stock_quantity)} disponibili`
-                                                                    : t('shop.outOfStock', 'Esaurito')}
-                                                            </span>
-                                                        )}
+
                                                     </label>
                                                     <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
                                                         {colorsArray.map((color: any, index: number) => {
@@ -4255,11 +4249,7 @@ const ProductDetail = () => {
                                                                     <span className="text-sm font-semibold capitalize whitespace-nowrap">
                                                                         {displayName}
                                                                     </span>
-                                                                    {isSelected && color.stock_quantity != null && (
-                                                                        <span className={`text-[10px] font-medium ${Number(color.stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                            {Number(color.stock_quantity) > 0 ? `${Number(color.stock_quantity)} pz` : '0'}
-                                                                        </span>
-                                                                    )}
+
                                                                 </button>
                                                             )
                                                         })}
@@ -5500,13 +5490,7 @@ const ProductDetail = () => {
                                                         <div className="mt-6">
                                                             <label className="block text-sm font-semibold text-blue-950 mb-3">
                                                                 {t('shop.selectColor', 'Seleziona colore')}
-                                                                {selectedColorVariant && (selectedColorVariant as any).stock_quantity != null && (
-                                                                    <span className={`ml-2 text-xs font-medium ${Number((selectedColorVariant as any).stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                                        {Number((selectedColorVariant as any).stock_quantity) > 0
-                                                                            ? `${Number((selectedColorVariant as any).stock_quantity)} disponibili`
-                                                                            : t('shop.outOfStock', 'Esaurito')}
-                                                                    </span>
-                                                                )}
+
                                                             </label>
                                                             <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
                                                                 {colorsArray.map((color: any, index: number) => {
