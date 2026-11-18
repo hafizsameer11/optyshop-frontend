@@ -8,6 +8,25 @@ import { useCart, getCartItemMaxQuantity } from '../../context/CartContext'
 import { applyCoupon, getAvailableCoupons, type CouponDiscount, type CartItemForCoupon, type Coupon } from '../../services/couponsService'
 import { getShippingMethods, type ShippingMethod } from '../../services/shippingMethodsService'
 
+
+/** Normalize frame size / caliber for display (never render raw objects). */
+function formatCartCaliberLabel(raw: unknown): string | null {
+    if (raw == null || raw === '') return null
+    if (typeof raw === 'number' || typeof raw === 'string' || typeof raw === 'boolean') {
+        const s = String(raw).trim()
+        if (!s || s === '[object Object]') return null
+        return s.replace(/mm$/i, '').trim()
+    }
+    if (typeof raw === 'object') {
+        const o = raw as Record<string, unknown>
+        const mm = o.mm ?? o.value ?? o.size ?? o.caliber ?? o.label
+        if (mm != null && (typeof mm === 'string' || typeof mm === 'number')) {
+            return String(mm).replace(/mm$/i, '').trim()
+        }
+    }
+    return null
+}
+
 const Cart: React.FC = () => {
     const { t } = useTranslation()
     const { cartItems, removeFromCart, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCart()
@@ -253,9 +272,9 @@ const Cart: React.FC = () => {
                                             </div>
                                         )}
                                         {/* Caliber Badge (if applicable) */}
-                                        {(item.customization as any)?.selected_mm_caliber && (
+                                        {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber) && (
                                             <div className="absolute top-2 left-2 bg-blue-950 text-white text-xs px-2 py-1 rounded-full font-semibold">
-                                                {(item.customization as any).selected_mm_caliber}mm
+                                                {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber)}mm
                                             </div>
                                         )}
                                     </div>
@@ -281,9 +300,9 @@ const Cart: React.FC = () => {
                                                       : item.category}
                                             </p>
                                             {/* Show selected caliber if applicable */}
-                                            {(item.customization as any)?.selected_mm_caliber && (
+                                            {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber) && (
                                                 <p className="text-xs text-blue-950 font-medium mt-1">
-                                                    Size: {(item.customization as any).selected_mm_caliber}mm
+                                                    Size: {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber)}mm
                                                 </p>
                                             )}
                                             <div className="mt-2">

@@ -3724,7 +3724,7 @@ const ProductDetail = () => {
                 product_id: cartProduct.id,
                 quantity: productQuantity,
                 selected_color: colorValue || undefined,
-                selected_mm_caliber: selectedCaliber?.toString() || undefined,
+                selected_mm_caliber: selectedCaliber?.mm != null ? String(selectedCaliber.mm) : undefined,
                 ...(useEyeHygieneForCart && {
                     selected_variant_id: `eye_hygiene_${selectedEyeHygieneVariant!.id}`,
                     variant_type: 'eye_hygiene' as const,
@@ -3739,8 +3739,8 @@ const ProductDetail = () => {
                     frame_material: cartProduct.frame_material,
                     color: colorValue || undefined,
                     lens_color: selectedLensColor || undefined,
-                    ...(selectedCaliber && {
-                        selected_mm_caliber: selectedCaliber.toString()
+                    ...(selectedCaliber?.mm != null && {
+                        selected_mm_caliber: String(selectedCaliber.mm)
                     }),
                     ...(selectedColor || selectedColorVariant ? {
                         selected_color: colorValue || selectedColor || undefined,
