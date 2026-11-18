@@ -3565,12 +3565,41 @@ const ProductDetail = () => {
         if (standardAddToCartLockRef.current) return
 
         if (isProductOutOfStock) {
-            alert(t('shop.outOfStockAlert', 'This item is out of stock and cannot be ordered.'))
+            alert(t('shop.outOfStockAlert', 'Questo articolo è esaurito e non può essere ordinato.'))
             return
         }
 
-        // Check if product has variants (new approach) - prioritize fetched variants, then check product object
+        // Frames/sunglasses with color variants: color is required
         const p = product as any
+        const hasColorVariants =
+            (Array.isArray(p.colors) && p.colors.length > 0) ||
+            (Array.isArray(product.color_images) && product.color_images.length > 0)
+        if (hasColorVariants && !isContactLens && !isEyeHygiene && !isAccessory) {
+            if (!selectedColor) {
+                alert(t('shop.selectColorFirst', 'Seleziona un colore prima di aggiungere al carrello.'))
+                return
+            }
+            const colorStock = (selectedColorVariant as any)?.stock_quantity
+            if (colorStock != null && Number(colorStock) <= 0) {
+                alert(t('shop.colorOutOfStock', 'Il colore selezionato è esaurito.'))
+                return
+            }
+            if ((selectedColorVariant as any)?.stock_status === 'out_of_stock') {
+                alert(t('shop.colorOutOfStock', 'Il colore selezionato è esaurito.'))
+                return
+            }
+            const qtyWanted = Math.max(1, Math.floor(Number(quantity) || 1))
+            if (colorStock != null && qtyWanted > Number(colorStock)) {
+                alert(
+                    t('shop.colorStockLimit', 'Disponibili solo {{count}} pezzi per questo colore.', {
+                        count: Number(colorStock),
+                    })
+                )
+                return
+            }
+        }
+
+        // Check if product has variants (new approach) - prioritize fetched variants, then check product object
         const variantsArray = fetchedVariants.length > 0
             ? fetchedVariants
             : (p.sizeVolumeVariants || p.size_volume_variants || [])
@@ -3716,11 +3745,14 @@ const ProductDetail = () => {
                     ...(selectedCaliber && {
                         selected_mm_caliber: selectedCaliber.toString()
                     }),
-                    ...(selectedColorVariant ? {
-                        color_name: (selectedColorVariant as any).name || (selectedColorVariant as any).color,
-                        color_display_name: (selectedColorVariant as any).display_name || (selectedColorVariant as any).name || (selectedColorVariant as any).color,
-                        variant_price: (selectedColorVariant as any).price,
-                        variant_images: (selectedColorVariant as any).images || []
+                    ...(selectedColor || selectedColorVariant ? {
+                        selected_color: colorValue || selectedColor || undefined,
+                        hex_code: (selectedColorVariant as any)?.hexCode || colorValue || selectedColor || undefined,
+                        color_name: (selectedColorVariant as any)?.name || (selectedColorVariant as any)?.color || selectedColor || undefined,
+                        color_display_name: (selectedColorVariant as any)?.display_name || (selectedColorVariant as any)?.name || (selectedColorVariant as any)?.color || selectedColor || undefined,
+                        variant_price: (selectedColorVariant as any)?.price,
+                        variant_images: (selectedColorVariant as any)?.images || [],
+                        color_stock_quantity: (selectedColorVariant as any)?.stock_quantity ?? null,
                     } : {}),
                     ...(selectedEyeHygieneVariant && {
                         eye_hygiene_variant_id: selectedEyeHygieneVariant.id,
@@ -4171,12 +4203,12 @@ const ProductDetail = () => {
                                             return (
                                                 <div className="mb-4">
                                                     <label className="block text-sm font-semibold text-blue-950 mb-2">
-                                                        {t('shop.selectColor', 'Select Color')}
+                                                        {t('shop.selectColor', 'Seleziona colore')}
                                                         {selectedColorVariant && (selectedColorVariant as any).stock_quantity != null && (
                                                             <span className={`ml-2 text-xs font-medium ${Number((selectedColorVariant as any).stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
                                                                 {Number((selectedColorVariant as any).stock_quantity) > 0
-                                                                    ? t('shop.piecesAvailable', '{{count}} available', { count: Number((selectedColorVariant as any).stock_quantity) })
-                                                                    : t('shop.outOfStock', 'Out of stock')}
+                                                                    ? `${Number((selectedColorVariant as any).stock_quantity)} disponibili`
+                                                                    : t('shop.outOfStock', 'Esaurito')}
                                                             </span>
                                                         )}
                                                     </label>
@@ -4223,6 +4255,11 @@ const ProductDetail = () => {
                                                                     <span className="text-sm font-semibold capitalize whitespace-nowrap">
                                                                         {displayName}
                                                                     </span>
+                                                                    {isSelected && color.stock_quantity != null && (
+                                                                        <span className={`text-[10px] font-medium ${Number(color.stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                            {Number(color.stock_quantity) > 0 ? `${Number(color.stock_quantity)} pz` : '0'}
+                                                                        </span>
+                                                                    )}
                                                                 </button>
                                                             )
                                                         })}
@@ -5448,9 +5485,11 @@ const ProductDetail = () => {
                                                             ? product.color_images.map((ci: any) => ({
                                                                 name: ci.name || ci.color,
                                                                 display_name: ci.display_name || ci.name || ci.color,
-                                                                value: ci.value || ci.color,
+                                                                value: ci.value || ci.hexCode || ci.color,
                                                                 hexCode: ci.hexCode || '#E5E5E5',
                                                                 price: ci.price,
+                                                                stock_quantity: ci.stock_quantity,
+                                                                stock_status: ci.stock_status,
                                                                 images: ci.images || []
                                                             }))
                                                             : [])
@@ -5460,7 +5499,14 @@ const ProductDetail = () => {
                                                     return (
                                                         <div className="mt-6">
                                                             <label className="block text-sm font-semibold text-blue-950 mb-3">
-                                                                {t('shop.selectColor', 'Select Color')}
+                                                                {t('shop.selectColor', 'Seleziona colore')}
+                                                                {selectedColorVariant && (selectedColorVariant as any).stock_quantity != null && (
+                                                                    <span className={`ml-2 text-xs font-medium ${Number((selectedColorVariant as any).stock_quantity) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                                        {Number((selectedColorVariant as any).stock_quantity) > 0
+                                                                            ? `${Number((selectedColorVariant as any).stock_quantity)} disponibili`
+                                                                            : t('shop.outOfStock', 'Esaurito')}
+                                                                    </span>
+                                                                )}
                                                             </label>
                                                             <div className="flex gap-2 pb-2 overflow-x-auto no-scrollbar flex-nowrap scroll-smooth">
                                                                 {colorsArray.map((color: any, index: number) => {
