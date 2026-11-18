@@ -22,7 +22,40 @@ const TrackOrder: React.FC = () => {
         const qEmail = searchParams.get('email') || ''
         if (qOrder) setOrderNumber(qOrder)
         if (qEmail) setEmail(qEmail)
-    }, [searchParams])
+        if (qOrder && qEmail) {
+            void (async () => {
+                setError(null)
+                setOrder(null)
+                setSearched(true)
+                setLoading(true)
+                try {
+                    const result = await trackOrderByNumber(qOrder.trim(), qEmail.trim())
+                    if (result?.order) {
+                        setOrder(result.order)
+                    } else {
+                        setError(
+                            t(
+                                'trackOrder.notFound',
+                                "Ordine non trovato. Controlla il numero ordine e l'email."
+                            )
+                        )
+                    }
+                } catch (err: unknown) {
+                    const message =
+                        (err as { response?: { data?: { message?: string } }; message?: string })?.response
+                            ?.data?.message ||
+                        (err as Error)?.message ||
+                        t(
+                            'trackOrder.notFound',
+                            "Ordine non trovato. Controlla il numero ordine e l'email."
+                        )
+                    setError(message)
+                } finally {
+                    setLoading(false)
+                }
+            })()
+        }
+    }, [searchParams, t])
 
     const formatCurrency = (value: number | string | undefined): string => {
         if (value === undefined || value === null) return '€0.00'
@@ -68,11 +101,11 @@ const TrackOrder: React.FC = () => {
         const trimmedEmail = email.trim()
 
         if (!trimmedOrder) {
-            setError(t('trackOrder.orderNumberRequired', 'Please enter your order number.'))
+            setError(t('trackOrder.orderNumberRequired', 'Inserisci il numero ordine.'))
             return
         }
         if (!trimmedEmail) {
-            setError(t('trackOrder.emailRequired', 'Please enter the email used at checkout.'))
+            setError(t('trackOrder.emailRequired', "Inserisci l'email usata al checkout."))
             return
         }
 
@@ -85,7 +118,7 @@ const TrackOrder: React.FC = () => {
                 setError(
                     t(
                         'trackOrder.notFound',
-                        'Order not found. Please check your order number and email.'
+                        "Ordine non trovato. Controlla il numero ordine e l'email."
                     )
                 )
             }
@@ -94,7 +127,7 @@ const TrackOrder: React.FC = () => {
                 (err as { response?: { data?: { message?: string } }; message?: string })?.response
                     ?.data?.message ||
                 (err as Error)?.message ||
-                t('trackOrder.notFound', 'Order not found. Please check your order number and email.')
+                t('trackOrder.notFound', "Ordine non trovato. Controlla il numero ordine e l'email.")
             setError(message)
         } finally {
             setLoading(false)
@@ -113,12 +146,12 @@ const TrackOrder: React.FC = () => {
                 <div className="mx-auto max-w-3xl">
                     <div className="mb-8 text-center">
                         <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
-                            {t('trackOrder.title', 'Track your order')}
+                            {t('trackOrder.title', 'Traccia il tuo ordine')}
                         </h1>
                         <p className="mt-2 text-gray-600">
                             {t(
                                 'trackOrder.subtitle',
-                                'Enter the order number from your confirmation email and the email you used at checkout.'
+                                "Inserisci il numero ordine dell'email di conferma e l'email usata al checkout."
                             )}
                         </p>
                     </div>
@@ -151,7 +184,7 @@ const TrackOrder: React.FC = () => {
                                     htmlFor="track_email"
                                     className="mb-1.5 block text-sm font-semibold text-gray-700"
                                 >
-                                    {t('trackOrder.checkoutEmail', 'Email used at checkout')}{' '}
+                                    {t('trackOrder.checkoutEmail', 'Email usata al checkout')}{' '}
                                     <span className="text-red-500">*</span>
                                 </label>
                                 <input
@@ -178,8 +211,8 @@ const TrackOrder: React.FC = () => {
                             className="mt-6 w-full rounded-lg bg-blue-950 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-900 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {loading
-                                ? t('trackOrder.searching', 'Looking up your order…')
-                                : t('trackOrder.trackButton', 'Track order')}
+                                ? t('trackOrder.searching', 'Ricerca ordine in corso…')
+                                : t('trackOrder.trackButton', 'Traccia ordine')}
                         </button>
                     </form>
 
@@ -209,7 +242,7 @@ const TrackOrder: React.FC = () => {
                                 {!isTerminalBad && currentStep >= 0 && (
                                     <div className="mt-8">
                                         <p className="mb-4 text-sm font-semibold text-gray-700">
-                                            {t('trackOrder.progress', 'Order progress')}
+                                            {t('trackOrder.progress', "Stato dell'ordine")}
                                         </p>
                                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                                             {STATUS_STEPS.map((step, index) => {
@@ -245,13 +278,13 @@ const TrackOrder: React.FC = () => {
 
                                 {order.shipped_at && (
                                     <p className="mt-4 text-sm text-gray-600">
-                                        {t('trackOrder.shippedOn', 'Shipped on')}:{' '}
+                                        {t('trackOrder.shippedOn', 'Spedito il')}:{' '}
                                         {new Date(order.shipped_at).toLocaleString()}
                                     </p>
                                 )}
                                 {order.delivered_at && (
                                     <p className="mt-1 text-sm text-gray-600">
-                                        {t('trackOrder.deliveredOn', 'Delivered on')}:{' '}
+                                        {t('trackOrder.deliveredOn', 'Consegnato il')}:{' '}
                                         {new Date(order.delivered_at).toLocaleString()}
                                     </p>
                                 )}
@@ -316,7 +349,7 @@ const TrackOrder: React.FC = () => {
                     )}
 
                     <p className="mt-8 text-center text-sm text-gray-500">
-                        {t('trackOrder.needHelp', 'Need help?')}{' '}
+                        {t('trackOrder.needHelp', 'Hai bisogno di aiuto?')}{' '}
                         <Link to="/contact" className="font-medium text-blue-600 hover:text-blue-800">
                             {t('footer.contact', 'Contact')}
                         </Link>

@@ -522,26 +522,26 @@ const Checkout: React.FC<CheckoutProps> = ({ formConfig = defaultCheckoutFormCon
                                 </svg>
                             </div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-                                Order Placed Successfully!
+                                Ordine effettuato con successo!
                             </h1>
                             {orderNumber && (
                                 <p className="text-lg text-gray-700 font-semibold">
-                                    Order Number: {orderNumber}
+                                    Numero ordine: {orderNumber}
                                 </p>
                             )}
                             <p className="text-lg text-gray-600">
-                                Thank you for your purchase. Your order has been confirmed.
+                                Grazie per il tuo acquisto. Il tuo ordine è stato confermato.
                             </p>
                             <p className="text-base text-gray-500">
-                                You will receive an email confirmation shortly.
+                                Riceverai a breve un'email di conferma.
                             </p>
                             <div className="flex flex-wrap gap-4 justify-center">
                                 {orderNumber && (
                                     <Link
-                                        to={`/track-order?order=${encodeURIComponent(orderNumber)}`}
+                                        to={`/track-order?order=${encodeURIComponent(orderNumber)}${formData.email ? `&email=${encodeURIComponent(formData.email)}` : ''}`}
                                         className="inline-block px-8 py-3 rounded-lg border-2 border-blue-950 text-blue-950 font-semibold hover:bg-blue-50 transition-colors duration-300"
                                     >
-                                        Track this order
+                                        Traccia questo ordine
                                     </Link>
                                 )}
                                 {isAuthenticated && (

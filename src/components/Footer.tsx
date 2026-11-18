@@ -169,6 +169,11 @@ const Footer: React.FC = () => {
                                 </Link>
                             </li>
                             <li>
+                                <Link to="/track-order" className="hover:text-white transition-colors">
+                                    {label('footer.trackOrder', 'Traccia ordine')}
+                                </Link>
+                            </li>
+                            <li>
                                 <Link to="/contact" className="hover:text-white transition-colors">
                                     {label('footer.contact', 'Contatti')}
                                 </Link>
