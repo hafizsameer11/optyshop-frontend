@@ -3574,11 +3574,8 @@ const ProductDetail = () => {
         const hasColorVariants =
             (Array.isArray(p.colors) && p.colors.length > 0) ||
             (Array.isArray(product.color_images) && product.color_images.length > 0)
-        if (hasColorVariants && !isContactLens && !isEyeHygiene && !isAccessory) {
-            if (!selectedColor) {
-                alert(t('shop.selectColorFirst', 'Seleziona un colore prima di aggiungere al carrello.'))
-                return
-            }
+        // Color is optional (click again to clear). When selected, enforce that colour's stock.
+        if (hasColorVariants && selectedColor && !isContactLens && !isEyeHygiene && !isAccessory) {
             const colorStock = (selectedColorVariant as any)?.stock_quantity
             if (colorStock != null && Number(colorStock) <= 0) {
                 alert(t('shop.colorOutOfStock', 'Il colore selezionato è esaurito.'))
@@ -4232,13 +4229,16 @@ const ProductDetail = () => {
                                                                 <button
                                                                     key={index}
                                                                     onClick={() => {
-                                                                        setSelectedColor(colorValue)
-                                                                        setSelectedImageIndex(0) // Reset to first image of selected color
-                                                                        setIsManuallySelectingImage(false) // Reset manual selection flag
-
-                                                                        // Update URL without page reload
+                                                                        const already =
+                                                                            selectedColor &&
+                                                                            String(selectedColor).toLowerCase() === String(colorValue).toLowerCase()
+                                                                        const next = already ? null : colorValue
+                                                                        setSelectedColor(next)
+                                                                        setSelectedImageIndex(0)
+                                                                        setIsManuallySelectingImage(false)
                                                                         const url = new URL(window.location.href)
-                                                                        url.searchParams.set('color', colorValue)
+                                                                        if (next) url.searchParams.set('color', String(next))
+                                                                        else url.searchParams.delete('color')
                                                                         window.history.pushState({}, '', url)
                                                                     }}
                                                                     className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-200 flex-shrink-0 ${isSelected
@@ -5530,14 +5530,16 @@ const ProductDetail = () => {
                                                                             onClick={(e) => {
                                                                                 e.preventDefault()
                                                                                 e.stopPropagation()
-                                                                                const newColor = colorValue
-                                                                                setSelectedColor(newColor)
-                                                                                setSelectedImageIndex(0) // Reset to first image of selected color
-                                                                                setIsManuallySelectingImage(false) // Reset manual selection flag
-
-                                                                                // Update URL without page reload
+                                                                                const already =
+                                                                                    selectedColor &&
+                                                                                    String(selectedColor).toLowerCase() === String(colorValue).toLowerCase()
+                                                                                const next = already ? null : colorValue
+                                                                                setSelectedColor(next)
+                                                                                setSelectedImageIndex(0)
+                                                                                setIsManuallySelectingImage(false)
                                                                                 const url = new URL(window.location.href)
-                                                                                url.searchParams.set('color', newColor)
+                                                                                if (next) url.searchParams.set('color', String(next))
+                                                                                else url.searchParams.delete('color')
                                                                                 window.history.pushState({}, '', url)
                                                                             }}
                                                                             className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-200 shadow-sm flex-shrink-0 ${isSelected
