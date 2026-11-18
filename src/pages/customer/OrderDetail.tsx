@@ -212,7 +212,18 @@ const OrderDetail: React.FC = () => {
               </span>
               {order.payment_status && (
                 <span className={`px-3 py-1 text-sm font-medium rounded-full ${getPaymentStatusColor(order.payment_status)}`}>
-                  {t('orders.paymentStatus')}: {t(`orders.${(order.payment_status || '').toLowerCase()}`, { defaultValue: order.payment_status || 'N/A' })}
+                  {t('orders.paymentStatus')}:{' '}
+                  {(() => {
+                    const method = String(order.payment_method || '').toLowerCase()
+                    const status = String(order.payment_status || '').toLowerCase()
+                    if (status === 'pending' && (method === 'cod' || method === 'cash' || method === 'dummy')) {
+                      return t('orders.payOnDelivery', { defaultValue: 'Pay on delivery' })
+                    }
+                    if (status === 'pending' && (method === 'stripe' || method === 'card' || method === 'paypal')) {
+                      return t('orders.awaitingPayment', { defaultValue: 'Awaiting payment' })
+                    }
+                    return t(`orders.${status}`, { defaultValue: order.payment_status || 'N/A' })
+                  })()}
                 </span>
               )}
             </div>
@@ -560,7 +571,17 @@ const OrderDetail: React.FC = () => {
               <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('orders.paymentInformation')}</h2>
               <div className="text-gray-600 space-y-2">
                 <p><span className="font-medium">{t('orders.method')}:</span> <span className="capitalize">{order.payment_method || 'N/A'}</span></p>
-                <p><span className="font-medium">{t('orders.status')}:</span> <span className="capitalize">{t(`orders.${order.payment_status?.toLowerCase()}`, { defaultValue: order.payment_status || 'N/A' })}</span></p>
+                <p><span className="font-medium">{t('orders.status')}:</span> <span className="capitalize">{(() => {
+                  const method = String(order.payment_method || '').toLowerCase()
+                  const status = String(order.payment_status || '').toLowerCase()
+                  if (status === 'pending' && (method === 'cod' || method === 'cash' || method === 'dummy')) {
+                    return t('orders.payOnDelivery', { defaultValue: 'Pay on delivery' })
+                  }
+                  if (status === 'pending' && (method === 'stripe' || method === 'card' || method === 'paypal')) {
+                    return t('orders.awaitingPayment', { defaultValue: 'Awaiting payment' })
+                  }
+                  return t(`orders.${status}`, { defaultValue: order.payment_status || 'N/A' })
+                })()}</span></p>
               </div>
             </div>
 
