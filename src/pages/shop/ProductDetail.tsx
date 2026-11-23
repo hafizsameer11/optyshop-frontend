@@ -6120,14 +6120,14 @@ const ProductDetail = () => {
                                                     null
                                                 return brandLabel ? (
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.brand', 'Marca')}</span>
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.brand', 'Brand')}</span>
                                                         <span className="text-gray-700 font-semibold">{String(brandLabel)}</span>
                                                     </div>
                                                 ) : null
                                             })()}
                                             {((product as any).lens_type || selectedLensType) && (
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.lensType', 'Tipo di lente')}</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.lensType', 'Lens Type')}</span>
                                                     <span className="text-gray-700 font-semibold capitalize">
                                                         {String((product as any).lens_type || selectedLensType).replace(/_/g, ' ')}
                                                     </span>
@@ -6135,112 +6135,28 @@ const ProductDetail = () => {
                                             )}
                                             {product.frame_shape && (
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.frameShape', 'Forma della montatura')}</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.frameShape', 'Frame Shape')}</span>
                                                     <span className="text-gray-700 font-semibold capitalize">{product.frame_shape.replace('_', ' ')}</span>
                                                 </div>
                                             )}
                                             {product.frame_material && (
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.material', 'Materiale')}</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.material', 'Material')}</span>
                                                     <span className="text-gray-700 font-semibold capitalize">{product.frame_material}</span>
                                                 </div>
                                             )}
                                             {product.gender && !isEyeHygiene && (
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.gender', 'Genere')}</span>
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.gender', 'Gender')}</span>
                                                     <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>
                                                 </div>
                                             )}
-                                            {(() => {
-                                                return selectedProductColorLabel ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.color', 'Colore')}</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{selectedProductColorLabel}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
-                                            {(() => {
-                                                // Calibro / Ponte (bridge) / Asta — selected value, else sole option, else first frameSize
-                                                const p = product as any
-                                                const frame = Array.isArray(p.frameSizes) && p.frameSizes.length > 0 ? p.frameSizes[0] : null
-                                                const pick = (
-                                                    selected: string,
-                                                    options: string[],
-                                                    fallback: unknown
-                                                ) => {
-                                                    if (selected) return selected
-                                                    if (options.length === 1) return options[0]
-                                                    if (fallback != null && fallback !== '') return String(fallback)
-                                                    return null
-                                                }
-                                                const calibroVal = pick(
-                                                    selectedCalibro,
-                                                    frameMeasurementOptions.calibro || [],
-                                                    frame?.lens_width
-                                                )
-                                                const ponteVal = pick(
-                                                    selectedPonte,
-                                                    frameMeasurementOptions.ponte || [],
-                                                    frame?.bridge_width ?? p.bridge
-                                                )
-                                                const astaVal = pick(
-                                                    selectedAsta,
-                                                    frameMeasurementOptions.asta || [],
-                                                    frame?.temple_length ?? p.temples
-                                                )
-                                                return (
-                                                    <>
-                                                        {calibroVal && (
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.caliber', 'Calibro')}</span>
-                                                                <span className="text-gray-700 font-semibold">{calibroVal} mm</span>
-                                                            </div>
-                                                        )}
-                                                        {ponteVal && (
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.bridge', 'Ponte')}</span>
-                                                                <span className="text-gray-700 font-semibold">{ponteVal} mm</span>
-                                                            </div>
-                                                        )}
-                                                        {astaVal && (
-                                                            <div className="flex flex-col">
-                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.temples', 'Asta')}</span>
-                                                                <span className="text-gray-700 font-semibold">{astaVal} mm</span>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )
-                                            })()}
-                                            {(() => {
-                                                const p = product as any
-                                                const size = p.size || (p.frameSizes && p.frameSizes.length > 0 ? p.frameSizes[0].size_label : null)
-                                                return size ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Size</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{size}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
-                                            {(() => {
-                                                const p = product as any
-                                                const clip = p.clip
-                                                return clip ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Clip</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{clip}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
-                                            {(() => {
-                                                const p = product as any
-                                                const lensColor = p.lens_color || p.lensColor
-                                                return lensColor ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Lens Color</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{lensColor}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
+                                            {selectedProductColorLabel ? (
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.color', 'Color')}</span>
+                                                    <span className="text-gray-700 font-semibold capitalize">{selectedProductColorLabel}</span>
+                                                </div>
+                                            ) : null}
                                         </div>
                                     )}
 
