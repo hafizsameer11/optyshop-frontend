@@ -1,6 +1,7 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
 import Banner from '../components/home/Banner'
+import HomeSearchBar from '../components/home/HomeSearchBar'
 import SmallSlidingBanners from '../components/home/SmallSlidingBanners'
 import FlashOffersProductHighlight from '../components/home/FlashOffersProductHighlight'
 import ShopCategories from '../components/home/ShopCategories'
@@ -15,6 +16,7 @@ const Home: React.FC = () => {
             <Navbar />
 
             <Banner pageType="home" showNavbar={false} autoSlideInterval={5000} />
+            <HomeSearchBar />
 
             <div className="w-full max-w-[100vw] overflow-x-hidden bg-white">
                 <SmallSlidingBanners />

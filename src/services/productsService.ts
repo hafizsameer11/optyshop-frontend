@@ -300,6 +300,12 @@ export interface ProductFilters {
   diameter?: string;
   replacementPeriod?: string;
 
+  // Frame size filters (API: frame_sizes relation)
+  lens_width?: number | string;
+  bridge_width?: number | string;
+  temple_length?: number | string;
+  frame_width?: number | string;
+
   [key: string]: any;
 }
 

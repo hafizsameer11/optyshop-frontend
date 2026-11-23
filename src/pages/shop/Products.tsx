@@ -101,6 +101,7 @@ const Products: React.FC = () => {
     const [caliber, setCaliber] = useState<string>('')
     const [bridge, setBridge] = useState<string>('')
     const [temples, setTemples] = useState<string>('')
+    const [frameWidth, setFrameWidth] = useState<string>('')
 
     const filtersCategorySlug = currentSection ?? ''
 
@@ -210,6 +211,10 @@ const Products: React.FC = () => {
             setTemples(filters.temples ?? '')
             setCurrentPage(1)
         }
+        if (filters.frameWidth !== undefined) {
+            setFrameWidth(filters.frameWidth ?? '')
+            setCurrentPage(1)
+        }
         if (filters.category !== undefined) {
             setSelectedCategory(filters.category ?? 'all')
             setCurrentPage(1)
@@ -243,6 +248,7 @@ const Products: React.FC = () => {
         setCaliber('')
         setBridge('')
         setTemples('')
+        setFrameWidth('')
         setSelectedCategory('all')
         setSelectedSubcategory(null)
         setCurrentPage(1)
@@ -408,6 +414,49 @@ const Products: React.FC = () => {
 
                 if (gender) {
                     filters.gender = gender
+                }
+
+                if (frameShape) {
+                    filters.frameShape = frameShape
+                }
+                if (frameMaterial) {
+                    filters.frameMaterial = frameMaterial
+                }
+                if (isFeaturedOnly) {
+                    filters.isFeatured = true
+                }
+                if (brand) {
+                    filters.brand = brand
+                }
+                if (inStockOnly) {
+                    filters.inStock = true
+                }
+                if (lensType) {
+                    filters.lensType = lensType
+                }
+                if (lensCoating) {
+                    filters.lensCoating = lensCoating
+                }
+                if (baseCurve.trim()) {
+                    filters.baseCurve = baseCurve.trim()
+                }
+                if (diameter.trim()) {
+                    filters.diameter = diameter.trim()
+                }
+                if (replacementPeriod.trim()) {
+                    filters.replacementPeriod = replacementPeriod.trim()
+                }
+                if (caliber.trim()) {
+                    filters.lens_width = caliber.trim()
+                }
+                if (bridge.trim()) {
+                    filters.bridge_width = bridge.trim()
+                }
+                if (temples.trim()) {
+                    filters.temple_length = temples.trim()
+                }
+                if (frameWidth.trim()) {
+                    filters.frame_width = frameWidth.trim()
                 }
 
                 // Add sorting
@@ -632,7 +681,7 @@ const Products: React.FC = () => {
             isCancelled = true
             clearTimeout(timeoutId)
         }
-    }, [selectedCategory, selectedSubcategory, searchTerm, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, lensType, lensCoating, currentPage, sortBy, currentSection, location.pathname])
+    }, [selectedCategory, selectedSubcategory, searchTerm, minPrice, maxPrice, gender, selectedColor, brand, inStockOnly, lensType, lensCoating, currentPage, sortBy, currentSection, location.pathname, frameShape, frameMaterial, isFeaturedOnly, baseCurve, diameter, replacementPeriod, caliber, bridge, temples, frameWidth])
 
 
     const handlePageChange = (newPage: number) => {
@@ -741,7 +790,7 @@ const Products: React.FC = () => {
                                     <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                     </svg>
-                                    {t('shop.filters.filters', 'Filters')}
+                                    {t('shop.filters.filters', 'Filtri')}
                                 </button>
                             </div>
                             <p className="mt-2 text-sm text-slate-600">

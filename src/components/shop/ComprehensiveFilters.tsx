@@ -27,6 +27,7 @@ export type ShopFilterPayload = {
     caliber?: string
     bridge?: string
     temples?: string
+    frameWidth?: string
     /** Synced to parent; not sent to products API as-is */
     featuredOnly?: boolean
 }
@@ -132,6 +133,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
     const [caliber, setCaliber] = useState<string>('')
     const [bridge, setBridge] = useState<string>('')
     const [temples, setTemples] = useState<string>('')
+    const [frameWidth, setFrameWidth] = useState<string>('')
     
     // Validation and conversion functions
     const validateAndConvertPrice = (value: string): number | undefined => {
@@ -201,6 +203,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (caliber.trim()) filters.caliber = caliber.trim()
         if (bridge.trim()) filters.bridge = bridge.trim()
         if (temples.trim()) filters.temples = temples.trim()
+        if (frameWidth.trim()) filters.frameWidth = frameWidth.trim()
 
         onFilterChange({
             ...filters,
@@ -219,6 +222,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
             caliber,
             bridge,
             temples,
+            frameWidth,
         })
     }, [
         minPrice,
@@ -243,6 +247,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         caliber,
         bridge,
         temples,
+        frameWidth,
         onFilterChange,
     ])
 
@@ -283,6 +288,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         setCaliber('')
         setBridge('')
         setTemples('')
+        setFrameWidth('')
         onClearAll?.()
     }
 
@@ -309,6 +315,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
         if (caliber.trim()) count++
         if (bridge.trim()) count++
         if (temples.trim()) count++
+        if (frameWidth.trim()) count++
         return count
     }
 
@@ -653,7 +660,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             )}
 
                             {showEyewearFilters && (
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                     <div>
                                         <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.caliber', 'Calibro')}</label>
                                         <input
@@ -680,6 +687,16 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             type="text"
                                             value={temples}
                                             onChange={(e) => setTemples(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.frameWidth', 'Larghezza')}</label>
+                                        <input
+                                            type="text"
+                                            value={frameWidth}
+                                            onChange={(e) => setFrameWidth(e.target.value)}
                                             placeholder="MM"
                                             className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-300"
                                         />
@@ -1096,7 +1113,7 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                             )}
 
                             {showEyewearFilters && (
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                     <div>
                                         <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.caliber', 'Calibro')}</label>
                                         <input
@@ -1123,6 +1140,16 @@ const ComprehensiveFilters: React.FC<ComprehensiveFiltersProps> = ({
                                             type="text"
                                             value={temples}
                                             onChange={(e) => setTemples(e.target.value)}
+                                            placeholder="MM"
+                                            className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">{t('shop.filters.frameWidth', 'Larghezza')}</label>
+                                        <input
+                                            type="text"
+                                            value={frameWidth}
+                                            onChange={(e) => setFrameWidth(e.target.value)}
                                             placeholder="MM"
                                             className="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:ring-1 focus:ring-blue-500"
                                         />

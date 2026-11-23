@@ -6052,34 +6052,44 @@ const ProductDetail = () => {
                                             })()}
                                             {(() => {
                                                 const p = product as any
-                                                // Get size from product.size or first frameSize
+                                                const frame = Array.isArray(p.frameSizes) && p.frameSizes.length > 0 ? p.frameSizes[0] : null
+                                                const calibro = p.caliber ?? p.lens_width ?? frame?.lens_width ?? null
+                                                return calibro != null && calibro !== '' ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Calibro</span>
+                                                        <span className="text-gray-700 font-semibold">{calibro}</span>
+                                                    </div>
+                                                ) : null
+                                            })()}
+                                            {(() => {
+                                                const p = product as any
+                                                const frame = Array.isArray(p.frameSizes) && p.frameSizes.length > 0 ? p.frameSizes[0] : null
+                                                const ponte = p.bridge ?? frame?.bridge_width ?? null
+                                                return ponte != null && ponte !== '' ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Ponte</span>
+                                                        <span className="text-gray-700 font-semibold">{ponte}</span>
+                                                    </div>
+                                                ) : null
+                                            })()}
+                                            {(() => {
+                                                const p = product as any
+                                                const frame = Array.isArray(p.frameSizes) && p.frameSizes.length > 0 ? p.frameSizes[0] : null
+                                                const asta = p.temples ?? frame?.temple_length ?? null
+                                                return asta != null && asta !== '' ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Asta</span>
+                                                        <span className="text-gray-700 font-semibold">{asta}</span>
+                                                    </div>
+                                                ) : null
+                                            })()}
+                                            {(() => {
+                                                const p = product as any
                                                 const size = p.size || (p.frameSizes && p.frameSizes.length > 0 ? p.frameSizes[0].size_label : null)
                                                 return size ? (
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-gray-400 uppercase mb-1">Size</span>
                                                         <span className="text-gray-700 font-semibold capitalize">{size}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
-                                            {(() => {
-                                                const p = product as any
-                                                // Get bridge from product.bridge or first frameSize bridge_width
-                                                const bridge = p.bridge || (p.frameSizes && p.frameSizes.length > 0 ? p.frameSizes[0].bridge_width : null)
-                                                return bridge ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Bridge</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{bridge}</span>
-                                                    </div>
-                                                ) : null
-                                            })()}
-                                            {(() => {
-                                                const p = product as any
-                                                // Get temples from product.temples or first frameSize temple_length
-                                                const temples = p.temples || (p.frameSizes && p.frameSizes.length > 0 ? p.frameSizes[0].temple_length : null)
-                                                return temples ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">Temples</span>
-                                                        <span className="text-gray-700 font-semibold capitalize">{temples}</span>
                                                     </div>
                                                 ) : null
                                             })()}

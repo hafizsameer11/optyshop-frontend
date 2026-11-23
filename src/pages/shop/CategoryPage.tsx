@@ -129,6 +129,7 @@ const CategoryPage: React.FC = () => {
     const [caliber, setCaliber] = useState<string>('')
     const [bridge, setBridge] = useState<string>('')
     const [temples, setTemples] = useState<string>('')
+    const [frameWidth, setFrameWidth] = useState<string>('')
 
     const handleCategoryNavigationFilterChange = useCallback(
         (filters: {
@@ -246,6 +247,10 @@ const CategoryPage: React.FC = () => {
             setTemples(filters.temples ?? '')
             setCurrentPage(1)
         }
+        if (filters.frameWidth !== undefined) {
+            setFrameWidth(filters.frameWidth ?? '')
+            setCurrentPage(1)
+        }
     }, [])
 
     const handleClearAllComprehensiveFilters = useCallback(() => {
@@ -271,6 +276,7 @@ const CategoryPage: React.FC = () => {
         setCaliber('')
         setBridge('')
         setTemples('')
+        setFrameWidth('')
         setCurrentPage(1)
     }, [])
 
@@ -456,6 +462,20 @@ const CategoryPage: React.FC = () => {
                 }
                 if (replacementPeriod.trim()) {
                     filters.replacementPeriod = replacementPeriod.trim()
+                }
+
+                // Frame size filters → API (frame_sizes relation)
+                if (caliber.trim()) {
+                    filters.lens_width = caliber.trim()
+                }
+                if (bridge.trim()) {
+                    filters.bridge_width = bridge.trim()
+                }
+                if (temples.trim()) {
+                    filters.temple_length = temples.trim()
+                }
+                if (frameWidth.trim()) {
+                    filters.frame_width = frameWidth.trim()
                 }
 
                 // Add sorting
@@ -945,10 +965,24 @@ const CategoryPage: React.FC = () => {
                             return featureText.toLowerCase().includes(q)
                         })
                     }
+                    const matchFrameSize = (p: any, field: string, q: string) => {
+                        const frames = Array.isArray(p.frameSizes) ? p.frameSizes : []
+                        const qNum = Number(q)
+                        if (frames.length > 0) {
+                            return frames.some((f: any) => {
+                                const v = f?.[field]
+                                if (v == null) return false
+                                if (!Number.isNaN(qNum)) return Number(v) === qNum
+                                return String(v).toLowerCase().includes(q)
+                            })
+                        }
+                        return false
+                    }
                     if (caliber.trim() && filteredProducts.length > 0) {
                         const q = caliber.trim().toLowerCase()
                         filteredProducts = filteredProducts.filter((p) => {
                             const x = p as any
+                            if (matchFrameSize(x, 'lens_width', q)) return true
                             const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
                             const value = String(x.caliber ?? x.mm ?? x.size ?? firstFrame?.size_label ?? '').toLowerCase()
                             return value.includes(q)
@@ -958,6 +992,7 @@ const CategoryPage: React.FC = () => {
                         const q = bridge.trim().toLowerCase()
                         filteredProducts = filteredProducts.filter((p) => {
                             const x = p as any
+                            if (matchFrameSize(x, 'bridge_width', q)) return true
                             const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
                             const value = String(x.bridge ?? firstFrame?.bridge_width ?? '').toLowerCase()
                             return value.includes(q)
@@ -967,10 +1002,15 @@ const CategoryPage: React.FC = () => {
                         const q = temples.trim().toLowerCase()
                         filteredProducts = filteredProducts.filter((p) => {
                             const x = p as any
+                            if (matchFrameSize(x, 'temple_length', q)) return true
                             const firstFrame = Array.isArray(x.frameSizes) ? x.frameSizes[0] : null
                             const value = String(x.temples ?? firstFrame?.temple_length ?? '').toLowerCase()
                             return value.includes(q)
                         })
+                    }
+                    if (frameWidth.trim() && filteredProducts.length > 0) {
+                        const q = frameWidth.trim().toLowerCase()
+                        filteredProducts = filteredProducts.filter((p) => matchFrameSize(p as any, 'frame_width', q))
                     }
                     
                     if (import.meta.env.DEV) {
@@ -1038,6 +1078,7 @@ const CategoryPage: React.FC = () => {
         caliber,
         bridge,
         temples,
+        frameWidth,
     ])
 
     // Reserved path: `/collections/all` is all products, not a category named "all"
@@ -1098,7 +1139,7 @@ const CategoryPage: React.FC = () => {
                                     <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                                     </svg>
-                                    {t('shop.filters.filters', 'Filters')}
+                                    {t('shop.filters.filters', 'Filtri')}
                                 </button>
                             </div>
                             <p className="mt-2 text-sm text-slate-600">
