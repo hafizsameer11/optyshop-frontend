@@ -32,6 +32,7 @@ export function getShopProductBrandLabel(product: Product | null | undefined): s
         brand?: string | { name?: string | null } | null
         brand_name?: string | null
         brandName?: string | null
+        brand_info?: { name?: string | null } | null
     }
     if (typeof p.brand === 'string' && p.brand.trim()) return p.brand.trim()
     if (p.brand && typeof p.brand === 'object' && typeof p.brand.name === 'string' && p.brand.name.trim()) {
@@ -39,6 +40,9 @@ export function getShopProductBrandLabel(product: Product | null | undefined): s
     }
     if (typeof p.brand_name === 'string' && p.brand_name.trim()) return p.brand_name.trim()
     if (typeof p.brandName === 'string' && p.brandName.trim()) return p.brandName.trim()
+    if (p.brand_info && typeof p.brand_info.name === 'string' && p.brand_info.name.trim()) {
+        return p.brand_info.name.trim()
+    }
     const cl = typeof p.contact_lens_brand === 'string' ? p.contact_lens_brand.trim() : ''
     if (cl) return cl
     return null

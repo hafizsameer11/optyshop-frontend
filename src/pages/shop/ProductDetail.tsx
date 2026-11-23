@@ -6110,53 +6110,54 @@ const ProductDetail = () => {
                                     })() && (
                                         <div className="mb-8 grid grid-cols-2 gap-y-4 gap-x-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                             {(() => {
+                                                // Exact layout (2 cols): Brand | Lens Type, Frame Shape | Material, Gender | Color
+                                                const pAny = product as any
                                                 const brandLabel =
                                                     productBrandEyebrow ||
                                                     getShopProductBrandLabel(product) ||
-                                                    (typeof (product as any)?.brand === 'string'
-                                                        ? (product as any).brand
-                                                        : (product as any)?.brand?.name) ||
-                                                    (product as any)?.brand_name ||
-                                                    null
-                                                return brandLabel ? (
-                                                    <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.brand', 'Brand')}</span>
-                                                        <span className="text-gray-700 font-semibold">{String(brandLabel)}</span>
+                                                    (typeof pAny?.brand === 'string' ? pAny.brand : pAny?.brand?.name) ||
+                                                    pAny?.brand_name ||
+                                                    pAny?.brand_info?.name ||
+                                                    pAny?.contact_lens_brand ||
+                                                    ''
+                                                const lensTypeRaw = pAny.lens_type || selectedLensType || ''
+                                                const lensTypeLabel = lensTypeRaw
+                                                    ? String(lensTypeRaw).replace(/_/g, ' ')
+                                                    : ''
+                                                const frameShapeLabel = product.frame_shape
+                                                    ? String(product.frame_shape).replace(/_/g, ' ')
+                                                    : ''
+                                                const materialLabel = product.frame_material
+                                                    ? String(product.frame_material)
+                                                    : ''
+                                                const genderLabel =
+                                                    !isEyeHygiene && product.gender ? String(product.gender) : ''
+                                                const colorLabel = selectedProductColorLabel || ''
+
+                                                const specCell = (label: string, value: string, capitalize = true) => (
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">
+                                                            {label}
+                                                        </span>
+                                                        <span
+                                                            className={`text-gray-700 font-semibold ${capitalize ? 'capitalize' : ''}`}
+                                                        >
+                                                            {value || '—'}
+                                                        </span>
                                                     </div>
-                                                ) : null
+                                                )
+
+                                                return (
+                                                    <>
+                                                        {specCell(t('shop.brand', 'Brand'), brandLabel, false)}
+                                                        {specCell(t('shop.lensType', 'Lens Type'), lensTypeLabel)}
+                                                        {specCell(t('shop.frameShape', 'Frame Shape'), frameShapeLabel)}
+                                                        {specCell(t('shop.material', 'Material'), materialLabel)}
+                                                        {specCell(t('shop.gender', 'Gender'), genderLabel)}
+                                                        {specCell(t('shop.color', 'Color'), colorLabel)}
+                                                    </>
+                                                )
                                             })()}
-                                            {((product as any).lens_type || selectedLensType) && (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.lensType', 'Lens Type')}</span>
-                                                    <span className="text-gray-700 font-semibold capitalize">
-                                                        {String((product as any).lens_type || selectedLensType).replace(/_/g, ' ')}
-                                                    </span>
-                                                </div>
-                                            )}
-                                            {product.frame_shape && (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.frameShape', 'Frame Shape')}</span>
-                                                    <span className="text-gray-700 font-semibold capitalize">{product.frame_shape.replace('_', ' ')}</span>
-                                                </div>
-                                            )}
-                                            {product.frame_material && (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.material', 'Material')}</span>
-                                                    <span className="text-gray-700 font-semibold capitalize">{product.frame_material}</span>
-                                                </div>
-                                            )}
-                                            {product.gender && !isEyeHygiene && (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.gender', 'Gender')}</span>
-                                                    <span className="text-gray-700 font-semibold capitalize">{product.gender}</span>
-                                                </div>
-                                            )}
-                                            {selectedProductColorLabel ? (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.color', 'Color')}</span>
-                                                    <span className="text-gray-700 font-semibold capitalize">{selectedProductColorLabel}</span>
-                                                </div>
-                                            ) : null}
                                         </div>
                                     )}
 
