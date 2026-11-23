@@ -6109,12 +6109,22 @@ const ProductDetail = () => {
                                         return (!isEyeHygiene || (product.frame_shape || product.frame_material || hasAdditionalAttrs))
                                     })() && (
                                         <div className="mb-8 grid grid-cols-2 gap-y-4 gap-x-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                            {productBrandEyebrow && (
-                                                <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.brand', 'Marca')}</span>
-                                                    <span className="text-gray-700 font-semibold">{productBrandEyebrow}</span>
-                                                </div>
-                                            )}
+                                            {(() => {
+                                                const brandLabel =
+                                                    productBrandEyebrow ||
+                                                    getShopProductBrandLabel(product) ||
+                                                    (typeof (product as any)?.brand === 'string'
+                                                        ? (product as any).brand
+                                                        : (product as any)?.brand?.name) ||
+                                                    (product as any)?.brand_name ||
+                                                    null
+                                                return brandLabel ? (
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.brand', 'Marca')}</span>
+                                                        <span className="text-gray-700 font-semibold">{String(brandLabel)}</span>
+                                                    </div>
+                                                ) : null
+                                            })()}
                                             {((product as any).lens_type || selectedLensType) && (
                                                 <div className="flex flex-col">
                                                     <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.lensType', 'Tipo di lente')}</span>
@@ -6148,6 +6158,58 @@ const ProductDetail = () => {
                                                         <span className="text-gray-700 font-semibold capitalize">{selectedProductColorLabel}</span>
                                                     </div>
                                                 ) : null
+                                            })()}
+                                            {(() => {
+                                                // Calibro / Ponte (bridge) / Asta — selected value, else sole option, else first frameSize
+                                                const p = product as any
+                                                const frame = Array.isArray(p.frameSizes) && p.frameSizes.length > 0 ? p.frameSizes[0] : null
+                                                const pick = (
+                                                    selected: string,
+                                                    options: string[],
+                                                    fallback: unknown
+                                                ) => {
+                                                    if (selected) return selected
+                                                    if (options.length === 1) return options[0]
+                                                    if (fallback != null && fallback !== '') return String(fallback)
+                                                    return null
+                                                }
+                                                const calibroVal = pick(
+                                                    selectedCalibro,
+                                                    frameMeasurementOptions.calibro || [],
+                                                    frame?.lens_width
+                                                )
+                                                const ponteVal = pick(
+                                                    selectedPonte,
+                                                    frameMeasurementOptions.ponte || [],
+                                                    frame?.bridge_width ?? p.bridge
+                                                )
+                                                const astaVal = pick(
+                                                    selectedAsta,
+                                                    frameMeasurementOptions.asta || [],
+                                                    frame?.temple_length ?? p.temples
+                                                )
+                                                return (
+                                                    <>
+                                                        {calibroVal && (
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.caliber', 'Calibro')}</span>
+                                                                <span className="text-gray-700 font-semibold">{calibroVal} mm</span>
+                                                            </div>
+                                                        )}
+                                                        {ponteVal && (
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.bridge', 'Ponte')}</span>
+                                                                <span className="text-gray-700 font-semibold">{ponteVal} mm</span>
+                                                            </div>
+                                                        )}
+                                                        {astaVal && (
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs font-bold text-gray-400 uppercase mb-1">{t('shop.filters.temples', 'Asta')}</span>
+                                                                <span className="text-gray-700 font-semibold">{astaVal} mm</span>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )
                                             })()}
                                             {(() => {
                                                 const p = product as any

@@ -30,11 +30,15 @@ export function getShopProductBrandLabel(product: Product | null | undefined): s
     const p = product as Product & {
         contact_lens_brand?: string | null
         brand?: string | { name?: string | null } | null
+        brand_name?: string | null
+        brandName?: string | null
     }
     if (typeof p.brand === 'string' && p.brand.trim()) return p.brand.trim()
     if (p.brand && typeof p.brand === 'object' && typeof p.brand.name === 'string' && p.brand.name.trim()) {
         return p.brand.name.trim()
     }
+    if (typeof p.brand_name === 'string' && p.brand_name.trim()) return p.brand_name.trim()
+    if (typeof p.brandName === 'string' && p.brandName.trim()) return p.brandName.trim()
     const cl = typeof p.contact_lens_brand === 'string' ? p.contact_lens_brand.trim() : ''
     if (cl) return cl
     return null
