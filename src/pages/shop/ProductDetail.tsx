@@ -372,9 +372,14 @@ const ProductDetail = () => {
                 }
                 
                 if (calibersData.length > 0) {
-                    // Calibers are size options only — they never carry their own image.
+                    // Calibers are size options (Calibro/Ponte/Asta) — they never carry their own image.
                     const calibers = calibersData.map((caliber: any) => ({
-                        mm: caliber.mm,
+                        id: caliber.id,
+                        mm: caliber.mm ?? caliber.lens_width,
+                        lens_width: caliber.lens_width ?? caliber.mm,
+                        bridge_width: caliber.bridge_width ?? caliber.ponte ?? null,
+                        temple_length: caliber.temple_length ?? caliber.asta ?? null,
+                        frame_width: caliber.frame_width ?? null,
                         price: caliber.price,
                         stock_quantity: caliber.stock_quantity,
                         is_active: caliber.is_active !== false
@@ -937,10 +942,11 @@ const ProductDetail = () => {
             .filter((x: { value: string; label: string }) => x.value.length > 0)
     }, [product, isContactLens])
 
-    // Unique measurement options from frameSizes (+ mm calibers for calibro)
+    // Unique measurement options from mm_calibers rows (+ frameSizes fallback)
     const frameMeasurementOptions = useMemo(() => {
         const p = product as any
         const frames: any[] = Array.isArray(p?.frameSizes) ? p.frameSizes : []
+        const mmRows = (productCalibers || []).filter((c: any) => c.is_active !== false)
         const uniq = (vals: Array<string | number | null | undefined>) =>
             Array.from(
                 new Set(
@@ -955,14 +961,24 @@ const ProductDetail = () => {
                 return a.localeCompare(b)
             })
 
-        const calibroFromFrames = frames.map((f) => f.lens_width)
-        const calibroFromMm = (productCalibers || [])
-            .filter((c) => c.is_active !== false)
-            .map((c) => c.mm)
         return {
-            calibro: uniq([...calibroFromFrames, ...calibroFromMm]),
-            ponte: uniq(frames.map((f) => f.bridge_width)),
-            asta: uniq(frames.map((f) => f.temple_length)),
+            calibro: uniq([
+                ...mmRows.map((c: any) => c.lens_width ?? c.mm),
+                ...frames.map((f) => f.lens_width),
+            ]),
+            ponte: uniq([
+                ...mmRows.map((c: any) => c.bridge_width ?? c.ponte),
+                ...frames.map((f) => f.bridge_width),
+            ]),
+            asta: uniq([
+                ...mmRows.map((c: any) => c.temple_length ?? c.asta),
+                ...frames.map((f) => f.temple_length),
+            ]),
+            frameWidth: uniq([
+                ...mmRows.map((c: any) => c.frame_width),
+                ...frames.map((f) => f.frame_width),
+            ]),
+            rows: mmRows,
         }
     }, [product, productCalibers])
 
@@ -5636,8 +5652,24 @@ const ProductDetail = () => {
                                                         onChange={(e) => {
                                                             const v = e.target.value
                                                             setSelectedCalibro(v)
-                                                            if (v) handleCaliberChange(v)
-                                                            else setSelectedCaliber(null)
+                                                            if (v) {
+                                                                handleCaliberChange(v)
+                                                                // If only one matching mm-caliber row, fill Ponte/Asta from it
+                                                                const matches = (frameMeasurementOptions.rows || []).filter(
+                                                                    (c: any) => String(c.lens_width ?? c.mm) === String(v)
+                                                                )
+                                                                if (matches.length === 1) {
+                                                                    const row = matches[0] as any
+                                                                    if (row.bridge_width != null && row.bridge_width !== '') {
+                                                                        setSelectedPonte(String(row.bridge_width))
+                                                                    }
+                                                                    if (row.temple_length != null && row.temple_length !== '') {
+                                                                        setSelectedAsta(String(row.temple_length))
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                setSelectedCaliber(null)
+                                                            }
                                                         }}
                                                         className="w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                     >
@@ -5659,7 +5691,22 @@ const ProductDetail = () => {
                                                     </label>
                                                     <select
                                                         value={selectedPonte}
-                                                        onChange={(e) => setSelectedPonte(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const v = e.target.value
+                                                            setSelectedPonte(v)
+                                                            // Prefer matching row when calibro already chosen
+                                                            if (v && selectedCalibro) {
+                                                                const match = (frameMeasurementOptions.rows || []).find(
+                                                                    (c: any) =>
+                                                                        String(c.lens_width ?? c.mm) === String(selectedCalibro) &&
+                                                                        String(c.bridge_width ?? '') === String(v)
+                                                                ) as any
+                                                                if (match?.temple_length != null && match.temple_length !== '') {
+                                                                    setSelectedAsta(String(match.temple_length))
+                                                                }
+                                                                if (match) handleCaliberChange(match.mm ?? selectedCalibro)
+                                                            }
+                                                        }}
                                                         className="w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                     >
                                                         <option value="">

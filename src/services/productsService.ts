@@ -142,12 +142,17 @@ export interface SizeVolumeVariant {
 }
 
 export interface MMCaliber {
-  mm: number | string; // e.g., 58, "78" - handle both number and string from API
+  id?: string;
+  mm: number | string; // Calibro / lens width
+  lens_width?: number | string | null;
+  bridge_width?: number | string | null; // Ponte
+  temple_length?: number | string | null; // Asta
+  frame_width?: number | string | null;
   /** Legacy field. Calibers are size options only and must never drive the displayed image. */
   image_url?: string;
-  price?: number; // Optional price adjustment for this caliber
-  stock_quantity?: number; // Stock for this specific caliber
-  is_active?: boolean; // Whether this caliber is available
+  price?: number | null;
+  stock_quantity?: number | null;
+  is_active?: boolean;
 }
 
 export interface EyeHygieneVariant {
