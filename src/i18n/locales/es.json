@@ -544,5 +544,16 @@
     "sphere": "Esfera",
     "cylinder": "Cil.",
     "axis": "Eje"
+  },
+  "search": {
+    "results": "Search Results",
+    "resultsFound": "results found",
+    "searching": "Searching...",
+    "noResults": "No results found",
+    "tryDifferent": "Try a different search term",
+    "products": "Products",
+    "categories": "Categories",
+    "subcategories": "Subcategories",
+    "subSubcategories": "Sub-subcategories"
   }
 }

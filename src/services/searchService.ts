@@ -15,6 +15,8 @@ export interface SearchResult {
   description?: string
   image?: string
   price?: string | number
+  /** Full product when type === 'product' — used by shop ProductCard */
+  product?: Product
   category?: {
     id: number
     name: string
@@ -87,6 +89,7 @@ export const searchAll = async (
             price: product.sale_price && Number(product.sale_price) < Number(product.price)
               ? product.sale_price
               : product.price,
+            product,
             category: product.category ? {
               id: product.category.id,
               name: product.category.name,

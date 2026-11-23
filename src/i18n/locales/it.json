@@ -620,5 +620,16 @@
     "login": "Accedi",
     "register": "Registrati",
     "trackOrder": "Traccia ordine"
+  },
+  "search": {
+    "results": "Risultati di ricerca",
+    "resultsFound": "risultati trovati",
+    "searching": "Ricerca in corso...",
+    "noResults": "Nessun risultato trovato",
+    "tryDifferent": "Prova un termine di ricerca diverso",
+    "products": "Prodotti",
+    "categories": "Categorie",
+    "subcategories": "Sottocategorie",
+    "subSubcategories": "Sotto-sottocategorie"
   }
 }
