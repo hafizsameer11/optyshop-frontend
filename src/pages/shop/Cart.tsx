@@ -299,12 +299,23 @@ const Cart: React.FC = () => {
                                                       ? 'Eye Hygiene'
                                                       : item.category}
                                             </p>
-                                            {/* Show selected caliber if applicable */}
-                                            {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber) && (
-                                                <p className="text-xs text-blue-950 font-medium mt-1">
-                                                    Size: {formatCartCaliberLabel((item.customization as any)?.selected_mm_caliber)}mm
-                                                </p>
-                                            )}
+                                            {/* Frame measurements + model */}
+                                            {(() => {
+                                                const c = (item.customization as any) || {}
+                                                const model = c.model_code || c.model_name
+                                                const calibro = formatCartCaliberLabel(c.calibro || c.lens_width || c.selected_mm_caliber)
+                                                const ponte = formatCartCaliberLabel(c.ponte || c.bridge_width)
+                                                const asta = formatCartCaliberLabel(c.asta || c.temple_length)
+                                                if (!model && !calibro && !ponte && !asta) return null
+                                                return (
+                                                    <div className="mt-1 space-y-0.5 text-xs text-blue-950 font-medium">
+                                                        {model && <p>Model: {String(model)}</p>}
+                                                        {calibro && <p>Calibro: {calibro}mm</p>}
+                                                        {ponte && <p>Bridge: {ponte}mm</p>}
+                                                        {asta && <p>Temple: {asta}mm</p>}
+                                                    </div>
+                                                )
+                                            })()}
                                             <div className="mt-2">
                                                 <p className="text-lg font-semibold text-blue-950">
                                                     €{(() => {

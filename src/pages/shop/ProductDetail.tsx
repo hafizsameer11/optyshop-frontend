@@ -3792,11 +3792,22 @@ const ProductDetail = () => {
 
             const useEyeHygieneForCart = useNamedEyeHygieneVariant && selectedEyeHygieneVariant
 
+            const resolvedCalibro =
+                selectedCalibro ||
+                (selectedCaliber?.mm != null ? String(selectedCaliber.mm) : '') ||
+                ''
+            const productModelCode =
+                (cartProduct as any).model_code ||
+                (cartProduct as any).model_name ||
+                (product as any)?.model_code ||
+                (product as any)?.model_name ||
+                ''
+
             const cartRequest: AddToCartRequest = {
                 product_id: cartProduct.id,
                 quantity: productQuantity,
                 selected_color: colorValue || undefined,
-                selected_mm_caliber: selectedCaliber?.mm != null ? String(selectedCaliber.mm) : undefined,
+                selected_mm_caliber: resolvedCalibro || undefined,
                 ...(useEyeHygieneForCart && {
                     selected_variant_id: `eye_hygiene_${selectedEyeHygieneVariant!.id}`,
                     variant_type: 'eye_hygiene' as const,
@@ -3811,10 +3822,15 @@ const ProductDetail = () => {
                     frame_material: cartProduct.frame_material,
                     color: colorValue || undefined,
                     lens_color: selectedLensColor || undefined,
-                    ...(selectedCaliber?.mm != null && {
-                        selected_mm_caliber: String(selectedCaliber.mm)
+                    ...(productModelCode && {
+                        model_code: String(productModelCode),
+                        model_name: String(productModelCode),
                     }),
-                    ...(selectedCalibro && { lens_width: selectedCalibro, calibro: selectedCalibro }),
+                    ...(resolvedCalibro && {
+                        selected_mm_caliber: resolvedCalibro,
+                        lens_width: resolvedCalibro,
+                        calibro: resolvedCalibro,
+                    }),
                     ...(selectedPonte && { bridge_width: selectedPonte, ponte: selectedPonte }),
                     ...(selectedAsta && { temple_length: selectedAsta, asta: selectedAsta }),
                     ...(selectedColor || selectedColorVariant ? {
@@ -3825,6 +3841,8 @@ const ProductDetail = () => {
                         variant_price: (selectedColorVariant as any)?.price,
                         variant_images: (selectedColorVariant as any)?.images || [],
                         color_stock_quantity: (selectedColorVariant as any)?.stock_quantity ?? null,
+                        barcode: (selectedColorVariant as any)?.barcode || (selectedColorVariant as any)?.bar_code || null,
+                        purchase_code: (selectedColorVariant as any)?.purchase_code || (selectedColorVariant as any)?.purchaseCode || null,
                     } : {}),
                     ...(selectedEyeHygieneVariant && {
                         eye_hygiene_variant_id: selectedEyeHygieneVariant.id,

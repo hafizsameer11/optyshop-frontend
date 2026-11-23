@@ -427,17 +427,47 @@ const OrderDetail: React.FC = () => {
                                 (typeof custom.selected_color === 'string' && custom.selected_color.startsWith('#')
                                   ? custom.selected_color
                                   : null)
-                              const size =
-                                custom.selected_mm_caliber ||
-                                custom.size_volume ||
-                                custom.variant_display_name ||
+                              const modelCode =
+                                custom.model_code ||
+                                custom.model_name ||
+                                (item as any).product?.model_code ||
+                                (item as any).product?.model_name ||
                                 null
+                              const calibro =
+                                custom.calibro ||
+                                custom.lens_width ||
+                                custom.selected_mm_caliber ||
+                                null
+                              const ponte = custom.ponte || custom.bridge_width || null
+                              const asta = custom.asta || custom.temple_length || null
                               const pack = custom.pack_type || null
+                              const sizeVolume = custom.size_volume || custom.variant_display_name || null
+                              const barcode = custom.barcode || custom.bar_code || null
+                              const purchaseCode = custom.purchase_code || custom.purchaseCode || null
 
-                              if (!colorName && !size && !pack && !hex) return null
+                              if (
+                                !colorName &&
+                                !modelCode &&
+                                !calibro &&
+                                !ponte &&
+                                !asta &&
+                                !pack &&
+                                !sizeVolume &&
+                                !barcode &&
+                                !purchaseCode &&
+                                !hex
+                              ) {
+                                return null
+                              }
 
                               return (
                                 <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                  {modelCode && (
+                                    <div>
+                                      {t('orders.model', { defaultValue: 'Model' })}:{' '}
+                                      <span className="font-medium font-mono text-gray-800">{String(modelCode)}</span>
+                                    </div>
+                                  )}
                                   {colorName && (
                                     <div className="flex items-center gap-2">
                                       {hex && (
@@ -452,14 +482,45 @@ const OrderDetail: React.FC = () => {
                                       </span>
                                     </div>
                                   )}
-                                  {size && (
+                                  {calibro && (
                                     <div>
-                                      {t('orders.size', { defaultValue: 'Size' })}: <span className="font-medium text-gray-800">{String(size)}{custom.selected_mm_caliber ? 'mm' : ''}</span>
+                                      {t('orders.calibro', { defaultValue: 'Calibro' })}:{' '}
+                                      <span className="font-medium text-gray-800">{String(calibro)} mm</span>
+                                    </div>
+                                  )}
+                                  {ponte && (
+                                    <div>
+                                      {t('orders.bridge', { defaultValue: 'Bridge (Ponte)' })}:{' '}
+                                      <span className="font-medium text-gray-800">{String(ponte)} mm</span>
+                                    </div>
+                                  )}
+                                  {asta && (
+                                    <div>
+                                      {t('orders.temple', { defaultValue: 'Temple (Asta)' })}:{' '}
+                                      <span className="font-medium text-gray-800">{String(asta)} mm</span>
+                                    </div>
+                                  )}
+                                  {sizeVolume && !calibro && (
+                                    <div>
+                                      {t('orders.size', { defaultValue: 'Size' })}:{' '}
+                                      <span className="font-medium text-gray-800">{String(sizeVolume)}</span>
                                     </div>
                                   )}
                                   {pack && (
                                     <div>
                                       {t('orders.pack', { defaultValue: 'Pack' })}: <span className="font-medium text-gray-800">{String(pack)}</span>
+                                    </div>
+                                  )}
+                                  {barcode && (
+                                    <div>
+                                      {t('orders.barcode', { defaultValue: 'Barcode' })}:{' '}
+                                      <span className="font-medium font-mono text-gray-800">{String(barcode)}</span>
+                                    </div>
+                                  )}
+                                  {purchaseCode && (
+                                    <div>
+                                      {t('orders.purchaseCode', { defaultValue: 'Purchase code' })}:{' '}
+                                      <span className="font-medium font-mono text-gray-800">{String(purchaseCode)}</span>
                                     </div>
                                   )}
                                 </div>
