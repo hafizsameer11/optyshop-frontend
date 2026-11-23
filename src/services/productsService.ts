@@ -143,10 +143,12 @@ export interface SizeVolumeVariant {
 
 export interface MMCaliber {
   id?: string;
-  mm: number | string; // Calibro / lens width
+  /** Independent list: calibro | ponte | asta | frame_width */
+  dimension?: 'calibro' | 'ponte' | 'asta' | 'frame_width' | string;
+  mm: number | string;
   lens_width?: number | string | null;
-  bridge_width?: number | string | null; // Ponte
-  temple_length?: number | string | null; // Asta
+  bridge_width?: number | string | null;
+  temple_length?: number | string | null;
   frame_width?: number | string | null;
   /** Legacy field. Calibers are size options only and must never drive the displayed image. */
   image_url?: string;

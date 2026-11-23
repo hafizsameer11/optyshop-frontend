@@ -375,8 +375,9 @@ const ProductDetail = () => {
                     // Calibers are size options (Calibro/Ponte/Asta) — they never carry their own image.
                     const calibers = calibersData.map((caliber: any) => ({
                         id: caliber.id,
-                        mm: caliber.mm ?? caliber.lens_width,
-                        lens_width: caliber.lens_width ?? caliber.mm,
+                        dimension: caliber.dimension || 'calibro',
+                        mm: caliber.mm ?? caliber.lens_width ?? caliber.value,
+                        lens_width: caliber.lens_width ?? (caliber.dimension === 'calibro' || !caliber.dimension ? caliber.mm : null),
                         bridge_width: caliber.bridge_width ?? caliber.ponte ?? null,
                         temple_length: caliber.temple_length ?? caliber.asta ?? null,
                         frame_width: caliber.frame_width ?? null,
@@ -942,11 +943,12 @@ const ProductDetail = () => {
             .filter((x: { value: string; label: string }) => x.value.length > 0)
     }, [product, isContactLens])
 
-    // Unique measurement options from mm_calibers rows (+ frameSizes fallback)
+    // Independent measurement options from mm_calibers (by dimension) + frameSizes fallback
     const frameMeasurementOptions = useMemo(() => {
         const p = product as any
         const frames: any[] = Array.isArray(p?.frameSizes) ? p.frameSizes : []
         const mmRows = (productCalibers || []).filter((c: any) => c.is_active !== false)
+        const dimOf = (c: any) => String(c.dimension || 'calibro').toLowerCase()
         const uniq = (vals: Array<string | number | null | undefined>) =>
             Array.from(
                 new Set(
@@ -961,21 +963,27 @@ const ProductDetail = () => {
                 return a.localeCompare(b)
             })
 
+        const fromDim = (dim: string) =>
+            mmRows.filter((c: any) => dimOf(c) === dim).map((c: any) => c.mm ?? c.lens_width ?? c.value)
+
+        // Legacy combo rows without dimension: use field aliases
+        const legacyCalibro = mmRows
+            .filter((c: any) => !c.dimension)
+            .map((c: any) => c.lens_width ?? c.mm)
+        const legacyPonte = mmRows
+            .filter((c: any) => !c.dimension)
+            .map((c: any) => c.bridge_width ?? c.ponte)
+        const legacyAsta = mmRows
+            .filter((c: any) => !c.dimension)
+            .map((c: any) => c.temple_length ?? c.asta)
+
         return {
-            calibro: uniq([
-                ...mmRows.map((c: any) => c.lens_width ?? c.mm),
-                ...frames.map((f) => f.lens_width),
-            ]),
-            ponte: uniq([
-                ...mmRows.map((c: any) => c.bridge_width ?? c.ponte),
-                ...frames.map((f) => f.bridge_width),
-            ]),
-            asta: uniq([
-                ...mmRows.map((c: any) => c.temple_length ?? c.asta),
-                ...frames.map((f) => f.temple_length),
-            ]),
+            calibro: uniq([...fromDim('calibro'), ...legacyCalibro, ...frames.map((f) => f.lens_width)]),
+            ponte: uniq([...fromDim('ponte'), ...legacyPonte, ...frames.map((f) => f.bridge_width)]),
+            asta: uniq([...fromDim('asta'), ...legacyAsta, ...frames.map((f) => f.temple_length)]),
             frameWidth: uniq([
-                ...mmRows.map((c: any) => c.frame_width),
+                ...fromDim('frame_width'),
+                ...mmRows.filter((c: any) => !c.dimension).map((c: any) => c.frame_width),
                 ...frames.map((f) => f.frame_width),
             ]),
             rows: mmRows,
@@ -5652,24 +5660,9 @@ const ProductDetail = () => {
                                                         onChange={(e) => {
                                                             const v = e.target.value
                                                             setSelectedCalibro(v)
-                                                            if (v) {
-                                                                handleCaliberChange(v)
-                                                                // If only one matching mm-caliber row, fill Ponte/Asta from it
-                                                                const matches = (frameMeasurementOptions.rows || []).filter(
-                                                                    (c: any) => String(c.lens_width ?? c.mm) === String(v)
-                                                                )
-                                                                if (matches.length === 1) {
-                                                                    const row = matches[0] as any
-                                                                    if (row.bridge_width != null && row.bridge_width !== '') {
-                                                                        setSelectedPonte(String(row.bridge_width))
-                                                                    }
-                                                                    if (row.temple_length != null && row.temple_length !== '') {
-                                                                        setSelectedAsta(String(row.temple_length))
-                                                                    }
-                                                                }
-                                                            } else {
-                                                                setSelectedCaliber(null)
-                                                            }
+                                                            // Independent: selecting calibro does not change ponte/asta
+                                                            if (v) handleCaliberChange(v)
+                                                            else setSelectedCaliber(null)
                                                         }}
                                                         className="w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                     >
@@ -5691,22 +5684,7 @@ const ProductDetail = () => {
                                                     </label>
                                                     <select
                                                         value={selectedPonte}
-                                                        onChange={(e) => {
-                                                            const v = e.target.value
-                                                            setSelectedPonte(v)
-                                                            // Prefer matching row when calibro already chosen
-                                                            if (v && selectedCalibro) {
-                                                                const match = (frameMeasurementOptions.rows || []).find(
-                                                                    (c: any) =>
-                                                                        String(c.lens_width ?? c.mm) === String(selectedCalibro) &&
-                                                                        String(c.bridge_width ?? '') === String(v)
-                                                                ) as any
-                                                                if (match?.temple_length != null && match.temple_length !== '') {
-                                                                    setSelectedAsta(String(match.temple_length))
-                                                                }
-                                                                if (match) handleCaliberChange(match.mm ?? selectedCalibro)
-                                                            }
-                                                        }}
+                                                        onChange={(e) => setSelectedPonte(e.target.value)}
                                                         className="w-full cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-8 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                                                     >
                                                         <option value="">
